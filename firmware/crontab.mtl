@@ -1,0 +1,41 @@
+//--------------------------------------------------------------------------------------------------
+// Crontab
+//--------------------------------------------------------------------------------------------------
+
+var _last_crontab_check = -1 ;; // last time (hour*100+min) of execution of crontab
+proto wavstarthttp 2;;
+proto _cbWavError 0;;
+proto startSleep 0;;
+proto endSleep 0;;
+proto get_language 0;;
+
+fun play_time_sound hour=
+	// controlsound midi_communion
+	wavstarthttp strcatlist "http://"::confGetServerUrl::"/config/clock/"::get_language::"/"::(itoa hour)::"/"::(itoa 1 + random 6)::".mp3"::nil #_cbWavError;;
+	
+fun check_crontab=	
+	let current_time_hours * 100 + current_time_minutes -> crontab_check in
+	if crontab_check != _last_crontab_check then (
+		set _last_crontab_check=crontab_check;
+		if current_time_minutes == 0 then (
+			if current_time_hours == 8 then endSleep;
+			if current_time_hours == 9 then play_time_sound current_time_hours;
+			if current_time_hours == 10 then play_time_sound current_time_hours;
+			if current_time_hours == 11 then play_time_sound current_time_hours;
+			if current_time_hours == 12 then play_time_sound current_time_hours;
+			if current_time_hours == 13 then play_time_sound current_time_hours;
+			if current_time_hours == 14 then play_time_sound current_time_hours;
+			if current_time_hours == 15 then play_time_sound current_time_hours;
+			if current_time_hours == 16 then play_time_sound current_time_hours;
+			if current_time_hours == 17 then play_time_sound current_time_hours;
+			if current_time_hours == 18 then play_time_sound current_time_hours;
+			if current_time_hours == 19 then play_time_sound current_time_hours;
+			if current_time_hours == 20 then play_time_sound current_time_hours;
+			if current_time_hours == 21 then play_time_sound current_time_hours;
+			if current_time_hours == 22 then startSleep;
+			0
+		);		
+		0
+		// TODO: update time from server 
+	)
+	;;

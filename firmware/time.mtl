@@ -1,0 +1,63 @@
+//--------------------------------------------------------------------------------------------------
+// Time Protocol (RFC 868) client
+//--------------------------------------------------------------------------------------------------
+
+proto check_crontab 0;;
+
+const HOUR_DELTA = 1;;
+const TIME_PROTOCOL_PORT = 37 ;;
+
+var time_server_ip = "\128\138\140\44" ;;
+var last_read_time = 0 ;;  // last value read from the time server
+var _last_read_internal_time = 0 ;; // internal time (since boot) of the last time read
+var _last_update_time_internal_time = -1 ;; // last time (since boot) of execution of update_time_internal
+var current_time_hours = 0 ;; // current hour
+var current_time_minutes = 0 ;; // current minute
+var current_time_seconds = 0 ;; // current second
+
+// const CONF_LOGIN=163;;		//6
+// const CONF_PWD=169;;			//6
+// const CONF_TIME_OFFSET=169;;		// 2+1
+
+// fun get_time_offset=
+// 	webport confGet CONF_TIME_OFFSET 2;; // ((strget s 0)<<8)+strget s 1
+
+
+// Update the current hour/minute/second and exec the crontab functions
+fun update_time_internal=
+	let time -> now in
+	if now != _last_update_time_internal_time then
+		let (last_read_time + (now - _last_read_internal_time)) % 86400 -> new_current_time in
+		(
+			set current_time_hours=(new_current_time / 3600 + HOUR_DELTA) % 24;
+			set current_time_minutes=new_current_time / 60 % 60;
+			set current_time_seconds=new_current_time % 60;
+			set _last_update_time_internal_time = now;
+			//Iecho current_time_hours; Secho ":"; Iecho current_time_minutes; Secho ":"; Iecho current_time_seconds; Secholn "";
+			check_crontab
+		);
+	0;;
+
+// Time protocol client - callback function
+fun callback_time msg mac ipfrom=
+	let strgetword msg 0 -> h in
+	let strgetword msg 2 -> l in
+	let ((h % 675) * 65536 + l) % 86400 -> new_current_time in   // 675 is 86400 >> 7
+	(
+		set _last_read_internal_time=time;
+		set last_read_time=new_current_time;
+		set current_time_hours=(new_current_time / 3600 + HOUR_DELTA) % 24;
+		set current_time_minutes=new_current_time / 60 % 60;
+		set current_time_seconds=new_current_time % 60
+	);
+	unregudp TIME_PROTOCOL_PORT;
+	0;;	
+
+// Get the current time from the time server
+fun get_time_from_timeserver=
+	udpsend netip TIME_PROTOCOL_PORT time_server_ip TIME_PROTOCOL_PORT "" nil;
+	regudp TIME_PROTOCOL_PORT #callback_time;
+	0;;
+	
+// -----------------------------------------------------------------------------
+

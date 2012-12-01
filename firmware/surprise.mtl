@@ -1,0 +1,30 @@
+//--------------------------------------------------------------------------------------------------
+// Surprise
+//--------------------------------------------------------------------------------------------------
+
+proto wavstarthttp 2;;
+proto _cbWavError 0;;
+proto get_language 0;;
+
+var surprise_delay = 120 ;; // average delay, in minutes  (delay= (surprise_delay/2) + random (surprise_delay))
+var next_surprise;;
+
+fun surprise=
+	wavstarthttp strcatlist "http://"::confGetServerUrl::"/config/surprise/"::get_language::"/"::(itoa 1 + random 299)::".mp3"::nil #_cbWavError;;
+
+fun check_surprise=
+	if surprise_delay && (surprise_delay != nil) && (!gSleepState) then
+		let (if next_surprise!=nil then (time>next_surprise) else 0) -> now in (
+			if now || next_surprise==nil then // compute next_surprise
+			let ((surprise_delay/2) + (random surprise_delay) + 1) -> delay in (
+				Secho "surprise in "; Iecho delay; Secholn "m";
+				set next_surprise = time + 60 * delay
+			);
+		now
+	) else (
+		set next_surprise=nil;
+		0
+	);;
+	
+fun get_next_surprise=
+	next_surprise;;

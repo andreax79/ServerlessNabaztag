@@ -1,0 +1,74 @@
+// ******************
+// The Ping
+var pingdelay=10;;
+
+fun earReady= earsmode!=EARSMODE_RESET;;
+fun earDetecting= earsmode==EARSMODE_DETECT;;
+fun earComplete = earReady && (!ears.(0).dirE) && (!ears.(1).dirE);;
+
+// ping processing
+fun _pingcbhttp http res=
+	Secholn "ping=";
+	if !recording then
+		evalTrame httpgetcontent res;
+	0;;
+
+fun runpingstart=
+	if gEarInited != 1 then (
+		set gEarInited = 1;
+		earInit						// we init the ears
+	);
+
+//	if (gInteractiveApp == nil) then
+	if netState==RT2501_S_CONNECTED then
+		set run=pingwaitRun httprequest "GET" Secholn pingurl nil #_pingcbhttp HTTP_NORMAL;
+	0;;
+
+// waiting for ping return : manage timeout
+fun runpingwait http=
+	// check timeout and retry
+	if (httpinactive http)>STD_NET_TIMEOUT then
+	(
+		Secholn "##timeout on pingwait";
+		httpabort http;
+		// restart later
+		set run=stdWaitRun time+pingdelay
+	);
+	0;;
+
+// main ping loog
+fun runStdWait t=
+	if time>t then set run=pingstartRun;
+	0;;
+
+
+fun runidlewait=
+	// check timeout (oreille bloquÈe)
+	if earReady then
+	(
+		earStartDetect;
+		setleds 0;
+		earGo 0 extleft 0;
+		earGo 1 extright 0;
+		set run=stdWaitRun time+pingdelay
+	);
+	0;;
+
+// L'appel du ping
+fun callPingRequest aSenddata=
+	if aSenddata!=nil then set senddata=aSenddata;
+	set run=pingRequestWaitRun httprequest "GET" Secholn pingurl nil #_pingcbhttp HTTP_NORMAL;
+	0;;
+
+fun runPingRequestWait http=
+	// Attente du retour de ping
+	// check timeout and retry
+	if (httpinactive http)>STD_NET_TIMEOUT then
+	(
+		Secholn "##timeout on pingsendwait";
+		httpabort http;
+		callPingRequest nil
+	);
+
+	0;;
+
