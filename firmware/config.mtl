@@ -15,6 +15,10 @@ const CONF_PROXYIP=157;;		//4
 const CONF_PROXYPORT=161;;	//2
 const CONF_LOGIN=163;;		//6
 const CONF_PWD=169;;			//6
+/*
+  const CONF_LANGUAGE=163;; //3
+  const CONF_TIME_DELTA=166; //1
+*/
 const CONF_WIFIPMK=175;;		//32
 const CONF_MAGIC=207;;		//1
 const CONF_LENGTH=208;;

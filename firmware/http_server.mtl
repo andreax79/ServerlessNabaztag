@@ -208,6 +208,44 @@ body {
   <li><a href='/lang?v=fr'>french</a></li>
   <li><a href='/lang?v=es'>spanish</a></li>
   </ul>
+
+  <h2>Timezone Setup</h2>
+  <form action='/time'>
+  <select name='v' onchange='this.form.submit();'>
+      <option value='' selected='selected' disabled='disabled'></option>
+      <option value='-720'>GMT -12:00</option>
+      <option value='-660'>GMT -11:00</option>
+      <option value='-600'>GMT -10:00</option>
+      <option value='-540'>GMT -9:00</option>
+      <option value='-480'>GMT -8:00</option>
+      <option value='-420'>GMT -7:00</option>
+      <option value='-360'>GMT -6:00</option>
+      <option value='-300'>GMT -5:00</option>
+      <option value='-240'>GMT -4:00</option>
+      <option value='-210'>GMT -3:30</option>
+      <option value='-180'>GMT -3:00</option>
+      <option value='-120'>GMT -2:00</option>
+      <option value='-60'>GMT -1:00</option>
+      <option value='0'>GMT</option>
+      <option value='60'>GMT +1:00</option>
+      <option value='120'>GMT +2:00</option>
+      <option value='180'>GMT +3:00</option>
+      <option value='210'>GMT +3:30</option>
+      <option value='240'>GMT +4:00</option>
+      <option value='270'>GMT +4:30</option>
+      <option value='300'>GMT +5:00</option>
+      <option value='330'>GMT +5:30</option>
+      <option value='345'>GMT +5:45</option>
+      <option value='260'>GMT +6:00</option>
+      <option value='420'>GMT +7:00</option>
+      <option value='480'>GMT +8:00</option>
+      <option value='540'>GMT +9:00</option>
+      <option value='570'>GMT +9:30</option>
+      <option value='600'>GMT +10:00</option>
+      <option value='660'>GMT +11:00</option>
+      <option value='720'>GMT +12:00</option>
+  </select>
+  </form>
     
   mac: "::"<MAC>"::" <br/>
   time: "::"<HOURS>"::":"::"<MINUTES>"::":"::"<SECONDS>"::" <br/>
@@ -217,6 +255,7 @@ body {
   left: "::"<LEFT>"::" <br/>
   right: "::"<RIGHT>"::" <br/>
   language: "::"<LANG>"::" <br/>
+  time offset: "::"<TIMEOFFSET>"::" min <br/>
   server url: http://"::"<SERVER>"::" <br/>
 
 </body></html>"::nil;;
@@ -237,6 +276,7 @@ fun httptest=
 	let itoa infotaichi -> infotaichi_string in
 	let itoa extleft -> extleft_string in
 	let itoa extright -> extright_string in
+    let itoa get_time_offset -> ttime_offset in
 
 	strcatlist pagefill
 			["<MAC>" mac]::
@@ -250,6 +290,7 @@ fun httptest=
 			["<RIGHT>" extright_string]::
 			["<SERVER>" confGetServerUrl]::
 			["<LANG>" get_language]::
+			["<TIMEOFFSET>" ttime_offset]::
 			nil
 		page_test
 	;;
@@ -359,6 +400,8 @@ fun cbhttp req=
 		else if !strcmp page "pollution" then (_infosrc_update 7 Igetargvalue args 'v'; httptest) // pollutions (0-10)
 		// language setup
 		else if !strcmp page "lang" then (set_language Sgetargvalue args 'v'; httptest)
+		// time setup
+		else if !strcmp page "time" then (set_time_offset atoi Sgetargvalue args 'v'; httptest)
 		
 		else httptest
 	);;

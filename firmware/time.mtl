@@ -4,7 +4,6 @@
 
 proto check_crontab 0;;
 
-const HOUR_DELTA = 1;;
 const TIME_PROTOCOL_PORT = 37 ;;
 
 var time_server_ip = "\128\138\140\44" ;;
@@ -15,23 +14,28 @@ var current_time_hours = 0 ;; // current hour
 var current_time_minutes = 0 ;; // current minute
 var current_time_seconds = 0 ;; // current second
 
-// const CONF_LOGIN=163;;		//6
-// const CONF_PWD=169;;			//6
-// const CONF_TIME_OFFSET=169;;		// 2+1
+const CONF_TIME_OFFSET=166;; //1
 
-// fun get_time_offset=
-// 	webport confGet CONF_TIME_OFFSET 2;; // ((strget s 0)<<8)+strget s 1
+// Store the time offset (in minutes, rounded by 15min) in the config
+fun set_time_offset time_offset=
+    strset conf CONF_TIME_OFFSET ((time_offset / 15) + 128);
+    confSave;;
 
+// Get the time offset (in minutes) from the config
+fun get_time_offset=
+    let (strget conf CONF_TIME_OFFSET) -> t in
+        if (t == 0) then 0 else (t - 128) * 15;;
 
 // Update the current hour/minute/second and exec the crontab functions
 fun update_time_internal=
 	let time -> now in
 	if now != _last_update_time_internal_time then
 		let (last_read_time + (now - _last_read_internal_time)) % 86400 -> new_current_time in
-		(
-			set current_time_hours=(new_current_time / 3600 + HOUR_DELTA) % 24;
-			set current_time_minutes=new_current_time / 60 % 60;
-			set current_time_seconds=new_current_time % 60;
+	    let (new_current_time + 86400 + get_time_offset * 60) % 86400 -> offset_time in
+        (
+			set current_time_hours=(offset_time / 3600) % 24;
+			set current_time_minutes=offset_time / 60 % 60;
+			set current_time_seconds=offset_time % 60;
 			set _last_update_time_internal_time = now;
 			//Iecho current_time_hours; Secho ":"; Iecho current_time_minutes; Secho ":"; Iecho current_time_seconds; Secholn "";
 			check_crontab
@@ -43,12 +47,13 @@ fun callback_time msg mac ipfrom=
 	let strgetword msg 0 -> h in
 	let strgetword msg 2 -> l in
 	let ((h % 675) * 65536 + l) % 86400 -> new_current_time in   // 675 is 86400 >> 7
-	(
+	let (new_current_time + 86400 + get_time_offset * 60) % 86400 -> offset_time in
+    (
 		set _last_read_internal_time=time;
 		set last_read_time=new_current_time;
-		set current_time_hours=(new_current_time / 3600 + HOUR_DELTA) % 24;
-		set current_time_minutes=new_current_time / 60 % 60;
-		set current_time_seconds=new_current_time % 60
+		set current_time_hours=(offset_time / 3600 ) % 24;
+		set current_time_minutes=offset_time / 60 % 60;
+		set current_time_seconds=offset_time % 60
 	);
 	unregudp TIME_PROTOCOL_PORT;
 	0;;	

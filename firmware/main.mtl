@@ -2160,7 +2160,7 @@ fun loop=
 //Secho "l";
 	wifiRun;
 
-	if netState==RT2501_S_IDLE then
+    if netState==RT2501_S_IDLE then
 	match wifi with
 	(initW -> nil)
 	|(_ ->
