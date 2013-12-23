@@ -39,3 +39,4 @@ Firmware features
 * Congfigure the language and timezone via HTTP
 * The rabbit fetches the current time from a time server and play the corresponding sound every hour
 * Autonomously wake up at go to sleep
+* Respond to ping request
