@@ -134,7 +134,10 @@ fun earInit =
 
 fun earStartDetect=
 	Earsw "earStartDetect";
-	setleds RGB_AMBER;
+	led LED_NOSE RGB_RED;
+	led LED_BODY_LEFT RGB_VIOLET;
+	led LED_BODY_MIDDLE RGB_BLACK;
+	led LED_BODY_RIGHT RGB_VIOLET;
 	set earsmode=EARSMODE_DETECT;
 	set earslastmovetime=time_ms;
 	set earslastmove=(motorget 0)+(motorget 1);;

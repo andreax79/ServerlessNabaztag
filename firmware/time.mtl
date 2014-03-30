@@ -37,8 +37,8 @@ fun update_time_internal=
 			set current_time_minutes=offset_time / 60 % 60;
 			set current_time_seconds=offset_time % 60;
 			set _last_update_time_internal_time = now;
-			//Iecho current_time_hours; Secho ":"; Iecho current_time_minutes; Secho ":"; Iecho current_time_seconds; Secholn "";
-			check_crontab
+			// only check when initialized
+			if (_last_read_internal_time > 0) then check_crontab
 		);
 	0;;
 

@@ -112,22 +112,44 @@ body {
 <body>
   <h1>Nabaztag</h1>
 
+<div style='width:200px;float:left;'>
   <h2>Util</h2>
   <ul>
   <li><a href='/'>reload page</a></li>
-  <li><a href='/gettime'>update time from timeserver</a></li>
-  <li><a href='/stop'>stop everything</a></li>
-  <li><a href='/weather?v=100'>info off</a></li>
-  <li><a href='/reboot'>reboot</a></li>
   <li><a href='/surprise'>surprise</a></li>
+  <li><a href='/stop'>stop everything</a></li>
+  <li><a href='/clear'>info off</a></li>
   </ul>
-
+</div>
+<div style='width:200px;float:left;'>
   <h2>Sleep</h2>
   <ul>
   <li><a href='/sleep'>sleep</a></li>
   <li><a href='/wakeup'>wake up</a></li>
   </ul>
+</div>
+<div style='width:200px;float:left;'>
+  <h2>System</h2>
+  <ul>
+  <li><a href='/gettime'>update time from timeserver</a></li>
+  <li><a href='/reboot'>reboot</a></li>
+  </ul>
+</div>
 
+<br style='clear:both;'/>
+
+<div style='width:200px;float:left;'>
+  <h2>Play sound</h2>
+  <ul>
+  <li><a href='/communication'>communication</a></li>
+  <li><a href='/ack'>ack</a></li>
+  <li><a href='/abort'>abort</a></li>
+  <li><a href='/ministop'>ministop</a></li>
+  <li><form action='/play' method='GET'><input type='text' name='u'/><input type='submit' value='Play URI'/></form></li>
+  <li><form action='/say' method='GET'><input type='text' name='t'/><input type='submit' value='Say text'/></form></li>
+  </ul>
+</div>
+<div style='width:200px;float:left;'>
   <h2>Taichi</h2>
   <ul>
   <li><a href='/taichi?v=1000'>do taichi now</a></li>
@@ -136,31 +158,8 @@ body {
   <li><a href='/taichi?v=80'>taichi medium</a></li>
   <li><a href='/taichi?v=255'>taichi max</a></li>
   </ul>
-
-  <h2>Nose</h2>
-  <ul>
-  <li><a href='/nose?v=1'>on</a></li>
-  <li><a href='/nose?v=0'>off</a></li>
-  </ul>
-
-  <h2>Play sound</h2>
-  <ul>
-  <li><a href='/communication'>communication</a></li>
-  <li><a href='/ack'>ack</a></li>
-  <li><a href='/abort'>abort</a></li>
-  <li><a href='/ministop'>ministop</a></li>
-  </ul>
-
-  <h2>Weather</h2>
-  <ul>
-  <li><a href='/weather?v=0'>sun</a></li>
-  <li><a href='/weather?v=1'>clouds</a></li>
-  <li><a href='/weather?v=2'>fog</a></li>
-  <li><a href='/weather?v=3'>rain</a></li>
-  <li><a href='/weather?v=4'>snow</a></li>
-  <li><a href='/weather?v=5'>storm</a></li>
-  </ul>
-
+</div>
+<div style='width:400px;float:left;'>
   <h2>Ears</h2>
   <ul>
   <li><b>left</b> position:
@@ -200,6 +199,88 @@ body {
   <a href='/right?p=15&d=0'>15</a>
   <a href='/right?p=16&d=0'>16</a></li>  
   </ul>
+</div>
+
+<br style='clear:both;'/>
+
+<div style='width:200px;float:left;'>
+  <h2>Nose</h2>
+  <ul>
+  <li><a href='/nose?v=0'>off</a></li>
+  <li><a href='/nose?v=1'>on</a></li>
+  <li><a href='/nose?v=2'>todo</a></li>
+  <li><a href='/nose?v=3'>urgent</a></li>
+  <li><a href='/nose?v=4'>panic</a></li>
+  </ul>
+</div>
+<div style='width:200px;float:left;'>
+  <h2>Weather</h2>
+  <ul>
+  <li><a href='/weather?v=0'>sun</a></li>
+  <li><a href='/weather?v=1'>clouds</a></li>
+  <li><a href='/weather?v=2'>fog</a></li>
+  <li><a href='/weather?v=3'>rain</a></li>
+  <li><a href='/weather?v=4'>snow</a></li>
+  <li><a href='/weather?v=5'>storm</a></li>
+  </ul>
+</div>
+<div style='width:200px;float:left;'>
+  <h2>Stock</h2>
+  <ul>
+  <li><a href='/stock?v=0'>---</a></li>
+  <li><a href='/stock?v=1'>--</a></li>
+  <li><a href='/stock?v=2'>-</a></li>
+  <li><a href='/stock?v=3'>0</a></li>
+  <li><a href='/stock?v=4'>+</a></li>
+  <li><a href='/stock?v=5'>++</a></li>
+  <li><a href='/stock?v=6'>+++</a></li>
+  </ul>
+</div>
+<div style='width:200px;float:left;'>
+  <h2>Traffic</h2>
+  <ul>
+  <li><a href='/traffic?v=0'>free</a></li>
+  <li><a href='/traffic?v=1'>okay</a></li>
+  <li><a href='/traffic?v=2'>moderate</a></li>
+  <li><a href='/traffic?v=3'>normal</a></li>
+  <li><a href='/traffic?v=4'>heavy</a></li>
+  <li><a href='/traffic?v=5'>congested</a></li>
+  <li><a href='/traffic?v=6'>extreme</a></li>
+  </ul>
+</div>
+<div style='width:200px;float:left;'>
+  <h2>Pollution</h2>
+  <ul>
+  <li><a href='/pollution?v=0'>0</a></li>
+  <li><a href='/pollution?v=1'>1</a></li>
+  <li><a href='/pollution?v=2'>2</a></li>
+  <li><a href='/pollution?v=3'>3</a></li>
+  <li><a href='/pollution?v=4'>4</a></li>
+  <li><a href='/pollution?v=5'>5</a></li>
+  <li><a href='/pollution?v=6'>6</a></li>
+  <li><a href='/pollution?v=7'>7</a></li>
+  <li><a href='/pollution?v=8'>8</a></li>
+  <li><a href='/pollution?v=9'>9</a></li>
+  <li><a href='/pollution?v=10'>10</a></li>
+  </ul>
+</div>
+
+<hr style='clear:both;'/>
+    
+  mac: "::"<MAC>"::" <br/>
+  time: "::"<HOURS>"::":"::"<MINUTES>"::":"::"<SECONDS>"::" <br/>
+  bunny time: "::"<TTIME>"::" <br/>
+  next surprise: "::"<SURPRISE>"::" <br/>
+  taichi freq: "::"<TAICHI>"::" <br/>
+  left: "::"<LEFT>"::" <br/>
+  right: "::"<RIGHT>"::" <br/>
+  language: "::"<LANG>"::" <br/>
+  time offset: "::"<TIMEOFFSET>"::" min <br/>
+  wakeup: "::"<WAKEUP>"::" <br/>
+  sleep: "::"<SLEEP>"::" <br/>
+  server url: http://"::"<SERVER>"::"
+
+  <hr/>
 
   <h2>Language Setup</h2>
   <ul>
@@ -246,17 +327,6 @@ body {
       <option value='720'>GMT +12:00</option>
   </select>
   </form>
-    
-  mac: "::"<MAC>"::" <br/>
-  time: "::"<HOURS>"::":"::"<MINUTES>"::":"::"<SECONDS>"::" <br/>
-  bunny time: "::"<TTIME>"::" <br/>
-  next surprise: "::"<SURPRISE>"::" <br/>
-  taichi freq: "::"<TAICHI>"::" <br/>
-  left: "::"<LEFT>"::" <br/>
-  right: "::"<RIGHT>"::" <br/>
-  language: "::"<LANG>"::" <br/>
-  time offset: "::"<TIMEOFFSET>"::" min <br/>
-  server url: http://"::"<SERVER>"::" <br/>
 
 </body></html>"::nil;;
 
@@ -291,6 +361,8 @@ fun httptest=
 			["<SERVER>" confGetServerUrl]::
 			["<LANG>" get_language]::
 			["<TIMEOFFSET>" ttime_offset]::
+			["<WAKEUP>" "8"]::
+			["<SLEEP>" "23"]::
 			nil
 		page_test
 	;;
@@ -308,6 +380,9 @@ proto _cbWavError 0;;
 proto _infosrc_update 2;;
 
 //--------------------------------------------------------------------------------------------------
+
+fun unknownCommand=
+	wavstarthttp strcatlist "http://"::confGetServerUrl::"/config/reco/"::get_language::"/Comprend"::(itoa 0 + random 4)::".mp3"::nil #_cbWavError;;
 
 fun filterplus s=
 	let strlen s -> n in
@@ -369,16 +444,18 @@ fun cbhttp req=
 		if !strcmp page "gettime" then (get_time_from_timeserver; httptest)		
 		else if !strcmp page "stop" then (stopEverythingAndResetToIdle;  httptest) // stop everything we can be doing and resets to either idle or asleep
 		else if !strcmp page "reboot" then (reboot 0x0407FE58 0x13fb6754; nil)
-		else if !strcmp page "surprise" then (surprise; httptest)
+		else if !strcmp page "surprise" then (if !gSleepState then (surprise; httptest))
 
 		// play sound
-		else if !strcmp page "communication" then (controlsound midi_communion; httptest)
-		else if !strcmp page "ack" then (controlsound midi_ack; httptest)
-		else if !strcmp page "abort" then (controlsound midi_abort; httptest)
+		else if !strcmp page "communication" then (if !gSleepState then (controlsound midi_communion; httptest))
+		else if !strcmp page "ack" then (if !gSleepState then (controlsound midi_ack; httptest))
+		else if !strcmp page "abort" then (if !gSleepState then (controlsound midi_abort; httptest))
 		else if !strcmp page "ministop" then (controlsound midi_ministop; httptest)
+		else if !strcmp page "play" then (if !gSleepState then (wavstarthttp Sgetargvalue args 'u' #_cbWavError; httptest))
+		else if !strcmp page "say" then (if !gSleepState then (wavstarthttp (strcatlist "http://translate.google.com/translate_tts?tl=en_gb&q="::(strreplace (Sgetargvalue args 't') " " "+")::nil) #_cbWavError; httptest))
 		
 		else if !strcmp page "taichi" then let Igetargvalue args 'v' -> v in (
-			if v == 1000 then
+			if v == 1000 && !gSleepState then
 				taichistart
 			else
 				set infotaichi = v;
@@ -389,21 +466,24 @@ fun cbhttp req=
 
 		else if !strcmp page "sleep" then (startSleep; httptest) // sleep
 		else if !strcmp page "wakeup" then (endSleep; httptest) // wake up
-		else if !strcmp page "left" then (earGo 0 Igetargvalue args 'p' Igetargvalue args 'd'; httptest) // p=position d=direction
-		else if !strcmp page "right" then (earGo 1 Igetargvalue args 'p' Igetargvalue args 'd'; httptest) // p=position d=direction
+		else if !strcmp page "left" then (if !gSleepState then (earGo 0 Igetargvalue args 'p' Igetargvalue args 'd'; httptest)) // p=position d=direction
+		else if !strcmp page "right" then (if !gSleepState then (earGo 1 Igetargvalue args 'p' Igetargvalue args 'd'; httptest)) // p=position d=direction
 
 		else if !strcmp page "nose" then (set infomessages = Igetargvalue args 'v'; httptest) // v (0-1)
-		else if !strcmp page "weather" then (_infosrc_update 1 Igetargvalue args 'v'; httptest) // weather (0-5)
-		else if !strcmp page "stock" then (_infosrc_update 2 Igetargvalue args 'v'; httptest) // stock market (0-6)
-		else if !strcmp page "trafic" then (_infosrc_update 3 Igetargvalue args 'v'; httptest) // trafic (0-6)
-		else if !strcmp page "mail" then (_infosrc_update 6 Igetargvalue args 'v'; httptest) // mail (0-4)
-		else if !strcmp page "pollution" then (_infosrc_update 7 Igetargvalue args 'v'; httptest) // pollutions (0-10)
+		else if !strcmp page "weather" then (if !gSleepState then (_infosrc_update 1 Igetargvalue args 'v'; httptest)) // weather (0-5)
+		else if !strcmp page "stock" then (if !gSleepState then (_infosrc_update 2 Igetargvalue args 'v'; httptest)) // stock market (0-6)
+		else if !strcmp page "traffic" then (if !gSleepState then (_infosrc_update 3 Igetargvalue args 'v'; httptest)) // trafic (0-6)
+		else if !strcmp page "mail" then (if !gSleepState then (_infosrc_update 6 Igetargvalue args 'v'; httptest)) // mail (0-4)
+		else if !strcmp page "pollution" then (if !gSleepState then (_infosrc_update 7 Igetargvalue args 'v'; httptest)) // pollutions (0-10)
+		else if !strcmp page "clear" then (for i=1;i<=8 do (_infosrc_update 0 i); httptest)
 		// language setup
 		else if !strcmp page "lang" then (set_language Sgetargvalue args 'v'; httptest)
 		// time setup
 		else if !strcmp page "time" then (set_time_offset atoi Sgetargvalue args 'v'; httptest)
+				
+		else if !strcmp page "" then (httptest)
 		
-		else httptest
+		else (unknownCommand; httptest)
 	);;
 
 
