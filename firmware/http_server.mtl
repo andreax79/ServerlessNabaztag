@@ -475,7 +475,7 @@ fun cbhttp req=
 		else if !strcmp page "traffic" then (_infosrc_update 3 Igetargvalue args 'v'; httptest) // trafic (0-6)
 		else if !strcmp page "mail" then (_infosrc_update 6 Igetargvalue args 'v'; httptest) // mail (0-4)
 		else if !strcmp page "pollution" then (_infosrc_update 7 Igetargvalue args 'v'; httptest) // pollutions (0-10)
-		else if !strcmp page "clear" then (for i=1;i<=8 do (_infosrc_update i 100); httptest)
+		else if !strcmp page "clear" then (for i=1;i<=8 do (_infosrc_update 0 i); httptest)
 		// language setup
 		else if !strcmp page "lang" then (set_language Sgetargvalue args 'v'; httptest)
 		// time setup

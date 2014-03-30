@@ -190,30 +190,6 @@ fun infoRun=
 			led LED_BODY_LEFT RGB_BLACK; led LED_BODY_MIDDLE RGB_BLACK; led LED_BODY_RIGHT RGB_BLACK
 		)
 	);;
-		
-// met à jour ou rajoute cette source
-fun __infosrc_update key val i=
-	if (i < 16) then
-	if (infosrc.i == 0 || infosrc.i == key) then (
-		// add or update
-		set infosrc.(i+1) = val;
-		if (infosrc.i == 0) then (
-			// add
-			set infosrc.i = key;
-			// set lapin to play this new one now
-			infoStartOne i
-		)
-	) else __infosrc_update key val i+2;; // recurse
-fun _infosrc_update key val=
-	// debug : hack special pour envoyer des commandes cachées au lapin... [as]
-	if ((key == 1) && (val == 6)) then ( // meteo 6 (n'existe pas)
-		// force reconnecte
-		Secholn "Forced XmppSessionStart!";
-		// XmppSessionStop; DEBUT
-		//XmppSessionStart gXmpps_cur.sDomain #Xmpps_statusChangedCb; DEBUG
-		0
-	);
-	__infosrc_update key val 0;;
 
 // util : slide tableau pour effacer case vide
 fun __infoslide i=
@@ -252,6 +228,26 @@ const midi_communion=
 \$5b\$65\$81\$1e\$54\$60\$51\$90\$58\$60\$15\$4c\$6a\$81\$1e\$80\
 \$58\$63\$0e\$4c\$45\$4d\$90\$24\$01\$72\$80\$24\$40\$00\$ff\$2f\
 \$00";;
+
+		
+// met à jour ou rajoute cette source
+fun __infosrc_update key val i=
+	if (i < 16) then
+	if (infosrc.i == 0 || infosrc.i == key) then (
+		// add or update
+		set infosrc.(i+1) = val;
+		if (infosrc.i == 0) then (
+			// add
+			set infosrc.i = key;
+			// set lapin to play this new one now
+			infoStartOne i
+		)
+	) else __infosrc_update key val i+2;; // recurse
+
+fun _infosrc_update key val=
+	// allow for deletion
+	if key == 0 then _infosrc_del val
+	else __infosrc_update key val 0;;
 
 fun newInfoUpdate data=
 	Secho "newInfoUpdate:";
