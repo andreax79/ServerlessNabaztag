@@ -1931,9 +1931,11 @@ fun noseled=
 	if !earDetecting then
 	// led tete clignote if netactivity or wav_buffering // 
 	let uploading || (match run with (rscLoadWaitRun _-> 1)|(interactiveReqWaitRun _->1)|(_->0)) -> netactivity in
-	if (netactivity || wav_buffering) then (
-		let if netactivity then 256 else if wav_buffering then 128 else 0 -> speed in
-		if speed > 0 then led LED_NOSE (if time_ms&speed then RGB_RED else 0);
+	if (netactivity) then (
+		led LED_NOSE (if time_ms&256 then RGB_BLUE else RGB_BLACK);
+		set gWasNetActivity = 1
+	) else if (wav_buffering) then (
+		led LED_NOSE (if time_ms&128 then RGB_VIOLET else RGB_BLACK);
 		set gWasNetActivity = 1
 	) else if (gWasNetActivity) then (
 		// show off the light
