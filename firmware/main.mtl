@@ -178,6 +178,14 @@ var currentTrameID=0;;
 #include surprise.mtl
 #include crontab.mtl
 
+#include hooks.mtl
+
+proto hookEars 2;;
+proto hookRfid 1;;
+
+proto hookClick 1;;
+proto hookDblClick 1;;
+
 // ancien format
 fun infoUpdate data=
 	Secho "infoUpdate OLD FORMAT:";
@@ -338,7 +346,8 @@ fun configurl=strcatlist confGetServerUrl::"/locate.jsp?sn="::(webmac netMac)::"
 #ifdef PING
 fun pingurl =strcatlist pingsrv::"/vl/p4.jsp?sn="::(webmac netMac)::"&v="::(getBytecodeRevision)::"&st=1&sd="::(itoh senddata)::"&h="::(itoa HARDWARE)::nil;;
 #endif
-fun recordurl mode=strcatlist pingsrv::"/vl/record.jsp?sn="::(webmac netMac)::"&v="::(getBytecodeRevision)::"&h="::(itoa HARDWARE)::"&m="::(itoa mode)::nil;;
+//fun recordurl mode=strcatlist pingsrv::"/vl/record.jsp?sn="::(webmac netMac)::"&v="::(getBytecodeRevision)::"&h="::(itoa HARDWARE)::"&m="::(itoa mode)::nil;;
+fun recordurl mode=strcatlist "http://"::confGetServerUrl::"/hooks/record.php"::nil;;
 fun rfidurl tag=strcatlist pingsrv::"/vl/rfid.jsp?sn="::(webmac netMac)::"&v="::(getBytecodeRevision)::"&h="::(itoa HARDWARE)::"&t="::(webmac tag)::nil;;
 fun interactifurl application = strcatlist pingsrv::"/vl/itmode.jsp?sn="::(webmac netMac)::"&v="::(getBytecodeRevision)::"&h="::(itoa HARDWARE)::"&a="::application::nil;;
 #ifdef XMPP
@@ -1996,7 +2005,7 @@ fun _cbrfidendchor unused=
 */
 fun checkRfidPresence=
 	let rfidGet -> rfid in
-	if (strcmp rfid lastrfid) && (RFIDchek == 0) && (time_ms - RFIDlast > 750) then
+	if (strcmp rfid lastrfid) && (time_ms - RFIDlast > 750) then
 		rfid
 	else
 		nil	
@@ -2004,8 +2013,8 @@ fun checkRfidPresence=
 
 fun controlrfid=
 //	let hd dumprfid rfidGetList -> rfid in
-	if ((!gItState) // disabled when interactive except ...
-      || (gItState && ((g_int_mask & MASK_RFID == 0) || (gProcessingState && gProcessingWaitState)))) then // enabled when mask set or executing a waiting command
+//	if ((!gItState) // disabled when interactive except ...
+//      || (gItState && ((g_int_mask & MASK_RFID == 0) || (gProcessingState && gProcessingWaitState)))) then // enabled when mask set or executing a waiting command
 (
 	if ((time_ms - RFIDlast) > 1000) then
 	(
@@ -2017,19 +2026,14 @@ fun controlrfid=
 		if (ParseRfid rfid) !=0 then
 		(
 			set lastrfid=rfid;
-			set RFIDchek = 1;
 			set RFIDlast = time_ms;
 			controlsound midi_RFIDok;
 
 			// lancer l'animation (v19)
 			msgchorstart chor_RFIDok::nil #_cbrfidendchor nil;
-			set chortimescale=10; // recopié d'avant, mas pourquoi ? Nécessaire ? [AS 24oct07]				
-
-			set gProcessingState = 1;
-			if (gItState) then
-				interactiveSendRfid rfid
-			else
-				(httprequest "GET" rfidurl rfid nil #_cbrfidhttp HTTP_NORMAL ; 0)
+			//set chortimescale=10; // recopié d'avant, mas pourquoi ? Nécessaire ? [AS 24oct07]				
+			
+			hookRfid rfid
 		)
 	)
 	)
@@ -2057,8 +2061,8 @@ fun controlwait=
 		Secho "controlwait ev="; Iecholn ev; 
 		wavstop;
 		earStop 0;
-		if ev==BUTTON_CLIC then ( XmppSessionSendButtonMsg ev 0 nil) // debug
-		else if ev==BUTTON_DCLIC then (controlsound midi_ack;XmppSessionSendButtonMsg ev 0 nil) //ackall
+		if ev==BUTTON_CLIC then (hookClick time_ms;0) // click
+		else if ev==BUTTON_DCLIC then (controlsound midi_ack; hookDblClick time_ms;0) //ackall
 		else if ev==BUTTON_LCLIC then _controlrecord 0	//  //back ou record
 		else if ev==BUTTON_DLCLIC then _controlrecord 1	// //back ou record
 		else if ev&0x8000 then (
@@ -2069,10 +2073,10 @@ fun controlwait=
 				// remember for after sleep, etc...
 				set extleft=leftpos;
 				set extright=rightPos;
-				XmppSessionSendEarMsg leftpos rightPos
+				hookEars leftpos rightPos
 			);
 			0
-		) 
+		)
 	);
 	controlrfid
 	;;
