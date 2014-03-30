@@ -27,12 +27,12 @@ fun infoInit=
 	set infodata=
 [0 // meteo
 {
-	[25 {3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 0 0 0 0 0 0 0 0 0}] // soleil
-	[125 {0 3 0 4 0 4}] // nuages
-	[25 {4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 0 0 0}] // brouillard
-	[20 {0 0 0 0 4 0 4 0 4 0 0 0 0 0 4 4 0 0 0 0 0 0 4 0 0 0 4}] // pluie
-	[40 {4 0 0 0 0 0 0 0 4 0 0 0 0 4 0 0 0 0 0 0 4 0 0 0 0 4 0 0 0 0 4 0 0 0 0 0}] // neige
-	[25 {0 4 3 0 0 0 0 0 0 0 0 0 0 0 0 4 3 0 0 4 3 0 0 0 0 0 0 0 3 4 3 4 0}] // orage
+	[40 {0 3 0 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3}] // sun
+	[125 {3 8 8 8 8 8 8 3 8 8 8 8 8 8 3 8 8 8}] // clouds
+	[200 {8 4 4 8 8 4 4 8 8 4 4 8 4 4 4 4 4 4}] // fog
+	[20 {0 0 0 0 4 0 4 0 4 0 0 0 0 0 4 4 0 0 0 0 0 0 4 0 0 0 4}] // rain
+	[40 {7 0 0 0 0 0 0 0 7 0 0 0 0 6 0 0 0 0 0 0 6 0 0 0 0 7 0 0 0 0 6 0 0 0 0 0}] // snow
+	[25 {0 4 3 0 0 0 0 0 0 0 0 0 0 0 0 4 3 0 0 4 3 0 0 0 0 0 0 0 3 4 3 4 0}] // storm
 }
 ]::
 [1 // bourse
@@ -84,9 +84,9 @@ nil;;
 
 // v21 : changé couleur jaune clair (11) de 0xffff80 à 0xffcc00 (bug 197)
 const infoPalette={
-//  noir     rouge    vert     jaune    bleu     violet   cyan     blanc
+//    0:black  1:red    2:green  3:yellow 4:blue   5:violet 6:cyan   7:white
 	0x000000 0xff0000 0x00ff00 0xffff00 0x0000ff 0xff00ff 0x00ffff 0xffffff
-//  gris     rose     G clair  J clair  B clair  V clair  C clair  orange
+//    8:gray   9:rose  10:lt gr 11:lt yel 12:lt bl 13:lt vio 14:lt cy 15:orange
 	0x808080 0xff8080 0x80ff80 0xffcc00 0x8080ff 0xff80ff 0x80ffff 0xff8000
 };;
 
@@ -162,9 +162,9 @@ fun infoRun=
 		set infoType=(infosrc.(infoIndex))-1;
 		if infoStartTime==nil || (time-infoStartTime>INFO_TIMEOUT) || infoType<0 then infoNext;
 
-		// Allumage de la tête en violet si message(s) en attente (infomessages)
+		// Allumage de la tête en verde si message(s) en attente (infomessages)
 		let (time_ms>>8)&7 -> t in
-			led LED_NOSE if (((infomessages>1) && ((t==1)||(t==3))) || ((infomessages==1) && (t==1))) then RGB_VIOLET else RGB_BLACK;
+			led LED_NOSE if (((infomessages>3) && (t==7)) || ((infomessages>2) && (t==5)) || ((infomessages>1) && (t==3)) || ((infomessages>0) && (t==1))) then RGB_GREEN else RGB_BLACK;
 
 		// couleurs des 3 leds du ventre (service courant/animation courante/couleur courante)
 		set infoType=(infosrc.(infoIndex))-1;
