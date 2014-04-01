@@ -444,18 +444,18 @@ fun cbhttp req=
 		if !strcmp page "gettime" then (get_time_from_timeserver; httptest)		
 		else if !strcmp page "stop" then (stopEverythingAndResetToIdle;  httptest) // stop everything we can be doing and resets to either idle or asleep
 		else if !strcmp page "reboot" then (reboot 0x0407FE58 0x13fb6754; nil)
-		else if !strcmp page "surprise" then (surprise; httptest)
+		else if !strcmp page "surprise" then (if !gSleepState then (surprise; httptest))
 
 		// play sound
-		else if !strcmp page "communication" then (controlsound midi_communion; httptest)
-		else if !strcmp page "ack" then (controlsound midi_ack; httptest)
-		else if !strcmp page "abort" then (controlsound midi_abort; httptest)
+		else if !strcmp page "communication" then (if !gSleepState then (controlsound midi_communion; httptest))
+		else if !strcmp page "ack" then (if !gSleepState then (controlsound midi_ack; httptest))
+		else if !strcmp page "abort" then (if !gSleepState then (controlsound midi_abort; httptest))
 		else if !strcmp page "ministop" then (controlsound midi_ministop; httptest)
-		else if !strcmp page "play" then (wavstarthttp Sgetargvalue args 'u' #_cbWavError; httptest)
-		else if !strcmp page "say" then (wavstarthttp (strcatlist "http://translate.google.com/translate_tts?tl=en_gb&q="::(strreplace (Sgetargvalue args 't') " " "+")::nil) #_cbWavError; httptest)
+		else if !strcmp page "play" then (if !gSleepState then (wavstarthttp Sgetargvalue args 'u' #_cbWavError; httptest))
+		else if !strcmp page "say" then (if !gSleepState then (wavstarthttp (strcatlist "http://translate.google.com/translate_tts?tl=en_gb&q="::(strreplace (Sgetargvalue args 't') " " "+")::nil) #_cbWavError; httptest))
 		
 		else if !strcmp page "taichi" then let Igetargvalue args 'v' -> v in (
-			if v == 1000 then
+			if v == 1000 && !gSleepState then
 				taichistart
 			else
 				set infotaichi = v;
@@ -466,15 +466,15 @@ fun cbhttp req=
 
 		else if !strcmp page "sleep" then (startSleep; httptest) // sleep
 		else if !strcmp page "wakeup" then (endSleep; httptest) // wake up
-		else if !strcmp page "left" then (earGo 0 Igetargvalue args 'p' Igetargvalue args 'd'; httptest) // p=position d=direction
-		else if !strcmp page "right" then (earGo 1 Igetargvalue args 'p' Igetargvalue args 'd'; httptest) // p=position d=direction
+		else if !strcmp page "left" then (if !gSleepState then (earGo 0 Igetargvalue args 'p' Igetargvalue args 'd'; httptest)) // p=position d=direction
+		else if !strcmp page "right" then (if !gSleepState then (earGo 1 Igetargvalue args 'p' Igetargvalue args 'd'; httptest)) // p=position d=direction
 
 		else if !strcmp page "nose" then (set infomessages = Igetargvalue args 'v'; httptest) // v (0-1)
-		else if !strcmp page "weather" then (_infosrc_update 1 Igetargvalue args 'v'; httptest) // weather (0-5)
-		else if !strcmp page "stock" then (_infosrc_update 2 Igetargvalue args 'v'; httptest) // stock market (0-6)
-		else if !strcmp page "traffic" then (_infosrc_update 3 Igetargvalue args 'v'; httptest) // trafic (0-6)
-		else if !strcmp page "mail" then (_infosrc_update 6 Igetargvalue args 'v'; httptest) // mail (0-4)
-		else if !strcmp page "pollution" then (_infosrc_update 7 Igetargvalue args 'v'; httptest) // pollutions (0-10)
+		else if !strcmp page "weather" then (if !gSleepState then (_infosrc_update 1 Igetargvalue args 'v'; httptest)) // weather (0-5)
+		else if !strcmp page "stock" then (if !gSleepState then (_infosrc_update 2 Igetargvalue args 'v'; httptest)) // stock market (0-6)
+		else if !strcmp page "traffic" then (if !gSleepState then (_infosrc_update 3 Igetargvalue args 'v'; httptest)) // trafic (0-6)
+		else if !strcmp page "mail" then (if !gSleepState then (_infosrc_update 6 Igetargvalue args 'v'; httptest)) // mail (0-4)
+		else if !strcmp page "pollution" then (if !gSleepState then (_infosrc_update 7 Igetargvalue args 'v'; httptest)) // pollutions (0-10)
 		else if !strcmp page "clear" then (for i=1;i<=8 do (_infosrc_update 0 i); httptest)
 		// language setup
 		else if !strcmp page "lang" then (set_language Sgetargvalue args 'v'; httptest)
