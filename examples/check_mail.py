@@ -44,7 +44,7 @@ req = urllib2.Request(base_url + cmd)
 urllib2.urlopen(req)
 
 # Fetch the weather from openweathermap.org
-data = urllib2.urlopen('http://openweathermap.org/data/2.1/find/name?q=' + city).read()
+data = urllib2.urlopen('http://api.openweathermap.org/data/2.5/forecast/daily?mode=json&units=metric&cnt=1&q=' + city).read()
 data = json.loads(data)
 weather_id = data["list"][0]["weather"][0]["id"]
 v = 100
