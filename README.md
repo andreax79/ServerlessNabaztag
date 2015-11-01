@@ -17,7 +17,7 @@ Install instruction
 -------------------
 
 * Create a folder "vl" an a website
-* Download the file web/wl/bc.jsp
+* Download the file web/vl/bc.jsp
 * Copy the file "bc.jsp" to the web server into the "vl" folder (note: it's not a Java Server Page, it's a binary file)
 * Download the mp3 files (as example, you can download from http://share.nekmo.com/python-nabaztag/mp3/zip/)
 * Copy the mp3 files in the "vl/config" directory on the web server. The resulting directroy structure is the following:
