@@ -385,7 +385,7 @@ fun cbhttp req=
 			httptest
 		) // taichi
 
-//		else if !strcmp page 8 then (wavstarthttp Sgetargvalue args 'u' #_cbWavError; httptest)
+		else if !strcmp page "mp3" then (wavstarthttp Sgetargvalue args 'v' #_cbWavError; httptest)
 
 		else if !strcmp page "sleep" then (startSleep; httptest) // sleep
 		else if !strcmp page "wakeup" then (endSleep; httptest) // wake up
