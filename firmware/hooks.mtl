@@ -1,0 +1,15 @@
+//--------------------------------------------------------------------------------------------------
+// Hooks
+//--------------------------------------------------------------------------------------------------
+
+fun hookRfid tag=
+	httprequest "POST" (strcatlist "http://"::confGetServerUrl::"/hooks/rfid.php"::nil) (strcatlist "tag="::(webmac tag)::nil) nil HTTP_NORMAL;;
+
+fun hookEars left right=
+	httprequest "POST" (strcatlist "http://"::confGetServerUrl::"/hooks/ears.php"::nil) (strcatlist "left="::(itoa left)::"&right="::(itoa right)::nil) nil HTTP_NORMAL;;
+
+fun hookClick timestamp=
+	httprequest "POST" (strcatlist "http://"::confGetServerUrl::"/hooks/click.php"::nil) (strcatlist "time="::(itoa timestamp)::nil) nil HTTP_NORMAL;;
+
+fun hookDblClick timestamp=
+	httprequest "POST" (strcatlist "http://"::confGetServerUrl::"/hooks/dblclick.php"::nil) (strcatlist "time="::(itoa timestamp)::nil) nil HTTP_NORMAL;;

@@ -187,7 +187,7 @@ fun httprequest verb url postdata cb type=
 	Secho "HTTPREQUEST url=";Secholn url;
 	let cuturl url ->[host port path] in	// décodage de l'url de la requête
 	let if confGetProxy then strcatlist "http://"::host::":"::(itoa port)::path::nil else path -> path in //Icy-MetaData:1\13\n
-	let strcatlist verb::" "::path::" HTTP/1.0\13\nUser-Agent: MTL\13\nPragma: no-cache\13\nIcy-MetaData:1\13\nHost: "::host::"\13\n"::
+	let strcatlist verb::" "::path::" HTTP/1.0\13\nUser-Agent: Mozilla/5.0\13\nAccept: */*\13\nHost: "::host::"\13\n"::
 			if postdata==nil then "\13\n"::nil
 			else "Content-length: "::(itoa strlen postdata)::"\13\n\13\n"::postdata::nil
 		-> request in	// création de la chaîne requête
