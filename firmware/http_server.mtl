@@ -452,7 +452,9 @@ fun cbhttp req=
 		else if !strcmp page "abort" then (if !gSleepState then (controlsound midi_abort; httptest))
 		else if !strcmp page "ministop" then (controlsound midi_ministop; httptest)
 		else if !strcmp page "play" then (if !gSleepState then (wavstarthttp Sgetargvalue args 'u' #_cbWavError; httptest))
-		else if !strcmp page "say" then (if !gSleepState then (wavstarthttp (strcatlist "http://translate.google.com/translate_tts?tl=en_gb&q="::(strreplace (Sgetargvalue args 't') " " "+")::nil) #_cbWavError; httptest))
+		//else if !strcmp page "say" then (if !gSleepState then (wavstarthttp (strcatlist "http://translate.google.com/translate_tts?tl=en_gb&q="::(strreplace (Sgetargvalue args 't') " " //"+")::nil) #_cbWavError; httptest))
+    else if !strcmp page "say" then (if !gSleepState then (wavstarthttp (strcatlist "http://translate.google.com.vn/translate_tts?ie=UTF-8&tl=nl&client=tw-ob&q="::(strreplace (Sgetargvalue args 't') " " "+")::nil) #_cbWavError; httptest))
+
 		
 		else if !strcmp page "taichi" then let Igetargvalue args 'v' -> v in (
 			if v == 1000 && !gSleepState then
