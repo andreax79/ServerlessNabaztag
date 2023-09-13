@@ -11,5 +11,5 @@ COMPILER="compiler/mtl_comp"
 
 "$COMPILER" -s "nominal.mtl" "bootcode.bin"
 rm nominal.mtl
-cp bootcode.bin web/vl/bc.jsp
-echo "Firmware copyed to $PWD/web/vl/bc.jsp"
+cp bootcode.bin vl/bc.jsp
+echo "Firmware copied to $PWD/vl/bc.jsp"

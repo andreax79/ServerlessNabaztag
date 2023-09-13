@@ -17,9 +17,9 @@ Install instruction
 -------------------
 
 * Create a folder "vl" an a website
-* Download the file web/vl/bc.jsp
+* Download the file vl/bc.jsp
 * Copy the file "bc.jsp" to the web server into the "vl" folder (note: it's not a Java Server Page, it's a binary file)
-* Download the mp3 files (as example, you can download from http://share.nekmo.com/python-nabaztag/mp3/zip/)
+* Download the mp3 files (as example, you can download from [https://github.com/andreax79/ServerlessNabaztag/tree/main/vl])
 * Copy the mp3 files in the "vl/config" directory on the web server. The resulting directroy structure is the following:
  
 ![](/imgs/files.jpg "Directory structure")
@@ -40,3 +40,11 @@ Firmware features
 * The rabbit fetches the current time from a time server and plays the corresponding sound every hour
 * Autonomously wake up at go to sleep
 * Respond to ping request
+
+Compile on Ubuntu 22
+--------------------
+
+Please install the following dependencies:
+```
+$ sudo apt-get install gcc-multilib g++-multilib
+```
