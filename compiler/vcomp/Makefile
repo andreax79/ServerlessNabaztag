@@ -1,3 +1,6 @@
+CXXFLAGS=-m32 -Wno-write-strings
+CFLAGS=-m32 -Wno-write-strings
+
 OBJS = \
 	bootstrap.o \
 	compiler_file.o \
@@ -20,8 +23,5 @@ libvcomp.a : $(OBJS)
 	ar rcs $@ $(OBJS)
 	ranlib $@
 
-%.o : %.cpp
-	g++ -m32 -c $^ -o $@
-
 clean :
-	rm $(OBJS)
+	rm -f $(OBJS)

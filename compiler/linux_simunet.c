@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #include <resolv.h>
 #include <arpa/inet.h>
