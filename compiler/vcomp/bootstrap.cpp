@@ -84,6 +84,6 @@ int StartMetal(const char *starter, const char* output, bool inSign)
 int vcompDoit(char *starter)
 {
 	int k=StartMetal(starter, "foo.bin", false);
-	getchar();
+	// getchar();
 	return k;
 }

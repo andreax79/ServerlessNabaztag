@@ -135,7 +135,7 @@ int main(int argc,char **argv)
 			loaderInit(srcbytecode);
 		}
 		vmemDumpShort();
-		getchar();
+		// getchar();
 
 #ifdef USE_GLUT
 		glutInit(&argc, argv);
