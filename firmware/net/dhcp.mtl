@@ -1,5 +1,5 @@
-#include dhcp_protos.mtl
-#include dns_protos.mtl
+#include protos/dhcp_protos.mtl
+#include protos/dns_protos.mtl
 
 const DHCP_DISCOVER=1;;
 const DHCP_OFFER=2;;
@@ -220,4 +220,4 @@ fun startdhcpserver=
 	regudp 67 #cbnetdhcp67;
 	0;;
 
-#include dns.mtl
+#include net/dns.mtl

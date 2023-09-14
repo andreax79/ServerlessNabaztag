@@ -1,4 +1,4 @@
-#include leds_protos.mtl
+#include protos/leds_protos.mtl
 
 fun setleds col= for i=0;i<5 do led i col;;
 

@@ -1,12 +1,11 @@
 #ifdef SIMU
 // make sure the tcpudp emulation stuff gets loaded after the "real" code to override it all
-#include ip.mtl
-#include icmp.mtl
-#include arp.mtl
-#include udp.mtl
-#include tcp.mtl
-#include dhcp.mtl
-#include net.mtl
+#include ipv4/icmp.mtl
+#include ipv4/arp.mtl
+#include ipv4/udp.mtl
+#include ipv4/tcp.mtl
+#include net/dhcp.mtl
+#include net/net.mtl
 #endif
 
 const TCPWRITE=0;;

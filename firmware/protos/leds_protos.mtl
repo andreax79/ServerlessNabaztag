@@ -14,4 +14,4 @@ type TLedsState = LEDS_STATE_START  | LEDS_STATE_CONFIG_WAIT | LEDS_STATE_XMPP_O
 /** place les leds du lapin dans la configuration correspondant à state */
 proto leds_set_state 1 ;; // TLedState state
 
-#include colors.mtl
+#include protos/colors.mtl

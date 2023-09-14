@@ -1,10 +1,10 @@
-#include net_protos.mtl
-#include net_vars.mtl
+#include protos/net_protos.mtl
+#include net/net_vars.mtl
 
-#include icmp_protos.mtl
-#include tcp_protos.mtl
-#include udp_protos.mtl
-#include arp_protos.mtl
+#include protos/icmp_protos.mtl
+#include protos/tcp_protos.mtl
+#include protos/udp_protos.mtl
+#include protos/arp_protos.mtl
 
 proto cbnetarp 2 ;;
 
@@ -19,7 +19,6 @@ fun net src mac=
 			else if ip==1 then icmp_handler src mac;  // ICMP
 		0
 	);
-// 	buttoncheckevent; // don't understand why there should be a buttoncheckevent here, it's already in the loop !
 	0;;
 
 fun netstart=
@@ -42,7 +41,7 @@ fun netSend2 trame mac =
 	netSend trame 0 nil mac 0 1
 ;;
 
-#include icmp.mtl
-#include tcp.mtl
-#include udp.mtl
-#include arp.mtl
+#include ipv4/icmp.mtl
+#include ipv4/tcp.mtl
+#include ipv4/udp.mtl
+#include ipv4/arp.mtl

@@ -1,4 +1,4 @@
-#include arp_protos.mtl
+#include protos/arp_protos.mtl
 
 const ARPREQ=1;;
 const ARPANS=2;;

@@ -17,15 +17,15 @@ const IEEE80211_M_MASTER=1;;
 var wifitry;;
 var master=0;;
 
-#include utils.mtl
-#include net_vars.mtl
-#include dhcp_protos.mtl
-#include udp_protos.mtl
-#include dns_protos.mtl
-#include net_protos.mtl
-#include env_protos.mtl
-#include leds_protos.mtl
-#include config_protos.mtl
+#include utils/utils.mtl
+#include net/net_vars.mtl
+#include protos/dhcp_protos.mtl
+#include protos/udp_protos.mtl
+#include protos/dns_protos.mtl
+#include protos/net_protos.mtl
+#include protos/env_protos.mtl
+#include protos/leds_protos.mtl
+#include protos/config_protos.mtl
 
 fun _scanserialize l=
 	if l!=nil then
@@ -258,10 +258,10 @@ fun wifiReady= match wifi with (stationW -> 1)|(_ -> 0);;
 
 fun wifiConnected= match wifi with (stationW -> 1)|(_ -> 0);;
 
-#include dhcp.mtl
-#include udp.mtl
-#include dns.mtl
-#include net.mtl
-#include env.mtl
-#include leds.mtl
-#include config.mtl
+#include net/dhcp.mtl
+#include ipv4/udp.mtl
+#include net/dns.mtl
+#include net/net.mtl
+#include utils/env.mtl
+#include hw/leds.mtl
+#include utils/config.mtl

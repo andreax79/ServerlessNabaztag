@@ -1,4 +1,4 @@
-#include config_protos.mtl
+#include protos/config_protos.mtl
 
 const CONF_SERVERURL=0;;		//41    Violet Platform URL
 const CONF_NETDHCP=41;;		    //1     DHCP server enabled

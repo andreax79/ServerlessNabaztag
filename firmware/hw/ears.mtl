@@ -21,7 +21,7 @@
 
 */
 
-#include leds_protos.mtl
+#include protos/leds_protos.mtl
 
 const EARSMODE_RESET=0;; // ears go to ref pos
 const EARSMODE_WAIT=1;;

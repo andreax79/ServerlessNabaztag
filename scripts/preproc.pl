@@ -56,7 +56,7 @@ sub processThisFile
 						if ($line =~ m/^#define ([a-zA-Z0-9_-]+)/) {
 								$defines{$1} = 1;
 						}
-						elsif ($line =~ m/^#include ([a-zA-Z0-9._-]+)/) {
+						elsif ($line =~ m/^#include ([a-zA-Z0-9.\/_-]+)/) {
 								my $includedFile=$1;
 								if (exists $includedFiles{$includedFile})
 								{

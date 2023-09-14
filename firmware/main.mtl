@@ -66,15 +66,15 @@ proto itNoteEarTouched 3;;
 proto processIncomingTrame 3;;
 proto dumpStatus 0;;
 
-#include net_vars.mtl
+#include net/net_vars.mtl
 
 const BYTECODE_REVISION_STR = "$Rev: 20120312 $";;
 fun getBytecodeRevision =
 	strsub BYTECODE_REVISION_STR 6 ((strlen BYTECODE_REVISION_STR) - 8);;
 
 
-#include utils.mtl
-#include leds.mtl
+#include utils/utils.mtl
+#include hw/leds.mtl
 
 
 // ---------------- dns prototypes
@@ -86,29 +86,28 @@ proto dnslistfromdhcp 1;;
 // ---------------- end dns prototypes
 
 
-#include md5.mtl
-#include b64.mtl
-#include xmlparser.mtl
+#include utils/md5.mtl
+#include utils/b64.mtl
+#include utils/xmlparser.mtl
 
-#include config.mtl
+#include utils/config.mtl
 
 #ifdef SIMU
-#include tcpudp_emu.mtl
+#include ipv4/tcpudp_emu.mtl
 #else
-#include ip.mtl
-#include arp.mtl
-#include udp.mtl
-#include tcp.mtl
-#include udp.mtl
-#include dhcp.mtl
-#include net.mtl
+#include ipv4/arp.mtl
+#include ipv4/udp.mtl
+#include ipv4/tcp.mtl
+#include ipv4/udp.mtl
+#include net/dhcp.mtl
+#include net/net.mtl
 #endif
 
-#include dns.mtl
+#include net/dns.mtl
 
-#include http.mtl
+#include net/http.mtl
 
-#include time.mtl
+#include net/time.mtl
 
 /**
 	Les différents états de la boucle principale.
@@ -148,7 +147,7 @@ fun runToStr run =
 proto earInit 0;;
 
 #ifdef XMPP
-#include xmpp.mtl
+#include srv/xmpp.mtl
 #else
 fun XmppSessionRequestResource newRes = 0 ;;
 fun XmppSessionRun = 0 ;;
@@ -160,25 +159,25 @@ var currentTrameID=0;;
 #endif
 
 #ifdef RECLIB
-#include reclib.mtl
+#include utils/reclib.mtl
 #endif
 
 #ifdef AUDIOLIB
-#include audiolib.mtl
+#include utils/audiolib.mtl
 #endif
 
 #ifdef EARSLIB
-#include ears.mtl
+#include hw/ears.mtl
 #endif
 
 #ifdef INFOLIB
-#include info.mtl
+#include srv/info.mtl
 #endif
 
-#include surprise.mtl
-#include crontab.mtl
+#include srv/surprise.mtl
+#include srv/crontab.mtl
 
-#include hooks.mtl
+#include utils/hooks.mtl
 
 proto hookEars 2;;
 proto hookRfid 1;;
@@ -233,8 +232,8 @@ fun infoUpdate data=
 
 
 
-#include wifi.mtl
-#include env.mtl
+#include net/wifi.mtl
+#include utils/env.mtl
 
 #ifdef NOMINAL
 
@@ -314,8 +313,8 @@ const CH_attend=19;;
 const CH_setmotordir=20;; // v16
 
 
-#include palette.mtl
-#include const_data.mtl
+#include utils/palette.mtl
+#include utils/const_data.mtl
 
 var midilist;;
 
@@ -332,7 +331,7 @@ fun controlsound s=
 	wavstartlocal s::nil;
 	0;;
 
-#include button.mtl
+#include hw/button.mtl
 
 // Pour le dÃ©veloppement, dÃ©commenter une des lignes ci-dessous.
 // fun confGetServerUrl = "r.nabaztag.com/vl";;
@@ -365,12 +364,12 @@ fun interactifurl_reco application position cmdindex = strcatlist (interactifurl
 fun interactifurl_rfid application tag = strcatlist (interactifurl application)::"&st=rfid&t="::(webmac tag)::g_cookie::nil;;
 
 #ifdef PING
-#include ping.mtl
+#include srv/ping.mtl
 #endif
 
 #ifdef WEBSERVER
-#include lang.mtl
-#include http_server.mtl
+#include utils/lang.mtl
+#include srv/http_server.mtl
 #endif
 
 fun runinit=
