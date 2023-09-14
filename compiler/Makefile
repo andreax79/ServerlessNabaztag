@@ -5,6 +5,7 @@ COMP_OBJS=main_compiler.o
 
 SIMU_SRC=main_simu.c linux_simu.c linux_simuaudio.c linux_simunet.c vmem.c vloader.c vlog.c vinterp.c vaudio.c vnet.c
 SIMU_OBJS=$(SIMU_SRC:.c=.o)
+PROGS=mtl_simu mtl_comp
 
 # CXXFLAGS=-DVSIMU -g3 -m32 -Wno-write-strings -DUSE_GLUT
 # CFLAGS=-m32 -DVSIMU -g3 -std=c99 -Wno-write-strings -D_DEFAULT_SOURCE -DUSE_GLUT
@@ -30,4 +31,4 @@ mtl_simu : vcomp/libvcomp.a $(COMMON_OBJS) $(SIMU_OBJS)
 
 clean :
 	$(MAKE) -C vcomp clean
-	rm -f $(COMMON_OBJS) $(COMP_OBJS) $(SIMU_OBJS)
+	rm -f $(COMMON_OBJS) $(COMP_OBJS) $(SIMU_OBJS) $(PROGS)
