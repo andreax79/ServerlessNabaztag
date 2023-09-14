@@ -129,8 +129,8 @@ fun httptcpread cnx input httpreq=
 
 // callback d'écriture sur la socket d'une requête
 fun httptcpwrite cnx httpreq=
-	set httpreq.stateH=HTTP_CONNECTED; 
-	set httpreq.aliveH=time_ms;	
+	set httpreq.stateH=HTTP_CONNECTED;
+	set httpreq.aliveH=time_ms;
 	if httpreq.outputH!=nil then	// s'il y a des choses à envoyer (notamment la première fois)
 	(
 		Secholn "httptcpwrite";
@@ -222,7 +222,7 @@ fun httpinactive httpreq = time_ms-httpreq.aliveH;;
 
 const http_sep="\13\n\13\n";;	// séparateur entre l'en-tête et le corps de la réponse à une requête
 
-	
+
 
 //##> retourne le header d'une réponse à une requête
 fun httpgetheader res =

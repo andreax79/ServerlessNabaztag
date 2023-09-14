@@ -1,7 +1,7 @@
 // ################################################
 // ##### XML Parser // Novembre 2007 // Romain COCHET
-// ################################################	
-	
+// ################################################
+
 type Attribute = [tagS valueS];;
 type Element = [nameS attribute content];;
 type Content = ContentElement Element | ContentText S;;
@@ -84,7 +84,7 @@ fun ParseXML XML =
 						if Ending < Space then ( // we have <balise>
 							set Name = strsub XML 1 (Ending-1);
 							set NewLen = (strfind XML 0 (strcatlist "</"::Name::">"::nil) 0 nil);
-							
+
 							if NewLen != nil then ( // si on ne trouve pas la fin, on ne donne rien à analyser
 								set ToAnalyseNow = strsub XML (Ending+1) (NewLen-Ending-1);
 								set ToAnalyseAfter = strsub XML (NewLen + (strlen Name) + 3) strlen XML
@@ -94,10 +94,10 @@ fun ParseXML XML =
 							0
 						)else( // we have an attribute
 							set Name = strsub XML 1 (Space-1);
-							
+
 							set NewLen = (strfind XML 0 (strcatlist "</"::Name::">"::nil) 0 nil);
 							if NewLen != nil then set StrLen = NewLen;
-							
+
 							// Get attributes
 							let BuildAttributes (strsub XML (Space+1) (StrLen-Space-1)) -> AttributesResp in (
 								set Attributes = AttributesResp.ListAttributes;
@@ -119,7 +119,7 @@ fun ParseXML XML =
 							0
 						)
 					);
-					
+
 					if ToAnalyseNow != nil then (
 						let ParseXML ToAnalyseNow -> NewContent in
 						(
@@ -158,7 +158,7 @@ fun ParseXML XML =
 			);
 		if (strlen XmlResp.EndStrS) == 0 then set XmlResp.EndStrS = nil;
 		XmlResp
-		
+
 		)
 	)
 ;;
@@ -239,7 +239,7 @@ fun XMLPrintElement Balise First=
 			set Recur = tl Recur
 		)
 	);;
-			
+
 // prints a ContentXXX
 fun XMLPrintContent Xml First = // was print_r
 	let match Xml with

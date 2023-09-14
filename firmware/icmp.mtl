@@ -36,7 +36,7 @@ fun strputchk s i w=
 	0;;
 
 fun mkicmp ipsrc ipdst icmp_type quench content=
-	let strcatlist 
+	let strcatlist
 	"\$aa\$aa\$03\$00\$00\$00\$08\$00\$45\$00\$00\$00\$00\$00\$00\$00\64\1\0\0"::  // 1=ICMP
 	ipsrc:: // source ip
 	ipdst:: // destination ip
@@ -60,19 +60,19 @@ fun icmp_handler src mac=
 	(
 		if icmp_type == ICMP_ECHO then ( // ping reply
 			// todo: add an hook
-			let mkicmp netip ipfrom ICMP_ECHOREPLY quench content -> response in		
+			let mkicmp netip ipfrom ICMP_ECHOREPLY quench content -> response in
 				netSend response 0 nil mac 0 1;
 			0
 		);
 		0
-	);;	
+	);;
 
 fun run_icmp_ping=
 	if last_ping_time + ICMP_PING_DELAY < time then (
 		let netgateway -> ipdst in
 		let "\0\1\0\1" -> quench in
 		let "abcd" -> content in
-		let mkicmp netip ipdst ICMP_ECHO quench content -> response in		
+		let mkicmp netip ipdst ICMP_ECHO quench content -> response in
 		(
 			netSend response 0 nil netMac 0 1;
 			set last_ping_time = time

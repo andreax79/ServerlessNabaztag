@@ -5,7 +5,7 @@ var tmp;;
 var val;;
 fun leftrotate val nb_rot =
 	let val.(0) -> valh in
-	let val.(1) -> vall in ( 
+	let val.(1) -> vall in (
 		if nb_rot == 16 then (
 			{vall valh}
 		) else (
@@ -15,7 +15,7 @@ fun leftrotate val nb_rot =
 				set valh = vall;
 				set vall = tmp;
 				set nb_rot = nb_rot - 16
-			);				
+			);
 			{
 				(valh << nb_rot) & 0xFFFF | (vall >> (16 - nb_rot))
 				(vall << nb_rot) & 0xFFFF | (valh >> (16 - nb_rot))
@@ -31,11 +31,11 @@ fun leftrotate val nb_rot =
 // http://fr.wikipedia.org/wiki/MD5
 // Constantes
 const md5r		= { 7 12 17 22 7 12 17 22 7 12 17 22 7 12 17 22 5 9 14 20 5 9 14 20 5 9 14 20 5 9 14 20 4 11 16 23 4 11 16 23 4 11 16 23 4 11 16 23 6 10 15 21 6 10 15 21 6 10 15 21 6 10 15 21 };;
-const md5k 		= { 0xd76a 0xa478 0xe8c7 0xb756 0x2420 0x70db 0xc1bd 0xceee 
-0xf57c 0x0faf 0x4787 0xc62a 0xa830 0x4613 0xfd46 0x9501 
-0x6980 0x98d8 0x8b44 0xf7af 0xffff 0x5bb1 0x895c 0xd7be 
-0x6b90 0x1122 0xfd98 0x7193 0xa679 0x438e 0x49b4 0x0821 
-0xf61e 0x2562 0xc040 0xb340 0x265e 0x5a51 0xe9b6 0xc7aa 
+const md5k 		= { 0xd76a 0xa478 0xe8c7 0xb756 0x2420 0x70db 0xc1bd 0xceee
+0xf57c 0x0faf 0x4787 0xc62a 0xa830 0x4613 0xfd46 0x9501
+0x6980 0x98d8 0x8b44 0xf7af 0xffff 0x5bb1 0x895c 0xd7be
+0x6b90 0x1122 0xfd98 0x7193 0xa679 0x438e 0x49b4 0x0821
+0xf61e 0x2562 0xc040 0xb340 0x265e 0x5a51 0xe9b6 0xc7aa
 0xd62f 0x105d 0x0244 0x1453 0xd8a1 0xe681 0xe7d3 0xfbc8
 0x21e1 0xcde6 0xc337 0x07d6 0xf4d5 0x0d87 0x455a 0x14ed
 0xa9e3 0xe905 0xfcef 0xa3f8 0x676f 0x02d9 0x8d2a 0x4c8a
@@ -80,21 +80,21 @@ fun md5bytes strmd5=
 	set md5mult 	= md5len/64;						// Reste de la division par 64octets(512bits)
 	if (md5reste > 55 && md5reste < 64) then set md5mult = md5mult + 1;	// Si la taille de la chaine entre dans les 64Bits de fin (en comptant le bit de fin de message) on allonge de 512bits
 	set md5msglen	= (md5mult+1)*64;					// Taille du message après preparation
-	
+
 	// ### Preparation du message
 	set md5message 	= strnew md5msglen;							// Allocation de la chaine
 	for i=0;i<md5msglen do strset md5message i 0;				// Initialise la chaine
 	for i=0;i<md5len do strset md5message i (strget strmd5 i);	// Copie le message
 	strset md5message md5len 0x80;								// Ajout d'un bit 1 à la fin du message
-	
+
 	// Puisque la chaine est de longueur de la chaine est max de 2^30 octect >> elle est de max (2^30) * 8 (01 FF FF FF F8)
 	set md5len64h = ((((0xFFFFFF000000&md5len)>>24)*8) + (((((0x000000FFFFFF&md5len)>>00)*8)>>24)&0x000000FFFFFF));
 	set md5len64l = ((((0x000000FFFFFF&md5len)>>00)*8)&0x000000FFFFFF);
-	
+
 	// On copie la longueur de 64 bits
 	for i=0; i<3 do	strset md5message (md5msglen-8+i) (((md5len64l)>>(i*8))&0xFF);
 	for i=3; i<6 do	strset md5message (md5msglen-8+i) (((md5len64h)>>((i-3)*8))&0xFF);
-	
+
 	// ### Calcul par blocs
 	for i=0; i<=md5mult do (	// Faire tous les blocs de md5message
 		// Preparation du bloc
@@ -104,11 +104,11 @@ fun md5bytes strmd5=
 			set md5bloc.(j*2+1) = (strget md5message ((i*64) + (j*4) + 1)) * 0x100;
 			set md5bloc.(j*2+1) = (strget md5message ((i*64) + (j*4) + 0)) + md5bloc.(j*2+1)
 		);
-		
+
 		// Initialiser les valeurs de hachage
 		set md5ah	= md5h0h;		set md5al	= md5h0l;		set md5bh	= md5h1h;		set md5bl	= md5h1l;
 		set md5ch	= md5h2h;		set md5cl	= md5h2l;		set md5dh	= md5h3h;		set md5dl	= md5h3l;
-		
+
 		// Opérations de l'algo
 		for j=0; j<64 do (
 			if j < 16 then (
@@ -128,9 +128,9 @@ fun md5bytes strmd5=
 				set md5fl 	= md5cl^(md5bl|((~md5dl)&0xFFFF));	//f := c xor (b ou (non d))
 				set md5g	= (7*j) %16
 			);
-			
+
 			set md5tmp1h 	= md5dh;			set md5tmp1l	= md5dl;			set md5dh 		= md5ch;
-			set md5dl 		= md5cl;			set md5ch 		= md5bh;			set md5cl 		= md5bl;			
+			set md5dl 		= md5cl;			set md5ch 		= md5bh;			set md5cl 		= md5bl;
 			// ((a+f+g+k(i) + w(g)
 			set md5tmp2h 	= (md5ah + md5fh + md5k.(j*2  ) + md5bloc.(md5g*2  ));
 			set md5tmp2l 	= (md5al + md5fl + md5k.(j*2+1) + md5bloc.(md5g*2+1));
@@ -141,14 +141,14 @@ fun md5bytes strmd5=
 			let leftrotate { md5tmp2h md5tmp2l } nb_rot -> tmpr in (
 				set md5tmp2h	= tmpr.(0);
 				set md5tmp2l	= tmpr.(1)
-			);			
+			);
 			set md5bh		= ((md5tmp2h + md5bh) + ((md5tmp2l + md5bl) >> 16))&0xFFFF;
-			set md5bl		= (md5tmp2l + md5bl)&0xFFFF;			
+			set md5bl		= (md5tmp2l + md5bl)&0xFFFF;
 			set md5ah 		= md5tmp1h;
 			set md5al 		= md5tmp1l
 		);
-		
-		// Dernière étape pour le prochain bloc 
+
+		// Dernière étape pour le prochain bloc
 		set md5h0h		= (md5h0h + md5ah + ((md5h0l+md5al) >> 16)) & 0xFFFF;
 		set md5h0l		= (md5h0l + md5al) & 0xFFFF;
 		set md5h1h		= (md5h1h + md5bh + ((md5h1l+md5bl) >> 16)) & 0xFFFF;
@@ -157,9 +157,9 @@ fun md5bytes strmd5=
 		set md5h2l		= (md5h2l + md5cl)&0xFFFF;
 		set md5h3h		= (md5h3h + md5dh + ((md5h3l+md5dl) >> 16)) & 0xFFFF;
 		set md5h3l		= (md5h3l + md5dl)&0xFFFF
-		
+
 	);
-	
+
 	let strnew 16 -> md5_16octets in (
 		// #### Concaténation et création du bag de 16 octets
 		for i=0; i<8 do (
@@ -175,7 +175,7 @@ fun md5bytes strmd5=
 				let (md5tmp2h>>(8*j))&0xFF -> octet in
 					strset md5_16octets (i*2+j) octet
 			)
-		); 
+		);
 		md5_16octets);;
 
 fun md5tohex bytes =
@@ -183,7 +183,7 @@ fun md5tohex bytes =
 	let "" -> md5str in (
 		for k=0; k<strlen bytes do set md5str = strcat md5str ctoh strget bytes k;
 		md5str
-	);;		
+	);;
 
 fun md5 str=
 	md5tohex md5bytes str;;

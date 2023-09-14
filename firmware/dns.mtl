@@ -24,7 +24,7 @@ fun Dnsw s = Secholn strcatlist "[dns] " :: s :: nil ;;
 
 
 // skippe une question dans la section 2.
-// 
+//
 //  s: la réponse dns
 //  i: le début de la partie qu'on doit skipper dans s
 //
@@ -33,7 +33,7 @@ fun parsequ s i= let strfind s i "\0" 0 nil -> j in	j+5;;
 
 // skippe la section 2 d'une réponse DNS (qui récapitule la
 // requête), qui ne nous intéresse pas.
-// 
+//
 //  s: la réponse dns
 //  i: le début de la partie qu'on doit skipper dans s
 //  n: le nombre de questions restantes à skipper
@@ -106,7 +106,7 @@ fun parseans s i n=
 				);
 
 				parseans s End n-1; // ON RELANCE LE TRAITEMENT (Pour toutes les réponses)
-				
+
 				let [SrvPriority:Priority SrvWeight:Weight SrvPort:Port SrvTargetS:Location] -> AnswerSrv in (
 					if SrvAnswerL == nil then set SrvAnswerL = AnswerSrv::nil	// ON AJOUTE DANS LA LISTE DES REPONSES
 					else set SrvAnswerL = AnswerSrv::SrvAnswerL;
@@ -175,7 +175,7 @@ fun dnsremoveipfromcache iptoremove =
 ;;
 
 // recherche l'url associée à un nom de domaine et appelle le callback une fois trouvé
-// 
+//
 //  domain: le domaine à rechercher
 //  cb: le callback à appeler
 fun dnsreq domain cb=
@@ -230,10 +230,10 @@ fun dnsAskNextServer x =
 */
 fun selectbyid d v= d.idD==v;;
 
-// callback appelé pour chaque paquet udp qui arrive 
+// callback appelé pour chaque paquet udp qui arrive
 // sur le port DNSLOCAL (setté dans startdnsclient)
-fun cbnetdns msg mac ipfrom= 
-	Dnsw strcatlist "cbnetdns [" :: msg :: "]" :: nil; 
+fun cbnetdns msg mac ipfrom=
+	Dnsw strcatlist "cbnetdns [" :: msg :: "]" :: nil;
 	let strgetword msg 0 -> id in
 	let parsemsg msg -> [ ip ttl ] in
 	let hd select ldnsreq id #selectbyid -> x in
@@ -267,7 +267,7 @@ fun filterdnsdead l=if l!=nil then let hd l-> d in if d.timeoutD==nil then filte
 
 /**
 	Checks if any dns request has timeouted and either relays the
-	request to the next dns server available or calls the callback with	
+	request to the next dns server available or calls the callback with
 	a null answear.
 */
 fun dnstime=
@@ -358,7 +358,7 @@ fun DnsSrv Request CallBack=
 	Helper func for addnewdns_r.
 */
 fun removedns_r dns lst =
-	if (nil != lst) then	
+	if (nil != lst) then
 	(
 		if !(ipcmp dns hd lst) then
 			(tl lst)

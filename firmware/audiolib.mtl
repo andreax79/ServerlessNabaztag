@@ -61,7 +61,7 @@ fun wavgetzeros=
 
 fun wavstop =
 	Audiowln "/wavstop/";
-	
+
 	if wav_state!=WAV_IDLE then
 	(
 		playStop;
@@ -85,7 +85,7 @@ fun wavrunning =
 // reads from wav_fifo and feeds playFeed
 fun _wavplaycb i =
 //Secho "p";
-	set wav_lasttime=time_ms;			
+	set wav_lasttime=time_ms;
 //	Iecho i;Secho ":cbplay\n";
 	if wav_fifo==nil then
 	(
@@ -108,7 +108,7 @@ fun _wavplaycb i =
 		if !wav_buffering then
 		let hd wav_fifo -> sample in
 		let strlen sample -> len in
-		(			
+		(
 			// push sample data
 			// wav_index is the index within the current sample.
 			if wav_index<len then (
@@ -161,7 +161,7 @@ fun itobin4 i=strcatlist (ctoa i)::(ctoa i>>8)::(ctoa i>>16)::(ctoa i>>24)::nil;
 fun itobin2 i=strcatlist (ctoa i)::(ctoa i>>8)::nil;;
 
 fun mkwav freq channel bps=
-	let strcatlist 
+	let strcatlist
 		"WAVEfmt "::(itobin4 0x12)::
 			(itobin2 1)::(itobin2 channel)::
 			(itobin4 freq)::(itobin4 freq*channel*bps/8)::

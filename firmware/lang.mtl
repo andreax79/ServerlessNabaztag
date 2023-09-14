@@ -6,7 +6,7 @@ const CONF_LANGUAGE=163;;	// 2+1
 fun set_language lang=
 	confSetstr CONF_LANGUAGE lang 3;
 	confSave;;
-	
+
 fun get_language=
 	confGet CONF_LANGUAGE 2;;
 

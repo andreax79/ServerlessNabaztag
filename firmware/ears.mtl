@@ -192,7 +192,7 @@ fun earDetectRun=
 			set earsmode=EARSMODE_WAITANDDETECT
 		)
 	);;
-		
+
 fun earResetRun=
 //	Earsw "earResetRun";
 	for i=0;i<2 do let ears.i -> e in
@@ -215,7 +215,7 @@ fun earResetRun=
 				set e.ldelayE=0;
 				earMotorset e 0
 			)
-		)	
+		)
 		else
 		if e.targetE!=nil then
 		(	// moved and have a target : check arrived
@@ -335,12 +335,12 @@ fun earGo i p d=
 		Earsw strcatlist "earGo " :: (itoa i) :: " broken !" :: nil;
 		nil
 	)
-	else		
+	else
 	if p!=earTarget i then //v16 add start
 	(
 		Earsw strcatlist "earGo " :: (itoa i) :: " to " :: (itoa p) :: " dir " :: (itoa d) :: nil;
-		set e.targetE=earCheck p; 
-		set e.targetLoopE=earLoopCount p 0; 
+		set e.targetE=earCheck p;
+		set e.targetLoopE=earLoopCount p 0;
 		Earsw strcatlist "targetE=" :: (itoa e.targetE) :: " targetLoopE=" :: (itoa e.targetLoopE) :: nil;
 		if e.posE==e.targetE then
 			if e.targetLoopE==0 then

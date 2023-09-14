@@ -48,7 +48,7 @@ fun strreplace2 sn s p v i id=
 		if j!=nil then strcpy sn id+k-i v 0 nil;
 		strreplace2 sn s p v k+strlen p id+k-i+strlen v
 	);;
-	
+
 fun strreplace s p v=
 	let countpattern s p 0 -> i in
 	if !i then s
@@ -118,18 +118,18 @@ fun makestremptyifzero s =
 
 
 fun AsciiToInt asccode =
-	if asccode <= 57 then // '9' /  
-		asccode - 48 // '0' 
-	else if asccode <= 70 then // 'F' 
-		asccode - 55 // 'F' - 15 
-	else asccode - 87 // 'f' - 15 
+	if asccode <= 57 then // '9' /
+		asccode - 48 // '0'
+	else if asccode <= 70 then // 'F'
+		asccode - 55 // 'F' - 15
+	else asccode - 87 // 'f' - 15
 ;;
 
 fun IntToAscii intval =
 	if intval < 10 then
-		intval + 48	// '0' 
+		intval + 48	// '0'
 	else
-		intval + 87	// 'f' - 15 
+		intval + 87	// 'f' - 15
 ;;
 
 fun XorHexStr str1 str2 =

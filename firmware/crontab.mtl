@@ -15,8 +15,8 @@ fun play_time_sound hour=
 
 fun play_halftime_sound=
 	wavstarthttp strcatlist "http://"::confGetServerUrl::"/config/clockall/"::get_language::"/"::(itoa 1 + random 12)::".mp3"::nil #_cbWavError;;
-	
-fun check_crontab=	
+
+fun check_crontab=
 	let current_time_hours * 100 + current_time_minutes -> crontab_check in
 	if crontab_check != _last_crontab_check then (
 		set _last_crontab_check=crontab_check;

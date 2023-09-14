@@ -49,7 +49,7 @@ fun tcpcb t cb=
 
 fun listentcp port cb=
 	set ltcp=[tcpListen port cb]::ltcp;;
-	
+
 fun opentcp local localp dst dstp cb=
 //	Secholn "opentcp";IPecho dst 0 0; Secho ":"; Iecholn dstp;
 

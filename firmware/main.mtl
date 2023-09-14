@@ -8,9 +8,9 @@ proto evalTrame 1;;
 proto endSleep 0;;
 
 // XMPP ECHO DEBUG
-fun Xw str = 
+fun Xw str =
 	Secholn str;;
-fun Xx i = 
+fun Xx i =
 	Iecholn i;;
 
 // ping echo debug
@@ -59,7 +59,7 @@ var gProcessingState = 0;; 	// processing a program
 var gProcessingWaitState = 0;;  // executing a "wait" command in a program. when checking this var, check gProcessingState first, as it is not always reseted to 0
 var gBusyState = 0;;		// busy (incoming message queue full)
 var gItApp = nil;;			// the name of the interactive application
-var gEarInited = 0;;		// si les oreilles ont été initialisées.
+var gEarInited = 0;;		// si les oreilles ont Ã©tÃ© initialisÃ©es.
 var gRegistrationError = 0;;// registration error during login
 
 proto itNoteEarTouched 3;;
@@ -111,9 +111,9 @@ proto dnslistfromdhcp 1;;
 #include time.mtl
 
 /**
-	Les différents états de la boucle principale.
+	Les diffÃ©rents Ã©tats de la boucle principale.
 */
-type Run= configstartRun | configwaitRun _ | interactiveReqWaitRun _ | 
+type Run= configstartRun | configwaitRun _ | interactiveReqWaitRun _ |
 #ifdef PING
 	pingstartRun | pingwaitRun _| stdWaitRun _ | pingRequestWaitRun _ |
 #endif
@@ -193,15 +193,15 @@ fun infoUpdate data=
 		// /14/80/0/0/0/0/0/0/0/0/0/0/0/0/0/0/14/13/0/
 		Secho "len="; Iecho len; Secho ":";
 		for i=0;i<len do (Iecho strget data i; Secho "/");
-		
+
 		// sources
 		for i=0;i<(min 16 len) do set infosrc.i=strget data i;
-		
+
 		// messages
 		set infomessages = 0;
 		if (len > 16+3) && (strget data (16+3)) then set infomessages = 2
 		else if (len > 16+2) && (strget data (16+2)) then set infomessages = 1;
-		
+
 		// taichi
 		let 0 -> found in
 		for i=0;(i<(min 16 len) && !found);i+2 do
@@ -209,7 +209,7 @@ fun infoUpdate data=
 			set infotaichi = strget data i+1;
 			set found = 1
 		);
-		
+
 		// process ears
 		if len > 17 then
 		let strget data 16 -> newleft in
@@ -225,7 +225,7 @@ fun infoUpdate data=
 
 	);
 	dumpinfo;
-	
+
 	0;;
 
 
@@ -239,9 +239,9 @@ fun infoUpdate data=
 #ifdef NOMINAL
 
 const tab_osc={
-	0 0 0 0 0 0 1 1 2 3 3 4 5 6 7 8 
-	9 10 12 13 15 16 18 19 21 23 25 27 29 31 33 35 
-	37 39 42 44 46 49 51 54 56 59 62 64 67 70 73 76 
+	0 0 0 0 0 0 1 1 2 3 3 4 5 6 7 8
+	9 10 12 13 15 16 18 19 21 23 25 27 29 31 33 35
+	37 39 42 44 46 49 51 54 56 59 62 64 67 70 73 76
 	79 81 84 87 90 93 96 99 103 106 109 112 115 118 121 124
 };;
 
@@ -334,7 +334,7 @@ fun controlsound s=
 
 #include button.mtl
 
-// Pour le dÃ©veloppement, dÃ©commenter une des lignes ci-dessous.
+// Pour le dÃƒÂ©veloppement, dÃƒÂ©commenter une des lignes ci-dessous.
 // fun confGetServerUrl = "r.nabaztag.com/vl";;
 // fun confGetServerUrl = "nabdev.violet.net/vl";; // debug
 // fun confGetServerUrl = "192.168.1.11/vl";;
@@ -352,11 +352,11 @@ fun rfidurl tag=strcatlist pingsrv::"/vl/rfid.jsp?sn="::(webmac netMac)::"&v="::
 fun interactifurl application = strcatlist pingsrv::"/vl/itmode.jsp?sn="::(webmac netMac)::"&v="::(getBytecodeRevision)::"&h="::(itoa HARDWARE)::"&a="::application::nil;;
 #ifdef XMPP
 fun sendmailxmppurl xmppdomain data = strcatlist pingsrv::"/vl/sendMailXMPP.jsp?m="::(webmac netMac)::"&d="::xmppdomain::"&r="::data::"&v="::(getBytecodeRevision)::nil;;
-fun boshurl ip = strcatlist ip::"/http-bind"::nil;; 
+fun boshurl ip = strcatlist ip::"/http-bind"::nil;;
 //fun boshurl ip = strcatlist ip::":5281/http-bind"::nil;;  // DEBUG
 #endif
 
-// Construction des urls d'interactivité
+// Construction des urls d'interactivitÃ©
 fun interactifurl_start application= strcatlist (interactifurl application)::"&st=start"::g_cookie::nil;;
 fun interactifurl_btn application position cmdindex btn= strcatlist (interactifurl application)::"&st=btn&pos="::(itoa position)::"&idx="::(itoa cmdindex)::"&btn="::(itoa btn)::g_cookie::nil;;
 fun interactifurl_done application = strcatlist (interactifurl application)::"&st=done"::g_cookie::nil;;
@@ -400,7 +400,7 @@ fun dump_prgm l=
 	Secholn "---";
 	l;;
 
-		
+
 fun _configcbhttp http res=
 	if (nil != res) then
 	(
@@ -425,7 +425,7 @@ fun _configcbhttp http res=
 #endif
 #ifdef SERVERLESS
 //			let listswitchstr conf "xmpp_domain" -> xmpp_domain in
-//				if xmpp_domain != nil then				
+//				if xmpp_domain != nil then
 			endSleep;
 #endif
 			0
@@ -433,7 +433,7 @@ fun _configcbhttp http res=
 	)
 	else
 	(
-		// l'appel à locate.jsp a échoué -> ... rebooter tout ?
+		// l'appel Ã  locate.jsp a Ã©chouÃ© -> ... rebooter tout ?
 		Secholn "call to locate.jsp failed, rebooting";
 		///////// reboot 0x0407FE58 0x13fb6754;
 		0
@@ -492,14 +492,14 @@ fun rscFromProgram l=
 	if (!strcmp key "MU") || (!strcmp key "CH") then [val /*nil*/300000]::rscFromProgram tl l
 	else if (!strcmp key "MC") then [val SIGNCUTSIZE]::rscFromProgram tl l
 	else rscFromProgram tl l;;
-	
+
 
 
 var paletteselected = 0;;
 // v17 (add romain)
 // Fonction permettant d'activer la palette pour le programme en cours
 // au jour du 31 mai 2007, on recoit le PL apres le son a jouer, la palette associee au son est donc affichee juste apres la fin du programme
-// Cette fonction passe prealablement sur le programme reçu pour mettre la bonne palette
+// Cette fonction passe prealablement sur le programme reÃ§u pour mettre la bonne palette
 // A noter, si il y a plusieurs palettes dans la trame de retour, seule la premiere est prise en compte
 fun CheckForPaletteBefore l=
 	for l=l;l!=nil;tl l do let hd l->[key val] in
@@ -514,11 +514,11 @@ fun CheckForPaletteBefore l=
 fun prgmStart=
 	// Starts playing the program
 	// setleds RGB_RED;
-	
+
 	// Si la palette est definie pour ce programme, alors on ne met pas l'aleatoire
 	if(paletteselected==0) then (
-		set current_palette=tabnew 0 8; // v17 : c'était inversé
-		set_current_palette_mode 8 // random palette par défaut
+		set current_palette=tabnew 0 8; // v17 : c'Ã©tait inversÃ©
+		set_current_palette_mode 8 // random palette par dÃ©faut
 	);
 	// start evaluating first command
 	set gCurAudioCmdIndex = -1;
@@ -538,7 +538,7 @@ fun _rscLoadCBhttp http res maxsize=
 	else if res!=nil then
 	(
 		// received a result, store it in rsctmp
-		// Je ne comprends pas la logique ici (AS sept07) : a quoi sert rsctmp et maxsize, et comment passe-t-il à la suite ?
+		// Je ne comprends pas la logique ici (AS sept07) : a quoi sert rsctmp et maxsize, et comment passe-t-il Ã  la suite ?
 //		Secholn res;
 		set rsctmp=res::rsctmp;
 		if maxsize!=nil && (slistlen rsctmp)>maxsize then
@@ -554,7 +554,7 @@ fun _rscLoadCBhttp http res maxsize=
 		let hd rsctoget ->[url _] in
 		// remember rsc loaded
 		set rscloaded=[url tl rev rsctmp nil]::rscloaded;
-		
+
 		// load next rsc
 		set rsctoget=tl rsctoget;
 		set run=rscLoadNextRun;
@@ -739,7 +739,7 @@ var chor_paused_since;;
 fun msgchorstart chor cb i0=
 	set chorendcb = cb;
 	set chordata=strcatlist chor;
-	set chorindex=4+1;	// on saute le header et la première attente
+	set chorindex=4+1;	// on saute le header et la premiÃ¨re attente
 	set chortimescale=0;
 	set chornexttime=time_ms;
 	set chor_paused_dur = 0;
@@ -758,7 +758,7 @@ fun msgendchor i0=
 fun runChorCmd i0=
 	//	Secho "runChorCmd i:";Iecho chorindex; Secho " t:";Iecholn chornexttime;
 	// Manage buffering and pauses
-	
+
 	if (!chor_paused && wav_buffering) then (
 		// start pause
 		set chor_paused_since = time_ms;
@@ -769,7 +769,7 @@ fun runChorCmd i0=
 		// increment paused_dur
 		set chor_paused_dur = chor_paused_dur + (time_ms - chor_paused_since)
 	);
-	
+
 	if (!chor_paused) then
 	if time_ms-chor_paused_dur >= chornexttime then
 	(
@@ -779,7 +779,7 @@ fun runChorCmd i0=
 		if code==CH_frame_duration then
 		(
 			set chortimescale=10*strget chordata chorindex+1;
-			1	//nb de paramètres
+			1	//nb de paramÃ¨tres
 		)
 		else if code==CH_set_motor then
 		(
@@ -820,7 +820,7 @@ fun runChorCmd i0=
 			2
 		)
 		// v17
-		else if code== CH_set_led_off then 
+		else if code== CH_set_led_off then
 		(
 			//Secholn "CH_set_led_off ";
 			led 4-strget chordata chorindex+1 0;
@@ -888,10 +888,10 @@ fun _cbtaichiend unused=
 	set run=idleRun;
 	0
 	;;
-	
+
 fun taichistart=
 	Secho "taichistart ";
-	
+
 	set chorrandom=((Iecholn rand&255)*30)>>8;
 	Secho "chorrandom="; Iecholn chorrandom;
 	set chortaichimotordir={0 0};
@@ -912,7 +912,7 @@ type gInteractiveChorType = intchorDefaultStart | intchorDefaultStop | intchorSt
 var gInteractiveSounds;;
 var gInteractiveChors;;
 
-// quand on a reçu une commande "WT", on stocke ici la date jusqu'à laquelle on doit attendre
+// quand on a reÃ§u une commande "WT", on stocke ici la date jusqu'Ã  laquelle on doit attendre
 var interactiveWaitEndTime_ms = 0;;
 
 proto _cbContinueStartInteractive 1;;
@@ -948,14 +948,14 @@ fun interactiveStart application=
 	if !gBusyState then XmppSessionRequestResource "itmode";
 
 	reset_IC;
-		
+
 	// oreilles vers l'avant
 	(earGo 0 3 0; earGo 1 3 0);
-	
+
 	// jingle
 	let gInteractiveSounds -> [gSoundStart gSoundStop] in
 		gIntControlSound gSoundStart;
-	
+
 	// chor de debut
 	let gInteractiveChors -> [gChorStart gChorStop] in
 		gIntControlChor gChorStart;
@@ -963,10 +963,10 @@ fun interactiveStart application=
 	0;;
 
 fun _cbContinueStartInteractive unused=
-	
+
 	// ask for instructions
 	set run=interactiveReqWaitRun (httprequest "GET" (interactifurl_start gItApp) nil #_interactiveReqCBhttp HTTP_NORMAL);
-		
+
 	0;;
 
 fun interactiveError=
@@ -978,20 +978,20 @@ fun interactiveError=
 fun _cbContinueErrorInteractive unused=
 	interactiveStop;
 	0;;
-	
+
 fun interactiveStop=
 	Secholn "interactiveStop";
-	
+
 	// jingle de fin
 	let gInteractiveSounds -> [gSoundStart gSoundStop] in
 		gIntControlSound gSoundStop;
 	set gInteractiveSounds = [intDefaultStart intDefaultStop]; // on remet le son par default a la fin
-	
+
 	// chor de fin
 	let gInteractiveChors -> [gChorStart gChorStop] in
 		gIntControlChor gChorStop;
 	set gInteractiveChors = [intchorDefaultStart intchorDefaultStop]; // on remet le chor par default a la fin
-	
+
 	// oreilles
 	earsGoToRefPos;
 
@@ -1004,7 +1004,7 @@ fun _cbContinueStopInteractive unused=
 	set gItApp = nil;
 	set gItState = 0;
 	set gProcessingState = 0; // skips all remaining commands anyway, so : not processing
-	//if !gBusyState then XmppSessionRequestResource "idle"; // can only be idle now 
+	//if !gBusyState then XmppSessionRequestResource "idle"; // can only be idle now
 	// DEBUG
 	XmppSessionRequestResource "idle"; // Obligation de revenir en IDLE
 	set gStreamingState = 0; // On ne stream plus rien!
@@ -1071,7 +1071,7 @@ fun earDeltaPosNormalized deltaPos=
 	if (deltaPos > EARS_HOLES>>1) then deltaPos - EARS_HOLES
 	else if (deltaPos < -EARS_HOLES>>1) then deltaPos + EARS_HOLES
 	else deltaPos;;
-	
+
 fun itNoteEarTouched eari curPos deltaPos=
 	// right = 0, left = 1
 	if (eari == 0 && (g_int_mask & MASK_EAR_RIGHT == 0)) || (eari == 1 && (g_int_mask & MASK_EAR_LEFT == 0)) then // active
@@ -1083,12 +1083,12 @@ fun itNoteEarTouched eari curPos deltaPos=
 			set et.refPos_ET = curPos;
 			if ((earDeltaPosNormalized deltaPos) > 0) then set et.moveDir_ET = 0 else set et.moveDir_ET = 1;
 			set et.lastDV_ET = 0
-			
+
 		) else if !et.turned_ET then
 		// was already moving and not turned yet : test turned
 		let (earDeltaPosNormalized (curPos - et.refPos_ET)) -> normalizedDV in (
 			Secho "NDV="; Iecho normalizedDV; Secho ",";
-			
+
 			// Test 1 tour or stopped
 			if (et.moveDir_ET == 0 && normalizedDV >= 0 && et.lastDV_ET < 0) then
 				// if more than one tour forward : ok
@@ -1096,9 +1096,9 @@ fun itNoteEarTouched eari curPos deltaPos=
 			else if (et.moveDir_ET == 1 && normalizedDV <= 0 && et.lastDV_ET > 0) then
 				// if more than one tour backward : ok
 				set et.turned_ET = 1;
-	
+
 			Secho "TOUCH="; Iecho et.turned_ET; Secho ",";
-				
+
 			set et.lastDV_ET = normalizedDV
 		)
 	);;
@@ -1114,7 +1114,7 @@ fun interactiveSendEarTouched lefttouch righttouch=
 	let wav_curplayedbytes -> readBytes in  // controlsound resets wav_curplayedbytes so we cache it
 	(
 		if (lefttouch) then controlsound midi_precedent;
-		if (righttouch) then controlsound midi_suivant;		
+		if (righttouch) then controlsound midi_suivant;
 		set run=interactiveReqWaitRun (httprequest "GET" (interactifurl_ear gItApp readBytes gCurAudioCmdIndex righttouch lefttouch) nil #_interactiveReqCBhttp HTTP_NORMAL)
 	);
 	0;;
@@ -1166,7 +1166,7 @@ fun runInteractiveReqWait http=
 	(
 		Secholn "##timeout on runInteractiveReqWait";
 		httpabort http;
-		
+
 		// error
 		interactiveError
 	);
@@ -1220,18 +1220,18 @@ fun eval_IC_msg val=
 				else set g_record_enabled = 0;
 				0
 			) else if !strcmp ickey "streaming.chor.enabled" then (
-				// streaming.chor.enabled   -> chorégraphie de streaming (oreilles)
+				// streaming.chor.enabled   -> chorÃ©graphie de streaming (oreilles)
 				if (!strcmp icval "true") then set g_streaming_chor_enabled = 1
 				else set g_streaming_chor_enabled = 0;
 				0
-			
+
 			) else if !strcmp ickey "int.mask" then (
 				// int.mask -> masque d'interruption pour le mode interactif
 				set g_int_mask = (atoi icval);
 				0
-			
+
 			) else if !strcmp ickey "cookie" then (
-				// cookie -> cookie envoyé au serveur
+				// cookie -> cookie envoyÃ© au serveur
 				set g_cookie = strcatlist "&c="::icval::nil;
 				0
 			) else (
@@ -1241,23 +1241,23 @@ fun eval_IC_msg val=
 
 
 // ****************************************
-// Exécution des chorégraphies de streaming
+// ExÃ©cution des chorÃ©graphies de streaming
 // v17 - AS 25may07
 
 // - 4 pas de danse fournis (dans chorstream_chorslist)
-// - une séquence :
+// - une sÃ©quence :
 // 	- une fois sur chorst_oreille_chance, bouger les oreilles :
-// 		- pour chaque oreille, choisir une position au hasard entre les 4 possibles (0, 4, 8, 12 dents) et, si elle est différente de la position courante, y aller, dans le sens 'vers l'avant'.
+// 		- pour chaque oreille, choisir une position au hasard entre les 4 possibles (0, 4, 8, 12 dents) et, si elle est diffÃ©rente de la position courante, y aller, dans le sens 'vers l'avant'.
 // 	- tirer un pas de danse au hasard (parmi les 4 fournis)
 // 	- tirer un nombre de boucles N au hasard entre 3 et 20 (inclus)
 // 	- tirer un frame_duration au hasard entre 16 et 25 (soit entre 160 ms et 250 ms par frame)
-// or les pas durent de 44 à 71 frames, donc le pas dure de 7 à 17 secs,
-// donc la séquence dure de 21s à 5m40s
-// 	-> jouer le pas de danse N fois à ce tempo, puis nouvelle séquence
+// or les pas durent de 44 Ã  71 frames, donc le pas dure de 7 Ã  17 secs,
+// donc la sÃ©quence dure de 21s Ã  5m40s
+// 	-> jouer le pas de danse N fois Ã  ce tempo, puis nouvelle sÃ©quence
 // A chaque pas de danse : tirer 3 couleurs au hazard dans la palette courante : tete, ventre, pied
-// Si palette aléatoire : la changer à toutes les séquences
-// sinon, fixée par le serveur.
-// 
+// Si palette alÃ©atoire : la changer Ã  toutes les sÃ©quences
+// sinon, fixÃ©e par le serveur.
+//
 var chorst_pasdedanse;;
 var chorst_index;;
 var chorst_tempo;;
@@ -1265,48 +1265,48 @@ var chorst_loops;;
 var chorst_nexttime;;
 var chorst_palettecolors = {0 0 0};;
 
-// v17 AS 25may07 : ratio entre changt de séquence et mvt d'oreille. Plus c'est grand moins souvent les moteurs joueront.
-// = 0 : à chaque chgt de seq (en myenne toutes les 2,5 minutes)
+// v17 AS 25may07 : ratio entre changt de sÃ©quence et mvt d'oreille. Plus c'est grand moins souvent les moteurs joueront.
+// = 0 : Ã  chaque chgt de seq (en myenne toutes les 2,5 minutes)
 // = 1 : une fois sur 2 (soit en moyenne ttes les 5 minutes)
 // = 2 : une fois sur 3 (soit en moyenne ttes les 7,5 minutes), etc...
-var chorst_oreille_chance;; 
+var chorst_oreille_chance;;
 
 // mouvement des leds et oreilles
 fun dochorstream=
 	if chorst_pasdedanse==nil || ((chorst_index>=strlen chorst_pasdedanse)&&(chorst_loops<1)) then
 	(
-		// nouvelle séquence
+		// nouvelle sÃ©quence
 		// Secho "Sequence suivante ";
 
 		// ears enabled ?
-		if (g_streaming_chor_enabled) then 
+		if (g_streaming_chor_enabled) then
 		(
 		// movements moteur
 		// toutes les chorst_oreille_chance fois en moyenne
-		// et aussi la première fois forcément histoire de montrer qu'on commence
+		// et aussi la premiÃ¨re fois forcÃ©ment histoire de montrer qu'on commence
 		if (chorst_pasdedanse == nil) then
 		(
 			// une des oreilles en haut, une autre en bas : radio...
 			if ((random 2) == 1) then (earGo 0 0 0; earGo 1 10 0) else (earGo 0 10 0; earGo 1 0 0);
-			
+
 			// initialisation chorst_oreille_chance
 			set chorst_oreille_chance = 0
 
 		) else if ((random chorst_oreille_chance) == 0) then
 		(
-			// pour chaque oreille, choisir une position au hasard entre les 4 possibles (0, 5, 10, 14 dents) et, si elle est différente de la position courante, y aller, dans le sens 'vers l'avant'.
+			// pour chaque oreille, choisir une position au hasard entre les 4 possibles (0, 5, 10, 14 dents) et, si elle est diffÃ©rente de la position courante, y aller, dans le sens 'vers l'avant'.
 			let 0::5::10::14::nil -> ear4Positions in
 			(
 				let listnth ear4Positions rand&3 -> p in earGo 0 p 0;
 				let listnth ear4Positions rand&3 -> p in earGo 1 p 0
 			);
-			
+
 			// de moins en moins souvent, puis de nouveau souvent, etc..
 			if ((set chorst_oreille_chance = chorst_oreille_chance + 1) > 4) then set chorst_oreille_chance = 0
 		)
 		);
-		
-		// choix d'une séquence = pas de danse (chorst_pasdedanse), tempo et nb de boucles
+
+		// choix d'une sÃ©quence = pas de danse (chorst_pasdedanse), tempo et nb de boucles
 		set chorst_pasdedanse = listnth chorstream_chorslist Iecholn rand&3;
 
 		set chorst_index=4+1; // on saute le header (4 bytes)
@@ -1314,24 +1314,24 @@ fun dochorstream=
 		//Secho "tempo "; Iecholn chorst_tempo;
 		set chorst_loops=3+random 18; // entre 3 et 20 (inclus)
 		//Secho "loops "; Iecholn chorst_loops;
-		
+
 		if (current_palette_is_random) then
 			// changer palette courante
 			set_current_palette random 7;
-		
+
 		// choisir 3 couleurs au hasard dans la palette
 		set chorst_palettecolors={(random 7) (random 7) (random 7)};
-		
+
 		set chorst_nexttime=time_ms
-		
+
 	);
-	
-	// continuer à jouer
+
+	// continuer Ã  jouer
 	while (chorst_index < strlen chorst_pasdedanse) && time_ms >= chorst_nexttime do
 	(
-		// interprète la choragraphie. Uniquement des set_led_palette et des set_led_off et des set_led_color
-		
-		let strget chorst_pasdedanse chorst_index -> cmd in		
+		// interprÃ¨te la choragraphie. Uniquement des set_led_palette et des set_led_off et des set_led_color
+
+		let strget chorst_pasdedanse chorst_index -> cmd in
 			// avance l'index de...
 			set chorst_index=chorst_index+2+
 				if (cmd == CH_set_led_palette) then
@@ -1340,7 +1340,7 @@ fun dochorstream=
 					let strget chorst_pasdedanse chorst_index+1 -> iled in
 					let strget chorst_pasdedanse chorst_index+2 -> icol in
 					let chorst_palettecolors.(3&icol) -> palcol in
-						// jouer la LED						
+						// jouer la LED
 						led iled current_palette.palcol;
 
 					// 2 bytes : led, color
@@ -1351,37 +1351,37 @@ fun dochorstream=
 					// off
 					let strget chorst_pasdedanse chorst_index+1 -> iled in
 						led iled 0;
-						
+
 					// 1 byte : led
 					1
 				)
 				else if (cmd == CH_set_led_color) then
 				(
 					led strget chorst_pasdedanse chorst_index+1
-						((strget chorst_pasdedanse chorst_index+2)<<16) + 
-						((strget chorst_pasdedanse chorst_index+3)<<8) + 
+						((strget chorst_pasdedanse chorst_index+2)<<16) +
+						((strget chorst_pasdedanse chorst_index+3)<<8) +
 						((strget chorst_pasdedanse chorst_index+4));
-						
-						// 6 bytes : 2 qui ne servent à rien
+
+						// 6 bytes : 2 qui ne servent Ã  rien
 						6
 				)
 				else if (cmd==CH_frame_duration) then
 				(
-					// on ne le prend pas en compte : c'est chorst_tempo qui gère le tempo
+					// on ne le prend pas en compte : c'est chorst_tempo qui gÃ¨re le tempo
 					// 1 byte : duree
 					1
 				)
 
 				else (
-					// problème : commande inconnue : forcer à recommencer au début en incrémentant beaucoup trop
+					// problÃ¨me : commande inconnue : forcer Ã  recommencer au dÃ©but en incrÃ©mentant beaucoup trop
 					Streamw strcatlist "dochorstream : unknown command, restarting dance" :: (itoa cmd) :: nil;
 					strlen chorst_pasdedanse
-				);			
-		
+				);
+
 		// pas de danse fini ?
 		if (chorst_index>=strlen chorst_pasdedanse) then
 		(
-			// on est arrivés au bout du pas de danse
+			// on est arrivÃ©s au bout du pas de danse
 			// next repeat
 			set chorst_loops=chorst_loops-1;
 			//Secho "loops "; Iecholn chorst_loops;
@@ -1390,24 +1390,24 @@ fun dochorstream=
 				// recommencer pas de danse
 				set chorst_index=4+1;  // on saute le header (4 bytes)
 				// tout de suite
-				set chorst_nexttime=time_ms;				
-				
-				0 // pour avoir le même type de return value que les autres branches du if...
+				set chorst_nexttime=time_ms;
 
-			) // sinon on laisse chorst_loops = 0 et chorst_index trop loin, ce qui force un passage à la séq suivante
-			
-		) else 
+				0 // pour avoir le mÃªme type de return value que les autres branches du if...
+
+			) // sinon on laisse chorst_loops = 0 et chorst_index trop loin, ce qui force un passage Ã  la sÃ©q suivante
+
+		) else
 			// date de la prochaine commande
-			// note : on repart de time_ms, histoire de se caler sur le temps présent et non pas sur le temps de
-			// la chorégraphie, sinon, on a des coups de speed car cette fonction n'est pas toujours appelée de manière régulière.
+			// note : on repart de time_ms, histoire de se caler sur le temps prÃ©sent et non pas sur le temps de
+			// la chorÃ©graphie, sinon, on a des coups de speed car cette fonction n'est pas toujours appelÃ©e de maniÃ¨re rÃ©guliÃ¨re.
 			let strget chorst_pasdedanse chorst_index-1 -> delay in
 				set chorst_nexttime = time_ms+delay*chorst_tempo
-		
+
 	);
-	
+
 	0;;
 
-// boucle principale de la chorégraphie de streaming
+// boucle principale de la chorÃ©graphie de streaming
 fun stopStream=
   Streamw "stopStream";
 	// oreilles
@@ -1420,7 +1420,7 @@ fun stopStream=
 		if (gItState) then XmppSessionRequestResource "itmode"
 		else XmppSessionRequestResource "idle"
 	)
-	
+
 	;;
 
 fun runStreamingCmd i0=
@@ -1429,7 +1429,7 @@ fun runStreamingCmd i0=
 		stopStream;
 		// next command
 		set run=cmdEvalOne i0+1;
-			
+
 		nil
 	) else (
 		// execute streaming choreography
@@ -1468,11 +1468,11 @@ fun runWaitCmd i0 =
 fun runEvalOneCommand i0=
 //	Secho "runEvalOneCommand ";Iecholn i0;
 	interactiveResetEarsTouched;
-		
+
 	let listnth gCurrentProgram i0 -> [key val] in
 	if (/* Secho "eval cmd:";Secholn */ key)==nil then
 	(
-		// toutes commandes jouées : demander la suite
+		// toutes commandes jouÃ©es : demander la suite
 		endOfProgram 0;
 		0
 	)
@@ -1536,10 +1536,10 @@ fun runEvalOneCommand i0=
 	else if !strcmp key "SE" then
 	(
 		Secho "exec SE : "; Secholn val;
-		// stoppe le stream courant s'il est nommé comme ca
+		// stoppe le stream courant s'il est nommÃ© comme ca
 		if gStreamingState && (!strcmp gCurStreamName val) then (
 			wavstop;
-			earStop 0;		
+			earStop 0;
 			stopStream
 		);
 		// play next
@@ -1604,24 +1604,24 @@ fun runEvalOneCommand i0=
 				0)
 		else if !strcmp key "IC" then (eval_IC_msg val;0)
 		else (Secholn "unknown, dropping";0);
-		
+
 		// and skip command
 		set run=cmdEvalOne i0+1;
 		runEvalOneCommand i0+1
 	);;
 
-// R=60*((rand&127)+64)) => 64 à 196 mn
-// donc si x=30, (x*R)>>7 => 15 à 45 mn
-// donc si x=40, (x*R)>>7 => 20 à 61 mn
-// donc si x=80, (x*R)>>7 => 40 à 122 mn
-// donc si x=216, (x*R)>>7 => 108 à 330 mn
-// donc si x=255, (x*R)>>7 => 127 à 390 mn, soit 2 à 6,5h
+// R=60*((rand&127)+64)) => 64 Ã  196 mn
+// donc si x=30, (x*R)>>7 => 15 Ã  45 mn
+// donc si x=40, (x*R)>>7 => 20 Ã  61 mn
+// donc si x=80, (x*R)>>7 => 40 Ã  122 mn
+// donc si x=216, (x*R)>>7 => 108 Ã  330 mn
+// donc si x=255, (x*R)>>7 => 127 Ã  390 mn, soit 2 Ã  6,5h
 var nexttaichi;;
 fun dotaichinow=
 	//Secho "checktaichi ";
 	if infotaichi && (infotaichi != nil) && (!gSleepState) then let (if nexttaichi!=nil then (time>nexttaichi) else 0) -> now in (
 		if now || nexttaichi==nil then // compute nexttaichi
-		let if (infotaichi == 40) then 255 else if (infotaichi == 255) then 40 else 80 -> correctedTaichi in // etait inversé
+		let if (infotaichi == 40) then 255 else if (infotaichi == 255) then 40 else 80 -> correctedTaichi in // etait inversÃ©
 		let ((correctedTaichi*60*((rand&127)+64))>>7) -> delaye in (
 			Secho "taichi in "; Iecho delaye; Secholn "s";
 			set nexttaichi=time+delaye
@@ -1638,20 +1638,20 @@ fun runEarReset cb=
 	;;
 
 fun _goSleepNow=
-	// oreilles arrivées en haut : eteindre tout + oreille basses
+	// oreilles arrivÃ©es en haut : eteindre tout + oreille basses
 	setleds RGB_BLACK;
 	earGo 0 10 0; // sur le v2 c'est la position 10 qui est en bas
 	earGo 1 10 0;
 	set run=sleepRun
 	;;
-	
+
 fun _wakeupNow=
 	//Secholn "_wakeupNow";
 	earsGoToRefPos;
 	earSetWaitAndDetectMode;
 	set run=idleRun
 	;;
-	
+
 fun startSleep=
 	Secholn "startSleep";
 	let gSleepState -> sleeping in (
@@ -1817,7 +1817,7 @@ var gTramesQueue = nil;;
 const TRAME_QUEUE_MAXLEN = 10;;
 
 fun _isResourceValid rsrcName=
-	// les règles d'adéquation entre resource et etats
+	// les rÃ¨gles d'adÃ©quation entre resource et etats
 	if (!strcmp rsrcName "urgent") then 1 // tjrs
 	else if (!strcmp rsrcName "sources") then 1 // tjrs
 	else if (!strcmp rsrcName "boot") then 1 // tjrs
@@ -1828,9 +1828,9 @@ fun _isResourceValid rsrcName=
 	else 1;;
 
 fun _queueTrameRemoveEntry binome=
-	// dépile
+	// dÃ©pile
 	set gTramesQueue = remfromlist gTramesQueue binome;
-	
+
 	// was full ?
 	let listlen gTramesQueue -> queueLen in
 	if queueLen == TRAME_QUEUE_MAXLEN-1 then (
@@ -1853,14 +1853,14 @@ fun getNextValidPendingTrame=
 			if ((expiration_time != nil) && (time >= expiration_time)) then (
 				Secholn "trame expired, removing";
 				_queueTrameRemoveEntry binome
-				
+
 			) else if (_isResourceValid rsrc) then (
 				// ok
 				set theTrame = ping_trame;
-			
+
 				_queueTrameRemoveEntry binome
 			);
-			
+
 			// next
 			set ptr = tl ptr
 		);
@@ -1878,7 +1878,7 @@ fun processIncomingTrame ping_trame rsrc ttl=
 		Secholn "enqueueing trame";
 		let if (ttl == nil) then nil else (time + (atoi ttl)) -> expiration_time in
 			set gTramesQueue = conc gTramesQueue [rsrc expiration_time ping_trame]::nil;
-		
+
 		// full ?
 		let listlen gTramesQueue -> queueLen in
 		if queueLen >= TRAME_QUEUE_MAXLEN then (
@@ -1894,13 +1894,13 @@ fun processIncomingTrame ping_trame rsrc ttl=
 
 fun runLogin=
 	// if trame waiting, execute it
-	let getNextValidPendingTrame -> trame in 
+	let getNextValidPendingTrame -> trame in
 	if trame != nil then
 		evalTrame trame;;
 
 fun runIdle=
 	// if trame waiting, execute it
-	let getNextValidPendingTrame -> trame in 
+	let getNextValidPendingTrame -> trame in
 	if trame != nil then (
 		evalTrame trame;
 		0
@@ -1911,7 +1911,7 @@ fun runIdle=
 			surprise;
 			0
 		)
-#endif 
+#endif
 		else if dotaichinow then (
 			taichistart;
 			0
@@ -1920,7 +1920,7 @@ fun runIdle=
 		       runpingstart;
 #endif
 		       0
-		)		
+		)
 	);
 	0
 ;;
@@ -1929,7 +1929,7 @@ fun runIdle=
 var gWasNetActivity = 0;;
 fun noseled=
 	if !earDetecting then
-	// led tete clignote if netactivity or wav_buffering // 
+	// led tete clignote if netactivity or wav_buffering //
 	let uploading || (match run with (rscLoadWaitRun _-> 1)|(interactiveReqWaitRun _->1)|(_->0)) -> netactivity in
 	if (netactivity) then (
 		led LED_NOSE (if time_ms&256 then RGB_BLUE else RGB_BLACK);
@@ -1945,15 +1945,15 @@ fun noseled=
 	0;;
 
 fun bottomled=
-	if gSleepState == 0 then 
+	if gSleepState == 0 then
 	if !earDetecting then
 		(let osc time_ms>>4 -> v in led LED_BASE v*0x000100); // pulse green - was violet 0x10001
 	0;;
-	
+
 
 // ********** RFID **********************
-// v19 Amélioration de la lecteure RFID
-// v19 Les fonction ParseRfid servent à tester les caractères de l'identifiant RFID
+// v19 AmÃ©lioration de la lecteure RFID
+// v19 Les fonction ParseRfid servent Ã  tester les caractÃ¨res de l'identifiant RFID
 var lastrfid;;
 var RFIDchar = 2;; // v19
 var RFIDint = 6;; // v19
@@ -1961,7 +1961,7 @@ var RFIDchek = 0;; // v19
 var RFIDlast = 0;; // v19
 
 var tmptps = 0;;
-	
+
 fun _cbrfidhttp http res=
 	Secholn "Recv rfid:"; Secho res;
 	set gProcessingState = 0;
@@ -2010,7 +2010,7 @@ fun checkRfidPresence=
 	if (strcmp rfid lastrfid) && (time_ms - RFIDlast > 750) then
 		rfid
 	else
-		nil	
+		nil
 ;;
 
 fun controlrfid=
@@ -2033,8 +2033,8 @@ fun controlrfid=
 
 			// lancer l'animation (v19)
 			msgchorstart chor_RFIDok::nil #_cbrfidendchor nil;
-			//set chortimescale=10; // recopié d'avant, mas pourquoi ? Nécessaire ? [AS 24oct07]				
-			
+			//set chortimescale=10; // recopiÃ© d'avant, mas pourquoi ? NÃ©cessaire ? [AS 24oct07]
+
 			hookRfid rfid
 		)
 	)
@@ -2049,7 +2049,7 @@ fun controlplay=
 		wavstop;
 		earStop 0;
 		let atoi listswitchstr gCurrentProgram "ID" -> id in
-			if ev==BUTTON_CLIC then	(controlsound midi_abort; if (gStreamingState) then stopStream; endOfProgram 0; XmppSessionSendButtonMsg ev 1 id) //pause  
+			if ev==BUTTON_CLIC then	(controlsound midi_abort; if (gStreamingState) then stopStream; endOfProgram 0; XmppSessionSendButtonMsg ev 1 id) //pause
 			else if ev==BUTTON_DCLIC then (controlsound midi_ack;if (gStreamingState) then stopStream; endOfProgram 0; XmppSessionSendButtonMsg ev 1 id) //ackall
 			else if ev==BUTTON_LCLIC then nil //pause ou record ? callPingRequest 5
 	)
@@ -2060,7 +2060,7 @@ fun controlwait=
 	let if ev==nil then eargetevent else ev -> ev in
 	if ev!=nil then
 	(
-		Secho "controlwait ev="; Iecholn ev; 
+		Secho "controlwait ev="; Iecholn ev;
 		wavstop;
 		earStop 0;
 		if ev==BUTTON_CLIC then (hookClick time_ms;0) // click
@@ -2098,7 +2098,7 @@ fun controlinteractif=
 			) else (
 				// like BUTTON_CLIC
 				set ev = BUTTON_CLIC;
-				if (g_int_mask&MASK_BUTTON == 0) then interactiveSendBtn ev	
+				if (g_int_mask&MASK_BUTTON == 0) then interactiveSendBtn ev
 			)
 		)
 	);
@@ -2198,12 +2198,12 @@ fun loop=
 		// Affichage des sources.
 		infoRun;
 		// On fige la base en violet
-		led LED_BASE RGB_VIOLET	
+		led LED_BASE RGB_VIOLET
 	);
-	let params -> [waitTime xSession oldRun] in 
+	let params -> [waitTime xSession oldRun] in
 		match xSession.sStatus with
 			(sOpened -> set run = oldRun; 0)
-			|(sClosed -> 
+			|(sClosed ->
 				if time_ms > waitTime then (
 					XmppGateReconnect xSession 0
 				);
@@ -2213,7 +2213,7 @@ fun loop=
 #endif
 	( idleRun -> earRun;infoRun;bottomled;noseled;runIdle;CONTROL_WAIT) |
 	( sleepRun -> earRun;runIdle;0) |
-	
+
 	( rscLoadNextRun -> earRun;infoRun;bottomled;noseled;runRscLoadNext; CONTROL_WAIT)|
 	( rscLoadWaitRun http-> earRun;infoRun;bottomled;noseled;runRscLoadWait http;CONTROL_WAIT)|
 	( cmdEvalOne i-> earRun;runEvalOneCommand i;CONTROL_PLAY)|
@@ -2238,7 +2238,7 @@ fun loop=
 		buttongetevent
 	;
 
-	XmppSessionRun; // On envois éventuellement les packets en attente	
+	XmppSessionRun; // On envois Ã©ventuellement les packets en attente
 	XmppSessionIdle;
 	uploadtimeout;
 #ifdef SERVERLESS
@@ -2253,7 +2253,7 @@ fun loop=
 	update_time_internal;
 	wavtime;
 
-	updatevol;	
+	updatevol;
 	0;;
 
 fun main=

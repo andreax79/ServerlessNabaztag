@@ -23,7 +23,7 @@ fun infoInit=
 	set infosrc=tabnew 0 16;
 	set infomessages=0;
 	set infotaichi = 0;
-	
+
 	set infodata=
 [0 // meteo
 {
@@ -229,7 +229,7 @@ const midi_communion=
 \$58\$63\$0e\$4c\$45\$4d\$90\$24\$01\$72\$80\$24\$40\$00\$ff\$2f\
 \$00";;
 
-		
+
 // met à jour ou rajoute cette source
 fun __infosrc_update key val i=
 	if (i < 16) then
@@ -272,7 +272,7 @@ fun newInfoUpdate data=
 		);
 		// process ears
 		Secho "newleft="; Iecho newleft; Secho "newright="; Iecho newright; Secho "extleft="; Iecho extleft; Secho "extright="; Iecho extright;
-		Secho "gSleepState="; Iecho gSleepState; Secho "earResetting="; Iecho earResetting; 
+		Secho "gSleepState="; Iecho gSleepState; Secho "earResetting="; Iecho earResetting;
 		if (newleft != nil || newright != nil) && ((newleft!=extleft) || (newright!=extright)) then (
 			set extleft=newleft;
 			set extright=newright;

@@ -56,13 +56,13 @@ fun callback_time msg mac ipfrom=
 		set current_time_seconds=offset_time % 60
 	);
 	unregudp TIME_PROTOCOL_PORT;
-	0;;	
+	0;;
 
 // Get the current time from the time server
 fun get_time_from_timeserver=
 	udpsend netip TIME_PROTOCOL_PORT time_server_ip TIME_PROTOCOL_PORT "" nil;
 	regudp TIME_PROTOCOL_PORT #callback_time;
 	0;;
-	
+
 // -----------------------------------------------------------------------------
 

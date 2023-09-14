@@ -28,7 +28,7 @@ fun findsize s=
 fun tcpwrite cnx sock=
 Secholn "tcpwrite";
 	if sock.sockOutput!=nil then
-	(	
+	(
 		if sock.sockIndex==nil then set sock.sockIndex=0;
 		Iecholn set sock.sockIndex=writetcp cnx sock.sockOutput Iecholn sock.sockIndex;
 		if sock.sockIndex!=nil && sock.sockIndex>=strlen sock.sockOutput then
@@ -402,7 +402,7 @@ fun extractargs uri i=
 
 fun extractpage uri=
 	strsub uri 1 nil;;
-	
+
 fun uriextract uri =
 	let strstr uri "?" 0 -> i in
 	if i==nil then [extractpage uri nil]
@@ -415,7 +415,7 @@ var _Iargvalue;;
 fun Sgetargvalue args key =
 	set _Sargvalue = "";
 	for l=args; l!=nil; tl l do let hd l->[n v] in
-	(	
+	(
 		if n==key then (set _Sargvalue=v)
 	);
 	_Sargvalue
@@ -425,7 +425,7 @@ fun Sgetargvalue args key =
 fun Igetargvalue args key =
 	set _Iargvalue = 0;
 	for l=args; l!=nil; tl l do let hd l->[n v] in
-	(	
+	(
 		if n==key then (set _Iargvalue=atoi v)
 	);
 	_Iargvalue
@@ -437,11 +437,11 @@ fun cbhttp req=
 	let strsub req i+1 j-i-1 -> uri in
 	let uriextract uri -> [page args] in
 	(
-		Secho "uri : "; Secholn uri; 
+		Secho "uri : "; Secholn uri;
 		//Secho "page : "; Secholn page;
 
 		// misc
-		if !strcmp page "gettime" then (get_time_from_timeserver; httptest)		
+		if !strcmp page "gettime" then (get_time_from_timeserver; httptest)
 		else if !strcmp page "stop" then (stopEverythingAndResetToIdle;  httptest) // stop everything we can be doing and resets to either idle or asleep
 		else if !strcmp page "reboot" then (reboot 0x0407FE58 0x13fb6754; nil)
 		else if !strcmp page "surprise" then (if !gSleepState then (surprise; httptest))
@@ -453,7 +453,7 @@ fun cbhttp req=
 		else if !strcmp page "ministop" then (controlsound midi_ministop; httptest)
 		else if !strcmp page "play" then (if !gSleepState then (wavstarthttp Sgetargvalue args 'u' #_cbWavError; httptest))
 		else if !strcmp page "say" then (if !gSleepState then (wavstarthttp (strcatlist "http://translate.google.com/translate_tts?tl=en_gb&q="::(strreplace (Sgetargvalue args 't') " " "+")::nil) #_cbWavError; httptest))
-		
+
 		else if !strcmp page "taichi" then let Igetargvalue args 'v' -> v in (
 			if v == 1000 && !gSleepState then
 				taichistart
@@ -480,9 +480,9 @@ fun cbhttp req=
 		else if !strcmp page "lang" then (set_language Sgetargvalue args 'v'; httptest)
 		// time setup
 		else if !strcmp page "time" then (set_time_offset atoi Sgetargvalue args 'v'; httptest)
-				
+
 		else if !strcmp page "" then (httptest)
-		
+
 		else (unknownCommand; httptest)
 	);;
 

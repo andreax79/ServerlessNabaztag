@@ -25,7 +25,7 @@ fun filterarpip l src =
 	else (hd l)::filterarpip tl l src;;
 
 fun checkarp l src=
-	if l!=nil then let hd l->[ip _ cb] in 
+	if l!=nil then let hd l->[ip _ cb] in
 	(
 		if !vstrcmp src 8+14 ip 0 4 then
 		let strsub src 8+8 6 -> mac in
@@ -66,8 +66,8 @@ fun subnet_ ip i=
 fun subnet ip=
 	//Secho "test subnet "; IPecho ip 0 1;
 	/*Iecholn */ subnet_ ip 3;;
-	
-	
+
+
 fun arpreq ip cb=
 	let /* IPecho */ (if subnet ip then ip else netgateway) /* 0 1 */ -> ip in
 	let listswitchstr larp ip -> mac in

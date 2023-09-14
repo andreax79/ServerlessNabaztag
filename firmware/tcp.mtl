@@ -33,7 +33,7 @@ type Tcp=[stateT locT dstT locpT dstpT seqT ackT cbT macT lastsentT retryT locks
 	creates the full tcp frame
 */
 fun mktcp t flag content=
-	let strcatlist 
+	let strcatlist
 	"\$aa\$aa\$03\$00\$00\$00\$08\$00\$45\$00\$00\$00\$00\$00\$00\$00\100\6\0\0"::
 	(t.locT)::
 	(t.dstT)::
@@ -73,7 +73,7 @@ fun headerlen src=((strget src 8+32)>>4)<<2;;
 fun datalength src=(strgetword src 10)-20-headerlen src;;
 
 fun sendtcp t trame=
-//	Secholn "tcpSend"; dump trame; 
+//	Secholn "tcpSend"; dump trame;
 	netSend trame 0 nil (/*MACecho*/ t.macT /*0 1*/) 0 1;
 	let strget trame 8+33 -> flag in
 	set t.seqT=netSeqAdd t.seqT (datalength trame)+(if flag&(TSYN|TFIN) then 1 else 0);
@@ -116,7 +116,7 @@ fun listentcp localp cb=
 	(
 		set ltcp=tcp::ltcp
 	);;
-	
+
 fun findtcp l localp dstp src=
 	if l!=nil then let hd l-> t in
 	if t.locpT==localp && t.dstpT==dstp && (!vstrcmp src 8+16 t.locT 0 4)&& (!vstrcmp src 8+12 t.dstT 0 4)
@@ -128,7 +128,7 @@ fun sendclose t=
 	Tcpw "## sendclose";
 	sendtcp t mktcp t TFIN+TACK nil;
 	set t.stateT=STFIN;
-	0;; 
+	0;;
 
 fun cbnettcp src mac=
 	//Secho "t";
@@ -198,14 +198,14 @@ fun cbnettcp src mac=
 					let 8+20+headerlen src -> start in
 					let strsub src start datalen -> data in
 					call t.cbT [t TCPREAD data];
-				if (datalen || (flag&TFIN)) then				
+				if (datalen || (flag&TFIN)) then
 					sendtcp t mktcp t TACK nil;
 				if (flag&TFIN) then
 				(
 					Tcpw "tcp : sender closes";
 					//Iecholn t.stateT;
 					sendtcp t mktcp t TFIN+TACK nil;
-					remtcp t;	
+					remtcp t;
 					call t.cbT [t TCPCLOSE nil]
 				)
 			)
