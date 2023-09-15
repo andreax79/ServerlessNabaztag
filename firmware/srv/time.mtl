@@ -64,5 +64,19 @@ fun get_time_from_timeserver=
 	regudp TIME_PROTOCOL_PORT #callback_time;
 	0;;
 
+// Zero pad a string to length l
+fun zeropad s l=
+    if ((strlen s) < l) then
+        strcat "0" (zeropad s l-1)
+        else s
+;;
+
+// Return the current time in human readable form
+fun current_time_human=
+    strcatlist (zeropad (itoa current_time_hours) 2)::":"::
+               (zeropad (itoa current_time_minutes) 2)::":"::
+               (zeropad (itoa current_time_seconds) 2)::nil
+;;
+
 // -----------------------------------------------------------------------------
 

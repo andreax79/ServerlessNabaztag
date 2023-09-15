@@ -4,107 +4,137 @@
 
 type Sock=[sockCnx sockInput sockSize sockOutput sockIndex sockCloseAfter sockCallback];;
 
-var http_header="HTTP/1.0 200 OK\13\10Server: MTL HTTP server\13\10Content-Type: text/html\13\10\13\10";;
-
-var http_sep="\13\n\13\n";;	// sÈparateur entre l'en-tÍte et le corps de la rÈponse ‡ une requÍte
-var http_content_start="ontent-Length: ";;
-var http_content_start2="ontent-length: ";;
-var http_content_end="\13\n";;
+const http_sep="\13\n\13\n";; // separator
+const http_content_start="ontent-Length: ";;
+const http_content_start2="ontent-length: ";;
+const http_content_end="\13\n";;
 proto get_next_surprise;;
 
+fun http_header content_type=
+    strcatlist "HTTP/1.0 200 OK\13\10Server: MTL HTTP server\13\10Content-Type: "::content_type::"\13\10\13\10"::nil
+;;
+
 fun httpgetheader res =
-	let strstr res http_sep 0 -> i in
-	if i!=nil then strsub res 0 i;;
+    let strstr res http_sep 0 -> i in
+    if i!=nil then strsub res 0 i;;
 
 fun findsize s=
-	let httpgetheader s -> header in
-	if header!=nil then
-	let strstr header http_content_start 0 -> i in
-	let if i!=nil then i else strstr header http_content_start2 0 -> i in
-	let if i!=nil then strstr header http_content_end i -> j in
-	(strlen header)+(strlen http_sep)+if i!=nil then
-		let i+strlen http_content_start -> i in atoi strsub header i if j!=nil then j-i;;
+    let httpgetheader s -> header in
+    if header!=nil then
+    let strstr header http_content_start 0 -> i in
+    let if i!=nil then i else strstr header http_content_start2 0 -> i in
+    let if i!=nil then strstr header http_content_end i -> j in
+    (strlen header)+(strlen http_sep)+if i!=nil then
+        let i+strlen http_content_start -> i in atoi strsub header i if j!=nil then j-i;;
 
 fun tcpwrite cnx sock=
-Secholn "tcpwrite";
-	if sock.sockOutput!=nil then
-	(
-		if sock.sockIndex==nil then set sock.sockIndex=0;
-		Iecholn set sock.sockIndex=writetcp cnx sock.sockOutput Iecholn sock.sockIndex;
-		if sock.sockIndex!=nil && sock.sockIndex>=strlen sock.sockOutput then
-		(	set sock.sockIndex=nil;
-			set sock.sockOutput=nil;
-			if sock.sockCloseAfter==1 then closetcp sock.sockCnx
-		)
-	);
-	0;;
+    if sock.sockOutput!=nil then
+    (
+        if sock.sockIndex==nil then set sock.sockIndex=0;
+        Iecholn set sock.sockIndex=writetcp cnx sock.sockOutput Iecholn sock.sockIndex;
+        if sock.sockIndex!=nil && sock.sockIndex>=strlen sock.sockOutput then
+        (   set sock.sockIndex=nil;
+            set sock.sockOutput=nil;
+            if sock.sockCloseAfter==1 then closetcp sock.sockCnx
+        )
+    );
+    0;;
 
 fun tcpsend sock s =
-	set sock.sockOutput=strcat sock.sockOutput s;
-	tcpwrite sock.sockCnx sock;;
+    set sock.sockOutput=strcat sock.sockOutput s;
+    tcpwrite sock.sockCnx sock;;
 
 fun tcpcloseafter sock =
-	set sock.sockCloseAfter=1;
-	if sock.sockIndex>=strlen sock.sockOutput then closetcp sock.sockCnx
-	;;
+    set sock.sockCloseAfter=1;
+    if sock.sockIndex>=strlen sock.sockOutput then closetcp sock.sockCnx
+    ;;
 
 fun tcpread cnx input sock=
-Secho "u";// Secholn input;
-	if input==nil ||0==strlen input then
-	(	closetcp cnx;
-		nil	)
-	else
-	(
-		if sock.sockSize==nil then
-		(
-			set sock.sockInput=(strcat hd sock.sockInput input)::nil;
-			Secho "size=";Iecholn set sock.sockSize=findsize hd sock.sockInput;
-			nil
-		)
-		else set sock.sockInput=input::sock.sockInput;
-		if sock.sockSize!=nil && (slistlen sock.sockInput)>=sock.sockSize then
-		let strcatlist rev sock.sockInput nil -> str in
-		(
-			set sock.sockInput=nil;
-			let call sock.sockCallback [str] -> res in
-			(
-				tcpsend sock strcat http_header res;
-				tcpcloseafter sock
-			)
-		)
-	);
-	0;;
+    if input==nil ||0==strlen input then
+    (   closetcp cnx;
+        nil )
+    else
+    (
+        if sock.sockSize==nil then
+        (
+            set sock.sockInput=(strcat hd sock.sockInput input)::nil;
+            Secho "size=";Iecholn set sock.sockSize=findsize hd sock.sockInput;
+            nil
+        )
+        else set sock.sockInput=input::sock.sockInput;
+        if sock.sockSize!=nil && (slistlen sock.sockInput)>=sock.sockSize then
+        let strcatlist rev sock.sockInput nil -> str in
+        (
+            set sock.sockInput=nil;
+            let call sock.sockCallback [str] -> res in
+            (
+                tcpsend sock res;
+                tcpcloseafter sock
+            )
+        )
+    );
+    0;;
 
 fun tcpevent t val msg sock=
-	if val==TCPWRITE then tcpwrite t sock
-	else if val==TCPCLOSE then tcpread t nil sock
-	else tcpread t msg sock;;
+    if val==TCPWRITE then tcpwrite t sock
+    else if val==TCPCLOSE then tcpread t nil sock
+    else tcpread t msg sock;;
 
 fun cbsrv cnx code msg cbrequest=
-	Secholn "httpsrv accept";
-	let [sockCnx:cnx sockCallback:cbrequest]-> sock in
-	(
-		tcpcb cnx fixarg4 #tcpevent sock;
-		0
-	);;
+    Secholn "httpsrv accept";
+    let [sockCnx:cnx sockCallback:cbrequest]-> sock in
+    (
+        tcpcb cnx fixarg4 #tcpevent sock;
+        0
+    );;
 
 fun starthttpsrv port cbrequest=
-	listentcp port fixarg4 #cbsrv cbrequest;
-	Secholn "starthttpsrv";
-	0;;
+    listentcp port fixarg4 #cbsrv cbrequest;
+    Secholn "starthttpsrv";
+    0;;
 
 //--------------------------------------------------------------------------------------------------
 
+fun doublequote s=
+    strcatlist "\""::s::"\""::nil
+;;
+
+fun jsonvalue k v=
+    strcatlist (doublequote k)::": "::(doublequote v)::nil
+;;
+
+fun jsonstatus=
+    let jsonvalue "mac" (webmac netMac) -> mac_ in
+    let jsonvalue "ts" current_time_human -> ts_ in
+    let jsonvalue "time" (itoa time) -> time_ in
+    let jsonvalue "taichi" (itoa infotaichi) -> taichi_ in
+    let jsonvalue "left" (itoa extleft) -> left_ in
+    let jsonvalue "right" (itoa extright) -> right_ in
+    let jsonvalue "timeoffset" (itoa get_time_offset) -> timeoffset_ in
+
+    strcatlist
+        (http_header "application/json")::
+        "{\n"::
+            mac_::",\n"::
+            ts_::",\n"::
+            time_::",\n"::
+            timeoffset_::",\n"::
+            taichi_::",\n"::
+            left_::",\n"::
+            right_::"\n"::
+        "}"::nil
+;;
+
 //--------------------------------------------------------------------------------------------------
 
-var page_test=
+var indexpage=
 "<html><head><title>Nabaztag</title>
 <style type=\"text/css\">
 <!--
 body {
-	font-family: Arial, Helvetica, sans-serif;
-	margin: 10px;
-	font-size: 11px;
+    font-family: Arial, Helvetica, sans-serif;
+    margin: 10px;
+    font-size: 11px;
 }
 -->
 </style>
@@ -119,6 +149,7 @@ body {
   <li><a href='/surprise'>surprise</a></li>
   <li><a href='/stop'>stop everything</a></li>
   <li><a href='/clear'>info off</a></li>
+  <li><a href='/status'>status as json</a></li>
   </ul>
 </div>
 <div style='width:200px;float:left;'>
@@ -197,7 +228,7 @@ body {
   <a href='/right?p=13&d=0'>13</a>
   <a href='/right?p=14&d=0'>14</a>
   <a href='/right?p=15&d=0'>15</a>
-  <a href='/right?p=16&d=0'>16</a></li>  
+  <a href='/right?p=16&d=0'>16</a></li>
   </ul>
 </div>
 
@@ -266,16 +297,16 @@ body {
 </div>
 
 <hr style='clear:both;'/>
-    
+
   mac: "::"<MAC>"::" <br/>
-  time: "::"<HOURS>"::":"::"<MINUTES>"::":"::"<SECONDS>"::" <br/>
+  current time: "::"<TS>"::" <br/>
+  time offset: "::"<TIMEOFFSET>"::" min <br/>
   bunny time: "::"<TTIME>"::" <br/>
   next surprise: "::"<SURPRISE>"::" <br/>
   taichi freq: "::"<TAICHI>"::" <br/>
   left: "::"<LEFT>"::" <br/>
   right: "::"<RIGHT>"::" <br/>
   language: "::"<LANG>"::" <br/>
-  time offset: "::"<TIMEOFFSET>"::" min <br/>
   wakeup: "::"<WAKEUP>"::" <br/>
   sleep: "::"<SLEEP>"::" <br/>
   server url: http://"::"<SERVER>"::"
@@ -331,41 +362,40 @@ body {
 </body></html>"::nil;;
 
 fun listreplacestr l key val=
-	if l!=nil then if !strcmp hd l key then val::listreplacestr tl l key val else (hd l)::listreplacestr tl l key val;;
+    if l!=nil then if !strcmp hd l key then val::listreplacestr tl l key val else (hd l)::listreplacestr tl l key val;;
 
 fun pagefill l p=
-	if l==nil then p
-	else let hd l ->[key val] in pagefill tl l listreplacestr p key val;;
+    if l==nil then p
+    else let hd l ->[key val] in pagefill tl l listreplacestr p key val;;
 
-fun httptest=
-	let webmac netMac -> mac in
-	let itoa current_time_hours -> current_time_hours_string in
-	let itoa current_time_minutes -> current_time_minutes_string in
-	let itoa current_time_seconds -> current_time_seconds_string in
-	let itoa time -> ttime_string in
-	let itoa infotaichi -> infotaichi_string in
-	let itoa extleft -> extleft_string in
-	let itoa extright -> extright_string in
+fun httpindex=
+    let webmac netMac -> mac in
+    let itoa time -> ttime_string in
+    let itoa infotaichi -> infotaichi_string in
+    let itoa extleft -> extleft_string in
+    let itoa extright -> extright_string in
     let itoa get_time_offset -> ttime_offset in
 
-	strcatlist pagefill
-			["<MAC>" mac]::
-			["<HOURS>" current_time_hours_string]::
-			["<MINUTES>" current_time_minutes_string]::
-			["<SECONDS>" current_time_seconds_string]::
-			["<TTIME>" ttime_string]::
-			["<SURPRISE>" itoa get_next_surprise]::
-			["<TAICHI>" infotaichi_string]::
-			["<LEFT>" extleft_string]::
-			["<RIGHT>" extright_string]::
-			["<SERVER>" confGetServerUrl]::
-			["<LANG>" get_language]::
-			["<TIMEOFFSET>" ttime_offset]::
-			["<WAKEUP>" "8"]::
-			["<SLEEP>" "23"]::
-			nil
-		page_test
-	;;
+    strcat
+        http_header "text/html"
+        strcatlist
+            pagefill
+                ["<MAC>" mac]::
+                ["<TS>" current_time_human]::
+                ["<TTIME>" ttime_string]::
+                ["<SURPRISE>" itoa get_next_surprise]::
+                ["<TAICHI>" infotaichi_string]::
+                ["<LEFT>" extleft_string]::
+                ["<RIGHT>" extright_string]::
+                ["<SERVER>" confGetServerUrl]::
+                ["<LANG>" get_language]::
+                ["<TIMEOFFSET>" ttime_offset]::
+                ["<WAKEUP>" "8"]::
+                ["<SLEEP>" "23"]::
+                nil
+            indexpage
+;;
+
 
 //--------------------------------------------------------------------------------------------------
 
@@ -382,161 +412,127 @@ proto _infosrc_update 2;;
 //--------------------------------------------------------------------------------------------------
 
 fun unknownCommand=
-	wavstarthttp strcatlist "http://"::confGetServerUrl::"/config/reco/"::get_language::"/Comprend"::(itoa 0 + random 4)::".mp3"::nil #_cbWavError;;
+    wavstarthttp strcatlist "http://"::confGetServerUrl::"/config/reco/"::get_language::"/Comprend"::(itoa 0 + random 4)::".mp3"::nil #_cbWavError;;
 
 fun filterplus s=
-	let strlen s -> n in
-	for i=0;i<n do if (strget s i)=='+' then strset s i 32;
-	s;;
+    let strlen s -> n in
+    for i=0;i<n do if (strget s i)=='+' then strset s i 32;
+    s;;
 
 fun filterpercent s i0=
-	let strstr s "%" i0 -> i in
-	if i==nil then (strsub s i0 nil)::nil
-	else (strsub s i0 i-i0)::(ctoa htoi strsub s i+1 2)::(filterpercent s i+3);;
+    let strstr s "%" i0 -> i in
+    if i==nil then (strsub s i0 nil)::nil
+    else (strsub s i0 i-i0)::(ctoa htoi strsub s i+1 2)::(filterpercent s i+3);;
 
 fun extractargs uri i=
-	let strstr uri "=" i-> j in
-	if j!=nil then let strstr uri "&" j-> k in
-	let if k==nil then strlen uri else k -> k in
-	[(strget uri i) strcatlist filterpercent filterplus strsub uri j+1 k-j-1 0]::extractargs uri k+1;;
+    let strstr uri "=" i-> j in
+    if j!=nil then let strstr uri "&" j-> k in
+    let if k==nil then strlen uri else k -> k in
+    [(strget uri i) strcatlist filterpercent filterplus strsub uri j+1 k-j-1 0]::extractargs uri k+1;;
 
 fun extractpage uri=
-	strsub uri 1 nil;;
+    strsub uri 1 nil;;
 
 fun uriextract uri =
-	let strstr uri "?" 0 -> i in
-	if i==nil then [extractpage uri nil]
-	else [extractpage strsub uri 0 i extractargs uri i+1];;
+    let strstr uri "?" 0 -> i in
+    if i==nil then [extractpage uri nil]
+    else [extractpage strsub uri 0 i extractargs uri i+1];;
 
 var _Sargvalue;;
 var _Iargvalue;;
 
 // get a string value from the args by the key
 fun Sgetargvalue args key =
-	set _Sargvalue = "";
-	for l=args; l!=nil; tl l do let hd l->[n v] in
-	(
-		if n==key then (set _Sargvalue=v)
-	);
-	_Sargvalue
-	;;
+    set _Sargvalue = "";
+    for l=args; l!=nil; tl l do let hd l->[n v] in
+    (
+        if n==key then (set _Sargvalue=v)
+    );
+    _Sargvalue
+    ;;
 
 // get an integer value from the args by the key
 fun Igetargvalue args key =
-	set _Iargvalue = 0;
-	for l=args; l!=nil; tl l do let hd l->[n v] in
-	(
-		if n==key then (set _Iargvalue=atoi v)
-	);
-	_Iargvalue
-	;;
+    set _Iargvalue = 0;
+    for l=args; l!=nil; tl l do let hd l->[n v] in
+    (
+        if n==key then (set _Iargvalue=atoi v)
+    );
+    _Iargvalue
+    ;;
 
 fun cbhttp req=
-	let strstr req " " 0 -> i in
-	let strstr req " " i+1 -> j in
-	let strsub req i+1 j-i-1 -> uri in
-	let uriextract uri -> [page args] in
-	(
-		Secho "uri : "; Secholn uri;
-		//Secho "page : "; Secholn page;
+    let strstr req " " 0 -> i in
+    let strstr req " " i+1 -> j in
+    let strsub req i+1 j-i-1 -> uri in
+    let uriextract uri -> [page args] in
+    (
+        Secho "uri : "; Secholn uri;
+        //Secho "page : "; Secholn page;
 
-		// misc
-		if !strcmp page "gettime" then (get_time_from_timeserver; httptest)
-		else if !strcmp page "stop" then (stopEverythingAndResetToIdle;  httptest) // stop everything we can be doing and resets to either idle or asleep
-		else if !strcmp page "reboot" then (reboot 0x0407FE58 0x13fb6754; nil)
-		else if !strcmp page "surprise" then (if !gSleepState then (surprise; httptest))
+        // misc
+        if !strcmp page "gettime" then (get_time_from_timeserver; httpindex)
+        else if !strcmp page "stop" then (stopEverythingAndResetToIdle;  httpindex) // stop everything we can be doing and resets to either idle or asleep
+        else if !strcmp page "reboot" then (reboot 0x0407FE58 0x13fb6754; nil)
+        else if !strcmp page "surprise" then (if !gSleepState then (surprise; httpindex))
+        else if !strcmp page "status" then jsonstatus
 
-		// play sound
-		else if !strcmp page "communication" then (if !gSleepState then (controlsound midi_communion; httptest))
-		else if !strcmp page "ack" then (if !gSleepState then (controlsound midi_ack; httptest))
-		else if !strcmp page "abort" then (if !gSleepState then (controlsound midi_abort; httptest))
-		else if !strcmp page "ministop" then (controlsound midi_ministop; httptest)
-		else if !strcmp page "play" then (if !gSleepState then (wavstarthttp Sgetargvalue args 'u' #_cbWavError; httptest))
-		else if !strcmp page "say" then (if !gSleepState then (wavstarthttp (strcatlist "http://translate.google.com/translate_tts?tl=en_gb&q="::(strreplace (Sgetargvalue args 't') " " "+")::nil) #_cbWavError; httptest))
+        // play sound
+        else if !strcmp page "communication" then (if !gSleepState then (controlsound midi_communion; httpindex))
+        else if !strcmp page "ack" then (if !gSleepState then (controlsound midi_ack; httpindex))
+        else if !strcmp page "abort" then (if !gSleepState then (controlsound midi_abort; httpindex))
+        else if !strcmp page "ministop" then (controlsound midi_ministop; httpindex)
+        else if !strcmp page "play" then (if !gSleepState then (wavstarthttp Sgetargvalue args 'u' #_cbWavError; httpindex))
+        else if !strcmp page "say" then (if !gSleepState then (wavstarthttp (strcatlist "http://translate.google.com/translate_tts?tl=en_gb&q="::(strreplace (Sgetargvalue args 't') " " "+")::nil) #_cbWavError; httpindex))
 
-		else if !strcmp page "taichi" then let Igetargvalue args 'v' -> v in (
-			if v == 1000 && !gSleepState then
-				taichistart
-			else
-				set infotaichi = v;
-			httptest
-		) // taichi
+        else if !strcmp page "taichi" then let Igetargvalue args 'v' -> v in (
+            if v == 1000 && !gSleepState then
+                taichistart
+            else
+                set infotaichi = v;
+            httpindex
+        ) // taichi
 
-		else if !strcmp page "mp3" then (wavstarthttp Sgetargvalue args 'v' #_cbWavError; httptest)
+        else if !strcmp page "mp3" then (wavstarthttp Sgetargvalue args 'v' #_cbWavError; httpindex)
 
-		else if !strcmp page "sleep" then (startSleep; httptest) // sleep
-		else if !strcmp page "wakeup" then (endSleep; httptest) // wake up
-		else if !strcmp page "left" then (if !gSleepState then (earGo 0 Igetargvalue args 'p' Igetargvalue args 'd'; httptest)) // p=position d=direction
-		else if !strcmp page "right" then (if !gSleepState then (earGo 1 Igetargvalue args 'p' Igetargvalue args 'd'; httptest)) // p=position d=direction
+        else if !strcmp page "sleep" then (startSleep; httpindex) // sleep
+        else if !strcmp page "wakeup" then (endSleep; httpindex) // wake up
+        else if !strcmp page "left" then (if !gSleepState then (earGo 0 Igetargvalue args 'p' Igetargvalue args 'd'; httpindex)) // p=position d=direction
+        else if !strcmp page "right" then (if !gSleepState then (earGo 1 Igetargvalue args 'p' Igetargvalue args 'd'; httpindex)) // p=position d=direction
 
-		else if !strcmp page "nose" then (set infomessages = Igetargvalue args 'v'; httptest) // v (0-1)
-		else if !strcmp page "weather" then (if !gSleepState then (_infosrc_update 1 Igetargvalue args 'v'; httptest)) // weather (0-5)
-		else if !strcmp page "stock" then (if !gSleepState then (_infosrc_update 2 Igetargvalue args 'v'; httptest)) // stock market (0-6)
-		else if !strcmp page "traffic" then (if !gSleepState then (_infosrc_update 3 Igetargvalue args 'v'; httptest)) // trafic (0-6)
-		else if !strcmp page "mail" then (if !gSleepState then (_infosrc_update 6 Igetargvalue args 'v'; httptest)) // mail (0-4)
-		else if !strcmp page "pollution" then (if !gSleepState then (_infosrc_update 7 Igetargvalue args 'v'; httptest)) // pollutions (0-10)
-		else if !strcmp page "clear" then (for i=1;i<=8 do (_infosrc_update 0 i); httptest)
-		// language setup
-		else if !strcmp page "lang" then (set_language Sgetargvalue args 'v'; httptest)
-		// time setup
-		else if !strcmp page "time" then (set_time_offset atoi Sgetargvalue args 'v'; httptest)
+        else if !strcmp page "nose" then (set infomessages = Igetargvalue args 'v'; httpindex) // v (0-1)
+        else if !strcmp page "weather" then (if !gSleepState then (_infosrc_update 1 Igetargvalue args 'v'; httpindex)) // weather (0-5)
+        else if !strcmp page "stock" then (if !gSleepState then (_infosrc_update 2 Igetargvalue args 'v'; httpindex)) // stock market (0-6)
+        else if !strcmp page "traffic" then (if !gSleepState then (_infosrc_update 3 Igetargvalue args 'v'; httpindex)) // trafic (0-6)
+        else if !strcmp page "mail" then (if !gSleepState then (_infosrc_update 6 Igetargvalue args 'v'; httpindex)) // mail (0-4)
+        else if !strcmp page "pollution" then (if !gSleepState then (_infosrc_update 7 Igetargvalue args 'v'; httpindex)) // pollutions (0-10)
+        else if !strcmp page "clear" then (for i=1;i<=8 do (_infosrc_update 0 i); httpindex)
+        // language setup
+        else if !strcmp page "lang" then (set_language Sgetargvalue args 'v'; httpindex)
+        // time setup
+        else if !strcmp page "time" then (set_time_offset atoi Sgetargvalue args 'v'; httpindex)
 
-		else if !strcmp page "" then (httptest)
+        else if !strcmp page "" then (httpindex)
 
-		else (unknownCommand; httptest)
-	);;
-
-
-fun cbtime req=
-	"ciao\13\n" ;;
-
-fun tcptimeread cnx input sock=
-	set sock.sockInput=nil;
-	let call sock.sockCallback [ "" ] -> res in
-	(
-		tcpsend sock res;
-		tcpcloseafter sock
-	);
-	0;;
-
-fun cbtimesrv cnx code msg =
-	let [sockCnx:cnx sockCallback:#cbtime]-> sock in
-	(
-		tcptimeread cnx nil sock;
-		0
-	);;
-
-fun start_time_server port=
-	listentcp port #cbtimesrv;
-	0;;
-
-
+        else (unknownCommand; httpindex)
+    );;
 
 
 fun startwebserver port =
 /*
-	let uriextract "/123?a=ciccio&b=2" -> [page args] in
-	let Sgetargvalue args 'a' -> a in
-	let Igetargvalue args 'b' -> b in
-	(
-		Secho "++++++++++++page : "; Iecholn page;
-		//for l=args;l!=nil;tl l do let hd l->[n v] in
-		//	(Iecho n; Secho ":";Secho v;Secholn "<");
-		//Secholn getargvalue args 97;
-		Secholn a;
-		Iecholn Igetargvalue args 'x';
-		starthttpsrv port #cbhttp
-	)
-	;;
+    let uriextract "/123?a=ciccio&b=2" -> [page args] in
+    let Sgetargvalue args 'a' -> a in
+    let Igetargvalue args 'b' -> b in
+    (
+        Secho "++++++++++++page : "; Iecholn page;
+        //for l=args;l!=nil;tl l do let hd l->[n v] in
+        //  (Iecho n; Secho ":";Secho v;Secholn "<");
+        //Secholn getargvalue args 97;
+        Secholn a;
+        Iecholn Igetargvalue args 'x';
+        starthttpsrv port #cbhttp
+    )
+    ;;
 */
-	start_time_server 2000;
-	starthttpsrv port #cbhttp;;
-
-
-
-
-
-
-
-
+    starthttpsrv port #cbhttp;;
 
