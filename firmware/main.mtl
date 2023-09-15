@@ -2242,6 +2242,7 @@ fun loop=
 	uploadtimeout;
 #ifdef SERVERLESS
 	run_icmp_ping;
+    periodic_send_gratuitous_arp;
 	set infotaichi = 80;
 #endif
 	checkdhcp 0;

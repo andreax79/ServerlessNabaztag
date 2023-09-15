@@ -8,15 +8,23 @@
 
 proto cbnetarp 2 ;;
 
+const IP_PROTO  = 0;;
+const ARP_PROTO = 6;;
+
+const SOL_IP    = 0;;
+const SOL_ICMP  = 1;;
+const SOL_TCP   = 6;;
+const SOL_UDP   = 17;;
+
 fun net src mac=
 	let strget src 7 -> p in
 	(
-		if p==6 then cbnetarp src mac // ARP
-		else if p==0 then
+		if p==ARP_PROTO then cbnetarp src mac // ARP
+		else if p==IP_PROTO then // IP
 			let strget src 17 -> ip in
-			if ip==6 then cbnettcp src mac
-			else if ip==17 then cbnetudp src mac
-			else if ip==1 then icmp_handler src mac;  // ICMP
+			if ip==SOL_TCP then cbnettcp src mac
+			else if ip==SOL_UDP then cbnetudp src mac // UDP
+			else if ip==SOL_ICMP then icmp_handler src mac;  // ICMP
 		0
 	);
 	0;;
