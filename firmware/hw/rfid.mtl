@@ -1,0 +1,92 @@
+// ********** RFID **********************
+// v19 Amélioration de la lecteure RFID
+// v19 Les fonction ParseRfid servent à tester les caractères de l'identifiant RFID
+
+var lastrfid;;
+var RFIDchar = 2;; // v19
+var RFIDint = 6;;  // v19
+var RFIDchek = 0;; // v19
+var RFIDlast = 0;; // v19
+
+var tmptps = 0;;
+
+fun _cbrfidhttp http res=
+	Secholn "Recv rfid:"; Secho res;
+	set gProcessingState = 0;
+	set RFIDchek = 0;
+	let httpgetcontent res -> ping_trame in
+		evalTrame ping_trame;
+	0;;
+
+fun dumprfid l0=
+	for l=l0;l!=nil;tl l do let hd l->x in Secholn webmac x;
+	l0;;
+
+fun ParseRfidChar id index= // v19
+	set RFIDchar = strget id index;
+	RFIDchar;;
+
+fun ParseRfid id = // v19
+	set RFIDint = 6;
+	for i=0;i<6 do ( if(ParseRfidChar id i) == 0 then set RFIDint = RFIDint - 1);
+	RFIDint;;
+
+/**
+	Sets RFIDchek = 0
+*/
+fun zeroRFIDchek =
+	set RFIDchek = 0;;
+
+
+// *************** CONTROLS *************
+
+fun _cbrfidendchor unused=
+	// continue idle
+	set run=idleRun;
+	0
+	;;
+
+
+/**
+	Controls if a stamp is shown to the rabbit.
+	Does not control wether we _should_ control or not (according to the interactive state, ...)
+
+	Returns the rfid or nil.
+*/
+fun checkRfidPresence=
+	let rfidGet -> rfid in
+	if (strcmp rfid lastrfid) && (time_ms - RFIDlast > 750) then
+		rfid
+	else
+		nil
+;;
+
+fun controlrfid=
+//	let hd dumprfid rfidGetList -> rfid in
+//	if ((!gItState) // disabled when interactive except ...
+//      || (gItState && ((g_int_mask & MASK_RFID == 0) || (gProcessingState && gProcessingWaitState)))) then // enabled when mask set or executing a waiting command
+(
+	if ((time_ms - RFIDlast) > 1000) then
+	(
+		set lastrfid = "0000000"
+	);
+	let checkRfidPresence -> rfid in
+	if rfid!=nil then
+	(
+		if (ParseRfid rfid) !=0 then
+		(
+			set lastrfid=rfid;
+			set RFIDlast = time_ms;
+			controlsound midi_RFIDok;
+
+			// lancer l'animation (v19)
+			msgchorstart chor_RFIDok::nil #_cbrfidendchor nil;
+			//set chortimescale=10; // recopié d'avant, mas pourquoi ? Nécessaire ? [AS 24oct07]
+
+			hookRfid rfid
+		)
+	)
+	)
+;
+	0;;
+
