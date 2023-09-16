@@ -4,14 +4,21 @@
 
 type Sock=[sockCnx sockInput sockSize sockOutput sockIndex sockCloseAfter sockCallback];;
 
+const HTTP_200 = "200 OK";;
+const HTTP_204 = "204 No Content";;
+const HTTP_404 = "404 Not Found";;
 const http_sep="\13\n\13\n";; // separator
 const http_content_start="ontent-Length: ";;
 const http_content_start2="ontent-length: ";;
 const http_content_end="\13\n";;
 proto get_next_surprise;;
 
-fun http_header content_type=
-    strcatlist "HTTP/1.0 200 OK\13\10Server: MTL HTTP server\13\10Content-Type: "::content_type::"\13\10\13\10"::nil
+fun http_header http_status content_type=
+    strcatlist
+        "HTTP/1.0 "::http_status::
+        "\13\10Server: MTL HTTP server"::
+        (if content_type!=nil then (strcat "\13\10Content-Type: " content_type) else "")::
+        "\13\10\13\10"::nil
 ;;
 
 fun httpgetheader res =
@@ -103,25 +110,32 @@ fun jsonvalue k v=
     strcatlist (doublequote k)::": "::(doublequote v)::nil
 ;;
 
-fun jsonstatus=
-    let jsonvalue "mac" (webmac netMac) -> mac_ in
-    let jsonvalue "ts" current_time_human -> ts_ in
-    let jsonvalue "time" (itoa time) -> time_ in
-    let jsonvalue "taichi" (itoa infotaichi) -> taichi_ in
-    let jsonvalue "left" (itoa extleft) -> left_ in
-    let jsonvalue "right" (itoa extright) -> right_ in
-    let jsonvalue "timeoffset" (itoa get_time_offset) -> timeoffset_ in
+fun jsonnext s=
+    strcat s ",\n"
+;;
 
+fun jsonlast s=
+    strcat s "\n"
+;;
+
+fun jsonstatus=
     strcatlist
-        (http_header "application/json")::
+        (http_header HTTP_200 "application/json")::
         "{\n"::
-            mac_::",\n"::
-            ts_::",\n"::
-            time_::",\n"::
-            timeoffset_::",\n"::
-            taichi_::",\n"::
-            left_::",\n"::
-            right_::"\n"::
+            (jsonnext jsonvalue "ts" current_time_human)::
+            (jsonnext jsonvalue "time" itoa time)::
+            (jsonnext jsonvalue "taichi" itoa infotaichi)::
+            (jsonnext jsonvalue "left" itoa extleft)::
+            (jsonnext jsonvalue "right" itoa extright)::
+            (jsonnext jsonvalue "timeoffset" itoa get_time_offset)::
+            (jsonnext jsonvalue "earsmode" itoa earsmode)::
+            (jsonnext jsonvalue "ear_detecting" itoa earDetecting)::
+            (jsonnext jsonvalue "sleep_state" itoa gSleepState)::
+            (jsonnext jsonvalue "streaming_state" itoa gStreamingState)::
+            (jsonnext jsonvalue "processing_state" itoa gProcessingState)::
+            (jsonnext jsonvalue "busy_state" itoa gBusyState)::
+            (jsonnext jsonvalue "it_state" itoa gItState)::
+            (jsonlast jsonvalue "it_app" gItApp)::
         "}"::nil
 ;;
 
@@ -377,7 +391,7 @@ fun httpindex=
     let itoa get_time_offset -> ttime_offset in
 
     strcat
-        http_header "text/html"
+        http_header HTTP_200 "text/html"
         strcatlist
             pagefill
                 ["<MAC>" mac]::
@@ -471,50 +485,119 @@ fun cbhttp req=
         //Secho "page : "; Secholn page;
 
         // misc
-        if !strcmp page "gettime" then (get_time_from_timeserver; httpindex)
-        else if !strcmp page "stop" then (stopEverythingAndResetToIdle;  httpindex) // stop everything we can be doing and resets to either idle or asleep
-        else if !strcmp page "reboot" then (reboot 0x0407FE58 0x13fb6754; nil)
-        else if !strcmp page "surprise" then (if !gSleepState then (surprise; httpindex))
-        else if !strcmp page "status" then jsonstatus
-
-        // play sound
-        else if !strcmp page "communication" then (if !gSleepState then (controlsound midi_communion; httpindex))
-        else if !strcmp page "ack" then (if !gSleepState then (controlsound midi_ack; httpindex))
-        else if !strcmp page "abort" then (if !gSleepState then (controlsound midi_abort; httpindex))
-        else if !strcmp page "ministop" then (controlsound midi_ministop; httpindex)
-        else if !strcmp page "play" then (if !gSleepState then (wavstarthttp Sgetargvalue args 'u' #_cbWavError; httpindex))
-        else if !strcmp page "say" then (if !gSleepState then (wavstarthttp (strcatlist "http://translate.google.com/translate_tts?tl=en_gb&q="::(strreplace (Sgetargvalue args 't') " " "+")::nil) #_cbWavError; httpindex))
-
-        else if !strcmp page "taichi" then let Igetargvalue args 'v' -> v in (
+        if !strcmp page "gettime" then (  // get time from server
+            get_time_from_timeserver;
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "stop" then (  // stop everything we can be doing and resets to either idle or asleep
+            stopEverythingAndResetToIdle;
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "reboot" then (  // reboot
+            reboot 0x0407FE58 0x13fb6754;
+            nil
+        )
+        else if !strcmp page "surprise" then (
+            if !gSleepState then surprise;
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "status" then (  // json status
+            jsonstatus
+        )
+        else if !strcmp page "communication" then (  // play sound
+            if !gSleepState then (controlsound midi_communion);
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "ack" then (
+            if !gSleepState then (controlsound midi_ack);
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "abort" then (
+            if !gSleepState then (controlsound midi_abort);
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "ministop" then (
+            controlsound midi_ministop;
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "play" then (
+            if !gSleepState then (wavstarthttp Sgetargvalue args 'u' #_cbWavError);
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "say" then (
+            if !gSleepState then (wavstarthttp (strcatlist "http://translate.google.com/translate_tts?tl=en_gb&q="::(strreplace (Sgetargvalue args 't') " " "+")::nil) #_cbWavError);
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "taichi" then let Igetargvalue args 'v' -> v in (  // taichi
             if v == 1000 && !gSleepState then
                 taichistart
             else
                 set infotaichi = v;
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "mp3" then (
+            wavstarthttp Sgetargvalue args 'v' #_cbWavError;
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "sleep" then (  // sleep
+            startSleep;
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "wakeup" then (  // wake up
+            endSleep;
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "left" then (  // p=position d=direction
+            if !gSleepState then (earGo 0 Igetargvalue args 'p' Igetargvalue args 'd');
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "right" then (  // p=position d=direction
+            if !gSleepState then (earGo 1 Igetargvalue args 'p' Igetargvalue args 'd');
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "nose" then (  // v (0-1)
+            set infomessages = Igetargvalue args 'v';
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "weather" then (  // weather (0-5)
+            if !gSleepState then (_infosrc_update 1 Igetargvalue args 'v');
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "stock" then (  // stock market (0-6)
+            if !gSleepState then (_infosrc_update 2 Igetargvalue args 'v');
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "traffic" then (  // trafic (0-6)
+            if !gSleepState then (_infosrc_update 3 Igetargvalue args 'v');
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "mail" then (  // mail (0-4)
+            if !gSleepState then (_infosrc_update 6 Igetargvalue args 'v');
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "pollution" then (  // pollutions (0-10)
+            if !gSleepState then (_infosrc_update 7 Igetargvalue args 'v');
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "clear" then (
+            for i=1;i<=8 do (_infosrc_update 0 i);
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "lang" then (  // language setup
+            set_language Sgetargvalue args 'v';
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "time" then (  // time setup
+            set_time_offset atoi Sgetargvalue args 'v';
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "" then (  // index page
             httpindex
-        ) // taichi
-
-        else if !strcmp page "mp3" then (wavstarthttp Sgetargvalue args 'v' #_cbWavError; httpindex)
-
-        else if !strcmp page "sleep" then (startSleep; httpindex) // sleep
-        else if !strcmp page "wakeup" then (endSleep; httpindex) // wake up
-        else if !strcmp page "left" then (if !gSleepState then (earGo 0 Igetargvalue args 'p' Igetargvalue args 'd'; httpindex)) // p=position d=direction
-        else if !strcmp page "right" then (if !gSleepState then (earGo 1 Igetargvalue args 'p' Igetargvalue args 'd'; httpindex)) // p=position d=direction
-
-        else if !strcmp page "nose" then (set infomessages = Igetargvalue args 'v'; httpindex) // v (0-1)
-        else if !strcmp page "weather" then (if !gSleepState then (_infosrc_update 1 Igetargvalue args 'v'; httpindex)) // weather (0-5)
-        else if !strcmp page "stock" then (if !gSleepState then (_infosrc_update 2 Igetargvalue args 'v'; httpindex)) // stock market (0-6)
-        else if !strcmp page "traffic" then (if !gSleepState then (_infosrc_update 3 Igetargvalue args 'v'; httpindex)) // trafic (0-6)
-        else if !strcmp page "mail" then (if !gSleepState then (_infosrc_update 6 Igetargvalue args 'v'; httpindex)) // mail (0-4)
-        else if !strcmp page "pollution" then (if !gSleepState then (_infosrc_update 7 Igetargvalue args 'v'; httpindex)) // pollutions (0-10)
-        else if !strcmp page "clear" then (for i=1;i<=8 do (_infosrc_update 0 i); httpindex)
-        // language setup
-        else if !strcmp page "lang" then (set_language Sgetargvalue args 'v'; httpindex)
-        // time setup
-        else if !strcmp page "time" then (set_time_offset atoi Sgetargvalue args 'v'; httpindex)
-
-        else if !strcmp page "" then (httpindex)
-
-        else (unknownCommand; httpindex)
+        )
+        else (
+            unknownCommand;
+            strcat (http_header HTTP_404 "text/plain") "Not Found"
+        )
     );;
 
 
@@ -534,5 +617,6 @@ fun startwebserver port =
     )
     ;;
 */
+    Secho jsonstatus;
     starthttpsrv port #cbhttp;;
 
