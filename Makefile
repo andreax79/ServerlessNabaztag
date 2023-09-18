@@ -20,11 +20,11 @@ clean:
 firmware:
 	@./scripts/make_nominal.sh
 	@$(COMPILER) -s "nominal.mtl" "bootcode.bin"
-	@rm nominal.mtl
+	@rm -f nominal.mtl
 	@cp bootcode.bin vl/bc.jsp
 	@echo "Firmware copied to $$PWD/vl/bc.jsp"
 
 run-sim:
 	@./scripts/make_nominal.sh -D SIMU
-	@$(SIMULATOR) --mac 0123456789ab --source "nominal.mtl"
-	@rm nominal.mtl
+	@$(SIMULATOR) --mac 0123456789ab --source "nominal.mtl" || true
+	@rm -f nominal.mtl foo.bin

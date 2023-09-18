@@ -5,7 +5,7 @@ ServerlessNabaztag is a firmware allowing control of the Nabaztag/tag directly v
 
 With this firmware, you can connect at http://\<YOURNABAZTAGIP\>/ and completely control your rabbit with a very simple web interface, as show in the following screenshot:
 
-![](/imgs/screenshot.jpg "Screenshot")
+![](/imgs/screenshot.png "Screenshot")
 
 All the commands can be called with a single HTTP requests from an external program/script, example:
 
@@ -53,10 +53,32 @@ Firmware features
 * Autonomously wake up at go to sleep
 * Respond to ping request
 
-Compile on Ubuntu 22
---------------------
+Development
+-----------
 
 Please install the following dependencies:
 ```
 $ sudo apt-get install gcc-multilib g++-multilib
 ```
+
+Build the compiler and the simulator:
+```
+$ make compilter
+```
+
+Build the firmware
+```
+$ make firmware
+```
+
+Start local web server:
+```
+$ sudo iptables -t nat -I PREROUTING -p tcp --dport 80 -j REDIRECT --to-ports 8000
+$ python3 -m http.server
+```
+
+### Links
+
+* [Nabaztag Firmware with WPA2 support](https://github.com/RedoXyde/nabgcc/tree/wpa2)
+* [Milligram, A minimalist CSS framework](https://milligram.io)
+* [pynab](https://github.com/nabaztag2018/pynab)

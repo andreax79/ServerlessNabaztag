@@ -122,12 +122,15 @@ fun jsonstatus=
     strcatlist
         (http_header HTTP_200 "application/json")::
         "{\n"::
+            (jsonnext jsonvalue "mac" webmac netMac)::
             (jsonnext jsonvalue "ts" current_time_human)::
             (jsonnext jsonvalue "time" itoa time)::
+            (jsonnext jsonvalue "timeoffset" itoa get_time_offset)::
+            (jsonnext jsonvalue "language" get_language)::
             (jsonnext jsonvalue "taichi" itoa infotaichi)::
+            (jsonnext jsonvalue "messages" itoa infomessages)::
             (jsonnext jsonvalue "left" itoa extleft)::
             (jsonnext jsonvalue "right" itoa extright)::
-            (jsonnext jsonvalue "timeoffset" itoa get_time_offset)::
             (jsonnext jsonvalue "earsmode" itoa earsmode)::
             (jsonnext jsonvalue "ear_detecting" itoa earDetecting)::
             (jsonnext jsonvalue "sleep_state" itoa gSleepState)::
@@ -141,273 +144,20 @@ fun jsonstatus=
 
 //--------------------------------------------------------------------------------------------------
 
-var indexpage=
-"<html><head><title>Nabaztag</title>
-<style type=\"text/css\">
-<!--
-body {
-    font-family: Arial, Helvetica, sans-serif;
-    margin: 10px;
-    font-size: 11px;
-}
--->
-</style>
-</head>
-<body>
-  <h1>Nabaztag</h1>
-
-<div style='width:200px;float:left;'>
-  <h2>Util</h2>
-  <ul>
-  <li><a href='/'>reload page</a></li>
-  <li><a href='/surprise'>surprise</a></li>
-  <li><a href='/stop'>stop everything</a></li>
-  <li><a href='/clear'>info off</a></li>
-  <li><a href='/status'>status as json</a></li>
-  </ul>
-</div>
-<div style='width:200px;float:left;'>
-  <h2>Sleep</h2>
-  <ul>
-  <li><a href='/sleep'>sleep</a></li>
-  <li><a href='/wakeup'>wake up</a></li>
-  </ul>
-</div>
-<div style='width:200px;float:left;'>
-  <h2>System</h2>
-  <ul>
-  <li><a href='/gettime'>update time from timeserver</a></li>
-  <li><a href='/reboot'>reboot</a></li>
-  </ul>
-</div>
-
-<br style='clear:both;'/>
-
-<div style='width:200px;float:left;'>
-  <h2>Play sound</h2>
-  <ul>
-  <li><a href='/communication'>communication</a></li>
-  <li><a href='/ack'>ack</a></li>
-  <li><a href='/abort'>abort</a></li>
-  <li><a href='/ministop'>ministop</a></li>
-  <li><form action='/play' method='GET'><input type='text' name='u'/><input type='submit' value='Play URI'/></form></li>
-  <li><form action='/say' method='GET'><input type='text' name='t'/><input type='submit' value='Say text'/></form></li>
-  </ul>
-</div>
-<div style='width:200px;float:left;'>
-  <h2>Taichi</h2>
-  <ul>
-  <li><a href='/taichi?v=1000'>do taichi now</a></li>
-  <li><a href='/taichi?v=0'>taichi off</a></li>
-  <li><a href='/taichi?v=40'>taichi min</a></li>
-  <li><a href='/taichi?v=80'>taichi medium</a></li>
-  <li><a href='/taichi?v=255'>taichi max</a></li>
-  </ul>
-</div>
-<div style='width:400px;float:left;'>
-  <h2>Ears</h2>
-  <ul>
-  <li><b>left</b> position:
-  <a href='/left?p=0&d=0'>0</a>
-  <a href='/left?p=1&d=0'>1</a>
-  <a href='/left?p=2&d=0'>2</a>
-  <a href='/left?p=3&d=0'>3</a>
-  <a href='/left?p=4&d=0'>4</a>
-  <a href='/left?p=5&d=0'>5</a>
-  <a href='/left?p=6&d=0'>6</a>
-  <a href='/left?p=7&d=0'>7</a>
-  <a href='/left?p=8&d=0'>8</a>
-  <a href='/left?p=9&d=0'>9</a>
-  <a href='/left?p=10&d=0'>10</a>
-  <a href='/left?p=11&d=0'>11</a>
-  <a href='/left?p=12&d=0'>12</a>
-  <a href='/left?p=13&d=0'>13</a>
-  <a href='/left?p=14&d=0'>14</a>
-  <a href='/left?p=15&d=0'>15</a>
-  <a href='/left?p=16&d=0'>16</a></li>
-  <li><b>right</b> position:
-  <a href='/right?p=0&d=0'>0</a>
-  <a href='/right?p=1&d=0'>1</a>
-  <a href='/right?p=2&d=0'>2</a>
-  <a href='/right?p=3&d=0'>3</a>
-  <a href='/right?p=4&d=0'>4</a>
-  <a href='/right?p=5&d=0'>5</a>
-  <a href='/right?p=6&d=0'>6</a>
-  <a href='/right?p=7&d=0'>7</a>
-  <a href='/right?p=8&d=0'>8</a>
-  <a href='/right?p=9&d=0'>9</a>
-  <a href='/right?p=10&d=0'>10</a>
-  <a href='/right?p=11&d=0'>11</a>
-  <a href='/right?p=12&d=0'>12</a>
-  <a href='/right?p=13&d=0'>13</a>
-  <a href='/right?p=14&d=0'>14</a>
-  <a href='/right?p=15&d=0'>15</a>
-  <a href='/right?p=16&d=0'>16</a></li>
-  </ul>
-</div>
-
-<br style='clear:both;'/>
-
-<div style='width:200px;float:left;'>
-  <h2>Nose</h2>
-  <ul>
-  <li><a href='/nose?v=0'>off</a></li>
-  <li><a href='/nose?v=1'>on</a></li>
-  <li><a href='/nose?v=2'>todo</a></li>
-  <li><a href='/nose?v=3'>urgent</a></li>
-  <li><a href='/nose?v=4'>panic</a></li>
-  </ul>
-</div>
-<div style='width:200px;float:left;'>
-  <h2>Weather</h2>
-  <ul>
-  <li><a href='/weather?v=0'>sun</a></li>
-  <li><a href='/weather?v=1'>clouds</a></li>
-  <li><a href='/weather?v=2'>fog</a></li>
-  <li><a href='/weather?v=3'>rain</a></li>
-  <li><a href='/weather?v=4'>snow</a></li>
-  <li><a href='/weather?v=5'>storm</a></li>
-  </ul>
-</div>
-<div style='width:200px;float:left;'>
-  <h2>Stock</h2>
-  <ul>
-  <li><a href='/stock?v=0'>---</a></li>
-  <li><a href='/stock?v=1'>--</a></li>
-  <li><a href='/stock?v=2'>-</a></li>
-  <li><a href='/stock?v=3'>0</a></li>
-  <li><a href='/stock?v=4'>+</a></li>
-  <li><a href='/stock?v=5'>++</a></li>
-  <li><a href='/stock?v=6'>+++</a></li>
-  </ul>
-</div>
-<div style='width:200px;float:left;'>
-  <h2>Traffic</h2>
-  <ul>
-  <li><a href='/traffic?v=0'>free</a></li>
-  <li><a href='/traffic?v=1'>okay</a></li>
-  <li><a href='/traffic?v=2'>moderate</a></li>
-  <li><a href='/traffic?v=3'>normal</a></li>
-  <li><a href='/traffic?v=4'>heavy</a></li>
-  <li><a href='/traffic?v=5'>congested</a></li>
-  <li><a href='/traffic?v=6'>extreme</a></li>
-  </ul>
-</div>
-<div style='width:200px;float:left;'>
-  <h2>Pollution</h2>
-  <ul>
-  <li><a href='/pollution?v=0'>0</a></li>
-  <li><a href='/pollution?v=1'>1</a></li>
-  <li><a href='/pollution?v=2'>2</a></li>
-  <li><a href='/pollution?v=3'>3</a></li>
-  <li><a href='/pollution?v=4'>4</a></li>
-  <li><a href='/pollution?v=5'>5</a></li>
-  <li><a href='/pollution?v=6'>6</a></li>
-  <li><a href='/pollution?v=7'>7</a></li>
-  <li><a href='/pollution?v=8'>8</a></li>
-  <li><a href='/pollution?v=9'>9</a></li>
-  <li><a href='/pollution?v=10'>10</a></li>
-  </ul>
-</div>
-
-<hr style='clear:both;'/>
-
-  mac: "::"<MAC>"::" <br/>
-  current time: "::"<TS>"::" <br/>
-  time offset: "::"<TIMEOFFSET>"::" min <br/>
-  bunny time: "::"<TTIME>"::" <br/>
-  next surprise: "::"<SURPRISE>"::" <br/>
-  taichi freq: "::"<TAICHI>"::" <br/>
-  left: "::"<LEFT>"::" <br/>
-  right: "::"<RIGHT>"::" <br/>
-  language: "::"<LANG>"::" <br/>
-  wakeup: "::"<WAKEUP>"::" <br/>
-  sleep: "::"<SLEEP>"::" <br/>
-  server url: http://"::"<SERVER>"::"
-
-  <hr/>
-
-  <h2>Language Setup</h2>
-  <ul>
-  <li><a href='/lang?v=uk'>english</a></li>
-  <li><a href='/lang?v=it'>italian</a></li>
-  <li><a href='/lang?v=fr'>french</a></li>
-  <li><a href='/lang?v=es'>spanish</a></li>
-  </ul>
-
-  <h2>Timezone Setup</h2>
-  <form action='/time'>
-  <select name='v' onchange='this.form.submit();'>
-      <option value='' selected='selected' disabled='disabled'></option>
-      <option value='-720'>GMT -12:00</option>
-      <option value='-660'>GMT -11:00</option>
-      <option value='-600'>GMT -10:00</option>
-      <option value='-540'>GMT -9:00</option>
-      <option value='-480'>GMT -8:00</option>
-      <option value='-420'>GMT -7:00</option>
-      <option value='-360'>GMT -6:00</option>
-      <option value='-300'>GMT -5:00</option>
-      <option value='-240'>GMT -4:00</option>
-      <option value='-210'>GMT -3:30</option>
-      <option value='-180'>GMT -3:00</option>
-      <option value='-120'>GMT -2:00</option>
-      <option value='-60'>GMT -1:00</option>
-      <option value='0'>GMT</option>
-      <option value='60'>GMT +1:00</option>
-      <option value='120'>GMT +2:00</option>
-      <option value='180'>GMT +3:00</option>
-      <option value='210'>GMT +3:30</option>
-      <option value='240'>GMT +4:00</option>
-      <option value='270'>GMT +4:30</option>
-      <option value='300'>GMT +5:00</option>
-      <option value='330'>GMT +5:30</option>
-      <option value='345'>GMT +5:45</option>
-      <option value='260'>GMT +6:00</option>
-      <option value='420'>GMT +7:00</option>
-      <option value='480'>GMT +8:00</option>
-      <option value='540'>GMT +9:00</option>
-      <option value='570'>GMT +9:30</option>
-      <option value='600'>GMT +10:00</option>
-      <option value='660'>GMT +11:00</option>
-      <option value='720'>GMT +12:00</option>
-  </select>
-  </form>
-
-</body></html>"::nil;;
-
-fun listreplacestr l key val=
-    if l!=nil then if !strcmp hd l key then val::listreplacestr tl l key val else (hd l)::listreplacestr tl l key val;;
-
-fun pagefill l p=
-    if l==nil then p
-    else let hd l ->[key val] in pagefill tl l listreplacestr p key val;;
-
 fun httpindex=
-    let webmac netMac -> mac in
-    let itoa time -> ttime_string in
-    let itoa infotaichi -> infotaichi_string in
-    let itoa extleft -> extleft_string in
-    let itoa extright -> extright_string in
-    let itoa get_time_offset -> ttime_offset in
-
     strcat
         http_header HTTP_200 "text/html"
-        strcatlist
-            pagefill
-                ["<MAC>" mac]::
-                ["<TS>" current_time_human]::
-                ["<TTIME>" ttime_string]::
-                ["<SURPRISE>" itoa get_next_surprise]::
-                ["<TAICHI>" infotaichi_string]::
-                ["<LEFT>" extleft_string]::
-                ["<RIGHT>" extright_string]::
-                ["<SERVER>" confGetServerUrl]::
-                ["<LANG>" get_language]::
-                ["<TIMEOFFSET>" ttime_offset]::
-                ["<WAKEUP>" "8"]::
-                ["<SLEEP>" "23"]::
-                nil
-            indexpage
+        "
+#include srv/www/index.html
+        "
+;;
+
+fun milligram_css=
+    strcat
+        http_header HTTP_200 "text/css"
+        "
+#include srv/www/milligram.css
+        "
 ;;
 
 
@@ -525,7 +275,7 @@ fun cbhttp req=
             http_header HTTP_204 nil
         )
         else if !strcmp page "say" then (
-            if !gSleepState then (wavstarthttp (strcatlist "http://translate.google.com/translate_tts?tl=en_gb&q="::(strreplace (Sgetargvalue args 't') " " "+")::nil) #_cbWavError);
+            if !gSleepState then (wavstarthttp (strcatlist "http://translate.google.com/translate_tts?ie=UTF-8&total=1&idx=0&textlen=32&client=tw-ob&tl=En-gb&q="::(strreplace (Sgetargvalue args 't') " " "+")::nil) #_cbWavError);
             http_header HTTP_204 nil
         )
         else if !strcmp page "taichi" then let Igetargvalue args 'v' -> v in (  // taichi
@@ -555,7 +305,7 @@ fun cbhttp req=
             if !gSleepState then (earGo 1 Igetargvalue args 'p' Igetargvalue args 'd');
             http_header HTTP_204 nil
         )
-        else if !strcmp page "nose" then (  // v (0-1)
+        else if !strcmp page "nose" then (  // v (0-4)
             set infomessages = Igetargvalue args 'v';
             http_header HTTP_204 nil
         )
@@ -591,6 +341,9 @@ fun cbhttp req=
             set_time_offset atoi Sgetargvalue args 'v';
             http_header HTTP_204 nil
         )
+        else if !strcmp page "milligram.css" then (
+            milligram_css
+        )
         else if !strcmp page "" then (  // index page
             httpindex
         )
@@ -617,6 +370,6 @@ fun startwebserver port =
     )
     ;;
 */
-    Secho jsonstatus;
+    // Secho jsonstatus;
     starthttpsrv port #cbhttp;;
 
