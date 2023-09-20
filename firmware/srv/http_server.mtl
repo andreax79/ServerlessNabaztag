@@ -125,7 +125,9 @@ fun jsonstatus=
             (jsonnext jsonvalue "mac" webmac netMac)::
             (jsonnext jsonvalue "ts" current_time_human)::
             (jsonnext jsonvalue "time" itoa time)::
-            (jsonnext jsonvalue "timeoffset" itoa get_time_offset)::
+            (jsonnext jsonvalue "city_code" confGetCity)::
+            (jsonnext jsonvalue "dst" itoa confGetDST)::
+            (jsonnext jsonvalue "time_offset" itoa get_time_offset)::
             (jsonnext jsonvalue "language" get_language)::
             (jsonnext jsonvalue "taichi" itoa infotaichi)::
             (jsonnext jsonvalue "messages" itoa infomessages)::
@@ -333,12 +335,16 @@ fun cbhttp req=
             for i=1;i<=8 do (_infosrc_update 0 i);
             http_header HTTP_204 nil
         )
-        else if !strcmp page "lang" then (  // language setup
+        else if !strcmp page "lang" then (  // set language
             set_language Sgetargvalue args 'v';
             http_header HTTP_204 nil
         )
-        else if !strcmp page "time" then (  // time setup
-            set_time_offset atoi Sgetargvalue args 'v';
+        else if !strcmp page "city" then (  // set city code
+            confStoreCity Sgetargvalue args 'v';
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "dst" then (  // set Daylight Saving Time
+            confStoreDST atoi Sgetargvalue args 'v';
             http_header HTTP_204 nil
         )
         else if !strcmp page "milligram.css" then (

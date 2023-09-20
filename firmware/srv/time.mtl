@@ -1,3 +1,5 @@
+#include utils/timezones.mtl
+
 //--------------------------------------------------------------------------------------------------
 // Time functions
 //--------------------------------------------------------------------------------------------------
@@ -20,17 +22,13 @@ var local_time_minute = 0 ;; // current minute
 var local_time_second = 0 ;; // current second
 
 
-const CONF_TIME_OFFSET=166;; //1
-
-// Store the time offset (in minutes, rounded by 15min) in the config
-fun set_time_offset time_offset=
-    strset conf CONF_TIME_OFFSET ((time_offset / 15) + 128);
-    confSave;;
+// Get Daylight Saving Time offset (in minutes)
+fun get_dst_offset=
+    if (confGetDST == 1) then 60 else 0;;
 
 // Get the time offset (in minutes) from the config
 fun get_time_offset=
-    let (strget conf CONF_TIME_OFFSET) -> t in
-        if (t == 0) then 0 else (t - 128) * 15;;
+    get_dst_offset + get_offset_from_city_code confGetCity;;
 
 // Calculate the local time "time+offset" (time only, not date)
 fun get_local_time=

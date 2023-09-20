@@ -1,0 +1,72 @@
+//--------------------------------------------------------------------------------------------------
+// Timezones
+//--------------------------------------------------------------------------------------------------
+
+fun get_offset_from_city_code city_code=
+    if      !strcmp city_code "UTC" then    0
+    else if !strcmp city_code "LIS" then    0
+    else if !strcmp city_code "LON" then    0
+    else if !strcmp city_code "MAD" then   60   // +1
+    else if !strcmp city_code "PAR" then   60
+    else if !strcmp city_code "ROM" then   60
+    else if !strcmp city_code "BER" then   60
+    else if !strcmp city_code "STO" then   60
+    else if !strcmp city_code "ATH" then  120   // +2
+    else if !strcmp city_code "CAI" then  120
+    else if !strcmp city_code "JRS" then  120
+    else if !strcmp city_code "MOW" then  180   // +3
+    else if !strcmp city_code "JED" then  180
+    else if !strcmp city_code "THR" then  210   // +3.5
+    else if !strcmp city_code "DXB" then  240   // +4
+    else if !strcmp city_code "KBL" then  270   // +4.5
+    else if !strcmp city_code "KHI" then  300   // +5
+    else if !strcmp city_code "DEL" then  330   // +5.5
+    else if !strcmp city_code "KTM" then  345   // +5.75
+    else if !strcmp city_code "DAC" then  360   // +6
+    else if !strcmp city_code "RNG" then  390   // +6.5
+    else if !strcmp city_code "BKK" then  420   // +7
+    else if !strcmp city_code "SIN" then  480   // +8
+    else if !strcmp city_code "HKG" then  480
+    else if !strcmp city_code "BJS" then  480
+    else if !strcmp city_code "TPE" then  480
+    else if !strcmp city_code "EUC" then  525   // +8.75
+    else if !strcmp city_code "SEL" then  540   // +9
+    else if !strcmp city_code "TYO" then  540
+    else if !strcmp city_code "ADL" then  570   // +9.5
+    else if !strcmp city_code "GUM" then  600   // +10
+    else if !strcmp city_code "SYD" then  600
+    else if !strcmp city_code "LHI" then  630   // +10.5
+    else if !strcmp city_code "NOU" then  660   // +11
+    else if !strcmp city_code "NSW" then  690   // +11.5
+    else if !strcmp city_code "WLG" then  720   // +12
+    else if !strcmp city_code "CHA" then  765   // +12.75
+    else if !strcmp city_code "TBU" then  780   // +13
+    else if !strcmp city_code "CXI" then  840   // +14
+    else if !strcmp city_code "BAR" then -720   // -12
+    else if !strcmp city_code "PPG" then -660   // -11
+    else if !strcmp city_code "HNL" then -600   // -10
+    else if !strcmp city_code "MAR" then -570   // -9.5
+    else if !strcmp city_code "ANC" then -540   // -9
+    else if !strcmp city_code "YVR" then -480   // -8
+    else if !strcmp city_code "LAX" then -480
+    else if !strcmp city_code "YEA" then -420   // -7
+    else if !strcmp city_code "DEN" then -420
+    else if !strcmp city_code "MEX" then -360   // -6
+    else if !strcmp city_code "CHI" then -360
+    else if !strcmp city_code "NYC" then -300   // -5
+    else if !strcmp city_code "CCS" then -270   // -4.5
+    else if !strcmp city_code "SCL" then -240   // -4
+    else if !strcmp city_code "YHZ" then -240
+    else if !strcmp city_code "SIF" then -210   // -3.5
+    else if !strcmp city_code "RIO" then -180   // -3
+    else if !strcmp city_code "FEN" then -120   // -2
+    else if !strcmp city_code "RAI" then  -60   // -1
+    else 0;;
+
+
+
+
+
+
+
+

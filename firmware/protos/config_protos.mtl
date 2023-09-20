@@ -3,17 +3,41 @@ proto confGetWificrypt 0 ;;
 proto confGetWifikey0 0 ;;
 proto confGetWifiauth 0 ;;
 proto confGetWifipmk 0 ;;
-
 proto confGetDhcp 0 ;;
 proto confGetNetip 0 ;;
 proto confGetNetmask 0 ;;
 proto confGetNetgateway 0 ;;
 proto confGetNetdns 0 ;;
-
 proto confGetServerUrl 0 ;;
-proto confGetLogin 0 ;;
-proto confGetPwd 0 ;;
-
 proto confGetProxy 0 ;;
 proto confGetProxyip 0 ;;
 proto confGetProxyport 0 ;;
+proto confGetCity 0 ;;
+proto confGetDST 0 ;;
+
+proto confStoreCity 1 ;;
+proto confStoreDST 1 ;;
+
+
+const CONF_SERVERURL=0;;		//41    Violet Platform URL
+const CONF_NETDHCP=41;;		    //1     DHCP server enabled
+const CONF_NETIP=42;;			//4     Local IP
+const CONF_NETMASK=46;;		    //4     Local Mask
+const CONF_NETGATEWAY=50;;	    //4     Local gateway
+const CONF_NETDNS=54;;		    //4     DNS Server
+const CONF_WIFISSID=58;;		//32    WiFi SSID
+const CONF_WIFIAUTH=90;;		//1
+const CONF_WIFICRYPT=91;;		//1     WiFi Auth (None, WEP, WPA, WPA2)
+const CONF_WIFIKEY0=92;;		//64    WiFi Key
+const CONF_PROXYENABLE=156;;	//1     HTTP Proxy enabled
+const CONF_PROXYIP=157;;		//4     Proxy IP address
+const CONF_PROXYPORT=161;;	    //2     Proxy port
+// const CONF_LOGIN=163;;		//6     obsolete
+// const CONF_PWD=169;;			//6     obsolete
+const CONF_LANGUAGE=163;;       //3     Language (string)
+const CONF_DST=166;;            //1     Daylight Saving Time
+const CONF_CITY=167;;           //4     City code
+// 171 - 174 --- free ---
+const CONF_WIFIPMK=175;;		//32    WiFi PMK (Pairwise Master Key)
+const CONF_MAGIC=207;;		    //1
+const CONF_LENGTH=208;;

@@ -1,80 +1,36 @@
 #include protos/config_protos.mtl
 
-const CONF_SERVERURL=0;;		//41    Violet Platform URL
-const CONF_NETDHCP=41;;		    //1     DHCP server enabled
-const CONF_NETIP=42;;			//4     Local IP
-const CONF_NETMASK=46;;		    //4     Local Mask
-const CONF_NETGATEWAY=50;;	    //4     Local gateway
-const CONF_NETDNS=54;;		    //4     DNS Server
-const CONF_WIFISSID=58;;		//32    WiFi SSID
-const CONF_WIFIAUTH=90;;		//1
-const CONF_WIFICRYPT=91;;		//1     WiFi Auth (None, WEP, WPA, WPA2)
-const CONF_WIFIKEY0=92;;		//64    WiFi Key
-const CONF_PROXYENABLE=156;;	//1     HTTP Proxy enabled
-const CONF_PROXYIP=157;;		//4     Proxy IP address
-const CONF_PROXYPORT=161;;	    //2     Proxy port
-const CONF_LOGIN=163;;		    //6
-const CONF_PWD=169;;			//6
-/*
-  const CONF_LANGUAGE=163;;     //3
-  const CONF_TIME_DELTA=166;    //1
-*/
-const CONF_WIFIPMK=175;;		//32    WiFi PMK (Pairwise Master Key)
-const CONF_MAGIC=207;;		    //1
-const CONF_LENGTH=208;;
-
 var conf;;
 
-/*
-var conf0=
-"r.nabaztag.com/vl\0-----------------------\
-\1\0\0\0\0\255\255\255\0\0\0\0\0\0\0\0\0\
-\0-------------------------------\
-\0\0abcde\0----------------------------------------------------------\
-\0\0\0\0\0\0\0\
-\0\0\0\0\0\0\
-\0\0\0\0\0\0\
---------------------------------\
-\$48";;
-*/
-
+// Store configuration
 fun confSave=
-	Secholn "## save configuration";
-	dump conf;
-	save conf 0 "conf.bin" 0 CONF_LENGTH;;
+    Secholn "## save configuration";
+    save conf 0 "conf.bin" 0 CONF_LENGTH;;
 
+// Init configuration
 fun confInit=
-	set conf=strnew CONF_LENGTH;
-	load conf 0 "conf.bin" 0 CONF_LENGTH;
-/*	if (strget conf CONF_MAGIC)!=0x48 then
-	(
-		set conf=strnew CONF_LENGTH;
-		strcpy conf 0 conf0 0 nil;
-		confSave;
-		set conf=strnew CONF_LENGTH;
-		load conf 0 "conf.bin" 0 CONF_LENGTH
-	);
-*/	dump conf;;
+    set conf=strnew CONF_LENGTH;
+    load conf 0 "conf.bin" 0 CONF_LENGTH;;
 
 fun confGet i len= strsub conf i len;;
 
 fun confGetbin i len= strsub conf i len;;
 
 fun confGetstr i len=
-	let strstr conf "\0" i -> j in
-	strsub conf i (if j==nil then len else min len j-i);;
+    let strstr conf "\0" i -> j in
+    strsub conf i (if j==nil then len else min len j-i);;
 
 fun confSet i val len=
-	strcpy conf i val 0 len;;
+    strcpy conf i val 0 len;;
 
 fun confSetbin i val len=strcpy conf i val 0 len;;
 
 fun confSetstr i val len=
-	let min strlen val len-1 -> len in
-	(
-		strcpy conf i val 0 len;
-		strset conf i+len 0
-	);;
+    let min strlen val len-1 -> len in
+    (
+        strcpy conf i val 0 len;
+        strset conf i+len 0
+    );;
 
 fun webport s= ((strget s 0)<<8)+strget s 1;;
 
@@ -91,10 +47,21 @@ fun confGetNetgateway=confGet CONF_NETGATEWAY 4;;
 fun confGetNetdns=confGet CONF_NETDNS 4;;
 
 fun confGetServerUrl=confGetstr CONF_SERVERURL 40;;
-fun confGetLogin=confGet CONF_LOGIN 6;;
-fun confGetPwd=confGet CONF_PWD 6;;
-
 fun confGetProxy=strget confGet CONF_PROXYENABLE 1 0;;
 fun confGetProxyip=confGet CONF_PROXYIP 4;;
 fun confGetProxyport=webport confGet CONF_PROXYPORT 2;;
 
+// Get City code
+fun confGetCity=confGetstr CONF_CITY 4;;
+// Get Daylight Saving Time
+fun confGetDST=strget confGet CONF_DST 1 0;;
+
+// Store city code
+fun confStoreCity val=
+    confSetstr CONF_CITY val 4;
+    confSave;;
+
+// Store Daylight Saving Time
+fun confStoreDST val=
+    strset conf CONF_DST val;
+    confSave;;

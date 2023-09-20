@@ -211,48 +211,87 @@
       </fieldset>
       </form>
     </div>
-    <div class="column">
-      <form action="/time" method="GET">
+    <div class="column column-50">
+      <form action="/city" method="GET">
         <fieldset>
-          <label for="timezoneField">Timezone</label>
-          <select name="v" id="timezoneField">
-          <option value="" selected="selected" disabled="disabled"></option>
-          <option value="-720">GMT -12:00</option>
-          <option value="-660">GMT -11:00</option>
-          <option value="-600">GMT -10:00</option>
-          <option value="-540">GMT -9:00</option>
-          <option value="-480">GMT -8:00</option>
-          <option value="-420">GMT -7:00</option>
-          <option value="-360">GMT -6:00</option>
-          <option value="-300">GMT -5:00</option>
-          <option value="-240">GMT -4:00</option>
-          <option value="-210">GMT -3:30</option>
-          <option value="-180">GMT -3:00</option>
-          <option value="-120">GMT -2:00</option>
-          <option value="-60">GMT -1:00</option>
-          <option value="0">GMT</option>
-          <option value="60">GMT +1:00</option>
-          <option value="120">GMT +2:00</option>
-          <option value="180">GMT +3:00</option>
-          <option value="210">GMT +3:30</option>
-          <option value="240">GMT +4:00</option>
-          <option value="270">GMT +4:30</option>
-          <option value="300">GMT +5:00</option>
-          <option value="330">GMT +5:30</option>
-          <option value="345">GMT +5:45</option>
-          <option value="260">GMT +6:00</option>
-          <option value="420">GMT +7:00</option>
-          <option value="480">GMT +8:00</option>
-          <option value="540">GMT +9:00</option>
-          <option value="570">GMT +9:30</option>
-          <option value="600">GMT +10:00</option>
-          <option value="660">GMT +11:00</option>
-          <option value="720">GMT +12:00</option>
+          <label for="cityCodeField">City</label>
+          <select name="v" id="cityCodeField">
+          <option value="UTC">UTC</option>
+          <option value="LIS">Lisbon</option>
+          <option value="LON">London</option>
+          <option value="MAD">Madrid</option>
+          <option value="PAR">Paris</option>
+          <option value="ROM">Rome</option>
+          <option value="BER">Berlin</option>
+          <option value="STO">Stockholm</option>
+          <option value="ATH">Athens</option>
+          <option value="CAI">Cairo</option>
+          <option value="JRS">Jerusalem</option>
+          <option value="MOW">Moscow</option>
+          <option value="JED">Jeddah</option>
+          <option value="THR">Tehran</option>
+          <option value="DXB">Dubai</option>
+          <option value="KBL">Kabul </option>
+          <option value="KHI">Karachi</option>
+          <option value="DEL">Delhi </option>
+          <option value="KTM">Kathmandu</option>
+          <option value="DAC">Dhaka</option>
+          <option value="RNG">Yangon</option>
+          <option value="BKK">Bangkok</option>
+          <option value="SIN">Singapore</option>
+          <option value="HKG">Hong Kong</option>
+          <option value="BJS">Beijing</option>
+          <option value="TPE">Taipei</option>
+          <option value="EUC">Eucla</option>
+          <option value="SEL">Seoul</option>
+          <option value="TYO">Tokyo</option>
+          <option value="ADL">Adelaide</option>
+          <option value="GUM">Guam</option>
+          <option value="SYD">Sydney</option>
+          <option value="LHI">Lord Howe Island</option>
+          <option value="NOU">Noumea</option>
+          <option value="NSW">Norfolk Island</option>
+          <option value="WLG">Wellington</option>
+          <option value="CHA">Chatham Islands</option>
+          <option value="TBU">Nuku’alofa</option>
+          <option value="CXI">Kiritimati</option>
+          <option value="BAR">Baker Island</option>
+          <option value="PPG">Pago Pago</option>
+          <option value="HNL">Honolulu</option>
+          <option value="MAR">Marquesas Islands</option>
+          <option value="ANC">Anchorage</option>
+          <option value="YVR">Vancouver</option>
+          <option value="LAX">Los Angeles</option>
+          <option value="JEA">Edmonton</option>
+          <option value="DEN">Denver</option>
+          <option value="MEX">Mexico City</option>
+          <option value="CHI">Chicago</option>
+          <option value="NYC">New York</option>
+          <option value="CCS">Caracas</option>
+          <option value="SCL">Santiago</option>
+          <option value="YHZ">Halifax/option>
+          <option value="SIF">St. John's</option>
+          <option value="RIO">Rio de Janeiro</option>
+          <option value="FEN">Fernando de Noronha</option>
+          <option value="RAI">Praia</option>
       </select>
       <input class="button-primary" type="submit" value="Set">
       </fieldset>
       </form>
     </div>
+    <div class="column">
+      <form action="/dst" method="GET">
+        <fieldset>
+          <label for="dstField">Daylight Saving Time</label>
+          <select name="v" id="dstField">
+          <option value="0">Off</option>
+          <option value="1">On</option>
+          </select>
+          <input class="button-primary" type="submit" value="Set">
+      </fieldset>
+      </form>
+    </div>
+
 </div>
 <footer class="footer">
      <a href="https://github.com/andreax79/ServerlessNabaztag" target="_blank" title="ServerlessNabaztag">github.com/andreax79/ServerlessNabaztag</a>
@@ -269,9 +308,14 @@ async function load() {
         langOption.setAttribute('selected', 'selected');
     }
 
-    let timezoneOption = document.querySelector('#timezoneField option[value="' + status.timeoffset + '"]');
-    if (timezoneOption){
-        timezoneOption.setAttribute('selected', 'selected');
+    let cityCodeOption = document.querySelector('#cityCodeField option[value="' + status.city_code + '"]');
+    if (cityCodeOption){
+        cityCodeOption.setAttribute('selected', 'selected');
+    }
+
+    let dstOption = document.querySelector('#dstField option[value="' + status.dst + '"]');
+    if (dstOption){
+        dstOption.setAttribute('selected', 'selected');
     }
 }
 
