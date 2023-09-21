@@ -354,7 +354,6 @@ fun cbhttp req=
             httpindex
         )
         else (
-            unknownCommand;
             strcat (http_header HTTP_404 "text/plain") "Not Found"
         )
     );;

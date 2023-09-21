@@ -1,0 +1,176 @@
+// ************************* Choregraphies (TaiChi, .chor) ************
+var chordata;;
+var chorindex;;
+var chortimescale;;
+var chornexttime;;
+var chorrandom;;
+var chortaichimotordir;; // le moteur // v16
+var chorendcb=nil;; // the callback to call in the end of the chor
+var chor_paused_dur;; // can be paused during buffering
+var chor_paused;;
+var chor_paused_since;;
+
+fun msgchorstart chor cb i0=
+    set chorendcb = cb;
+    set chordata=strcatlist chor;
+    set chorindex=4+1;  // on saute le header et la première attente
+    set chortimescale=0;
+    set chornexttime=time_ms;
+    set chor_paused_dur = 0;
+    set chor_paused_since = nil;
+    set chor_paused= 0;
+    setleds RGB_BLACK; // shut off all leds at start (or should it be in the chor ?)
+    set run=chorCmdRun i0;
+    0;;
+
+fun msgendchor i0=
+    set chornexttime=nil;
+    // call the callback
+    if (chorendcb != nil) then call chorendcb [i0];
+    0;;
+
+fun runChorCmd i0=
+    //  Secho "runChorCmd i:";Iecho chorindex; Secho " t:";Iecholn chornexttime;
+    // Manage buffering and pauses
+
+    if (!chor_paused && wav_buffering) then (
+        // start pause
+        set chor_paused_since = time_ms;
+        set chor_paused = 1
+    ) else if (chor_paused && !wav_buffering) then (
+        // end pause
+        set chor_paused = 0;
+        // increment paused_dur
+        set chor_paused_dur = chor_paused_dur + (time_ms - chor_paused_since)
+    );
+
+    if (!chor_paused) then
+    if time_ms-chor_paused_dur >= chornexttime then
+    (
+        if chorindex>=strlen chordata then msgendchor i0
+        else let strget chordata chorindex -> code in
+        set chorindex=chorindex+2+
+        if code==CH_frame_duration then
+        (
+            set chortimescale=10*strget chordata chorindex+1;
+            1   //nb de paramètres
+        )
+        else if code==CH_set_motor then
+        (
+            earGo (strget chordata chorindex+1) (strget chordata chorindex+2) (strget chordata chorindex+3);
+            3
+        )
+        else if code==CH_set_led_color then
+        (
+//          Secho "set_led_color ";
+            //led 4-strget chordata chorindex+1 ((strget chordata chorindex+2)<<16)+((strget chordata chorindex+3)<<8)+(strget chordata chorindex+4); // v16 start
+            let 4-strget chordata chorindex+1 -> iled in
+            let strget chordata chorindex+2 -> ired in
+            let strget chordata chorindex+3 -> igreen in
+            let strget chordata chorindex+4 -> iblue in
+            (
+                //Iecho iled; Secho ",r=";Iecho ired; Secho ",g=";Iecho igreen; Secho ",b=";Iecho iblue; Secholn ".";
+                led iled (ired<<16)+(igreen<<8)+iblue
+            ); // v16 end
+            6
+        )
+        else if code==CH_set_leds_color then // v16 start
+        (
+            //Secho "set_leds_color ";
+            let strget chordata chorindex+1 -> ired in
+            let strget chordata chorindex+2 -> igreen in
+            let strget chordata chorindex+3 -> iblue in
+            let (ired<<16)+(igreen<<8)+iblue -> col in
+            (
+                //Secho "leds "; Secho ",r=";Iecho ired; Secho ",g=";Iecho igreen; Secho ",b=";Iecho iblue; Secholn ".";
+                setleds col
+            );
+            3
+        ) // v16 end
+        else if code==CH_set_led_palette then
+        (
+//          Secholn "set_led_palette ";
+            led 4-strget chordata chorindex+1 current_palette.(7&strget chordata chorindex+2);
+            2
+        )
+        // v17
+        else if code== CH_set_led_off then
+        (
+            //Secholn "CH_set_led_off ";
+            led 4-strget chordata chorindex+1 0;
+            1
+        )
+        else if code==CH_randmidi then
+        (
+            //Secholn "randmidi";
+            let getmidilist -> t in
+            let tablen t -> n in
+            if n>0 then
+            let ((rand&255)*n)>>8 -> imusic in // v16 start
+            let t.(imusic) -> music in
+            (
+                Secho "randmidi="; Iecholn imusic;
+                wavstartlocal music::nil
+            ); // v16 end
+            0
+        )
+        else if code==CH_avance then
+        (
+            //Secholn "avance";
+            let (strget chordata chorindex+1) -> motor in // v16 start
+            let (strget chordata chorindex+2) -> delta in
+            let chortaichimotordir.motor -> dir in
+            earGo motor (earTarget motor)+if dir then -delta else delta dir;
+            2
+        )
+        else if code==CH_setmotordir then
+        (
+            //Secholn "setmotordir";
+            let (strget chordata chorindex+1) -> motor in
+            let (strget chordata chorindex+2) -> dir in
+            set chortaichimotordir=
+            if  motor == 0 then {dir chortaichimotordir.1} else {chortaichimotordir.0 dir}; // v16 end
+            2
+        )
+        else if code==CH_ifne then
+        (
+            //Secho "ifne ";Iecholn chorrandom;
+            if chorrandom==(Iecholn strget chordata chorindex+1) then 3
+            else 3+((strget chordata chorindex+2)<<8)+(strget chordata chorindex+3)
+        )
+        else if code==CH_attend then
+        (
+            //Secholn "attend";
+            if earFinishedMoving && wavrunning==0 then 0
+            else -2
+        )
+        else
+        (
+            msgendchor i0;
+            0
+        );
+        if chornexttime!=nil then
+        (
+            set chornexttime=chornexttime+(strget chordata chorindex-1)*chortimescale;
+            runChorCmd i0
+        )
+    );;
+
+fun _cbtaichiend unused=
+    set gProcessingState = 0;
+    earSetWaitAndDetectMode;
+    set run=idleRun;
+    0
+    ;;
+
+fun taichistart=
+    Secho "taichistart ";
+
+    set chorrandom=((Iecholn rand&255)*30)>>8;
+    Secho "chorrandom="; Iecholn chorrandom;
+    set chortaichimotordir={0 0};
+
+    earSetWaitOnlyMode;
+    set gProcessingState = 1; // block all trames during taichi
+    msgchorstart chordef_taichi::nil #_cbtaichiend nil;
+    0;;

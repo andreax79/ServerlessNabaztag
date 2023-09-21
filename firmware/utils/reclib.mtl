@@ -1,5 +1,4 @@
 var lrec;;
-var recording=0;;
 
 fun sqrt_ i i0 i1=
 	let (i0+i1)>>1 -> m in

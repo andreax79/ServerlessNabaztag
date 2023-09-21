@@ -1,3 +1,4 @@
+proto processIncomingTrame 3;;
 
 //------------------- MOT DE PASSE POUR LE PROTOCOLE XMPP
 const XMPP_PASSWORD_CHECK = 1;;
@@ -48,6 +49,60 @@ var NOWREGISTER = 0;;
 proto boshurl 1;;
 proto sendmailxmppurl 2;;
 
+
+/**
+    Returns a string representation of the run variable
+*/
+fun runToStr run =
+    match run with
+    ( configstartRun -> "configStartRun")
+    | (configwaitRun _ -> "configWaitRun")
+    | (interactiveReqWaitRun _ -> "interactiveReqWaitRun")
+    | (rscLoadNextRun -> "rscLoadNextRun" )
+    | (rscLoadWaitRun _ -> "rscLoadWaitRun" )
+    | (chorCmdRun _ -> "chorCmdRun" )
+    | (streamCmdRun _ -> "streamCmdRun" )
+    | (waitCmdRun _ -> "waitCmdRun" )
+    | (cmdEvalOne _ -> "cmdEvalOne" )
+    | (idleRun -> "idleRun" )
+    | (sleepRun -> "sleepRun" )
+#ifdef RECLIB
+    | (recordRun -> "recordRun" )
+    | (recordStartRun -> "recordStartRun" )
+#endif
+    | (earResetWaitRun _ -> "earResetWaitRun" )
+    | (xmppLoginRun -> "xmppLoginRun" )
+    | (xmppReconnectRun _ -> "xmppReconnectRun" )
+;;
+
+
+fun runLogin=
+    // if trame waiting, execute it
+    let getNextValidPendingTrame -> trame in
+    if trame != nil then
+        evalTrame trame;;
+
+
+fun processIncomingTrame ping_trame rsrc ttl=
+    Secho "processIncomingTrame for "; Secholn rsrc;
+    if (_isResourceValid rsrc) then (
+        evalTrame ping_trame
+    ) else (
+        Secholn "enqueueing trame";
+        let if (ttl == nil) then nil else (time + (atoi ttl)) -> expiration_time in
+            set gTramesQueue = conc gTramesQueue [rsrc expiration_time ping_trame]::nil;
+
+        // full ?
+        let listlen gTramesQueue -> queueLen in
+        if queueLen >= TRAME_QUEUE_MAXLEN then (
+            Secholn "trame queue full, warning server";
+            set gBusyState = 1;
+            (XmppSessionRequestResource "busy")::nil
+        ) else (
+            nil
+        )
+    )
+    ;;
 
 // ---------------------------------------------------------
 // XMPP Configuration
@@ -802,7 +857,6 @@ fun XmppGateInfo xSession =
 	Xw strcatlist "Next Resource : "::xSession.sNextResource::nil;
 	Xw strcatlist "Stream State : ":: (xmppStateToStr xSession.sState ) :: nil;
 	Xw strcatlist "gBusy : "::(itoa gBusyState)::nil;
-	dumpStatus;
 	Xw "***************************************";
 	Xw " ";Xw " "
 ;;

@@ -20,64 +20,64 @@ var infomessages=0;;
 var infotaichi=0;;
 
 fun infoInit=
-	set infosrc=tabnew 0 16;
-	set infomessages=0;
-	set infotaichi = 0;
+    set infosrc=tabnew 0 16;
+    set infomessages=0;
+    set infotaichi = 0;
 
-	set infodata=
+    set infodata=
 [0 // meteo
 {
-	[40 {0 3 0 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3}] // sun
-	[125 {0 3 8 0 8 8 8 8 0 8 3 8 0 8 8 8 8 0 8 3 0}] // clouds
-	[200 {8 4 4 8 8 4 4 8 8 4 4 8 4 4 4 4 4 4}] // fog
-	[20 {0 0 0 0 4 0 4 0 4 0 0 0 0 0 4 4 0 0 0 0 0 0 4 0 0 0 4}] // rain
-	[40 {7 0 0 0 0 0 0 0 7 0 0 0 0 6 0 0 0 0 0 0 6 0 0 0 0 7 0 0 0 0 6 0 0 0 0 0}] // snow
-	[25 {0 4 3 0 0 0 0 0 0 0 0 0 0 0 0 4 3 0 0 4 3 0 0 0 0 0 0 0 3 4 3 4 0}] // storm
+    [40 {0 3 0 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3}] // sun
+    [125 {0 3 8 0 8 8 8 8 0 8 3 8 0 8 8 8 8 0 8 3 0}] // clouds
+    [200 {8 4 4 8 8 4 4 8 8 4 4 8 4 4 4 4 4 4}] // fog
+    [20 {0 0 0 0 4 0 4 0 4 0 0 0 0 0 4 4 0 0 0 0 0 0 4 0 0 0 4}] // rain
+    [40 {7 0 0 0 0 0 0 0 7 0 0 0 0 6 0 0 0 0 0 0 6 0 0 0 0 7 0 0 0 0 6 0 0 0 0 0}] // snow
+    [25 {0 4 3 0 0 0 0 0 0 0 0 0 0 0 0 4 3 0 0 4 3 0 0 0 0 0 0 0 3 4 3 4 0}] // storm
 }
 ]::
 [1 // bourse
 {
-	[7 {0 0 11 0 11 0 11 0 0 0 0 0 0 0 0 0 0 0}]
-	[14 {0 0 11 0 11 0 11 0 0 0 0 0}]
-	[28 {0 0 11 0 11 0 11 0 0 0 0 0}]
-	[28 {0 11 0 0 0 0}]
-	[28 {11 0 0 0 11 0 0 0 11 0 0 0}]
-	[14 {11 0 0 0 11 0 0 0 11 0 0 0}]
-	[7 {11 0 0 0 11 0 0 0 11 0 0 0 0 0 0 0 0 0}]
+    [7 {0 0 11 0 11 0 11 0 0 0 0 0 0 0 0 0 0 0}]
+    [14 {0 0 11 0 11 0 11 0 0 0 0 0}]
+    [28 {0 0 11 0 11 0 11 0 0 0 0 0}]
+    [28 {0 11 0 0 0 0}]
+    [28 {11 0 0 0 11 0 0 0 11 0 0 0}]
+    [14 {11 0 0 0 11 0 0 0 11 0 0 0}]
+    [7 {11 0 0 0 11 0 0 0 11 0 0 0 0 0 0 0 0 0}]
 }
 ]::
 [2 // traffic
 {
-	[100 {1 0 1 1 0 1 1 0 1 0 0 0 0 0 0 0 0 0}]
-	[100 {0 1 0 1 0 1 0 0 0 0 0 0 0 0 0}]
-	[50 {0 1 0 1 0 1 0 0 0 0 0 0 0 0 0}]
-	[25 {0 1 0 1 0 1 0 0 0 0 0 0 0 0 0}]
-	[12 {0 1 0 1 0 1 0 0 0 0 0 0 0 0 0}]
-	[8 {0 1 0 1 0 1 0 0 0 0 0 0 0 0 0}]
-	[4 {0 1 0 1 0 1 0 1 0 1 0 1 0 0 0 0 0 0}]
+    [100 {1 0 1 1 0 1 1 0 1 0 0 0 0 0 0 0 0 0}]
+    [100 {0 1 0 1 0 1 0 0 0 0 0 0 0 0 0}]
+    [50 {0 1 0 1 0 1 0 0 0 0 0 0 0 0 0}]
+    [25 {0 1 0 1 0 1 0 0 0 0 0 0 0 0 0}]
+    [12 {0 1 0 1 0 1 0 0 0 0 0 0 0 0 0}]
+    [8 {0 1 0 1 0 1 0 0 0 0 0 0 0 0 0}]
+    [4 {0 1 0 1 0 1 0 1 0 1 0 1 0 0 0 0 0 0}]
 }
 ]::
 [5 // mails
 {
-	[70 {5 0 0 0 5 0 0 0 5 0 5 0}]
-	[56 {0 5 0 0 0 0}]
-	[56 {5 0 5 0 0 0}]
-	[56 {5 5 5 0 0 0}]
+    [70 {5 0 0 0 5 0 0 0 5 0 5 0}]
+    [56 {0 5 0 0 0 0}]
+    [56 {5 0 5 0 0 0}]
+    [56 {5 5 5 0 0 0}]
 }
 ]::
 [6 // pollution
 {
-	[42 {6 6 6 6 6 6 6 6 6 0 0 0}]
-	[42 {6 6 6 6 6 6 6 6 6 0 0 0}]
-	[42 {6 6 6 6 6 6 6 6 6 0 0 0}]
-	[42 {6 6 6 6 6 6 6 6 6 0 0 0}]
-	[42 {6 6 6 6 6 6 6 6 6 0 0 0}]
-	[14 {0 6 6 6 6 0 6 6 6 6 6 6 6 6 6 6 6 6 6 0 6 0 0 6 0 0 0 0 6 0 0 6 6 6 6 6 6 6 6 6 6 6 6 6 0 6 0 6 0 6 6}]
-	[14 {0 6 6 6 6 0 6 6 6 6 6 6 6 6 6 6 6 6 6 0 6 0 0 6 0 0 0 0 6 0 0 6 6 6 6 6 6 6 6 6 6 6 6 6 0 6 0 6 0 6 6}]
-	[14 {0 6 6 6 6 0 6 6 6 6 6 6 6 6 6 6 6 6 6 0 6 0 0 6 0 0 0 0 6 0 0 6 6 6 6 6 6 6 6 6 6 6 6 6 0 6 0 6 0 6 6}]
-	[14 {0 6 0 0 6 6 6 6 6 6 0 0 0 0 0 0 6 0 0 6 6 0 0 0 6 6 0 6 6 6 0 0 6 6 0 0 0 6 0 0 0 0 6 0 6 0 6 0}]
-	[14 {0 6 0 0 6 6 6 6 6 6 0 0 0 0 0 0 6 0 0 6 6 0 0 0 6 6 0 6 6 6 0 0 6 6 0 0 0 6 0 0 0 0 6 0 6 0 6 0}]
-	[14 {0 6 0 0 6 6 6 6 6 6 0 0 0 0 0 0 6 0 0 6 6 0 0 0 6 6 0 6 6 6 0 0 6 6 0 0 0 6 0 0 0 0 6 0 6 0 6 0}]
+    [42 {6 6 6 6 6 6 6 6 6 0 0 0}]
+    [42 {6 6 6 6 6 6 6 6 6 0 0 0}]
+    [42 {6 6 6 6 6 6 6 6 6 0 0 0}]
+    [42 {6 6 6 6 6 6 6 6 6 0 0 0}]
+    [42 {6 6 6 6 6 6 6 6 6 0 0 0}]
+    [14 {0 6 6 6 6 0 6 6 6 6 6 6 6 6 6 6 6 6 6 0 6 0 0 6 0 0 0 0 6 0 0 6 6 6 6 6 6 6 6 6 6 6 6 6 0 6 0 6 0 6 6}]
+    [14 {0 6 6 6 6 0 6 6 6 6 6 6 6 6 6 6 6 6 6 0 6 0 0 6 0 0 0 0 6 0 0 6 6 6 6 6 6 6 6 6 6 6 6 6 0 6 0 6 0 6 6}]
+    [14 {0 6 6 6 6 0 6 6 6 6 6 6 6 6 6 6 6 6 6 0 6 0 0 6 0 0 0 0 6 0 0 6 6 6 6 6 6 6 6 6 6 6 6 6 0 6 0 6 0 6 6}]
+    [14 {0 6 0 0 6 6 6 6 6 6 0 0 0 0 0 0 6 0 0 6 6 0 0 0 6 6 0 6 6 6 0 0 6 6 0 0 0 6 0 0 0 0 6 0 6 0 6 0}]
+    [14 {0 6 0 0 6 6 6 6 6 6 0 0 0 0 0 0 6 0 0 6 6 0 0 0 6 6 0 6 6 6 0 0 6 6 0 0 0 6 0 0 0 0 6 0 6 0 6 0}]
+    [14 {0 6 0 0 6 6 6 6 6 6 0 0 0 0 0 0 6 0 0 6 6 0 0 0 6 6 0 6 6 6 0 0 6 6 0 0 0 6 0 0 0 0 6 0 6 0 6 0}]
 }
 ]::
 nil;;
@@ -85,9 +85,9 @@ nil;;
 // v21 : changé couleur jaune clair (11) de 0xffff80 à 0xffcc00 (bug 197)
 const infoPalette={
 //    0:black  1:red    2:green  3:yellow 4:blue   5:violet 6:cyan   7:white
-	0x000000 0xff0000 0x00ff00 0xffff00 0x0000ff 0xff00ff 0x00ffff 0xffffff
+    0x000000 0xff0000 0x00ff00 0xffff00 0x0000ff 0xff00ff 0x00ffff 0xffffff
 //    8:gray   9:rose  10:lt gr 11:lt yel 12:lt bl 13:lt vio 14:lt cy 15:orange
-	0x808080 0xff8080 0x80ff80 0xffcc00 0x8080ff 0xff80ff 0x80ffff 0xff8000
+    0x808080 0xff8080 0x80ff80 0xffcc00 0x8080ff 0xff80ff 0x80ffff 0xff8000
 };;
 
 
@@ -113,105 +113,105 @@ fun infoAnimationsOf typ=listswitch infodata typ;;
 
 // retourne le prochain index utile (infoType non nul)
 fun _infoNextIndex i=
-	let i+2-> i in
-	if i>=16 then 0 else if infosrc.i then i else _infoNextIndex i;;
+    let i+2-> i in
+    if i>=16 then 0 else if infosrc.i then i else _infoNextIndex i;;
 
 // le service suivant
 fun infoStartOne i=
-	set infoIndex= i;
-	set infoType=(infosrc.(infoIndex))-1;
-	set infoVal=infosrc.(infoIndex+1);
-	set infoStartTime=time;
-	set infoAnimColori=0;
-	set infoAnimColorStart=time_ms;
-	let infoAnimationsOf infoType -> anims in
-	if anims==nil then set infoStartTime=nil
-	else let anims.infoVal ->[dur _] in set infoAnimColorDur= dur*10;
-	0;;
+    set infoIndex= i;
+    set infoType=(infosrc.(infoIndex))-1;
+    set infoVal=infosrc.(infoIndex+1);
+    set infoStartTime=time;
+    set infoAnimColori=0;
+    set infoAnimColorStart=time_ms;
+    let infoAnimationsOf infoType -> anims in
+    if anims==nil then set infoStartTime=nil
+    else let anims.infoVal ->[dur _] in set infoAnimColorDur= dur*10;
+    0;;
 
 fun infoNext=
-	infoStartOne (_infoNextIndex infoIndex);
-	0;;
+    infoStartOne (_infoNextIndex infoIndex);
+    0;;
 
 fun _dumpinfosrc i=
-	if (i < 16) then (
-		let infosrc.i -> key in
-		let infosrc.(i+1) -> val in
-		if key == 1 then ( Secho "Meteo="; Iecho val; Secho ",")
-		else if key == 2 then ( Secho "Bourse="; Iecho val; Secho ",")
-		else if key == 3 then ( Secho "Traffic="; Iecho val; Secho ",")
-		else if key == 6 then ( Secho "Mails="; Iecho val; Secho ",")
-		else if key == 7 then ( Secho "Pollution="; Iecho val; Secho ",");
-		_dumpinfosrc i+2
-	);;
+    if (i < 16) then (
+        let infosrc.i -> key in
+        let infosrc.(i+1) -> val in
+        if key == 1 then ( Secho "Meteo="; Iecho val; Secho ",")
+        else if key == 2 then ( Secho "Bourse="; Iecho val; Secho ",")
+        else if key == 3 then ( Secho "Traffic="; Iecho val; Secho ",")
+        else if key == 6 then ( Secho "Mails="; Iecho val; Secho ",")
+        else if key == 7 then ( Secho "Pollution="; Iecho val; Secho ",");
+        _dumpinfosrc i+2
+    );;
 fun dumpinfo=
-	Secho "infos=[";
-	_dumpinfosrc 0;
-	Secho "Messages#="; Iecho infomessages; Secho ",";
-	Secho "TaiChi="; Iecho infotaichi; Secho ",";
-	Secho "EarL="; Iecho extleft; Secho ",";
-	Secho "EarR="; Iecho extright; Secho "]"
-	;;
+    Secho "infos=[";
+    _dumpinfosrc 0;
+    Secho "Messages#="; Iecho infomessages; Secho ",";
+    Secho "TaiChi="; Iecho infotaichi; Secho ",";
+    Secho "EarL="; Iecho extleft; Secho ",";
+    Secho "EarR="; Iecho extright; Secho "]"
+    ;;
 
 fun infoRun=
-	if gSleepState == 0 then // no info while sleeping
-	if (!gItState) then // no info while in interactive mode
-	if !earDetecting then
-	(
-		// passage au service suivant ?
-		set infoType=(infosrc.(infoIndex))-1;
-		if infoStartTime==nil || (time-infoStartTime>INFO_TIMEOUT) || infoType<0 then infoNext;
+    if gSleepState == 0 then // no info while sleeping
+    if (!gItState) then // no info while in interactive mode
+    if !earDetecting then
+    (
+        // passage au service suivant ?
+        set infoType=(infosrc.(infoIndex))-1;
+        if infoStartTime==nil || (time-infoStartTime>INFO_TIMEOUT) || infoType<0 then infoNext;
 
-		// Allumage de la tête en verde si message(s) en attente (infomessages)
-		let (time_ms>>8)&7 -> t in
-			led LED_NOSE if (((infomessages>3) && (t==7)) || ((infomessages>2) && (t==5)) || ((infomessages>1) && (t==3)) || ((infomessages>0) && (t==1))) then RGB_GREEN else RGB_BLACK;
+        // Allumage de la tête en verde si message(s) en attente (infomessages)
+        let (time_ms>>8)&7 -> t in
+            led LED_NOSE if (((infomessages>3) && (t==7)) || ((infomessages>2) && (t==5)) || ((infomessages>1) && (t==3)) || ((infomessages>0) && (t==1))) then RGB_GREEN else RGB_BLACK;
 
-		// couleurs des 3 leds du ventre (service courant/animation courante/couleur courante)
-		set infoType=(infosrc.(infoIndex))-1;
-		set infoVal=infosrc.(infoIndex+1);
-		let infoAnimationsOf infoType -> anims in
-		let anims.infoVal ->[dur anime] in
-		if anime!=nil then
-		(
-			led LED_BODY_LEFT infoPalette.(anime.infoAnimColori);
-			led LED_BODY_MIDDLE infoPalette.(anime.(1+infoAnimColori));
-			led LED_BODY_RIGHT infoPalette.(anime.(2+infoAnimColori));
-			if (time_ms-infoAnimColorStart >= infoAnimColorDur) then
-			(
-				// next colors
-				set infoAnimColori=infoAnimColori+3;
-				set infoAnimColorStart=time_ms;
-				set infoAnimColorDur= dur*10;
-				if infoAnimColori>=tablen anime then set infoAnimColori=0
-			)
-		)
-		else
-		(
-			led LED_BODY_LEFT RGB_BLACK; led LED_BODY_MIDDLE RGB_BLACK; led LED_BODY_RIGHT RGB_BLACK
-		)
-	);;
+        // couleurs des 3 leds du ventre (service courant/animation courante/couleur courante)
+        set infoType=(infosrc.(infoIndex))-1;
+        set infoVal=infosrc.(infoIndex+1);
+        let infoAnimationsOf infoType -> anims in
+        let anims.infoVal ->[dur anime] in
+        if anime!=nil then
+        (
+            led LED_BODY_LEFT infoPalette.(anime.infoAnimColori);
+            led LED_BODY_MIDDLE infoPalette.(anime.(1+infoAnimColori));
+            led LED_BODY_RIGHT infoPalette.(anime.(2+infoAnimColori));
+            if (time_ms-infoAnimColorStart >= infoAnimColorDur) then
+            (
+                // next colors
+                set infoAnimColori=infoAnimColori+3;
+                set infoAnimColorStart=time_ms;
+                set infoAnimColorDur= dur*10;
+                if infoAnimColori>=tablen anime then set infoAnimColori=0
+            )
+        )
+        else
+        (
+            led LED_BODY_LEFT RGB_BLACK; led LED_BODY_MIDDLE RGB_BLACK; led LED_BODY_RIGHT RGB_BLACK
+        )
+    );;
 
 // util : slide tableau pour effacer case vide
 fun __infoslide i=
-	if (i == 16-2) then (
-		set infosrc.i = 0;
-		set infosrc.(i+1) = 0
-	) else (
-		set infosrc.i = infosrc.(i+2);
-		set infosrc.(i+1) = infosrc.(i+3);
-		// recurse
-		if (infosrc.i > 0) then __infoslide i+2
-	);;
+    if (i == 16-2) then (
+        set infosrc.i = 0;
+        set infosrc.(i+1) = 0
+    ) else (
+        set infosrc.i = infosrc.(i+2);
+        set infosrc.(i+1) = infosrc.(i+3);
+        // recurse
+        if (infosrc.i > 0) then __infoslide i+2
+    );;
 
 // enlève cette source de la liste
 fun __infosrc_del key i=
-	if (i < 16) then
-	if (infosrc.i == key) then (
-		// delete
-		__infoslide i
-	) else __infosrc_del key i+2;;
+    if (i < 16) then
+    if (infosrc.i == key) then (
+        // delete
+        __infoslide i
+    ) else __infosrc_del key i+2;;
 fun _infosrc_del key=
-	__infosrc_del key 0;;
+    __infosrc_del key 0;;
 
 proto controlsound 1;;
 
@@ -232,56 +232,99 @@ const midi_communion=
 
 // met à jour ou rajoute cette source
 fun __infosrc_update key val i=
-	if (i < 16) then
-	if (infosrc.i == 0 || infosrc.i == key) then (
-		// add or update
-		set infosrc.(i+1) = val;
-		if (infosrc.i == 0) then (
-			// add
-			set infosrc.i = key;
-			// set lapin to play this new one now
-			infoStartOne i
-		)
-	) else __infosrc_update key val i+2;; // recurse
+    if (i < 16) then
+    if (infosrc.i == 0 || infosrc.i == key) then (
+        // add or update
+        set infosrc.(i+1) = val;
+        if (infosrc.i == 0) then (
+            // add
+            set infosrc.i = key;
+            // set lapin to play this new one now
+            infoStartOne i
+        )
+    ) else __infosrc_update key val i+2;; // recurse
 
 fun _infosrc_update key val=
-	// allow for deletion
-	if key == 0 then _infosrc_del val
-	else __infosrc_update key val 0;;
+    // allow for deletion
+    if key == 0 then _infosrc_del val
+    else __infosrc_update key val 0;;
+
+
+// ancien format
+fun infoUpdate data=
+    Secho "infoUpdate OLD FORMAT:";
+    let strlen data -> len in (
+        // /14/80/0/0/0/0/0/0/0/0/0/0/0/0/0/0/14/13/0/
+        Secho "len="; Iecho len; Secho ":";
+        for i=0;i<len do (Iecho strget data i; Secho "/");
+
+        // sources
+        for i=0;i<(min 16 len) do set infosrc.i=strget data i;
+
+        // messages
+        set infomessages = 0;
+        if (len > 16+3) && (strget data (16+3)) then set infomessages = 2
+        else if (len > 16+2) && (strget data (16+2)) then set infomessages = 1;
+
+        // taichi
+        let 0 -> found in
+        for i=0;(i<(min 16 len) && !found);i+2 do
+        if ((strget data i) == 14) then (
+            set infotaichi = strget data i+1;
+            set found = 1
+        );
+
+        // process ears
+        if len > 17 then
+        let strget data 16 -> newleft in
+        let strget data 17 -> newright in
+        if (newleft != nil || newright != nil) && ((newleft!=extleft) || (newright!=extright)) then (
+            set extleft=newleft;
+            set extright=newright;
+            if ((!gSleepState) && (!earResetting)) then (
+                controlsound midi_communion;
+                earsGoToRefPos
+            )
+        )
+
+    );
+    dumpinfo;
+
+    0;;
 
 fun newInfoUpdate data=
-	Secho "newInfoUpdate:";
-	let 0 -> i in
-	let nil -> newleft in
-	let nil -> newright in (
-		while (i < strlen data) do (
-			let strget data i -> key in
-			let strget data i+1 -> val in (
-				Secho "key:"; Iecho key; Secho "="; Iecho val; Secho ",";
-				if key == 8 then set infomessages = val
-				else if key == 0 then _infosrc_del val
-				else if key == 1 || key == 2 || key == 3 || key == 6 || key == 7 then _infosrc_update key val
-				else if key == 4 then set newleft = val
-				else if key == 5 then set newright = val
-				else if key == 14 then set infotaichi = val
-				else (
-					Secho "ERROR newInfoUpdate unknown key="; Iecholn key;0
-				)
-			);
-			set i = i + 2
-		);
-		// process ears
-		Secho "newleft="; Iecho newleft; Secho "newright="; Iecho newright; Secho "extleft="; Iecho extleft; Secho "extright="; Iecho extright;
-		Secho "gSleepState="; Iecho gSleepState; Secho "earResetting="; Iecho earResetting;
-		if (newleft != nil || newright != nil) && ((newleft!=extleft) || (newright!=extright)) then (
-			set extleft=newleft;
-			set extright=newright;
-			if ((!gSleepState) && (!earResetting)) then (
-//				controlsound midi_communion;
-				earsGoToRefPos
-			)
-		)
-	);
-	Secholn "";
-	dumpinfo
-	;;
+    Secho "newInfoUpdate:";
+    let 0 -> i in
+    let nil -> newleft in
+    let nil -> newright in (
+        while (i < strlen data) do (
+            let strget data i -> key in
+            let strget data i+1 -> val in (
+                Secho "key:"; Iecho key; Secho "="; Iecho val; Secho ",";
+                if key == 8 then set infomessages = val
+                else if key == 0 then _infosrc_del val
+                else if key == 1 || key == 2 || key == 3 || key == 6 || key == 7 then _infosrc_update key val
+                else if key == 4 then set newleft = val
+                else if key == 5 then set newright = val
+                else if key == 14 then set infotaichi = val
+                else (
+                    Secho "ERROR newInfoUpdate unknown key="; Iecholn key;0
+                )
+            );
+            set i = i + 2
+        );
+        // process ears
+        Secho "newleft="; Iecho newleft; Secho "newright="; Iecho newright; Secho "extleft="; Iecho extleft; Secho "extright="; Iecho extright;
+        Secho "gSleepState="; Iecho gSleepState; Secho "earResetting="; Iecho earResetting;
+        if (newleft != nil || newright != nil) && ((newleft!=extleft) || (newright!=extright)) then (
+            set extleft=newleft;
+            set extright=newright;
+            if ((!gSleepState) && (!earResetting)) then (
+//              controlsound midi_communion;
+                earsGoToRefPos
+            )
+        )
+    );
+    Secholn "";
+    dumpinfo
+    ;;
