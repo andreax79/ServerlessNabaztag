@@ -3,65 +3,106 @@
 var conf;;
 
 // Store configuration
-fun confSave=
+fun config_save =
     Secholn "## save configuration";
     save conf 0 "conf.bin" 0 CONF_LENGTH;;
 
 // Init configuration
-fun confInit=
+fun config_init =
     set conf=strnew CONF_LENGTH;
     load conf 0 "conf.bin" 0 CONF_LENGTH;;
 
-fun confGet i len= strsub conf i len;;
+fun _config_get i len= strsub conf i len;;
 
-fun confGetbin i len= strsub conf i len;;
+fun _config_get_bin i len= strsub conf i len;;
 
-fun confGetstr i len=
+fun _config_get_str i len=
     let strstr conf "\0" i -> j in
     strsub conf i (if j==nil then len else min len j-i);;
 
-fun confSet i val len=
+fun _config_set i val len =
     strcpy conf i val 0 len;;
 
-fun confSetbin i val len=strcpy conf i val 0 len;;
+fun _config_set_bin i val len =
+    strcpy conf i val 0 len;;
 
-fun confSetstr i val len=
+fun _config_set_str i val len=
     let min strlen val len-1 -> len in
     (
         strcpy conf i val 0 len;
         strset conf i+len 0
     );;
 
-fun webport s= ((strget s 0)<<8)+strget s 1;;
+fun _config_webport s= ((strget s 0)<<8)+strget s 1;;
 
-fun confGetWifissid=confGetstr CONF_WIFISSID 32;;
-fun confGetWificrypt=strget confGet CONF_WIFICRYPT 1 0;;
-fun confGetWifikey0=confGetstr CONF_WIFIKEY0 64;;
-fun confGetWifiauth=strget confGet CONF_WIFIAUTH 1 0;;
-fun confGetWifipmk=confGetbin CONF_WIFIPMK 32;;
 
-fun confGetDhcp=strget confGet CONF_NETDHCP 1 0;;
-fun confGetNetip=confGet CONF_NETIP 4;;
-fun confGetNetmask=confGet CONF_NETMASK 4;;
-fun confGetNetgateway=confGet CONF_NETGATEWAY 4;;
-fun confGetNetdns=confGet CONF_NETDNS 4;;
+fun config_get_wifi_ssid = _config_get_str CONF_WIFISSID 32;;
+fun config_get_wifi_crypt = strget _config_get CONF_WIFICRYPT 1 0;;
+fun config_get_wifi_key0 = _config_get_str CONF_WIFIKEY0 64;;
+fun config_get_wifi_auth = strget _config_get CONF_WIFIAUTH 1 0;;
+fun config_get_wifi_pmk = _config_get_bin CONF_WIFIPMK 32;;
+fun config_get_dhcp = strget _config_get CONF_NETDHCP 1 0;;
+fun config_get_net_ip = _config_get CONF_NETIP 4;;
+fun config_get_netmask = _config_get CONF_NETMASK 4;;
+fun config_get_net_gw = _config_get CONF_NETGATEWAY 4;;
+fun config_get_net_dns = _config_get CONF_NETDNS 4;;
 
-fun confGetServerUrl=confGetstr CONF_SERVERURL 40;;
-fun confGetProxy=strget confGet CONF_PROXYENABLE 1 0;;
-fun confGetProxyip=confGet CONF_PROXYIP 4;;
-fun confGetProxyport=webport confGet CONF_PROXYPORT 2;;
+// Get server URL
+fun config_get_server_url =
+    _config_get_str CONF_SERVERURL 40;;
+
+// Get Proxy enabled
+fun config_get_proxy =
+    strget _config_get CONF_PROXYENABLE 1 0;;
+
+// Get Proxy IP
+fun config_get_proxy_ip =
+    _config_get CONF_PROXYIP 4;;
+
+// Get Proxy Port
+fun config_get_proxy_port =
+    _config_webport _config_get CONF_PROXYPORT 2;;
+
+// Get Language
+fun config_get_lang =
+    let _config_get CONF_LANGUAGE 2 -> val in
+    if val == nil then "" else val;;
 
 // Get City code
-fun confGetCity=confGetstr CONF_CITY 4;;
+fun config_get_city_code =
+    let _config_get_str CONF_CITY 4 -> val in
+    if val == nil then "" else val;;
+
+// Get Latitude
+fun config_get_latitude =
+    let _config_get_str CONF_LATITUDE 8 -> val in
+    if val == nil then "" else val;;
+
+// Get Longitude
+fun config_get_longitude =
+    let _config_get_str CONF_LONGITUDE 8 -> val in
+    if val == nil then "" else val;;
+
 // Get Daylight Saving Time
-fun confGetDST=strget confGet CONF_DST 1 0;;
+fun config_get_dst =
+    strget _config_get CONF_DST 1 0;;
 
-// Store city code
-fun confStoreCity val=
-    confSetstr CONF_CITY val 4;
-    confSave;;
+// Set Language
+fun config_set_lang lang =
+    _config_set_str CONF_LANGUAGE lang 3;;
 
-// Store Daylight Saving Time
-fun confStoreDST val=
-    strset conf CONF_DST val;
-    confSave;;
+// Set city code
+fun config_set_city val =
+    _config_set_str CONF_CITY val 4;;
+
+// Set Daylight Saving Time
+fun config_set_dst val =
+    strset conf CONF_DST val;;
+
+// Set latitude
+fun config_set_latitude val =
+    _config_set_str CONF_LATITUDE val 8;;
+
+// Set longitude
+fun config_set_longitude val =
+    _config_set_str CONF_LONGITUDE val 8;;

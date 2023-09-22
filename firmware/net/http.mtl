@@ -186,13 +186,13 @@ fun httpsendreq ip x=
 fun httprequest verb url postdata cb type=
 	Secho "HTTPREQUEST url=";Secholn url;
 	let cuturl url ->[host port path] in	// décodage de l'url de la requête
-	let if confGetProxy then strcatlist "http://"::host::":"::(itoa port)::path::nil else path -> path in //Icy-MetaData:1\13\n
+	let if config_get_proxy then strcatlist "http://"::host::":"::(itoa port)::path::nil else path -> path in //Icy-MetaData:1\13\n
 	let strcatlist verb::" "::path::" HTTP/1.0\13\nUser-Agent: Mozilla/5.0\13\nAccept: */*\13\nHost: "::host::"\13\n"::
 			if postdata==nil then "\13\n"::nil
 			else "Content-length: "::(itoa strlen postdata)::"\13\n\13\n"::postdata::nil
 		-> request in	// création de la chaîne requête
-	let if confGetProxy then webip confGetProxyip else host -> host in
-	let if confGetProxy then confGetProxyport else port -> port in
+	let if config_get_proxy then webip config_get_proxy_ip else host -> host in
+	let if config_get_proxy then config_get_proxy_port else port -> port in
 	let [outputH:request indexH:0 cbH:cb typeH:type stateH:HTTP_SOLVE aliveH:time_ms sonH:nil redirLevelH:0] -> httpreq in	// création de la structure requête
 	(
 		if isip host 0 then httpsendreq host [port httpreq]

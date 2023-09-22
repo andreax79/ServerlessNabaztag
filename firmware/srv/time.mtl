@@ -7,6 +7,7 @@
 proto check_crontab 0;;
 
 const TIME_PROTOCOL_PORT = 37 ;;
+const TIME_PROTOCOL_EPHEMERAL_PORT = 49152 ;;
 
 var time_server_ip = "\128\138\140\44" ;;
 var _last_read_time = 0 ;;  // last value read from the time server
@@ -24,11 +25,11 @@ var local_time_second = 0 ;; // current second
 
 // Get Daylight Saving Time offset (in minutes)
 fun get_dst_offset=
-    if (confGetDST == 1) then 60 else 0;;
+    if (config_get_dst == 1) then 60 else 0;;
 
 // Get the time offset (in minutes) from the config
 fun get_time_offset=
-    get_dst_offset + get_offset_from_city_code confGetCity;;
+    get_dst_offset + get_offset_from_city_code config_get_city_code;;
 
 // Calculate the local time "time+offset" (time only, not date)
 fun get_local_time=
@@ -37,7 +38,7 @@ fun get_local_time=
 // Update the current year, month, day, housrs, minutes, seconds
 fun calculate_local_time=
     let get_local_time -> local_time in
-    let 4 * (days_since_2000 - 60) + 3 -> ee in
+    let 4 * (days_since_2000 - 59) + 3 -> ee in
     let (ee % 1461) / 4 -> gg in
     let 5 * gg + 2 -> hh in
     let ((hh % 153) / 5) + 1 -> day in
@@ -102,19 +103,22 @@ fun callback_time msg mac ipfrom=
     let ((h % 675) * 65536 + l) % 86400 -> new_time_of_the_day in   // 675 is 86400 >> 7
     let h * 512 / 675 - 36524 -> new_days_since_2000 in
     (
+        Secho "h: "; Iecho h; Secho " l: "; Iecho l; Secho " new_time_of_the_day: "; Iecho new_time_of_the_day; Secho " new_days_since_2000: "; Iecho new_days_since_2000;
+        Secholn "";
         // Set last update
         set _last_read_internal_time = now;
         set _last_read_time = new_time_of_the_day;
         // Update time of the day
         set time_of_the_day = new_time_of_the_day;
         set days_since_2000 = new_days_since_2000;
-        calculate_local_time
+        calculate_local_time;
+        Secholn current_time_human
     );
-    unregudp TIME_PROTOCOL_PORT;
+    unregudp TIME_PROTOCOL_EPHEMERAL_PORT;
     0;;
 
 // Get the current time from the time server
 fun get_time_from_timeserver=
-    udpsend netip TIME_PROTOCOL_PORT time_server_ip TIME_PROTOCOL_PORT "" nil;
-    regudp TIME_PROTOCOL_PORT #callback_time;
+    udpsend netip TIME_PROTOCOL_EPHEMERAL_PORT time_server_ip TIME_PROTOCOL_PORT "" nil;
+    regudp TIME_PROTOCOL_EPHEMERAL_PORT #callback_time;
     0;;

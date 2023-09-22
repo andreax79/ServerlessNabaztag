@@ -12,7 +12,7 @@ All the commands can be called with a single HTTP requests from an external prog
 ```
 $ curl http://nabaztag/wakeup
 ```
-    
+
 In examples/check_mail.py, there is a script that turns on the nose when you have unread email and changes the lights color according to the weather forecast.
 
 Configure the rabbit
@@ -20,7 +20,7 @@ Configure the rabbit
 
 * Unplug the rabbit, press the button on its head and hold it while you replug your rabbit. When all the lights are blue, you can release the button
 * On your computer, connect to the wifi network created by your rabbit (the name should be Nabaztag\<XX\>)
-* Go to the configuration page at the following address: http://192.168.0.1 
+* Go to the configuration page at the following address: http://192.168.0.1
 * At the bottom of the page, in General Info, change "Violet Platform" to http://nabaztag.joe.dj/vl
 * Click on Update settings and wait for rabbit to reboot.
 * You can now connect to the IP of your rabbit, configure and control it. (note: if your rabbit IP is assigned with DHCP, you have to discover the IP address. Usually you can check the assigned IP from some page on your router)
@@ -34,12 +34,12 @@ Server install instruction
 * Copy the file "bc.jsp" to the web server into the "vl" folder (note: it's not a Java Server Page, it's a binary file)
 * Download the mp3 files from https://github.com/andreax79/ServerlessNabaztag/tree/main/vl
 * Copy the mp3 files in the "vl/config" directory on the web server. The resulting directroy structure is the following:
- 
+
 ![](/imgs/files.jpg "Directory structure")
 
 * Unplug the rabbit, press the button on its head and hold it while you replug your rabbit. When all the lights are blue, you can release the button
 * On your computer, connect to the wifi network created by your rabbit (the name should be Nabaztag\<XX\>)
-* Go to the configuration page at the following address: http://192.168.0.1 
+* Go to the configuration page at the following address: http://192.168.0.1
 * At the bottom of the page, in General Info, change "Violet Platform" to the url of the vl directory (without http://, example: 192.168.0.1/vl)
 * Click on Update settings and wait for rabbit to reboot.
 * You can now connect to the IP of your rabbit, configure and control it. (note: if your rabbit IP is assigned with DHCP, you have to discover the IP address. Usually you can check the assigned IP from some page on your router)
@@ -47,11 +47,12 @@ Server install instruction
 Firmware features
 -----------------
 
-* Control the rabbit via HTTP
-* Configure the language and timezone via HTTP
-* The rabbit fetches the current time from a time server and plays the corresponding sound every hour
+* Control the rabbit via HTTP API
+* Configure via web interface
+* Fetch the current time from a time server and play the corresponding sound every hour
+* Fetch weather from [open-meteo](https://open-meteo.com)
 * Autonomously wake up at go to sleep
-* Respond to ping request
+* Respond to ICMP pings
 
 Development
 -----------
@@ -81,4 +82,5 @@ $ python3 -m http.server
 
 * [Nabaztag Firmware with WPA2 support](https://github.com/RedoXyde/nabgcc/tree/wpa2)
 * [Milligram, A minimalist CSS framework](https://milligram.io)
+* [open-meteo, Free Weather Forecast API for non-commercial use ](https://github.com/open-meteo/open-meteo)
 * [pynab](https://github.com/nabaztag2018/pynab)

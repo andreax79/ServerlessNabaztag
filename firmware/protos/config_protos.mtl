@@ -1,22 +1,28 @@
-proto confGetWifissid 0 ;;
-proto confGetWificrypt 0 ;;
-proto confGetWifikey0 0 ;;
-proto confGetWifiauth 0 ;;
-proto confGetWifipmk 0 ;;
-proto confGetDhcp 0 ;;
-proto confGetNetip 0 ;;
-proto confGetNetmask 0 ;;
-proto confGetNetgateway 0 ;;
-proto confGetNetdns 0 ;;
-proto confGetServerUrl 0 ;;
-proto confGetProxy 0 ;;
-proto confGetProxyip 0 ;;
-proto confGetProxyport 0 ;;
-proto confGetCity 0 ;;
-proto confGetDST 0 ;;
+proto config_get_wifi_ssid 0 ;;
+proto config_get_wifi_crypt 0 ;;
+proto config_get_wifi_key0 0 ;;
+proto config_get_wifi_auth 0 ;;
+proto config_get_wifi_pmk 0 ;;
+proto config_get_dhcp 0 ;;
+proto config_get_net_ip 0 ;;
+proto config_get_netmask 0 ;;
+proto config_get_net_gw 0 ;;
+proto config_get_net_dns 0 ;;
+proto config_get_server_url 0 ;;
+proto config_get_proxy 0 ;;
+proto config_get_proxy_ip 0 ;;
+proto config_get_proxy_port 0 ;;
+proto config_get_lang 0 ;;
+proto config_get_city_code 0 ;;
+proto config_get_dst 0 ;;
+proto config_get_latitude 0 ;;
+proto config_get_longitude 0 ;;
 
-proto confStoreCity 1 ;;
-proto confStoreDST 1 ;;
+proto config_set_lang 1 ;;
+proto config_set_city 1 ;;
+proto config_set_dst 1 ;;
+proto config_set_latitude 1 ;;
+proto config_set_longitude 1 ;;
 
 
 const CONF_SERVERURL=0;;		//41    Violet Platform URL
@@ -40,4 +46,8 @@ const CONF_CITY=167;;           //4     City code
 // 171 - 174 --- free ---
 const CONF_WIFIPMK=175;;		//32    WiFi PMK (Pairwise Master Key)
 const CONF_MAGIC=207;;		    //1
-const CONF_LENGTH=208;;
+const CONF_LATITUDE=208;;	    //8     Latitude
+const CONF_LONGITUDE=216;;	    //8     Longitude
+const CONF_WAKEUP=224;;	        //1     Wake up time
+const CONF_SLEEP=225;;	        //1     Sleep time
+const CONF_LENGTH=226;;

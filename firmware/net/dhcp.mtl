@@ -203,7 +203,7 @@ fun checkdhcp force =
 */
 fun startdhcp=
 	Dhcpw "startdhcp";
-	if (confGetDhcp && !dhcp_client_started) then
+	if (config_get_dhcp && !dhcp_client_started) then
 	(
 		Dhcpw "really do startdhcp";
 		regudp 68 #cbnetdhcp;

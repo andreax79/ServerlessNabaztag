@@ -102,13 +102,13 @@ fun wifiInit rescan=
 		)
 		else
 		(
-			if confGetDhcp then	set netip=netip_empty
+			if config_get_dhcp then	set netip=netip_empty
 			else
 			(
-				set netmask=confGetNetmask;
-				set netgateway=confGetNetgateway;
-				addnewdns confGetNetdns 1;
-				set netip=confGetNetip
+				set netmask=config_get_netmask;
+				set netgateway=config_get_net_gw;
+				addnewdns config_get_net_dns 1;
+				set netip=config_get_net_ip
 			);
 			0
 		);
@@ -152,10 +152,10 @@ fun wifiAuth=
 	setleds RGB_AMBER;
 	if wifiscans==nil then 0
 	else
-		let Iecholn confGetWificrypt -> crypt in
-		let confGetWifiauth -> auth in
-		let if crypt==1 then wifiwepkey confGetWifikey0
-			else if crypt==2 then confGetWifipmk -> key in
+		let Iecholn config_get_wifi_crypt -> crypt in
+		let config_get_wifi_auth -> auth in
+		let if crypt==1 then wifiwepkey config_get_wifi_key0
+			else if crypt==2 then config_get_wifi_pmk -> key in
 		(
 			dump key;
 			set wifitry=time;
@@ -184,7 +184,7 @@ fun wifiRun=
 					(
 						if wifiscans==nil then
 						(
-							let confGetWifissid -> ssid in
+							let config_get_wifi_ssid -> ssid in
 							let if strlen ssid then ssid else nil -> ssid in
 							let netScan ssid -> lscan in
 							let sort lscan #scancmpssid -> l in
@@ -193,7 +193,7 @@ fun wifiRun=
 						);
 						if wifiAuth then
 						(
-							Secho confGetWifissid; Secholn ":-------------gostation";
+							Secho config_get_wifi_ssid; Secholn ":-------------gostation";
 							gostationW [0 time]
 						)
 					)
@@ -217,7 +217,7 @@ fun wifiRun=
 		|(gostationW x-> if state==RT2501_S_CONNECTED then
 				(
 					Secholn "-------------dhcp";
-					if confGetDhcp then startdhcp;
+					if config_get_dhcp then startdhcp;
 					startdnsclient;
 					dhcpW time
 				)
@@ -237,7 +237,7 @@ fun wifiRun=
 			netSetmode IEEE80211_M_MANAGED nil 11;
 			if wifiAuth then
 			(
-				Secho confGetWifissid; Secholn ":-------------gostation";
+				Secho config_get_wifi_ssid; Secholn ":-------------gostation";
 				gostationW [0 time]
 			)
 		 )

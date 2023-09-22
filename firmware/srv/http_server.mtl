@@ -1,4 +1,4 @@
-//--------------------------------------------------------------------------------------------------
+//---------------------value
 // HTTP Server
 //--------------------------------------------------------------------------------------------------
 
@@ -125,10 +125,12 @@ fun jsonstatus=
             (jsonnext jsonvalue "mac" webmac netMac)::
             (jsonnext jsonvalue "ts" current_time_human)::
             (jsonnext jsonvalue "time" itoa time)::
-            (jsonnext jsonvalue "city_code" confGetCity)::
-            (jsonnext jsonvalue "dst" itoa confGetDST)::
+            (jsonnext jsonvalue "city_code" config_get_city_code)::
+            (jsonnext jsonvalue "dst" itoa config_get_dst)::
             (jsonnext jsonvalue "time_offset" itoa get_time_offset)::
-            (jsonnext jsonvalue "language" get_language)::
+            (jsonnext jsonvalue "language" config_get_lang)::
+            (jsonnext jsonvalue "latitude" config_get_latitude)::
+            (jsonnext jsonvalue "longitude" config_get_longitude)::
             (jsonnext jsonvalue "taichi" itoa infotaichi)::
             (jsonnext jsonvalue "messages" itoa infomessages)::
             (jsonnext jsonvalue "left" itoa extleft)::
@@ -141,6 +143,7 @@ fun jsonstatus=
             (jsonnext jsonvalue "busy_state" itoa gBusyState)::
             (jsonnext jsonvalue "it_state" itoa gItState)::
             (jsonnext jsonvalue "it_app" gItApp)::
+            (jsonnext jsonvalue "meteo_weather_code" itoa _meteo_weather_code)::
             (jsonlast jsonvalue "rev" BYTECODE_REVISION_STR)::
         "}"::nil
 ;;
@@ -179,7 +182,7 @@ proto _infosrc_update 2;;
 //--------------------------------------------------------------------------------------------------
 
 fun unknownCommand=
-    wavstarthttp strcatlist "http://"::confGetServerUrl::"/config/reco/"::get_language::"/Comprend"::(itoa 0 + random 4)::".mp3"::nil #_cbWavError;;
+    wavstarthttp strcatlist "http://"::config_get_server_url::"/config/reco/"::config_get_lang::"/Comprend"::(itoa 0 + random 4)::".mp3"::nil #_cbWavError;;
 
 fun filterplus s=
     let strlen s -> n in
@@ -235,11 +238,15 @@ fun cbhttp req=
     let uriextract uri -> [page args] in
     (
         Secho "uri : "; Secholn uri;
-        //Secho "page : "; Secholn page;
+        Secho "page : "; Secholn page;
 
         // misc
-        if !strcmp page "gettime" then (  // get time from server
+        if !strcmp page "update-time" then (  // get time from server
             get_time_from_timeserver;
+            http_header HTTP_204 nil
+        )
+        else if !strcmp page "update-weather" then (  // get weather info
+            meteo_get;
             http_header HTTP_204 nil
         )
         else if !strcmp page "stop" then (  // stop everything we can be doing and resets to either idle or asleep
@@ -336,16 +343,14 @@ fun cbhttp req=
             for i=1;i<=8 do (_infosrc_update 0 i);
             http_header HTTP_204 nil
         )
-        else if !strcmp page "lang" then (  // set language
-            set_language Sgetargvalue args 'v';
-            http_header HTTP_204 nil
-        )
-        else if !strcmp page "city" then (  // set city code
-            confStoreCity Sgetargvalue args 'v';
-            http_header HTTP_204 nil
-        )
-        else if !strcmp page "dst" then (  // set Daylight Saving Time
-            confStoreDST atoi Sgetargvalue args 'v';
+        else if !strcmp page "setup" then (
+            config_set_lang Sgetargvalue args 'l';       // set language
+            config_set_city Sgetargvalue args 'c';       // set city code
+            config_set_dst atoi Sgetargvalue args 'd';   // set Daylight Saving Time
+            config_set_latitude Sgetargvalue args 'j';   // set latitude
+            config_set_longitude Sgetargvalue args 'k';  // set longitude
+            config_save;
+            meteo_get;
             http_header HTTP_204 nil
         )
         else if !strcmp page "milligram.css" then (

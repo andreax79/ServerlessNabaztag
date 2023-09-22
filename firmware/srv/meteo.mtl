@@ -1,0 +1,79 @@
+
+const METEO_TEST = "{\"latitude\":45.46,\"longitude\":9.18,\"generationtime_ms\":0.048995018005371094,\"utc_offset_seconds\":0,\"timezone\":\"GMT\",\"timezone_abbreviation\":\"GMT\",\"elevation\":145.0,\"daily_units\":{\"time\":\"iso8601\",\"weathercode\":\"wmo code\"},\"daily\":{\"time\":[\"2023-09-22\"],\"weathercode\":[80]}}";;
+
+var _meteo_weather_code = nil;;
+
+fun _meteo_search_key s=
+    strcatlist "\""::s::"\""::nil;;
+
+// Get JSON string from the given key
+fun _meteo_get_json_from_key json key =
+    let strstr json _meteo_search_key key 0 -> start in
+    let if (start==nil) then nil else (strstr json ":" start) -> kv_start in
+    if (kv_start==nil) then nil else (strsub json kv_start+1 nil);;
+
+// Get weathercode from JSON
+fun _meteo_get_weathercode json =
+    let _meteo_get_json_from_key json "daily" -> daily_json in
+    let _meteo_get_json_from_key daily_json "weathercode" -> weathercode_json in
+    let strstr weathercode_json "[" 0 -> c_start in
+    let strstr weathercode_json "]" c_start -> c_end in
+    let if (weathercode_json==nil || c_start==nil || c_end ==nil) then nil else (strsub weathercode_json c_start+1 c_end-1) -> weathercode_txt in
+    if (weathercode_txt==nil) then nil else atoi weathercode_txt
+    ;;
+
+// Prepare the url for getting the weather for a given lat long
+fun _meteo_prepare_url lat long =
+    if (lat==nil || long==nil || (strlen lat)==0 || (strlen long)==0) then
+        nil
+    else
+        strcatlist "http://api.open-meteo.com/v1/forecast?latitude="::lat::"&longitude="::long::"&daily=weathercode&timezone=GMT&forecast_days=1"::nil;;
+
+
+// WMO Weather interpretation codes (WW)
+//
+// Code         Info Code Description
+// 0            sun   0   Clear sky
+// 1, 2, 3      cloud 1   Mainly clear, partly cloudy, and overcast
+// 45, 48       fog   2   Fog and depositing rime fog
+// 51, 53, 55   rain  3   Drizzle: Light, moderate, and dense intensity
+// 56, 57       rain  3   Freezing Drizzle: Light and dense intensity
+// 61, 63, 65   rain  3   Rain: Slight, moderate and heavy intensity
+// 66, 67       rain  3   Freezing Rain: Light and heavy intensity
+// 71, 73, 75   snow  4   Snow fall: Slight, moderate, and heavy intensity
+// 77           snow  4   Snow grains
+// 80, 81, 82   rain  3   Rain showers: Slight, moderate, and violent
+// 85, 86       snow  4   Snow showers slight and heavy
+// 95           storm 5   Thunderstorm: Slight or moderate
+// 96, 99       storm 5   Thunderstorm with slight and heavy hail
+
+// Convert weather code info info code
+fun _weather_code_to_info_code weather_code =
+    if weather_code == 0 then 0
+    else if weather_code <= 3 then 1
+    else if (weather_code >= 1)  && (weather_code <= 3)  then 1
+    else if (weather_code >= 45) && (weather_code <= 48) then 2
+    else if (weather_code >= 51) && (weather_code <= 67) then 3
+    else if (weather_code >= 71) && (weather_code <= 75) then 4
+    else if (weather_code == 77) then 4
+    else if (weather_code >= 80) && (weather_code <= 82) then 3
+    else if (weather_code >= 85) && (weather_code <= 86) then 4
+    else if (weather_code >= 95) && (weather_code <= 99) then 5
+    else nil;;
+
+// Get weather callback - parse the JSON, the the weather code and set the led status
+fun _meteo_get_cb httpreq res=
+    let httpgetcontent res -> content in
+    let _meteo_get_weathercode content -> weather_code in
+    let _weather_code_to_info_code weather_code -> info_code in (
+        set _meteo_weather_code = weather_code;
+        _infosrc_update 1 (if (!gSleepState && info_code!=nil) then info_code else 0);
+        0
+    );;
+
+// Get weather and set the led status
+fun meteo_get =
+    // Iecholn _meteo_get_weathercode METEO_TEST;
+    let _meteo_prepare_url config_get_latitude config_get_longitude -> url in
+    httprequest "GET" url nil #_meteo_get_cb HTTP_NORMAL
+    ;;

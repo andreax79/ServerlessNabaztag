@@ -266,11 +266,11 @@ fun controlsound s=
 #include hw/button.mtl
 
 // URLs normales
-fun configurl=strcatlist confGetServerUrl::"/locate.jsp?sn="::(webmac netMac)::"&h="::(itoa HARDWARE)::"&v="::(getBytecodeRevision)::nil;;
+fun configurl=strcatlist config_get_server_url::"/locate.jsp?sn="::(webmac netMac)::"&h="::(itoa HARDWARE)::"&v="::(getBytecodeRevision)::nil;;
 #ifdef PING
 fun pingurl =strcatlist pingsrv::"/vl/p4.jsp?sn="::(webmac netMac)::"&v="::(getBytecodeRevision)::"&st=1&sd="::(itoh senddata)::"&h="::(itoa HARDWARE)::nil;;
 #endif
-fun recordurl mode=strcatlist "http://"::confGetServerUrl::"/hooks/record.php"::nil;;
+fun recordurl mode=strcatlist "http://"::config_get_server_url::"/hooks/record.php"::nil;;
 fun rfidurl tag=strcatlist pingsrv::"/vl/rfid.jsp?sn="::(webmac netMac)::"&v="::(getBytecodeRevision)::"&h="::(itoa HARDWARE)::"&t="::(webmac tag)::nil;;
 fun interactifurl application = strcatlist pingsrv::"/vl/itmode.jsp?sn="::(webmac netMac)::"&v="::(getBytecodeRevision)::"&h="::(itoa HARDWARE)::"&a="::application::nil;;
 #ifdef XMPP
@@ -284,16 +284,17 @@ fun interactifurl_btn application position cmdindex btn= strcatlist (interactifu
 fun interactifurl_done application = strcatlist (interactifurl application)::"&st=done"::g_cookie::nil;;
 fun interactifurl_ear application position cmdindex earg eard = strcatlist (interactifurl application)::"&st=ear&pos="::(itoa position)::"&idx="::(itoa cmdindex)::"&el="::(itoa earg)::"&er="::(itoa eard)::g_cookie::nil;;
 fun interactifurl_reco application position cmdindex = strcatlist (interactifurl application)::"&st=reco&pos="::(itoa position)::"&idx="::(itoa cmdindex)::g_cookie::nil;;
-fun interactifurl_rfid application tag = strcatlist (interactifurl application)::"&st=rfid&t="::(webmac tag)::g_cookie::nil;;
+
+#include srv/meteo.mtl
 
 #ifdef PING
 #include srv/ping.mtl
 #endif
 
 #ifdef WEBSERVER
-#include utils/lang.mtl
 #include srv/http_server.mtl
 #endif
+
 
 fun runinit=
     set run=configstartRun;;
@@ -366,6 +367,7 @@ fun runconfigstart=
         set gConfigStart = time_ms;
         leds_set_state LEDS_STATE_CONFIG_WAIT ;
 #ifdef SERVERLESS
+        meteo_get;
         get_time_from_timeserver;
         endSleep
 #else
@@ -1772,7 +1774,6 @@ fun loop=
 #ifdef SERVERLESS
     run_icmp_ping;
     periodic_send_gratuitous_arp;
-    set infotaichi = 80;
 #endif
     checkdhcp 0;
 
@@ -1790,7 +1791,7 @@ fun main=
     MACecho netMac 0 1;
     set master=0;
     Secholn ":started";
-    confInit;
+    config_init;
     wifiInit 0;
     loopcb  #loop;
     infoInit;

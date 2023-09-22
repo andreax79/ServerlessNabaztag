@@ -291,7 +291,7 @@ fun dnstime=
 fun startdnsclient=
 
 	// on ajoute les dns "de secours" s'ils ne sont pas déjà dans la liste
-	addnewdns confGetNetdns 0;
+	addnewdns config_get_net_dns 0;
 
 	regudp DNSLOCAL #cbnetdns;
 	set ldnsreq=nil;
@@ -437,5 +437,5 @@ fun dnslisttostr =
 */
 fun dnslistfromdhcp dnslist =
 	set netdnslist = dnslist;
-	addnewdns confGetNetdns 0
+	addnewdns config_get_net_dns 0
 ;;

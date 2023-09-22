@@ -1,8 +1,0 @@
-
-fun set_language lang=
-	confSetstr CONF_LANGUAGE lang 3;
-	confSave;;
-
-fun get_language=
-	confGet CONF_LANGUAGE 2;;
-
