@@ -2,7 +2,7 @@
 // HTTP Server
 //--------------------------------------------------------------------------------------------------
 
-type Sock=[sockCnx sockInput sockSize sockOutput sockIndex sockCloseAfter sockCallback];;
+type Sock=[sockInput sockSize sockOutput sockIndex sockCloseAfter sockCallback];;
 
 const HTTP_200 = "200 OK";;
 const HTTP_204 = "204 No Content";;
@@ -42,18 +42,18 @@ fun tcpwrite cnx sock=
         if sock.sockIndex!=nil && sock.sockIndex>=strlen sock.sockOutput then
         (   set sock.sockIndex=nil;
             set sock.sockOutput=nil;
-            if sock.sockCloseAfter==1 then closetcp sock.sockCnx
+            if sock.sockCloseAfter==1 then closetcp cnx
         )
     );
     0;;
 
-fun tcpsend sock s =
+fun tcpsend cnx sock s =
     set sock.sockOutput=strcat sock.sockOutput s;
-    tcpwrite sock.sockCnx sock;;
+    tcpwrite cnx sock;;
 
-fun tcpcloseafter sock =
+fun tcpcloseafter cnx sock =
     set sock.sockCloseAfter=1;
-    if sock.sockIndex>=strlen sock.sockOutput then closetcp sock.sockCnx
+    if sock.sockIndex>=strlen sock.sockOutput then closetcp cnx
     ;;
 
 fun tcpread cnx input sock=
@@ -75,21 +75,21 @@ fun tcpread cnx input sock=
             set sock.sockInput=nil;
             let call sock.sockCallback [str] -> res in
             (
-                tcpsend sock res;
-                tcpcloseafter sock
+                tcpsend cnx sock res;
+                tcpcloseafter cnx sock
             )
         )
     );
     0;;
 
-fun tcpevent t val msg sock=
-    if val==TCPWRITE then tcpwrite t sock
-    else if val==TCPCLOSE then tcpread t nil sock
-    else tcpread t msg sock;;
+fun tcpevent cnx val msg sock=
+    if val==TCPWRITE then tcpwrite cnx sock
+    else if val==TCPCLOSE then tcpread cnx nil sock
+    else tcpread cnx msg sock;;
 
 fun cbsrv cnx code msg cbrequest=
     Secholn "httpsrv accept";
-    let [sockCnx:cnx sockCallback:cbrequest]-> sock in
+    let [sockCallback:cbrequest]-> sock in
     (
         tcpcb cnx fixarg4 #tcpevent sock;
         0
@@ -140,7 +140,8 @@ fun jsonstatus=
             (jsonnext jsonvalue "processing_state" itoa gProcessingState)::
             (jsonnext jsonvalue "busy_state" itoa gBusyState)::
             (jsonnext jsonvalue "it_state" itoa gItState)::
-            (jsonlast jsonvalue "it_app" gItApp)::
+            (jsonnext jsonvalue "it_app" gItApp)::
+            (jsonlast jsonvalue "rev" BYTECODE_REVISION_STR)::
         "}"::nil
 ;;
 

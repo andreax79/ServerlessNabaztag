@@ -200,6 +200,7 @@ int tcpEventRead(int fd)
 			return 0;
 		}
 
+    my_printf(LOG_SIMUNET, "tcpEventRead: idx: %d tcp_listen[idx]: %d\n", idx, tcp_listen[idx]);
 	if (tcp_listen[idx])
 		{
 			// accept
@@ -209,7 +210,7 @@ int tcpEventRead(int fd)
 			int ni,ip,port;
 			char buf[16];
 
-			tcp_listen[idx] = 0;
+			//tcp_listen[idx] = 0;
 
 			sizecor=sizeof(cor);
 			ns=accept(fd,(struct sockaddr*)&cor,&sizecor);
