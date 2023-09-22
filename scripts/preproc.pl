@@ -1,6 +1,9 @@
 #!/usr/bin/perl -w
 
 use strict;
+use Time::Piece;
+
+my $datetime = gmtime->datetime;
 
 my %defines;
 my %includedFiles;
@@ -23,6 +26,7 @@ sub processThisFile
         $ifdefskip[$ifdefLevel] = 0;
 
         while (my $line = <$F>) {
+                $line =~ s/(__DATE__)/$datetime/g;
                 if ($isHtml) {
                     # quote "
                     $line =~ s/(["])/\\$1/g;

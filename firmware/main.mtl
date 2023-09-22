@@ -67,7 +67,7 @@ proto itNoteEarTouched 3;;
 
 #include net/net_vars.mtl
 
-const BYTECODE_REVISION_STR = "$Rev: 20120312 $";;
+const BYTECODE_REVISION_STR = "$Rev: __DATE__ $";;
 fun getBytecodeRevision =
     strsub BYTECODE_REVISION_STR 6 ((strlen BYTECODE_REVISION_STR) - 8);;
 
