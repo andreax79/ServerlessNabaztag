@@ -11,7 +11,7 @@ const TIME_PROTOCOL_EPHEMERAL_PORT = 49152 ;;
 
 var time_server_ip = "\128\138\140\44" ;;
 var _last_read_time = 0 ;;  // last value read from the time server
-var _last_read_internal_time = 0 ;; // internal time (since boot) of the last time read
+var _last_read_internal_time = nil ;; // internal time (since boot) of the last time read
 var _last_update_time_internal_time = -1 ;; // last time (since boot) of execution of update_time_internal
 var days_since_2000 = 0;; // number of days since 2000-01-01 (UTC)
 var time_of_the_day = 0;; // seconds since midnigjt (UTC)
@@ -60,6 +60,7 @@ fun update_time_internal=
     if now != _last_update_time_internal_time then
         let (_last_read_time + (now - _last_read_internal_time)) % 86400 -> new_time_of_the_day in
         (
+            // Secho "update_time_internal now "; Iecho now; Secho " _last_update_time_internal_time: "; Iecholn _last_update_time_internal_time;
             // Set last update
             set _last_update_time_internal_time = now;
             // Update time of the day
@@ -68,7 +69,7 @@ fun update_time_internal=
             if (get_local_time == 0) then set days_since_2000 = days_since_2000+1;
             calculate_local_time;
             // only check when initialized
-            if (_last_read_internal_time > 0) then check_crontab
+            if (_last_read_internal_time !=nil) then check_crontab
         );
     0;;
 

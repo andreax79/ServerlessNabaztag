@@ -75,5 +75,5 @@ fun _meteo_get_cb httpreq res=
 fun meteo_get =
     // Iecholn _meteo_get_weathercode METEO_TEST;
     let _meteo_prepare_url config_get_latitude config_get_longitude -> url in
-    httprequest "GET" url nil #_meteo_get_cb HTTP_NORMAL
-    ;;
+    httprequest "GET" url nil #_meteo_get_cb HTTP_NORMAL;
+    0;;

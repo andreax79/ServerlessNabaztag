@@ -17,12 +17,16 @@ proto config_get_city_code 0 ;;
 proto config_get_dst 0 ;;
 proto config_get_latitude 0 ;;
 proto config_get_longitude 0 ;;
+proto config_get_wake_up 0 ;;
+proto config_get_go_to_bed 0 ;;
 
 proto config_set_lang 1 ;;
 proto config_set_city 1 ;;
 proto config_set_dst 1 ;;
 proto config_set_latitude 1 ;;
 proto config_set_longitude 1 ;;
+proto config_set_wake_up 1 ;;
+proto config_set_go_to_bed 1 ;;
 
 
 const CONF_SERVERURL=0;;		//41    Violet Platform URL
@@ -48,6 +52,6 @@ const CONF_WIFIPMK=175;;		//32    WiFi PMK (Pairwise Master Key)
 const CONF_MAGIC=207;;		    //1
 const CONF_LATITUDE=208;;	    //8     Latitude
 const CONF_LONGITUDE=216;;	    //8     Longitude
-const CONF_WAKEUP=224;;	        //1     Wake up time
-const CONF_SLEEP=225;;	        //1     Sleep time
+const CONF_WAKE_UP=224;;	    //1     Wake up time
+const CONF_GO_TO_BED=225;;      //1     Go to bed time
 const CONF_LENGTH=226;;

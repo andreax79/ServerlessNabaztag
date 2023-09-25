@@ -201,6 +201,14 @@
     <fieldset>
       <div class="row">
         <div class="column">
+            <label for="latitudeField">Latitude</label>
+            <input name="j" type="text" placeholder="45.464" id="latitudeField" />
+        </div>
+        <div class="column">
+            <label for="longitudeField">Longitude</label>
+            <input name="k" type="text" placeholder="9.1895" id="longitudeField" />
+        </div>
+        <div class="column column-50">
             <label for="langField">Language</label>
             <select name="l" id="langField">
             <option value="uk">English</option>
@@ -209,7 +217,9 @@
             <option value="es">Spanish</option>
             </select>
         </div>
-        <div class="column column-50">
+      </div>
+      <div class="row">
+        <div class="column">
             <label for="cityCodeField">City (Timezone)</label>
             <select name="c" id="cityCodeField">
             <option value="UTC">UTC</option>
@@ -271,6 +281,7 @@
             <option value="FEN">Fernando de Noronha</option>
             <option value="RAI">Praia</option>
           </select>
+            <input class="button-primary" type="submit" value="Set">
         </div>
         <div class="column">
             <label for="dstField">Daylight Saving Time</label>
@@ -279,16 +290,13 @@
             <option value="1">On</option>
             </select>
         </div>
-      </div>
-      <div class="row">
         <div class="column">
-            <label for="latitudeField">Latitude</label>
-            <input name="j" type="text" placeholder="45.464" id="latitudeField" />
-            <input class="button-primary" type="submit" value="Set">
+            <label for="wakeUpField">Wake up</label>
+            <input name="w" type="number" min="0" max="23" placeholder="7" id="wakeUpField" />
         </div>
         <div class="column">
-            <label for="longitudeField">Longitude</label>
-            <input name="k" type="text" placeholder="9.1895" id="longitudeField" />
+            <label for="goToBedField">Go to bed</label>
+            <input name="b" type="number" min="0" max="23" placeholder="22" id="goToBedField" />
         </div>
       </div>
     </fieldset>
@@ -323,6 +331,8 @@ async function load() {
 
     document.getElementById("latitudeField").value = status.latitude;
     document.getElementById("longitudeField").value = status.longitude;
+    document.getElementById("wakeUpField").value = status.wake_up;
+    document.getElementById("goToBedField").value = status.go_to_bed;
 }
 
 load();

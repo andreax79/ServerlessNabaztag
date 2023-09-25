@@ -87,6 +87,14 @@ fun config_get_longitude =
 fun config_get_dst =
     strget _config_get CONF_DST 1 0;;
 
+// Get wake up time
+fun config_get_wake_up =
+    strget _config_get CONF_WAKE_UP 1 0;;
+
+// Get go to bed time
+fun config_get_go_to_bed =
+    strget _config_get CONF_GO_TO_BED 1 0;;
+
 // Set Language
 fun config_set_lang lang =
     _config_set_str CONF_LANGUAGE lang 3;;
@@ -106,3 +114,11 @@ fun config_set_latitude val =
 // Set longitude
 fun config_set_longitude val =
     _config_set_str CONF_LONGITUDE val 8;;
+
+// Set wake up time
+fun config_set_wake_up val =
+    strset conf CONF_WAKE_UP val;;
+
+// Set go to bd time
+fun config_set_go_to_bed val =
+    strset conf CONF_GO_TO_BED val;;
