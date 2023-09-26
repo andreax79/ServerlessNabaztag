@@ -1,3 +1,4 @@
+#include protos/audiolib_protos.mtl
 
 // wav playback
 
@@ -145,7 +146,7 @@ fun _wavstartnow =
 	set wav_curplayedbytes=0;
 	playStart 1024 #_wavplaycb;;
 
-fun wavstartlocalEx l timeout=
+fun audiolib_wav_start_local_ex l timeout=
 	wavstop;
 	set wav_end_timeout=timeout;
 	set wav_fifo=conc l (wavgetzeros)::nil;
@@ -155,20 +156,8 @@ fun wavstartlocalEx l timeout=
 	_wavstartnow
 	;;
 
-fun wavstartlocal l=wavstartlocalEx l WAV_END_TIMEOUT;;
-/*
-fun itobin4 i=strcatlist (ctoa i)::(ctoa i>>8)::(ctoa i>>16)::(ctoa i>>24)::nil;;
-fun itobin2 i=strcatlist (ctoa i)::(ctoa i>>8)::nil;;
-
-fun mkwav freq channel bps=
-	let strcatlist
-		"WAVEfmt "::(itobin4 0x12)::
-			(itobin2 1)::(itobin2 channel)::
-			(itobin4 freq)::(itobin4 freq*channel*bps/8)::
-			(itobin2 channel*bps/8)::(itobin4 bps)::
-		"data"::(itobin4 0)::nil -> c in
-	strcatlist "RIFF"::(itobin4 (strlen c))::c::nil;;
-*/
+fun audiolib_wav_start_local l =
+    audiolib_wav_start_local_ex l WAV_END_TIMEOUT;;
 
 fun _wavcbhttp httpreq req=
 	Audiow "w";
@@ -210,7 +199,7 @@ fun _wavcbhttp httpreq req=
 	updatevol;
 	0;;
 
-fun wavstarthttp url cb=
+fun audiolib_start_http url cb=
 	wavstop;
 	set wav_http_cb = cb;
 	set wav_end_timeout=WAV_END_TIMEOUT;
@@ -223,7 +212,7 @@ fun wavstarthttp url cb=
 	set wav_lastnet=time_ms;
 	set wav_http=httprequest "GET" url nil #_wavcbhttp HTTP_STREAM;;
 
-fun wavtime =
+fun audiolib_wav_time =
 	// Check timeout against wav_buffering_since
 	if (wav_http!=nil && wav_state==WAV_RUN && wav_buffering && (time_ms - wav_buffering_since > WAV_NET_TIMEOUT)) then (
 		Audiowln "wavhttp timeout";

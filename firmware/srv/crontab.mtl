@@ -1,53 +1,52 @@
+#include protos/config_protos.mtl
+#include protos/meteo_protos.mtl
+#include protos/sleep_protos.mtl
+#include protos/audiolib_protos.mtl
+
 //--------------------------------------------------------------------------------------------------
 // Crontab
 //--------------------------------------------------------------------------------------------------
 
-#include protos/config_protos.mtl
-
 var _crontab_last_check = -1 ;; // last time (hour*100+min) of execution of crontab
-proto wavstarthttp 2;;
 proto _cbWavError 0;;
-proto startSleep 0;;
-proto endSleep 0;;
-proto meteo_get 0;;
 
-fun crontab_play_time_sound hour =
+fun _crontab_play_time_sound hour =
     if !gSleepState then
         let strcatlist "http://"::config_get_server_url::"/config/clock/"::config_get_lang::"/"::(itoa hour)::"/"::(itoa 1 + random 6)::".mp3"::nil -> url in (
             Secho "Play "; Secholn url;
-            wavstarthttp url #_cbWavError
+            audiolib_start_http url #_cbWavError
         );
     0;;
 
-fun crontab_play_halftime_sound =
+fun _crontab_play_halftime_sound =
     if !gSleepState then
         let strcatlist "http://"::config_get_server_url::"/config/clockall/"::config_get_lang::"/"::(itoa 1 + random 12)::".mp3"::nil -> url in (
             Secho "Play "; Secholn url;
-            wavstarthttp url #_cbWavError
+            audiolib_start_http url #_cbWavError
         );
     0;;
 
-fun crontab_time h m=
+fun _crontab_time h m=
     h * 100 + m;;
 
-fun check_crontab =
-    let crontab_time local_time_hour local_time_minute -> crontab_check in
+fun crontab_check =
+    let _crontab_time local_time_hour local_time_minute -> crontab_check in
     if crontab_check != _crontab_last_check then (
         set _crontab_last_check = crontab_check;
 
-        if (gSleepState && local_time_hour == config_get_wake_up) then endSleep;
+        if (gSleepState && local_time_hour == config_get_wake_up) then sleep_end;
 
         if local_time_minute == 0 then (
-            crontab_play_time_sound local_time_hour
+            _crontab_play_time_sound local_time_hour
         ) else if local_time_minute == 15 then (
             meteo_get // Update weather info
         ) else if local_time_minute == 30 then (
-            crontab_play_halftime_sound // Play halftime sound
+            _crontab_play_halftime_sound // Play halftime sound
         ) else if (local_time_hour == 23 && local_time_minute == 55) then (
             get_time_from_timeserver
         );
 
-        if (!gSleepState && local_time_hour == config_get_go_to_bed) then startSleep;
+        if (!gSleepState && local_time_hour == config_get_go_to_bed) then sleep_start;
 
         0
     )

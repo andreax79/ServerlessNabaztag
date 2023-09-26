@@ -1,0 +1,12 @@
+proto interactive_init 0;;
+proto interactive_start 1;;
+proto interactive_stop 0;;
+proto interactive_error 0;;
+proto interactive_program_done 0;;
+proto interactive_reset_ears_touched 0;;
+proto interactive_req_cb_http 2;;
+proto interactive_state_enter 0;;
+proto _interactive_continue_start_cb 1;;
+proto _interactive_continue_stop_cb 1;;
+proto _interactive_continue_error_cb 1;;
+

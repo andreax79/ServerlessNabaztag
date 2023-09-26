@@ -1,10 +1,9 @@
 #include utils/timezones.mtl
+#include protos/crontab_protos.mtl
 
 //--------------------------------------------------------------------------------------------------
 // Time functions
 //--------------------------------------------------------------------------------------------------
-
-proto check_crontab 0;;
 
 const TIME_PROTOCOL_PORT = 37 ;;
 const TIME_PROTOCOL_EPHEMERAL_PORT = 49152 ;;
@@ -69,7 +68,7 @@ fun update_time_internal=
             if (get_local_time == 0) then set days_since_2000 = days_since_2000+1;
             calculate_local_time;
             // only check when initialized
-            if (_last_read_internal_time !=nil) then check_crontab
+            if (_last_read_internal_time !=nil) then crontab_check
         );
     0;;
 

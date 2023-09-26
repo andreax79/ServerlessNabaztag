@@ -110,7 +110,7 @@ fun runChorCmd i0=
             let t.(imusic) -> music in
             (
                 Secho "randmidi="; Iecholn imusic;
-                wavstartlocal music::nil
+                audiolib_wav_start_local music::nil
             ); // v16 end
             0
         )

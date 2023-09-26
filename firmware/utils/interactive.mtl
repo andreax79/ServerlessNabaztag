@@ -1,0 +1,324 @@
+// **********************
+// Interactivity
+// **********************
+
+type InteractiveSoundsType = intDefaultStart | intDefaultStop | intNone;;
+type InteractiveChorType = intchorDefaultStart | intchorDefaultStop | intchorStartNone | intchorStopNone;;
+
+var _interactive_sounds;;
+var _interactive_chors;;
+
+// quand on a reçu une commande "WT", on stocke ici la date jusqu'à laquelle on doit attendre
+var interactiveWaitEndTime_ms = 0;;
+
+// Play a start or stop sound
+fun gIntControlSound Type =
+    match Type with
+    (intDefaultStart ->     controlsound midi_startInteractive )    // On joue le son par defaut
+    | (intDefaultStop ->    controlsound midi_endInteractive )      // On joue le son par defaut
+    | (intNone ->           nil)                                    // On ne joue pas de son
+    | (_ -> Secholn "No Sound to Play!!"; nil );                    // Si on a indique un mauvais son, on ne joue rien
+    0
+;;
+
+// Play a start or stop chor
+fun gIntControlChor Type =
+    match Type with
+    (intchorDefaultStart ->     msgchorstart chordef_startInteractive::nil #_interactive_continue_start_cb nil )       // On joue le chor par defaut
+    | (intchorDefaultStop ->    msgchorstart chordef_startInteractive::nil #_interactive_continue_stop_cb nil )        // On joue le chor par defaut
+    | (intchorStartNone ->      _interactive_continue_start_cb nil )                                                   // On ne joue pas de chor
+    | (intchorStopNone ->       _interactive_continue_stop_cb nil )                                                    // On ne joue pas de chor
+    | (_ -> Secholn "No Chor to Play!!"; nil );                 // Si on a indique un mauvais chor, on ne joue rien
+    0
+;;
+
+fun interactive_init =
+    set _interactive_sounds = [intDefaultStart intDefaultStop]; // Default Sounds of InteractiveMode
+    set _interactive_chors = [intchorDefaultStart intchorDefaultStop]; // Default Sounds of InteractiveMode
+    0;;
+
+// Starts interactivity : sets run mode, remember application and request commands
+fun interactive_start application=
+
+    set gItState = 1;
+    set gItApp = application;
+    if !gBusyState then XmppSessionRequestResource "itmode";
+
+    interactive_state_enter;
+
+    // oreilles vers l'avant
+    (earGo 0 3 0; earGo 1 3 0);
+
+    // jingle
+    let _interactive_sounds -> [gSoundStart gSoundStop] in
+        gIntControlSound gSoundStart;
+
+    // chor de debut
+    let _interactive_chors -> [gChorStart gChorStop] in
+        gIntControlChor gChorStart;
+
+    0;;
+
+fun _interactive_continue_start_cb unused=
+    // ask for instructions
+    set run=interactiveReqWaitRun (httprequest "GET" (interactifurl_start gItApp) nil #interactive_req_cb_http HTTP_NORMAL);
+    0;;
+
+fun interactive_error=
+    // jingle error
+    Secho "interactive_error";
+    msgchorstart chordef_interactiveerror::nil #_interactive_continue_error_cb nil;
+    0;;
+
+fun _interactive_continue_error_cb unused=
+    interactive_stop;
+    0;;
+
+fun interactive_stop=
+    Secholn "interactive_stop";
+
+    // jingle de fin
+    let _interactive_sounds -> [gSoundStart gSoundStop] in
+        gIntControlSound gSoundStop;
+    set _interactive_sounds = [intDefaultStart intDefaultStop]; // on remet le son par default a la fin
+
+    // chor de fin
+    let _interactive_chors -> [gChorStart gChorStop] in
+        gIntControlChor gChorStop;
+    set _interactive_chors = [intchorDefaultStart intchorDefaultStop]; // on remet le chor par default a la fin
+
+    // oreilles
+    earsGoToRefPos;
+
+    // clean
+    set g_cookie="";
+    0;;
+
+fun _interactive_continue_stop_cb unused=
+    // finalise stopping itMode
+    set gItApp = nil;
+    set gItState = 0;
+    set gProcessingState = 0; // skips all remaining commands anyway, so : not processing
+    // DEBUG
+    XmppSessionRequestResource "idle"; // Obligation de revenir en IDLE
+    set gStreamingState = 0; // On ne stream plus rien!
+    set run = idleRun;
+    0;;
+
+fun interactive_send_btn btn=
+    Xw "Inside interactive_send_btn";
+    wavstop;
+    earStop 0;
+    let wav_curplayedbytes -> readBytes in ( // controlsound resets wav_curplayedbytes so we cache it
+        // sound
+        if (btn == BUTTON_CLIC) then (
+            if (!strcmp g_snd_btn_1 "clonk") then controlsound midi_abort
+            else if (!strcmp g_snd_btn_1"chord") then controlsound midi_ack
+            else if (!strcmp g_snd_btn_1 "neutral") then controlsound midi_ministop;
+            0
+        ) else if (btn == BUTTON_DCLIC) then (
+            if (!strcmp g_snd_btn_2 "clonk") then controlsound midi_abort
+            else if (!strcmp g_snd_btn_2 "chord") then controlsound midi_ack
+            else if (!strcmp g_snd_btn_2 "neutral") then controlsound midi_ministop;
+            0
+        );
+        // request instructions
+        set run=interactiveReqWaitRun (httprequest "GET" (interactifurl_btn gItApp readBytes gCurAudioCmdIndex btn) nil #interactive_req_cb_http HTTP_NORMAL)
+    );
+    0;;
+
+fun interactive_program_done=
+    set run=interactiveReqWaitRun (httprequest "GET" (interactifurl_done gItApp) nil #interactive_req_cb_http HTTP_NORMAL);
+    0;;
+
+
+//*******************
+// Ears turned
+//*******************
+
+type EarTouch=[num_ET refPos_ET moveDir_ET lastDV_ET lastMoveTime_ET turned_ET];;
+var _interactive_ears_touch;;
+const EAR_TOUCH_TIMEOUT=1000;;
+
+fun interactive_reset_ears_touched=
+    set _interactive_ears_touch=tabnew nil 2;
+    for i=0;i<2 do set _interactive_ears_touch.i=[num_ET:i];
+    for i=0;i<2 do let _interactive_ears_touch.i -> et in
+    (
+        set et.refPos_ET = -1;
+        set et.moveDir_ET = -1;
+        set et.lastDV_ET = -1;
+        set et.lastMoveTime_ET = -1;
+        set et.turned_ET = 0
+    );
+    0;;
+
+fun _interactive_ear_delta_pos_normalized deltaPos=
+    // between -EARS_HOLES>>1 and EARS_HOLES>>1
+    if (deltaPos > EARS_HOLES>>1) then deltaPos - EARS_HOLES
+    else if (deltaPos < -EARS_HOLES>>1) then deltaPos + EARS_HOLES
+    else deltaPos;;
+
+fun itNoteEarTouched eari curPos deltaPos=
+    // right = 0, left = 1
+    if (eari == 0 && (g_int_mask & MASK_EAR_RIGHT == 0)) || (eari == 1 && (g_int_mask & MASK_EAR_LEFT == 0)) then // active
+    let _interactive_ears_touch.eari -> et in
+    (
+        set et.lastMoveTime_ET = time_ms;
+        if (et.refPos_ET == -1) then (
+            // first move : remember position and direction of movement
+            set et.refPos_ET = curPos;
+            if ((_interactive_ear_delta_pos_normalized deltaPos) > 0) then set et.moveDir_ET = 0 else set et.moveDir_ET = 1;
+            set et.lastDV_ET = 0
+
+        ) else if !et.turned_ET then
+        // was already moving and not turned yet : test turned
+        let (_interactive_ear_delta_pos_normalized (curPos - et.refPos_ET)) -> normalizedDV in (
+            Secho "NDV="; Iecho normalizedDV; Secho ",";
+
+            // Test 1 tour or stopped
+            if (et.moveDir_ET == 0 && normalizedDV >= 0 && et.lastDV_ET < 0) then
+                // if more than one tour forward : ok
+                set et.turned_ET = 1
+            else if (et.moveDir_ET == 1 && normalizedDV <= 0 && et.lastDV_ET > 0) then
+                // if more than one tour backward : ok
+                set et.turned_ET = 1;
+
+            Secho "TOUCH="; Iecho et.turned_ET; Secho ",";
+
+            set et.lastDV_ET = normalizedDV
+        )
+    );;
+
+fun touchedP i=
+    let _interactive_ears_touch.i -> et in (et.turned_ET || ((et.lastMoveTime_ET != -1) && ((/*Secho "DLAST="; Iecho */(time_ms - et.lastMoveTime_ET))> EAR_TOUCH_TIMEOUT)))
+;;
+
+fun interactiveSendEarTouched lefttouch righttouch=
+    // right = 0, left = 1
+    wavstop;
+    earStop 0;
+    let wav_curplayedbytes -> readBytes in  // controlsound resets wav_curplayedbytes so we cache it
+    (
+        if (lefttouch) then controlsound midi_precedent;
+        if (righttouch) then controlsound midi_suivant;
+        set run=interactiveReqWaitRun (httprequest "GET" (interactifurl_ear gItApp readBytes gCurAudioCmdIndex righttouch lefttouch) nil #interactive_req_cb_http HTTP_NORMAL)
+    );
+    0;;
+
+fun interactiveEarProcessTouched=
+    if (gItState) then
+    let touchedP 0 -> lefttouch in
+    let touchedP 1 -> righttouch in
+    if (lefttouch || righttouch) then (
+        interactiveSendEarTouched lefttouch righttouch;
+        interactive_reset_ears_touched
+    );;
+
+proto zeroRFIDchek 0;;
+
+// Interactive request answer
+fun interactive_req_cb_http http res=
+    Secholn "interactive_req_cb_http=";
+
+    if (record_uploading) then (
+        // mode upload / record
+#ifdef RECLIB
+        set recorddata=nil;
+        set recordreq=nil;
+#endif
+        Secholn res;
+        setleds RGB_BLACK
+    );
+
+    // if the request was a rfid one...
+    zeroRFIDchek;
+
+    if !recording then
+    let httpgetcontent res -> ping_trame in
+        evalTrame ping_trame;
+
+    0;;
+
+// Interactive request wait : timeout
+fun runInteractiveReqWait http=
+    // Waiting for interactive request
+    // check timeout
+    if (!record_uploading) then // upload record mode : timeout managed by record_upload_timeout
+    if (httpinactive http)>STD_NET_TIMEOUT then
+    (
+        Secholn "##timeout on runInteractiveReqWait";
+        httpabort http;
+
+        // error
+        interactive_error
+    );
+
+    0;;
+
+
+// ********************************
+// interactive settings
+// ********************************
+
+/**
+    Called when entering interactive state (command "IC" in a program)
+*/
+fun interactive_state_enter=
+    set g_streaming_chor_enabled=1;
+    set g_int_mask=0;
+    set g_snd_btn_1 = "clonk";
+    set g_snd_btn_2 = "chord";
+    set g_record_enabled = 1;
+    0;;
+
+fun eval_IC_msg val=
+    // parse val : ickey=icval
+    let strstr val "=" 0 -> icpos in
+    if icpos != nil && icpos > 0 && icpos < (strlen val) - 1 then
+     // present, not first, not last
+        let strsub val 0 icpos -> ickey in
+        let strsub val icpos+1 ((strlen val) -1-icpos) -> icval in
+        (
+            if !strcmp ickey "snd.btn.1" then (
+                // snd.btn.1                -> son du bouton en cas de pression courte.
+                set g_snd_btn_1 = icval;
+                0
+            ) else if !strcmp ickey "snd.btn.2" then (
+                // snd.btn.2                -> son du bouton en cas de double click.
+                set g_snd_btn_2 = icval;
+                0
+            ) else if !strcmp ickey "snd.itmode" then (
+                // snd.itmode                -> son debut et fin du mode interactif.
+                if      !strcmp icval "default"     then set _interactive_sounds = [intDefaultStart intDefaultStop]
+                else if !strcmp icval "none"        then set _interactive_sounds = [intNone intNone];
+                0
+            ) else if !strcmp ickey "chor.itmode" then (
+                // chor.itmode                -> chor debut et fin du mode interactif.
+                if      !strcmp icval "default"     then set _interactive_chors = [intchorDefaultStart intchorDefaultStop]
+                else if !strcmp icval "none"        then set _interactive_chors = [intchorStartNone intchorStopNone];
+                0
+            ) else if !strcmp ickey "record.enabled" then (
+                // record.enabled   -> activation de l'enregistrement
+                if (!strcmp icval "true") then set g_record_enabled = 1
+                else set g_record_enabled = 0;
+                0
+            ) else if !strcmp ickey "streaming.chor.enabled" then (
+                // streaming.chor.enabled   -> chorégraphie de streaming (oreilles)
+                if (!strcmp icval "true") then set g_streaming_chor_enabled = 1
+                else set g_streaming_chor_enabled = 0;
+                0
+
+            ) else if !strcmp ickey "int.mask" then (
+                // int.mask -> masque d'interruption pour le mode interactif
+                set g_int_mask = (atoi icval);
+                0
+
+            ) else if !strcmp ickey "cookie" then (
+                // cookie -> cookie envoyé au serveur
+                set g_cookie = strcatlist "&c="::icval::nil;
+                0
+            ) else (
+                0
+            )
+        );;

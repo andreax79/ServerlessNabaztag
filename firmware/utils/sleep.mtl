@@ -1,0 +1,58 @@
+fun _sleep_go_sleep_now=
+    // oreilles arrivées en haut : eteindre tout + oreille basses
+    setleds RGB_BLACK;
+    earGo 0 10 0; // sur le v2 c'est la position 10 qui est en bas
+    earGo 1 10 0;
+    set run=sleepRun
+    ;;
+
+fun _sleep_wake_up_now=
+    earsGoToRefPos;
+    earSetWaitAndDetectMode;
+    set run=idleRun
+    ;;
+
+fun sleep_start =
+    Secholn "sleep_start";
+    let gSleepState -> sleeping in (
+        set gSleepState = 1;
+        set gStreamingState = 0; // just to be sure
+        set gProcessingState = 0; // just to be sure
+        // server resource
+        let XmppSessionRequestResource "asleep" -> result in (
+            // Starts to sleep
+            Secholn "going asleep";
+            if sleeping == 0 then (
+                setleds RGB_VIOLET;
+                earStartReset // oreilles en haut
+            );
+            set run = earResetWaitRun #_sleep_go_sleep_now; // attente de fin oreille
+            result
+        )
+    )
+    ;;
+
+fun sleep_end =
+    Secholn "sleep_end";
+    if (gSleepState) then (
+        // was asleep or initial booting (gSleepState = 1 at start)
+        set gSleepState = 0;
+        set gStreamingState = 0; // just to be sure
+        set gProcessingState = 0; // just to be sure
+        let XmppSessionRequestResource "idle" -> result in (
+            setleds RGB_VIOLET; // violet
+            earStartReset; // reset oreilles
+            set run = earResetWaitRun #_sleep_wake_up_now; // attente de fin oreille
+            result
+        )
+    ) else (
+        // was not asleep (after a reconnect for example)
+        let (
+            if (gStreamingState) then XmppSessionRequestResource "streaming"
+            else if (gItState) then XmppSessionRequestResource "itmode"
+            else XmppSessionRequestResource "idle") -> result in (
+            set run=idleRun;
+            result
+        )
+    )
+    ;;

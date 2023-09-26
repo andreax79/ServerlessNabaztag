@@ -1,4 +1,8 @@
-//---------------------value
+#include protos/meteo_protos.mtl
+#include protos/sleep_protos.mtl
+#include protos/audiolib_protos.mtl
+
+//--------------------------------------------------------------------------------------------------
 // HTTP Server
 //--------------------------------------------------------------------------------------------------
 
@@ -11,7 +15,6 @@ const http_sep="\13\n\13\n";; // separator
 const http_content_start="ontent-Length: ";;
 const http_content_start2="ontent-length: ";;
 const http_content_end="\13\n";;
-proto get_next_surprise;;
 
 fun http_header http_status content_type=
     strcatlist
@@ -172,11 +175,9 @@ fun milligram_css=
 //--------------------------------------------------------------------------------------------------
 
 proto taichistart 0;;
-proto startSleep 0;;
-proto endSleep 0;;
 proto stopEverythingAndResetToIdle 0;;
 proto get_time_from_timeserver 0;;
-proto wavstarthttp 2;;
+proto audiolib_start_http 2;;
 proto surprise 0;;
 proto _cbWavError 0;;
 proto _infosrc_update 2;;
@@ -280,11 +281,11 @@ fun cbhttp req=
             http_header HTTP_204 nil
         )
         else if !strcmp page "play" then (
-            if !gSleepState then (wavstarthttp Sgetargvalue args 'u' #_cbWavError);
+            if !gSleepState then (audiolib_start_http Sgetargvalue args 'u' #_cbWavError);
             http_header HTTP_204 nil
         )
         else if !strcmp page "say" then (
-            if !gSleepState then (wavstarthttp (strcatlist "http://translate.google.com/translate_tts?ie=UTF-8&total=1&idx=0&textlen=32&client=tw-ob&tl=En-gb&q="::(strreplace (Sgetargvalue args 't') " " "+")::nil) #_cbWavError);
+            if !gSleepState then (audiolib_start_http (strcatlist "http://translate.google.com/translate_tts?ie=UTF-8&total=1&idx=0&textlen=32&client=tw-ob&tl=En-gb&q="::(strreplace (Sgetargvalue args 't') " " "+")::nil) #_cbWavError);
             http_header HTTP_204 nil
         )
         else if !strcmp page "taichi" then let Igetargvalue args 'v' -> v in (  // taichi
@@ -295,15 +296,15 @@ fun cbhttp req=
             http_header HTTP_204 nil
         )
         else if !strcmp page "mp3" then (
-            wavstarthttp Sgetargvalue args 'v' #_cbWavError;
+            audiolib_start_http Sgetargvalue args 'v' #_cbWavError;
             http_header HTTP_204 nil
         )
         else if !strcmp page "sleep" then (  // sleep
-            startSleep;
+            sleep_start;
             http_header HTTP_204 nil
         )
         else if !strcmp page "wakeup" then (  // wake up
-            endSleep;
+            sleep_end;
             http_header HTTP_204 nil
         )
         else if !strcmp page "left" then (  // p=position d=direction

@@ -1,16 +1,17 @@
+#include protos/audiolib_protos.mtl
+#include protos/config_protos.mtl
+
 //--------------------------------------------------------------------------------------------------
 // Surprise
 //--------------------------------------------------------------------------------------------------
 
-proto wavstarthttp 2;;
 proto _cbWavError 0;;
-proto config_get_lang 0;;
 
 var surprise_delay = 120 ;; // average delay, in minutes  (delay= (surprise_delay/2) + random (surprise_delay))
 var next_surprise;;
 
 fun surprise=
-	wavstarthttp strcatlist "http://"::config_get_server_url::"/config/surprise/"::config_get_lang::"/"::(itoa 1 + random 299)::".mp3"::nil #_cbWavError;;
+	audiolib_start_http strcatlist "http://"::config_get_server_url::"/config/surprise/"::config_get_lang::"/"::(itoa 1 + random 299)::".mp3"::nil #_cbWavError;;
 
 fun check_surprise=
 	if surprise_delay && (surprise_delay != nil) && (!gSleepState) then

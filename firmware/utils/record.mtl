@@ -1,3 +1,5 @@
+#include protos/interactive_protos.mtl
+
 // **********************
 // Record
 // **********************
@@ -32,7 +34,7 @@ fun record_control mode=
     motorset 0 0;
     motorset 1 0;
     forcevol 64;
-    wavstartlocalEx mp3_startrecord::nil 100;
+    audiolib_wav_start_local_ex mp3_startrecord::nil 100;
     set _record_mode=mode;
     set run=recordStartRun;
     0;;
@@ -46,7 +48,7 @@ fun _record_cb_http http res=
     if _record_play_end!=nil then
     (
         set _record_play_end=nil;
-        wavstartlocal midi_endrecord::nil
+        audiolib_wav_start_local midi_endrecord::nil
     );
     set run=idleRun;
     0;;
@@ -57,7 +59,7 @@ fun record_upload_timeout=
         if _record_play_end!=nil && ((_record_play_end-time_ms)<0) then
         (
             set _record_play_end=nil;
-            wavstartlocal midi_endrecord::nil
+            audiolib_wav_start_local midi_endrecord::nil
         );
         if (httpinactive recordreq)>STD_NET_TIMEOUT then
         (
@@ -82,7 +84,7 @@ fun record_upload_timeout=
                 if (!gItState) then (
                     set run=idleRun;0
                 ) else (
-                    interactiveError
+                    interactive_error
                 )
             )
         )
@@ -111,7 +113,7 @@ fun runrecord=
     );;
 
 fun _record_interactive_send_upload =
-    set recordreq = httprequest "POST" (interactifurl_reco gItApp record_last_wav_bytes gCurAudioCmdIndex) recorddata #_interactiveReqCBhttp HTTP_NORMAL;
+    set recordreq = httprequest "POST" (interactifurl_reco gItApp record_last_wav_bytes gCurAudioCmdIndex) recorddata #interactive_req_cb_http HTTP_NORMAL;
     set run=interactiveReqWaitRun recordreq;
     0;;
 

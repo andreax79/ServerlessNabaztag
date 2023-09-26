@@ -1,36 +1,63 @@
 #include protos/config_protos.mtl
 
-var conf;;
+const CONF_SERVERURL=0;;		//41    Violet Platform URL
+const CONF_NETDHCP=41;;		    //1     DHCP server enabled
+const CONF_NETIP=42;;			//4     Local IP
+const CONF_NETMASK=46;;		    //4     Local Mask
+const CONF_NETGATEWAY=50;;	    //4     Local gateway
+const CONF_NETDNS=54;;		    //4     DNS Server
+const CONF_WIFISSID=58;;		//32    WiFi SSID
+const CONF_WIFIAUTH=90;;		//1
+const CONF_WIFICRYPT=91;;		//1     WiFi Auth (None, WEP, WPA, WPA2)
+const CONF_WIFIKEY0=92;;		//64    WiFi Key
+const CONF_PROXYENABLE=156;;	//1     HTTP Proxy enabled
+const CONF_PROXYIP=157;;		//4     Proxy IP address
+const CONF_PROXYPORT=161;;	    //2     Proxy port
+// const CONF_LOGIN=163;;		//6     obsolete
+// const CONF_PWD=169;;			//6     obsolete
+const CONF_LANGUAGE=163;;       //3     Language (string)
+const CONF_DST=166;;            //1     Daylight Saving Time
+const CONF_CITY=167;;           //4     City code
+// 171 - 174 --- free ---
+const CONF_WIFIPMK=175;;		//32    WiFi PMK (Pairwise Master Key)
+const CONF_MAGIC=207;;		    //1
+const CONF_LATITUDE=208;;	    //8     Latitude (string)
+const CONF_LONGITUDE=216;;	    //8     Longitude (string)
+const CONF_WAKE_UP=224;;	    //1     Wake up time
+const CONF_GO_TO_BED=225;;      //1     Go to bed time
+const CONF_LENGTH=226;;
+
+var _config_data;;
 
 // Store configuration
 fun config_save =
     Secholn "## save configuration";
-    save conf 0 "conf.bin" 0 CONF_LENGTH;;
+    save _config_data 0 "conf.bin" 0 CONF_LENGTH;;
 
 // Init configuration
 fun config_init =
-    set conf=strnew CONF_LENGTH;
-    load conf 0 "conf.bin" 0 CONF_LENGTH;;
+    set _config_data = strnew CONF_LENGTH;
+    load _config_data 0 "conf.bin" 0 CONF_LENGTH;;
 
-fun _config_get i len= strsub conf i len;;
+fun _config_get i len= strsub _config_data i len;;
 
-fun _config_get_bin i len= strsub conf i len;;
+fun _config_get_bin i len= strsub _config_data i len;;
 
 fun _config_get_str i len=
-    let strstr conf "\0" i -> j in
-    strsub conf i (if j==nil then len else min len j-i);;
+    let strstr _config_data "\0" i -> j in
+    strsub _config_data i (if j==nil then len else min len j-i);;
 
 fun _config_set i val len =
-    strcpy conf i val 0 len;;
+    strcpy _config_data i val 0 len;;
 
 fun _config_set_bin i val len =
-    strcpy conf i val 0 len;;
+    strcpy _config_data i val 0 len;;
 
 fun _config_set_str i val len=
     let min strlen val len-1 -> len in
     (
-        strcpy conf i val 0 len;
-        strset conf i+len 0
+        strcpy _config_data i val 0 len;
+        strset _config_data i+len 0
     );;
 
 fun _config_webport s= ((strget s 0)<<8)+strget s 1;;
@@ -105,7 +132,7 @@ fun config_set_city val =
 
 // Set Daylight Saving Time
 fun config_set_dst val =
-    strset conf CONF_DST val;;
+    strset _config_data CONF_DST val;;
 
 // Set latitude
 fun config_set_latitude val =
@@ -117,8 +144,8 @@ fun config_set_longitude val =
 
 // Set wake up time
 fun config_set_wake_up val =
-    strset conf CONF_WAKE_UP val;;
+    strset _config_data CONF_WAKE_UP val;;
 
 // Set go to bd time
 fun config_set_go_to_bed val =
-    strset conf CONF_GO_TO_BED val;;
+    strset _config_data CONF_GO_TO_BED val;;
