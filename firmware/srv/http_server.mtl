@@ -121,7 +121,50 @@ fun jsonlast s=
     strcat s "\n"
 ;;
 
-fun jsonstatus=
+fun http_server_json_status=
+    strcatlist
+        (http_header HTTP_200 "application/json")::
+        "{\n"::
+            (jsonnext jsonvalue "mac" webmac netMac)::
+            (jsonnext jsonvalue "ts" current_time_human)::
+            (jsonnext jsonvalue "time" itoa time)::
+            (jsonnext jsonvalue "city_code" config_get_city_code)::
+            (jsonnext jsonvalue "dst" itoa config_get_dst)::
+            (jsonnext jsonvalue "time_offset" itoa get_time_offset)::
+            (jsonnext jsonvalue "language" config_get_lang)::
+            (jsonnext jsonvalue "latitude" config_get_latitude)::
+            (jsonnext jsonvalue "longitude" config_get_longitude)::
+            (jsonnext jsonvalue "wake_up" itoa config_get_wake_up)::
+            (jsonnext jsonvalue "go_to_bed" itoa config_get_go_to_bed)::
+            (jsonnext jsonvalue "taichi" itoa infotaichi)::
+            (jsonnext jsonvalue "messages" itoa infomessages)::
+            (jsonnext jsonvalue "left" itoa extleft)::
+            (jsonnext jsonvalue "right" itoa extright)::
+            (jsonnext jsonvalue "earsmode" itoa earsmode)::
+            (jsonnext jsonvalue "ear_detecting" itoa earDetecting)::
+            (jsonnext jsonvalue "sleep_state" itoa gSleepState)::
+            (jsonnext jsonvalue "streaming_state" itoa gStreamingState)::
+            (jsonnext jsonvalue "processing_state" itoa gProcessingState)::
+            (jsonnext jsonvalue "busy_state" itoa gBusyState)::
+            (jsonnext jsonvalue "it_state" itoa gItState)::
+            (jsonnext jsonvalue "it_app" gItApp)::
+            (jsonnext jsonvalue "meteo_weather_code" itoa _meteo_weather_code)::
+            (jsonlast jsonvalue "rev" BYTECODE_REVISION_STR)::
+        "}"::nil
+;;
+
+fun http_server_json_jobs=
+    for l=_jobs;l!=nil; tl l do
+        let hd l -> job in
+        let nil==tl l -> last in
+        let match job.status with (JobRun -> "RUN") | (_ -> "SUSPEND") -> status in (
+            Secholn strcatlist
+                "{\n"::
+                (jsonnext jsonvalue "name" job.name)::
+                (jsonlast jsonvalue "status" status)::
+                (if last then "}\n" else "},\n")::
+                nil
+        );
     strcatlist
         (http_header HTTP_200 "application/json")::
         "{\n"::
@@ -208,27 +251,25 @@ fun uriextract uri =
     if i==nil then [extractpage uri nil]
     else [extractpage strsub uri 0 i extractargs uri i+1];;
 
-var _Sargvalue;;
-var _Iargvalue;;
 
-// get a string value from the args by the key
+// Get a string value from the args by the key
 fun Sgetargvalue args key =
-    set _Sargvalue = "";
-    for l=args; l!=nil; tl l do let hd l->[n v] in
-    (
-        if n==key then (set _Sargvalue=v)
-    );
-    _Sargvalue
+    let nil -> value in (
+        for l=args; l!=nil; tl l do
+            let hd l->[n v] in
+                if n==key then set value=v;
+        value
+    )
     ;;
 
-// get an integer value from the args by the key
+// Get an integer value from the args by the key
 fun Igetargvalue args key =
-    set _Iargvalue = 0;
-    for l=args; l!=nil; tl l do let hd l->[n v] in
-    (
-        if n==key then (set _Iargvalue=atoi v)
-    );
-    _Iargvalue
+    let nil -> value in (
+        for l=args; l!=nil; tl l do
+            let hd l->[n v] in
+                if n==key then set value=atoi v;
+        value
+    )
     ;;
 
 fun cbhttp req=
@@ -262,7 +303,10 @@ fun cbhttp req=
             http_header HTTP_204 nil
         )
         else if !strcmp page "status" then (  // json status
-            jsonstatus
+            http_server_json_status
+        )
+        else if !strcmp page "jobs" then (
+            http_server_json_jobs
         )
         else if !strcmp page "communication" then (  // play sound
             if !gSleepState then (controlsound midi_communion);
@@ -383,6 +427,6 @@ fun startwebserver port =
     )
     ;;
 */
-    // Secho jsonstatus;
+    // Secho http_server_json_status;
     starthttpsrv port #cbhttp;;
 

@@ -1,0 +1,3 @@
+proto setRunState 1;;
+proto getRunState 0;;
+proto stopEverythingAndResetToIdle 0;;

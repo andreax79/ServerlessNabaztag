@@ -1,0 +1,127 @@
+const CONTROL_WAIT=1;;
+const CONTROL_PLAY=2;;
+const CONTROL_INTERACTIF=3;;
+const CONTROL_PROGRAMWAIT=4;;
+
+fun getRunState =
+    run;;
+
+fun setRunState runState =
+    let run -> oldRun in (
+        set run = runState;
+        oldRun
+    );;
+
+/**
+    Stop everything we can be doing and resets to either idle or asleep
+ */
+fun stopEverythingAndResetToIdle =
+    wavstop;
+    stopStream;
+    earStartReset;
+    set gItState = 0;
+    set g_cookie = "";
+    set gItApp = nil;
+    set gProcessingState = 0;
+    set gStreamingState = 0;
+    set gCurrentProgram = nil;
+    set run = if (!gSleepState) then idleRun else sleepRun;
+    0
+;;
+
+
+/*
+    Utilise dans le cas ou on execute un programme et qu'on est en train
+  d'executer une commande "WT". En gros on a un comportement normal
+  sauf qu'on lit les rfid en plus
+*/
+fun controlprogramwait =
+    (if (!gItState) then controlplay else controlinteractif) ;
+    controlrfid
+;;
+
+
+fun run_step=
+    let match run with
+    ( configstartRun ->
+        earRun;
+        runconfigstart;
+        0)|
+    ( configwaitRun http ->
+        earRun;
+        runconfigwait http;
+        0)|
+#ifdef PING
+    ( pingstartRun ->
+        earRun;
+        if currentTrameID!=MSG_ASLEEP then bottomled;
+        runpingstart;
+        0)|
+    ( pingwaitRun http ->
+        earRun;
+        if currentTrameID!=MSG_ASLEEP then (
+            infoRun;
+            bottomled;
+            noseled
+        );
+        runpingwait http;
+        if currentTrameID!=MSG_ASLEEP then CONTROL_WAIT)|
+    ( pingRequestWaitRun http->
+        bottomled;
+        noseled;
+        runPingRequestWait http;
+        0)|
+    ( stdWaitRun t -> earRun;if currentTrameID!=MSG_ASLEEP then (infoRun;bottomled;noseled);runStdWait t; CONTROL_WAIT) |
+#endif
+#ifdef XMPP
+    ( xmppLoginRun ->
+    if (earResetting && earsInited) then earRun else earStop 1;
+    runLogin;
+    CONTROL_WAIT) |
+    ( xmppReconnectRun params ->
+    if (earResetting && earsInited) then earRun else earStop 1;
+    if gSleepState == 0 then (
+        // Affichage des sources.
+        infoRun;
+        // On fige la base en violet
+        led LED_BASE RGB_VIOLET
+    );
+    let params -> [waitTime xSession oldRun] in
+        match xSession.sStatus with
+            (sOpened -> set run = oldRun; 0)
+            |(sClosed ->
+                if time_ms > waitTime then (
+                    XmppGateReconnect xSession 0
+                );
+                0)
+            |(_ -> 0);
+    CONTROL_WAIT)|
+#endif
+    ( idleRun -> earRun;infoRun;bottomled;noseled;runIdle;CONTROL_WAIT) |
+    ( sleepRun -> earRun;runIdle;0) |
+
+    ( rscLoadNextRun -> earRun;infoRun;bottomled;noseled;runRscLoadNext; CONTROL_WAIT)|
+    ( rscLoadWaitRun http-> earRun;infoRun;bottomled;noseled;runRscLoadWait http;CONTROL_WAIT)|
+    ( cmdEvalOne i-> earRun;runEvalOneCommand i;CONTROL_PLAY)|
+    ( chorCmdRun i-> earRun;noseled;runChorCmd i;CONTROL_PLAY)|
+    ( streamCmdRun i0-> earRun;noseled;runStreamingCmd i0;CONTROL_PLAY)|
+    ( waitCmdRun i -> earRun;noseled;runWaitCmd i;CONTROL_PROGRAMWAIT)|
+
+    ( earResetWaitRun cb -> earRun; runEarReset cb; 0) |
+
+#ifdef RECLIB
+    ( recordRun -> runrecord; 0)|
+    ( recordStartRun -> runrecordstart; 0) |
+#endif
+
+    ( interactiveReqWaitRun http-> earRun;infoRun;bottomled;noseled;runInteractiveReqWait http;CONTROL_WAIT)
+     -> keymanager in
+    if keymanager==CONTROL_WAIT then
+        controlwait
+    else if keymanager==CONTROL_PLAY then
+        (if (!gItState) then controlplay else controlinteractif)
+    else if keymanager==CONTROL_PROGRAMWAIT then
+        controlprogramwait
+    else
+        buttongetevent;
+    nil;;

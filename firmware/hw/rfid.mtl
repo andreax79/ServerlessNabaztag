@@ -1,3 +1,5 @@
+#include protos/trame_protos.mtl
+
 // ********** RFID **********************
 // v19 Amélioration de la lecteure RFID
 // v19 Les fonction ParseRfid servent à tester les caractères de l'identifiant RFID
@@ -15,7 +17,7 @@ fun _cbrfidhttp http res=
 	set gProcessingState = 0;
 	set RFIDchek = 0;
 	let httpgetcontent res -> ping_trame in
-		evalTrame ping_trame;
+		trame_eval ping_trame;
 	0;;
 
 fun dumprfid l0=

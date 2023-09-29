@@ -120,5 +120,5 @@ fun periodic_send_gratuitous_arp=
     if last_gratuitous_arp_time + GRATUITOUS_ARP_DELAY < time then (
         set last_gratuitous_arp_time = time;
         send_gratuitous_arp
-    )
-    ;;
+    );
+    nil;;

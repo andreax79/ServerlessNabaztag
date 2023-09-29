@@ -6,7 +6,8 @@ proto interactive_program_done 0;;
 proto interactive_reset_ears_touched 0;;
 proto interactive_req_cb_http 2;;
 proto interactive_state_enter 0;;
+proto interactive_eval_IC_msg 1;;
+proto interactive_note_ear_touched 3;;
 proto _interactive_continue_start_cb 1;;
 proto _interactive_continue_stop_cb 1;;
 proto _interactive_continue_error_cb 1;;
-

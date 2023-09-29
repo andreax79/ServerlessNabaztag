@@ -1,3 +1,6 @@
+#include protos/trame_protos.mtl
+#include protos/interactive_protos.mtl
+
 // **********************
 // Interactivity
 // **********************
@@ -8,11 +11,8 @@ type InteractiveChorType = intchorDefaultStart | intchorDefaultStop | intchorSta
 var _interactive_sounds;;
 var _interactive_chors;;
 
-// quand on a reçu une commande "WT", on stocke ici la date jusqu'à laquelle on doit attendre
-var interactiveWaitEndTime_ms = 0;;
-
 // Play a start or stop sound
-fun gIntControlSound Type =
+fun _interactive_control_sound Type =
     match Type with
     (intDefaultStart ->     controlsound midi_startInteractive )    // On joue le son par defaut
     | (intDefaultStop ->    controlsound midi_endInteractive )      // On joue le son par defaut
@@ -22,7 +22,7 @@ fun gIntControlSound Type =
 ;;
 
 // Play a start or stop chor
-fun gIntControlChor Type =
+fun _interactive_control_chor Type =
     match Type with
     (intchorDefaultStart ->     msgchorstart chordef_startInteractive::nil #_interactive_continue_start_cb nil )       // On joue le chor par defaut
     | (intchorDefaultStop ->    msgchorstart chordef_startInteractive::nil #_interactive_continue_stop_cb nil )        // On joue le chor par defaut
@@ -51,11 +51,11 @@ fun interactive_start application=
 
     // jingle
     let _interactive_sounds -> [gSoundStart gSoundStop] in
-        gIntControlSound gSoundStart;
+        _interactive_control_sound gSoundStart;
 
     // chor de debut
     let _interactive_chors -> [gChorStart gChorStop] in
-        gIntControlChor gChorStart;
+        _interactive_control_chor gChorStart;
 
     0;;
 
@@ -79,12 +79,12 @@ fun interactive_stop=
 
     // jingle de fin
     let _interactive_sounds -> [gSoundStart gSoundStop] in
-        gIntControlSound gSoundStop;
+        _interactive_control_sound gSoundStop;
     set _interactive_sounds = [intDefaultStart intDefaultStop]; // on remet le son par default a la fin
 
     // chor de fin
     let _interactive_chors -> [gChorStart gChorStop] in
-        gIntControlChor gChorStop;
+        _interactive_control_chor gChorStop;
     set _interactive_chors = [intchorDefaultStart intchorDefaultStop]; // on remet le chor par default a la fin
 
     // oreilles
@@ -159,7 +159,7 @@ fun _interactive_ear_delta_pos_normalized deltaPos=
     else if (deltaPos < -EARS_HOLES>>1) then deltaPos + EARS_HOLES
     else deltaPos;;
 
-fun itNoteEarTouched eari curPos deltaPos=
+fun interactive_note_ear_touched eari curPos deltaPos=
     // right = 0, left = 1
     if (eari == 0 && (g_int_mask & MASK_EAR_RIGHT == 0)) || (eari == 1 && (g_int_mask & MASK_EAR_LEFT == 0)) then // active
     let _interactive_ears_touch.eari -> et in
@@ -236,7 +236,7 @@ fun interactive_req_cb_http http res=
 
     if !recording then
     let httpgetcontent res -> ping_trame in
-        evalTrame ping_trame;
+        trame_eval ping_trame;
 
     0;;
 
@@ -272,7 +272,7 @@ fun interactive_state_enter=
     set g_record_enabled = 1;
     0;;
 
-fun eval_IC_msg val=
+fun interactive_eval_IC_msg val=
     // parse val : ickey=icval
     let strstr val "=" 0 -> icpos in
     if icpos != nil && icpos > 0 && icpos < (strlen val) - 1 then

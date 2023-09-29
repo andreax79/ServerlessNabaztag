@@ -1,3 +1,5 @@
+#include protos/trame_protos.mtl
+
 proto processIncomingTrame 3;;
 
 //------------------- MOT DE PASSE POUR LE PROTOCOLE XMPP
@@ -78,15 +80,15 @@ fun runToStr run =
 
 fun runLogin=
     // if trame waiting, execute it
-    let getNextValidPendingTrame -> trame in
+    let trame_get_next_pending -> trame in
     if trame != nil then
-        evalTrame trame;;
+        trame_eval trame;;
 
 
 fun processIncomingTrame ping_trame rsrc ttl=
     Secho "processIncomingTrame for "; Secholn rsrc;
-    if (_isResourceValid rsrc) then (
-        evalTrame ping_trame
+    if (trame_is_resource_valid rsrc) then (
+        trame_eval ping_trame
     ) else (
         Secholn "enqueueing trame";
         let if (ttl == nil) then nil else (time + (atoi ttl)) -> expiration_time in
@@ -1866,7 +1868,6 @@ fun XmppSessionUpdate xSession =
 		//let XmppSession.sCnx.xDomain -> xdomain in (
 			//XmppSessionStop;
 			// just to be sure that all is clean
-			//set gRegistrationError = 1;
 			//Secho "Xmpp Session error : waiting 5mn and restart"; Secho "domain="; Secholn xdomain;
 			//if (xdomain != nil) then
 			//	set run = waitAndRestartSessionRun [time+(5*60) xdomain]

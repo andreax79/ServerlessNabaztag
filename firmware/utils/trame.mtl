@@ -1,0 +1,230 @@
+fun _trame_dump_prgm l=
+    Progw "Program:";
+    for l=l;l!=nil;tl l do let hd l->[key val] in (
+        Progw strcatlist ( key :: " " :: (if (val != nil) then val else "") :: nil)
+    );
+    Secholn "---";
+    l;;
+
+// Cryptage des trames
+fun _trame_bintoi3 s x=((strget s x)<<16)+((strget s x+1)<<8)+(strget s x+2);;
+
+
+// aide pour la fonction _trame_pingextract juste en dessous
+fun _trame_pingextract_ s i res=
+    if i<strlen s then
+    let (strget s i)-> code in
+    if code==255 then res
+    else if code>=0 && code<=11 then
+        let _trame_bintoi3 s i+1 -> len in
+        if len>=0 then _trame_pingextract_ s i+4+len [code strsub s i+4 len]::res;;
+
+
+// parse la chaine s et renvoie une liste des commandes contenues dedans
+fun _trame_pingextract s=
+    if (strget s 0)==0x7f then _trame_pingextract_ s 1 nil;;
+
+
+fun _trame_rsc_from_program l=
+    if l!=nil then let hd l->[key val] in
+    if (!strcmp key "MU") || (!strcmp key "CH") then [val /*nil*/300000]::_trame_rsc_from_program tl l
+    else if (!strcmp key "MC") then [val SIGNCUTSIZE]::_trame_rsc_from_program tl l
+    else _trame_rsc_from_program tl l;;
+
+
+
+var paletteselected = 0;;
+// v17 (add romain)
+// Fonction permettant d'activer la palette pour le programme en cours
+// au jour du 31 mai 2007, on recoit le PL apres le son a jouer, la palette associee au son est donc affichee juste apres la fin du programme
+// Cette fonction passe prealablement sur le programme reçu pour mettre la bonne palette
+// A noter, si il y a plusieurs palettes dans la trame de retour, seule la premiere est prise en compte
+fun _trame_check_for_palette_before l=
+    for l=l;l!=nil;tl l do let hd l->[key val] in
+    (
+        if (!strcmp key "PL") && (paletteselected==0) then
+        (
+            set_current_palette_mode atoi val;
+            set paletteselected = 1
+        )
+    );;
+
+fun trame_program_start=
+    // Starts playing the program
+    // setleds RGB_RED;
+
+    // Si la palette est definie pour ce programme, alors on ne met pas l'aleatoire
+    if(paletteselected==0) then (
+        set current_palette=tabnew 0 8; // v17 : c'était inversé
+        set_current_palette_mode 8 // random palette par défaut
+    );
+    // start evaluating first command
+    set gCurAudioCmdIndex = -1;
+    set run=cmdEvalOne 0;
+    0;;
+
+// ******************************************
+// Main function : evaluate trame
+// trames are sent back from ping and itmode
+// a trame contains frames
+// a frame can:
+// - change the ping delay (type 3)
+// - order 'reboot' (type 9)
+// - contain new service values and ear positions (type 4)
+// - contain a program (type 10)
+// In program frames, programs can contain url resources: resources are loaded and stored and then program is executed
+// Return the XMPP packet(s) to send or nil.
+
+fun trame_eval ping_trame=
+    let _trame_pingextract dump ping_trame -> frame_list in
+    if frame_list==nil then (
+        // error, bad trame
+        Secholn "bad trame";
+        dump ping_trame;
+        Secholn "dropping";
+        if (gItState) then (
+            // display error
+            interactive_error;
+            nil
+        ) else (
+            // drop, and ping again later
+            set run=idleRun;
+            nil
+        )
+    ) else (
+        // frame_list ok
+        let nil->xmpp_packets in
+        let nil->program in
+        (
+            for l=frame_list;l!=nil;tl l do let hd l-> [code val] in
+            (
+                let (if code == 3 then (
+                    // ping delay
+#ifdef PING
+                    set pingdelay = strget val 0;
+#else
+                    Secholn "dropping ping delay";
+#endif
+                    nil
+                ) else if code == 4 then (
+                    // update sources, messages number and ears
+                    let ((strget val 3) == 0xFF) -> fromHttp in
+                    if fromHttp then (
+                        // old format
+                        infoUpdate strsub val 4 nil;
+                        nil
+                    ) else (
+                        // new format
+                        newInfoUpdate strsub val 4 nil;
+                        nil
+                    )
+                ) else if code == 9 then (
+                    // reboot
+                    //////// reboot 0x0407FE58 0x13fb6754;
+                    nil
+                ) else if code == 10 then (
+                    // programs (or IDLE or SLEEP)
+                    uncrypt val 1 nil 0x47 47;
+                    set program=_trame_dump_prgm filterconfig val 1;
+                    nil
+                ) else if code == 11 then (
+                    // change mode
+                    let strget val 0 -> mode in (
+                        Secho "changemode = "; Iecholn mode;
+                        if (mode == 0) then sleep_end
+                        else if (mode == 1) then sleep_start
+                        else nil
+                    )
+                ) else (Secho "Unknown code "; Iecho code; Secholn ""; nil)) -> xmpp_packet_list in
+                if (xmpp_packet_list != nil) then
+                    set xmpp_packets = xmpp_packet_list::xmpp_packets
+                else
+                    xmpp_packets
+            ); // for l=frame_list
+
+            // post process : a program ?
+            if program!=nil then (
+                // Initialize Program
+                set paletteselected = 0;
+                set gCurrentProgram = program;
+                set gProcessingState = 1;
+                set gProcessingWaitState = 0;
+                _trame_check_for_palette_before program; // Permet de mettre la palette correspondante au programme, v17 (add romain)
+                // resources
+                set rsctoget=_trame_rsc_from_program program;
+                // empties the rsc cache
+                set rscloaded=nil;
+                let hd rsctoget -> [url _] in
+                if url==nil then (
+                    // no resources to load : start the program now
+                    trame_program_start;
+                    0
+                ) else (
+                    // will load rsctoget and then start the program 'gCurrentProgram'
+                    Secho "loading rsrcs...";
+                    set run = rscLoadNextRun;
+                    0
+                )
+            );
+            xmpp_packets
+        ) // nil->program
+    ) // frame_list != nil
+    ;;
+
+
+//*******************
+// Trames queue
+var gTramesQueue = nil;;
+const TRAME_QUEUE_MAXLEN = 10;;
+
+fun trame_is_resource_valid rsrcName=
+    // les règles d'adéquation entre resource et etats
+    if (!strcmp rsrcName "urgent") then 1 // tjrs
+    else if (!strcmp rsrcName "sources") then 1 // tjrs
+    else if (!strcmp rsrcName "boot") then 1 // tjrs
+    else if (gStreamingState) then (if (!strcmp rsrcName "streaming") then 1 else 0)
+    else if (gItState) then (if (!strcmp rsrcName "itmode") then 1 else 0)
+    else if (gSleepState) then (if (!strcmp rsrcName "asleep") then 1 else 0)
+    else if (gProcessingState) then 0
+    else 1;;
+
+fun _trame_queue_remove_entry binome=
+    // dépile
+    set gTramesQueue = remfromlist gTramesQueue binome;
+
+    // was full ?
+    let listlen gTramesQueue -> queueLen in
+    if queueLen == TRAME_QUEUE_MAXLEN-1 then (
+        Secholn "trame queue not full anymore, warning server";
+        set gBusyState = 0;
+        // which resource now ? Can be in this order asleep, streaming, itmode or idle
+        if (gSleepState) then XmppSessionRequestResource "asleep"
+        else if (gStreamingState) then XmppSessionRequestResource "streaming"
+        else if (gItState) then XmppSessionRequestResource "itmode"
+        else XmppSessionRequestResource "idle"
+    );
+    0;;
+
+fun trame_get_next_pending=
+    let gTramesQueue -> ptr in
+    let nil -> theTrame in (
+        while ((theTrame == nil) && ((hd ptr) != nil)) do (
+            let hd ptr -> binome in
+            let binome -> [rsrc expiration_time ping_trame] in
+            if ((expiration_time != nil) && (time >= expiration_time)) then (
+                Secholn "trame expired, removing";
+                _trame_queue_remove_entry binome
+
+            ) else if (trame_is_resource_valid rsrc) then (
+                // ok
+                set theTrame = ping_trame;
+
+                _trame_queue_remove_entry binome
+            );
+
+            // next
+            set ptr = tl ptr
+        );
+        theTrame
+    )
+    ;;

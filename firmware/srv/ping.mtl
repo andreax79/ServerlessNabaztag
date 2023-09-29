@@ -1,3 +1,5 @@
+#include protos/trame_protos.mtl
+
 // ******************
 // The Ping
 var pingdelay=10;;
@@ -10,7 +12,7 @@ fun earComplete = earReady && (!ears.(0).dirE) && (!ears.(1).dirE);;
 fun _pingcbhttp http res=
 	Secholn "ping=";
 	if !recording then
-		evalTrame httpgetcontent res;
+		trame_eval httpgetcontent res;
 	0;;
 
 fun runpingstart=
@@ -19,7 +21,6 @@ fun runpingstart=
 		earInit						// we init the ears
 	);
 
-//	if (gInteractiveApp == nil) then
 	if netState==RT2501_S_CONNECTED then
 		set run=pingwaitRun httprequest "GET" Secholn pingurl nil #_pingcbhttp HTTP_NORMAL;
 	0;;

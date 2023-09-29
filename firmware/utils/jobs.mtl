@@ -1,0 +1,47 @@
+type JobStatus = JobRun | JobSuspend;;
+type Job=[n name f status];;
+
+var _jobs = nil;; // list of Job
+
+// Add a job at the end of jobs list
+fun _jobs_add e l =
+	if l==nil then
+        e::nil
+    else
+        (hd l)::_jobs_add e tl l
+    ;;
+
+
+// Initialize a job
+fun job_start name f =
+    let listlen _jobs -> n in
+    let [n:n name:name f:f status:JobRun] -> job in (
+        set _jobs = _jobs_add job _jobs
+    )
+    ;;
+
+// Temporarily stop execution of a job
+fun job_suspend name =
+    for l=_jobs;l!=nil; tl l do
+        let hd l -> job in
+            if !strcmp name job.name then
+                set job.status = JobSuspend;
+    0;;
+
+// Resume execution of a suspended job
+fun job_resume name =
+    for l=_jobs;l!=nil; tl l do
+        let hd l -> job in
+            if !strcmp name job.name then
+                set job.status = JobRun;
+    0;;
+
+// Jobs loop
+fun job_loop =
+    for l=_jobs;l!=nil; tl l do
+        let hd l -> job in (
+            match job.status with
+                (JobRun -> call job.f []) |
+                (_ -> nil)
+            );
+    0;;

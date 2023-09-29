@@ -77,6 +77,6 @@ fun run_icmp_ping=
 			netSend response 0 nil netMac 0 1;
 			set last_ping_time = time
 		)
-	)
-	;;
+	);
+    nil;;
 

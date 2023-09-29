@@ -163,7 +163,19 @@ fun wifiAuth=
 			1
 		);;
 
-fun wifiRun=
+fun wifi_check =
+    if netState==RT2501_S_IDLE then
+    match wifi with
+    (initW -> nil)
+    |(_ ->
+        Secholn "######### wifi lost";
+        set wifi=reconnectW;
+        earStop 1; // make sure that ears are not moving while we're reconnecting.
+        0
+    )
+    ;;
+
+fun wifi_run=
 	let netState -> state in
 	(
 		if state!=laststate then (Secho "wifi state=";Iecholn state);
@@ -204,7 +216,6 @@ fun wifiRun=
 					setleds RGB_BLUE;
 					Secholn "-------------master";
 					startdhcpserver;
-//					startconfigserver 80;
 					masterW)
 			)
 		|(masterW -> if !master then
@@ -251,12 +262,11 @@ fun wifiRun=
 		nettime;
 		dnstime;
 		0
-	)
+	);
+    wifi_check;
+    0
 	;;
 
-fun wifiReady= match wifi with (stationW -> 1)|(_ -> 0);;
-
-fun wifiConnected= match wifi with (stationW -> 1)|(_ -> 0);;
 
 #include net/dhcp.mtl
 #include ipv4/udp.mtl
