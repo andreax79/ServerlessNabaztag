@@ -1,0 +1,14 @@
+var _midi_list;;
+
+fun midi_get_list =
+    if _midi_list==nil then set _midi_list=
+    {midi_1noteA4 midi_1noteB5 midi_1noteBb4 midi_1noteC5 midi_1noteE4 midi_1noteF4
+     midi_1noteF5 midi_1noteG5 midi_2notesC6C4 midi_2notesC6F5 midi_2notesD4A5
+     midi_2notesD4G4 midi_2notesD5G4 midi_2notesE5A5 midi_2notesE5C6 midi_2notesE5E4
+     midi_3notesA4G5G5 midi_3notesB5A5F5 midi_3notesB5D5C6 midi_3notesD4E4G4 midi_3notesE5A5C6
+     midi_3notesE5C6D5 midi_3notesE5D5A5 midi_3notesF5C6G5};
+    _midi_list;;
+
+fun midi_play s=
+    audiolib_wav_start_local s::nil;
+    0;;

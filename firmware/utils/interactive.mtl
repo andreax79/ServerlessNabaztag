@@ -10,12 +10,37 @@ type InteractiveChorType = intchorDefaultStart | intchorDefaultStop | intchorSta
 
 var _interactive_sounds;;
 var _interactive_chors;;
+var _interactive_btn_1_snd = "clonk";;
+var _interactive_btn_2_snd = "chord";;
+
+
+// Construction des urls d'interactivité
+fun interactive_url_start application =
+    strcatlist (interactifurl application)::"&st=start"::g_cookie::nil
+    ;;
+
+fun interactive_url_btn application position cmdindex btn =
+    strcatlist (interactifurl application)::"&st=btn&pos="::(itoa position)::"&idx="::(itoa cmdindex)::"&btn="::(itoa btn)::g_cookie::nil
+    ;;
+
+fun interactive_url_done application =
+    strcatlist (interactifurl application)::"&st=done"::g_cookie::nil
+    ;;
+
+fun interactive_url_ear application position cmdindex earg eard =
+    strcatlist (interactifurl application)::"&st=ear&pos="::(itoa position)::"&idx="::(itoa cmdindex)::"&el="::(itoa earg)::"&er="::(itoa eard)::g_cookie::nil
+    ;;
+
+fun interactive_url_reco application position cmdindex =
+    strcatlist (interactifurl application)::"&st=reco&pos="::(itoa position)::"&idx="::(itoa cmdindex)::g_cookie::nil
+    ;;
+
 
 // Play a start or stop sound
 fun _interactive_control_sound Type =
     match Type with
-    (intDefaultStart ->     controlsound midi_startInteractive )    // On joue le son par defaut
-    | (intDefaultStop ->    controlsound midi_endInteractive )      // On joue le son par defaut
+    (intDefaultStart ->     midi_play midi_startInteractive )    // On joue le son par defaut
+    | (intDefaultStop ->    midi_play midi_endInteractive )      // On joue le son par defaut
     | (intNone ->           nil)                                    // On ne joue pas de son
     | (_ -> Secholn "No Sound to Play!!"; nil );                    // Si on a indique un mauvais son, on ne joue rien
     0
@@ -61,7 +86,7 @@ fun interactive_start application=
 
 fun _interactive_continue_start_cb unused=
     // ask for instructions
-    set run=interactiveReqWaitRun (httprequest "GET" (interactifurl_start gItApp) nil #interactive_req_cb_http HTTP_NORMAL);
+    run_set_state interactiveReqWaitRun (httprequest "GET" (interactive_url_start gItApp) nil #interactive_req_cb_http HTTP_NORMAL);
     0;;
 
 fun interactive_error=
@@ -102,33 +127,33 @@ fun _interactive_continue_stop_cb unused=
     // DEBUG
     XmppSessionRequestResource "idle"; // Obligation de revenir en IDLE
     set gStreamingState = 0; // On ne stream plus rien!
-    set run = idleRun;
+    run_set_state idleRun;
     0;;
 
 fun interactive_send_btn btn=
     Xw "Inside interactive_send_btn";
     wavstop;
     earStop 0;
-    let wav_curplayedbytes -> readBytes in ( // controlsound resets wav_curplayedbytes so we cache it
+    let wav_curplayedbytes -> readBytes in ( // midi_play resets wav_curplayedbytes so we cache it
         // sound
         if (btn == BUTTON_CLIC) then (
-            if (!strcmp g_snd_btn_1 "clonk") then controlsound midi_abort
-            else if (!strcmp g_snd_btn_1"chord") then controlsound midi_ack
-            else if (!strcmp g_snd_btn_1 "neutral") then controlsound midi_ministop;
+            if (!strcmp _interactive_btn_1_snd "clonk") then midi_play midi_abort
+            else if (!strcmp _interactive_btn_1_snd"chord") then midi_play midi_ack
+            else if (!strcmp _interactive_btn_1_snd "neutral") then midi_play midi_ministop;
             0
         ) else if (btn == BUTTON_DCLIC) then (
-            if (!strcmp g_snd_btn_2 "clonk") then controlsound midi_abort
-            else if (!strcmp g_snd_btn_2 "chord") then controlsound midi_ack
-            else if (!strcmp g_snd_btn_2 "neutral") then controlsound midi_ministop;
+            if (!strcmp _interactive_btn_2_snd "clonk") then midi_play midi_abort
+            else if (!strcmp _interactive_btn_2_snd "chord") then midi_play midi_ack
+            else if (!strcmp _interactive_btn_2_snd "neutral") then midi_play midi_ministop;
             0
         );
         // request instructions
-        set run=interactiveReqWaitRun (httprequest "GET" (interactifurl_btn gItApp readBytes gCurAudioCmdIndex btn) nil #interactive_req_cb_http HTTP_NORMAL)
+        run_set_state interactiveReqWaitRun (httprequest "GET" (interactive_url_btn gItApp readBytes gCurAudioCmdIndex btn) nil #interactive_req_cb_http HTTP_NORMAL)
     );
     0;;
 
 fun interactive_program_done=
-    set run=interactiveReqWaitRun (httprequest "GET" (interactifurl_done gItApp) nil #interactive_req_cb_http HTTP_NORMAL);
+    run_set_state interactiveReqWaitRun (httprequest "GET" (interactive_url_done gItApp) nil #interactive_req_cb_http HTTP_NORMAL);
     0;;
 
 
@@ -198,11 +223,11 @@ fun interactiveSendEarTouched lefttouch righttouch=
     // right = 0, left = 1
     wavstop;
     earStop 0;
-    let wav_curplayedbytes -> readBytes in  // controlsound resets wav_curplayedbytes so we cache it
+    let wav_curplayedbytes -> readBytes in  // midi_play resets wav_curplayedbytes so we cache it
     (
-        if (lefttouch) then controlsound midi_precedent;
-        if (righttouch) then controlsound midi_suivant;
-        set run=interactiveReqWaitRun (httprequest "GET" (interactifurl_ear gItApp readBytes gCurAudioCmdIndex righttouch lefttouch) nil #interactive_req_cb_http HTTP_NORMAL)
+        if (lefttouch) then midi_play midi_precedent;
+        if (righttouch) then midi_play midi_suivant;
+        run_set_state interactiveReqWaitRun (httprequest "GET" (interactive_url_ear gItApp readBytes gCurAudioCmdIndex righttouch lefttouch) nil #interactive_req_cb_http HTTP_NORMAL)
     );
     0;;
 
@@ -213,7 +238,8 @@ fun interactiveEarProcessTouched=
     if (lefttouch || righttouch) then (
         interactiveSendEarTouched lefttouch righttouch;
         interactive_reset_ears_touched
-    );;
+    );
+    JobRun;;
 
 proto zeroRFIDchek 0;;
 
@@ -267,8 +293,8 @@ fun runInteractiveReqWait http=
 fun interactive_state_enter=
     set g_streaming_chor_enabled=1;
     set g_int_mask=0;
-    set g_snd_btn_1 = "clonk";
-    set g_snd_btn_2 = "chord";
+    set _interactive_btn_1_snd = "clonk";
+    set _interactive_btn_2_snd = "chord";
     set g_record_enabled = 1;
     0;;
 
@@ -282,11 +308,11 @@ fun interactive_eval_IC_msg val=
         (
             if !strcmp ickey "snd.btn.1" then (
                 // snd.btn.1                -> son du bouton en cas de pression courte.
-                set g_snd_btn_1 = icval;
+                set _interactive_btn_1_snd = icval;
                 0
             ) else if !strcmp ickey "snd.btn.2" then (
                 // snd.btn.2                -> son du bouton en cas de double click.
-                set g_snd_btn_2 = icval;
+                set _interactive_btn_2_snd = icval;
                 0
             ) else if !strcmp ickey "snd.itmode" then (
                 // snd.itmode                -> son debut et fin du mode interactif.

@@ -44,7 +44,7 @@ fun zeroRFIDchek =
 
 fun _cbrfidendchor unused=
 	// continue idle
-	set run=idleRun;
+	run_set_state idleRun;
 	0
 	;;
 
@@ -79,7 +79,7 @@ fun controlrfid=
 		(
 			set lastrfid=rfid;
 			set RFIDlast = time_ms;
-			controlsound midi_RFIDok;
+			midi_play midi_RFIDok;
 
 			// lancer l'animation (v19)
 			msgchorstart chor_RFIDok::nil #_cbrfidendchor nil;

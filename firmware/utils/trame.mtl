@@ -1,3 +1,20 @@
+fun _trame_filter_config_word s=
+    let strstr s " " 0 -> i in
+    if i!=nil then [strsub s 0 i strsub s i+1 nil]
+    else [s nil];;
+
+fun _trame_filter_config_line s i=
+    let strstr s "\10" i-> j in
+    if j!=nil then (_trame_filter_config_word strsub s i j-i)::_trame_filter_config_line s j+1
+    else if i<strlen s then (_trame_filter_config_word strsub s i nil)::nil;;
+
+fun trame_filter_config s i0=
+    let strreplace s "\13" "" -> s in
+    _trame_filter_config_line s i0
+;;
+
+// ---------------------------------------------------------------------------
+
 fun _trame_dump_prgm l=
     Progw "Program:";
     for l=l;l!=nil;tl l do let hd l->[key val] in (
@@ -60,7 +77,7 @@ fun trame_program_start=
     );
     // start evaluating first command
     set gCurAudioCmdIndex = -1;
-    set run=cmdEvalOne 0;
+    run_set_state cmdEvalOne 0;
     0;;
 
 // ******************************************
@@ -88,7 +105,7 @@ fun trame_eval ping_trame=
             nil
         ) else (
             // drop, and ping again later
-            set run=idleRun;
+            run_set_state idleRun;
             nil
         )
     ) else (
@@ -125,7 +142,7 @@ fun trame_eval ping_trame=
                 ) else if code == 10 then (
                     // programs (or IDLE or SLEEP)
                     uncrypt val 1 nil 0x47 47;
-                    set program=_trame_dump_prgm filterconfig val 1;
+                    set program=_trame_dump_prgm trame_filter_config val 1;
                     nil
                 ) else if code == 11 then (
                     // change mode
@@ -162,7 +179,7 @@ fun trame_eval ping_trame=
                 ) else (
                     // will load rsctoget and then start the program 'gCurrentProgram'
                     Secho "loading rsrcs...";
-                    set run = rscLoadNextRun;
+                    run_set_state rscLoadNextRun;
                     0
                 )
             );

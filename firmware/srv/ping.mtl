@@ -22,7 +22,7 @@ fun runpingstart=
 	);
 
 	if netState==RT2501_S_CONNECTED then
-		set run=pingwaitRun httprequest "GET" Secholn pingurl nil #_pingcbhttp HTTP_NORMAL;
+		run_set_state pingwaitRun httprequest "GET" Secholn pingurl nil #_pingcbhttp HTTP_NORMAL;
 	0;;
 
 // waiting for ping return : manage timeout
@@ -33,13 +33,13 @@ fun runpingwait http=
 		Secholn "##timeout on pingwait";
 		httpabort http;
 		// restart later
-		set run=stdWaitRun time+pingdelay
+		run_set_state stdWaitRun time+pingdelay
 	);
 	0;;
 
 // main ping loog
 fun runStdWait t=
-	if time>t then set run=pingstartRun;
+	if time>t then run_set_state pingstartRun;
 	0;;
 
 
@@ -51,14 +51,14 @@ fun runidlewait=
 		setleds 0;
 		earGo 0 extleft 0;
 		earGo 1 extright 0;
-		set run=stdWaitRun time+pingdelay
+		run_set_state stdWaitRun time+pingdelay
 	);
 	0;;
 
 // L'appel du ping
 fun callPingRequest aSenddata=
 	if aSenddata!=nil then set senddata=aSenddata;
-	set run=pingRequestWaitRun httprequest "GET" Secholn pingurl nil #_pingcbhttp HTTP_NORMAL;
+	run_set_state pingRequestWaitRun httprequest "GET" Secholn pingurl nil #_pingcbhttp HTTP_NORMAL;
 	0;;
 
 fun runPingRequestWait http=

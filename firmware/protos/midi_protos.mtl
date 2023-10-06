@@ -1,0 +1,2 @@
+proto midi_get_list 0;;
+proto midi_play 1;;

@@ -78,5 +78,5 @@ fun run_icmp_ping=
 			set last_ping_time = time
 		)
 	);
-    nil;;
+    JobRun;;
 

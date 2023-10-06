@@ -16,7 +16,7 @@ var record_last_wav_bytes = 0;;
 
 fun record_uploading = recordreq!=nil;;
 
-fun runrecordstart=
+fun runrecordstart =
     // wait for the end of the starting sound
     if !wavrunning then
     (
@@ -25,7 +25,7 @@ fun runrecordstart=
         unforcevol;
         recstart;
         set _record_time_start=time_ms;
-        set run=recordRun
+        run_set_state recordRun
     );;
 
 fun record_control mode=
@@ -36,7 +36,7 @@ fun record_control mode=
     forcevol 64;
     audiolib_wav_start_local_ex mp3_startrecord::nil 100;
     set _record_mode=mode;
-    set run=recordStartRun;
+    run_set_state recordStartRun;
     0;;
 
 fun _record_cb_http http res=
@@ -50,7 +50,7 @@ fun _record_cb_http http res=
         set _record_play_end=nil;
         audiolib_wav_start_local midi_endrecord::nil
     );
-    set run=idleRun;
+    run_set_state idleRun;
     0;;
 
 fun record_upload_timeout=
@@ -82,14 +82,15 @@ fun record_upload_timeout=
                 // abort
                 set recorddata=nil;
                 if (!gItState) then (
-                    set run=idleRun;0
+                    run_set_state idleRun;
+                    0
                 ) else (
                     interactive_error
                 )
             )
         )
     );
-    nil;;
+    JobRun;;
 
 const AskR = 0;; // v18
 const RecordingTime = 8000;; // v18
@@ -106,7 +107,8 @@ fun runrecord=
             set _record_play_end=time_ms+400;
             if (!gItState) then (
                 set recordreq=httprequest "POST" Secholn recordurl _record_mode recorddata #_record_cb_http HTTP_NORMAL;
-                set run=idleRun;0
+                run_set_state idleRun;
+                0
             ) else (
                 _record_interactive_send_upload
             )
@@ -114,7 +116,7 @@ fun runrecord=
     );;
 
 fun _record_interactive_send_upload =
-    set recordreq = httprequest "POST" (interactifurl_reco gItApp record_last_wav_bytes gCurAudioCmdIndex) recorddata #interactive_req_cb_http HTTP_NORMAL;
-    set run=interactiveReqWaitRun recordreq;
+    set recordreq = httprequest "POST" (interactive_url_reco gItApp record_last_wav_bytes gCurAudioCmdIndex) recorddata #interactive_req_cb_http HTTP_NORMAL;
+    run_set_state interactiveReqWaitRun recordreq;
     0;;
 

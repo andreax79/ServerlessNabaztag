@@ -11,3 +11,4 @@ proto interactive_note_ear_touched 3;;
 proto _interactive_continue_start_cb 1;;
 proto _interactive_continue_stop_cb 1;;
 proto _interactive_continue_error_cb 1;;
+proto interactive_url_reco 3;;

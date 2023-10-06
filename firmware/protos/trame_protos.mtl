@@ -2,3 +2,6 @@ proto trame_eval 1;;
 proto trame_get_next_pending 0;;
 proto trame_is_resource_valid 1;;
 proto trame_program_start 0;;
+proto trame_filter_config 2;;
+
+const TRAME_QUEUE_MAXLEN = 10;;

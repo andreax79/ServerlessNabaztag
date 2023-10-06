@@ -3,14 +3,75 @@ const CONTROL_PLAY=2;;
 const CONTROL_INTERACTIF=3;;
 const CONTROL_PROGRAMWAIT=4;;
 
-fun getRunState =
+// Main loop state
+var run;;
+
+var _run_net_activity = 0;;
+
+// Get main loop state
+fun run_get_state =
     run;;
 
-fun setRunState runState =
-    let run -> oldRun in (
-        set run = runState;
-        oldRun
+// Set main loop state
+fun run_set_state r =
+    let run -> old_run in (
+        set run = r;
+        old_run
     );;
+
+fun run_init =
+    run_set_state configstartRun;;
+
+fun _run_control_wait =
+    let buttongetevent -> ev in
+    let if ev==nil then eargetevent else ev -> ev in
+    if ev!=nil then
+    (
+        wavstop;
+        earStop 0;
+        if ev==BUTTON_CLIC then (hookClick time_ms;0) // click
+        else if ev==BUTTON_DCLIC then (midi_play midi_ack; hookDblClick time_ms;0) //ackall
+        else if ev==BUTTON_LCLIC then record_control 0  //  //back ou record
+        else if ev==BUTTON_DLCLIC then record_control 1 // //back ou record
+        else if ev&0x8000 then (
+            // oreilles
+            midi_play midi_acquired;
+            let (ev-0x8000)&0xFF00>>8 -> leftpos in
+            let (ev-0x8000)&0xFF -> rightPos in (
+                // remember for after sleep, etc...
+                set extleft=leftpos;
+                set extright=rightPos;
+                hookEars leftpos rightPos
+            );
+            0
+        )
+    );
+    controlrfid
+    ;;
+
+
+fun _run_control_inter =
+    let buttongetevent -> ev in
+    if ev!=nil then
+    (
+        if ev==BUTTON_CLIC || ev==BUTTON_DCLIC then (
+            if (g_int_mask&MASK_BUTTON == 0) then interactive_send_btn ev
+        ) else if ev==BUTTON_LCLIC then (
+            if (g_record_enabled) then (
+                // remember wav position and start record
+#ifdef RECLIB
+                set record_last_wav_bytes = wav_curplayedbytes ;
+#endif
+                record_control 0
+            ) else (
+                // like BUTTON_CLIC
+                set ev = BUTTON_CLIC;
+                if (g_int_mask&MASK_BUTTON == 0) then interactive_send_btn ev
+            )
+        )
+    );
+    controlrfid
+    ;;
 
 /**
     Stop everything we can be doing and resets to either idle or asleep
@@ -25,53 +86,200 @@ fun stopEverythingAndResetToIdle =
     set gProcessingState = 0;
     set gStreamingState = 0;
     set gCurrentProgram = nil;
-    set run = if (!gSleepState) then idleRun else sleepRun;
+    run_set_state if (!gSleepState) then idleRun else sleepRun;
     0
 ;;
 
+fun _run_control_play =
+    let buttongetevent -> ev in
+    if ev!=nil then (
+        wavstop;
+        earStop 0;
+        let atoi listswitchstr gCurrentProgram "ID" -> id in
+            if ev==BUTTON_CLIC then (midi_play midi_abort; if (gStreamingState) then stopStream; endOfProgram 0; XmppSessionSendButtonMsg ev 1 id) //pause
+            else if ev==BUTTON_DCLIC then (midi_play midi_ack;if (gStreamingState) then stopStream; endOfProgram 0; XmppSessionSendButtonMsg ev 1 id) //ackall
+            else if ev==BUTTON_LCLIC then nil //pause ou record ? callPingRequest 5
+    )
+    ;;
 
 /*
     Utilise dans le cas ou on execute un programme et qu'on est en train
   d'executer une commande "WT". En gros on a un comportement normal
   sauf qu'on lit les rfid en plus
 */
-fun controlprogramwait =
-    (if (!gItState) then controlplay else controlinteractif) ;
+fun _run_control_program_wait =
+    (if (!gItState) then _run_control_play else _run_control_inter) ;
     controlrfid
 ;;
+
+
+const _run_tab_osc={
+    0 0 0 0 0 0 1 1 2 3 3 4 5 6 7 8
+    9 10 12 13 15 16 18 19 21 23 25 27 29 31 33 35
+    37 39 42 44 46 49 51 54 56 59 62 64 67 70 73 76
+    79 81 84 87 90 93 96 99 103 106 109 112 115 118 121 124
+};;
+
+
+fun _run_osc x=
+    let (x>>6)&3 -> q in
+    let x&255 -> x in
+    if q==0 then _run_tab_osc.x
+    else if q==1 then 255-_run_tab_osc.(127-x)
+    else if q==2 then 255-_run_tab_osc.(x-128)
+    else _run_tab_osc.(255-x);;
+
+
+fun _run_bottom_led=
+    if gSleepState == 0 then
+    if !earDetecting then
+        (let _run_osc time_ms>>4 -> v in led LED_BASE v*0x000100); // pulse green - was violet 0x10001
+    0;;
+
+
+fun _run_nose_led=
+    if !earDetecting then
+    // led tete clignote if netactivity or wav_buffering //
+    let record_uploading || (match run with (rscLoadWaitRun _-> 1)|(interactiveReqWaitRun _->1)|(_->0)) -> netactivity in
+    if (netactivity) then (
+        led LED_NOSE (if time_ms&256 then RGB_BLUE else RGB_BLACK);
+        set _run_net_activity = 1
+    ) else if (wav_buffering) then (
+        led LED_NOSE (if time_ms&128 then RGB_VIOLET else RGB_BLACK);
+        set _run_net_activity = 1
+    ) else if (_run_net_activity) then (
+        // show off the light
+        led LED_NOSE RGB_BLACK;
+        set _run_net_activity = 0
+    );
+    0;;
+
+
+fun _run_ear_reset cb =
+    if (!earResetting) then
+        call cb []
+    ;;
+
+fun _run_idle =
+    // if trame waiting, execute it
+    let trame_get_next_pending -> trame in
+    if trame != nil then (
+        trame_eval trame;
+        0
+    ) else (
+        set gProcessingState = 0;
+#ifdef SERVERLESS
+        if check_surprise then (
+            surprise;
+            0
+        )
+        else
+#endif
+        if dotaichinow then (
+            taichistart;
+            0
+        ) else (
+#ifdef PING
+            runpingstart;
+#endif
+            0
+        )
+    );
+    0;;
+
+
+fun _configcbhttp http res=
+    if (nil != res) then
+    (
+        Secholn "config=";
+        let trame_filter_config Secholn httpgetcontent res 0-> conf in
+        (
+            // http urls
+            set pingsrv=listswitchstr conf "ping";
+            set broadcasturl=listswitchstr conf "broad";
+
+#ifdef PING
+            sleep_end;
+            if pingsrv!=nil && broadcasturl!=nil then run_set_state pingstartRun;
+#endif
+#ifdef XMPP
+        /****** XMPP ****/
+            let listswitchstr conf "xmpp_domain" -> xmpp_domain in
+                if xmpp_domain != nil then
+                    XmppSessionStart xmpp_domain 1; // START 1 XMPP SESSION HERE (1 == Display Leds for connexion Details)
+
+            run_set_state xmppLoginRun;
+#endif
+#ifdef SERVERLESS
+            sleep_end;
+#endif
+            0
+        )
+    )
+    else
+    (
+        // l'appel à locate.jsp a échoué -> ... rebooter tout ?
+        Secholn "call to locate.jsp failed, rebooting";
+        ///////// reboot 0x0407FE58 0x13fb6754;
+        0
+    )
+;;
+
+fun _run_config_start =
+    if netState==RT2501_S_CONNECTED && wavrunning==0 then (
+        leds_set_state LEDS_STATE_CONFIG_WAIT ;
+#ifdef SERVERLESS
+        meteo_get;
+        get_time_from_timeserver;
+        sleep_end
+#else
+        run_set_state configwaitRun httprequest "GET" Secholn configurl nil #_configcbhttp HTTP_NORMAL
+#endif
+    );
+    0;;
+
+fun _run_config_wait http=
+    // check timeout and retry : cligne + ou - la led middle body toutes les secondes en bleu
+    if ((httpinactive http) > STD_NET_TIMEOUT) then
+    (
+        Secholn "##timeout on configwait";
+        httpabort http;
+        run_init
+    );
+    0;;
 
 
 fun run_step=
     let match run with
     ( configstartRun ->
         earRun;
-        runconfigstart;
+        _run_config_start;
         0)|
     ( configwaitRun http ->
         earRun;
-        runconfigwait http;
+        _run_config_wait http;
         0)|
 #ifdef PING
     ( pingstartRun ->
         earRun;
-        if currentTrameID!=MSG_ASLEEP then bottomled;
+        if currentTrameID!=MSG_ASLEEP then _run_bottom_led;
         runpingstart;
         0)|
     ( pingwaitRun http ->
         earRun;
         if currentTrameID!=MSG_ASLEEP then (
             infoRun;
-            bottomled;
-            noseled
+            _run_bottom_led;
+            _run_nose_led
         );
         runpingwait http;
         if currentTrameID!=MSG_ASLEEP then CONTROL_WAIT)|
     ( pingRequestWaitRun http->
-        bottomled;
-        noseled;
+        _run_bottom_led;
+        _run_nose_led;
         runPingRequestWait http;
         0)|
-    ( stdWaitRun t -> earRun;if currentTrameID!=MSG_ASLEEP then (infoRun;bottomled;noseled);runStdWait t; CONTROL_WAIT) |
+    ( stdWaitRun t -> earRun;if currentTrameID!=MSG_ASLEEP then (infoRun;_run_bottom_led;_run_nose_led);runStdWait t; CONTROL_WAIT) |
 #endif
 #ifdef XMPP
     ( xmppLoginRun ->
@@ -88,7 +296,7 @@ fun run_step=
     );
     let params -> [waitTime xSession oldRun] in
         match xSession.sStatus with
-            (sOpened -> set run = oldRun; 0)
+            (sOpened -> run_set_state oldRun; 0)
             |(sClosed ->
                 if time_ms > waitTime then (
                     XmppGateReconnect xSession 0
@@ -97,31 +305,31 @@ fun run_step=
             |(_ -> 0);
     CONTROL_WAIT)|
 #endif
-    ( idleRun -> earRun;infoRun;bottomled;noseled;runIdle;CONTROL_WAIT) |
-    ( sleepRun -> earRun;runIdle;0) |
+    ( idleRun -> earRun;infoRun;_run_bottom_led;_run_nose_led;_run_idle;CONTROL_WAIT) |
+    ( sleepRun -> earRun;_run_idle;0) |
 
-    ( rscLoadNextRun -> earRun;infoRun;bottomled;noseled;runRscLoadNext; CONTROL_WAIT)|
-    ( rscLoadWaitRun http-> earRun;infoRun;bottomled;noseled;runRscLoadWait http;CONTROL_WAIT)|
+    ( rscLoadNextRun -> earRun;infoRun;_run_bottom_led;_run_nose_led;runRscLoadNext; CONTROL_WAIT)|
+    ( rscLoadWaitRun http-> earRun;infoRun;_run_bottom_led;_run_nose_led;runRscLoadWait http;CONTROL_WAIT)|
     ( cmdEvalOne i-> earRun;runEvalOneCommand i;CONTROL_PLAY)|
-    ( chorCmdRun i-> earRun;noseled;runChorCmd i;CONTROL_PLAY)|
-    ( streamCmdRun i0-> earRun;noseled;runStreamingCmd i0;CONTROL_PLAY)|
-    ( waitCmdRun i -> earRun;noseled;runWaitCmd i;CONTROL_PROGRAMWAIT)|
+    ( chorCmdRun i-> earRun;_run_nose_led;runChorCmd i;CONTROL_PLAY)|
+    ( streamCmdRun i0-> earRun;_run_nose_led;runStreamingCmd i0;CONTROL_PLAY)|
+    ( waitCmdRun i -> earRun;_run_nose_led;runWaitCmd i;CONTROL_PROGRAMWAIT)|
 
-    ( earResetWaitRun cb -> earRun; runEarReset cb; 0) |
+    ( earResetWaitRun cb -> earRun; _run_ear_reset cb; 0) |
 
 #ifdef RECLIB
     ( recordRun -> runrecord; 0)|
     ( recordStartRun -> runrecordstart; 0) |
 #endif
 
-    ( interactiveReqWaitRun http-> earRun;infoRun;bottomled;noseled;runInteractiveReqWait http;CONTROL_WAIT)
+    ( interactiveReqWaitRun http-> earRun;infoRun;_run_bottom_led;_run_nose_led;runInteractiveReqWait http;CONTROL_WAIT)
      -> keymanager in
     if keymanager==CONTROL_WAIT then
-        controlwait
+        _run_control_wait
     else if keymanager==CONTROL_PLAY then
-        (if (!gItState) then controlplay else controlinteractif)
+        (if (!gItState) then _run_control_play else _run_control_inter)
     else if keymanager==CONTROL_PROGRAMWAIT then
-        controlprogramwait
+        _run_control_program_wait
     else
         buttongetevent;
-    nil;;
+    JobRun;;

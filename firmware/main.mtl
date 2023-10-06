@@ -55,7 +55,6 @@ var gProcessingWaitState = 0;;  // executing a "wait" command in a program. when
 var gBusyState = 0;;        // busy (incoming message queue full)
 var gItApp = nil;;          // the name of the interactive application
 var gEarInited = 0;;        // si les oreilles ont été initialisées.
-var gRegistrationError = 0;;// registration error during login
 
 #include net/net_vars.mtl
 
@@ -66,8 +65,9 @@ fun getBytecodeRevision =
 
 #include protos/run_protos.mtl
 #include protos/dns_protos.mtl
-#include utils/utils.mtl
 #include hw/leds.mtl
+#include utils/utils.mtl
+#include utils/jobs.mtl
 #include utils/md5.mtl
 #include utils/b64.mtl
 #include utils/xmlparser.mtl
@@ -87,30 +87,16 @@ fun getBytecodeRevision =
 #include net/dns.mtl
 #include net/http.mtl
 #include srv/time.mtl
+#include protos/ears_protos.mtl
+#include protos/midi_protos.mtl
 
-/**
-    Les différents états de la boucle principale.
-*/
-type Run= configstartRun | configwaitRun _ | interactiveReqWaitRun _ |
-#ifdef PING
-    pingstartRun | pingwaitRun _| stdWaitRun _ | pingRequestWaitRun _ |
-#endif
-    rscLoadNextRun | rscLoadWaitRun _ | chorCmdRun _ |streamCmdRun _ | waitCmdRun _ | cmdEvalOne _ | idleRun | sleepRun |
-#ifdef RECLIB
-    recordRun | recordStartRun |
-#endif
-    earResetWaitRun _ | xmppLoginRun | xmppReconnectRun _ ;;
-
-var run;;
-
-proto earInit 0;;
+proto XmppSessionRequestResource 1;;
 
 #ifdef XMPP
 #include srv/xmpp.mtl
 #else
 fun XmppSessionRequestResource newRes = 0 ;;
 fun XmppSessionSendButtonMsg btn withEvent eventValue = 0 ;;
-fun XmppSessionSendEarMsg leftValue rightValue = 0 ;;
 var senddata=0;;
 var currentTrameID=0;;
 #endif
@@ -133,42 +119,11 @@ var currentTrameID=0;;
 
 #include srv/surprise.mtl
 #include srv/crontab.mtl
-
 #include utils/hooks.mtl
-
-proto hookEars 2;;
-proto hookRfid 1;;
-
-proto hookClick 1;;
-proto hookDblClick 1;;
-
-
-
-//-------------------
-
-
-
 #include net/wifi.mtl
 #include utils/env.mtl
 
 #ifdef NOMINAL
-
-const tab_osc={
-    0 0 0 0 0 0 1 1 2 3 3 4 5 6 7 8
-    9 10 12 13 15 16 18 19 21 23 25 27 29 31 33 35
-    37 39 42 44 46 49 51 54 56 59 62 64 67 70 73 76
-    79 81 84 87 90 93 96 99 103 106 109 112 115 118 121 124
-};;
-
-
-fun osc x=
-    let (x>>6)&3 -> q in
-    let x&255 -> x in
-    if q==0 then tab_osc.x
-    else if q==1 then 255-tab_osc.(127-x)
-    else if q==2 then 255-tab_osc.(x-128)
-    else tab_osc.(255-x);;
-
 
 var pingsrv;;
 var broadcasturl;;
@@ -189,8 +144,6 @@ const MASK_EAR_LEFT = 2;;
 const MASK_EAR_RIGHT = 4;;
 const MASK_RFID = 8;;
 var g_int_mask=0;;
-var g_snd_btn_1 = "clonk";;
-var g_snd_btn_2 = "chord";;
 var g_record_enabled = 1;;
 
 #include protos/interactive_protos.mtl
@@ -226,22 +179,7 @@ const CH_setmotordir=20;; // v16
 
 #include utils/palette.mtl
 #include utils/const_data.mtl
-
-var midilist;;
-
-fun getmidilist=
-    if midilist==nil then set midilist=
-    {midi_1noteA4 midi_1noteB5 midi_1noteBb4 midi_1noteC5 midi_1noteE4 midi_1noteF4
-     midi_1noteF5 midi_1noteG5 midi_2notesC6C4 midi_2notesC6F5 midi_2notesD4A5
-     midi_2notesD4G4 midi_2notesD5G4 midi_2notesE5A5 midi_2notesE5C6 midi_2notesE5E4
-     midi_3notesA4G5G5 midi_3notesB5A5F5 midi_3notesB5D5C6 midi_3notesD4E4G4 midi_3notesE5A5C6
-     midi_3notesE5C6D5 midi_3notesE5D5A5 midi_3notesF5C6G5};
-    midilist;;
-
-fun controlsound s=
-    audiolib_wav_start_local s::nil;
-    0;;
-
+#include utils/midi.mtl
 #include hw/button.mtl
 
 // URLs normales
@@ -257,13 +195,6 @@ fun sendmailxmppurl xmppdomain data = strcatlist pingsrv::"/vl/sendMailXMPP.jsp?
 fun boshurl ip = strcatlist ip::"/http-bind"::nil;;
 #endif
 
-// Construction des urls d'interactivité
-fun interactifurl_start application= strcatlist (interactifurl application)::"&st=start"::g_cookie::nil;;
-fun interactifurl_btn application position cmdindex btn= strcatlist (interactifurl application)::"&st=btn&pos="::(itoa position)::"&idx="::(itoa cmdindex)::"&btn="::(itoa btn)::g_cookie::nil;;
-fun interactifurl_done application = strcatlist (interactifurl application)::"&st=done"::g_cookie::nil;;
-fun interactifurl_ear application position cmdindex earg eard = strcatlist (interactifurl application)::"&st=ear&pos="::(itoa position)::"&idx="::(itoa cmdindex)::"&el="::(itoa earg)::"&er="::(itoa eard)::g_cookie::nil;;
-fun interactifurl_reco application position cmdindex = strcatlist (interactifurl application)::"&st=reco&pos="::(itoa position)::"&idx="::(itoa cmdindex)::g_cookie::nil;;
-
 #include srv/meteo.mtl
 
 #ifdef PING
@@ -274,356 +205,52 @@ fun interactifurl_reco application position cmdindex = strcatlist (interactifurl
 #include srv/http_server.mtl
 #endif
 
-
-fun runinit=
-    set run=configstartRun;;
-
-
-fun filterconfig_word s=
-    let strstr s " " 0 -> i in
-    if i!=nil then [strsub s 0 i strsub s i+1 nil]
-    else [s nil];;
-
-fun filterconfig_line s i=
-    let strstr s "\10" i-> j in
-    if j!=nil then (filterconfig_word strsub s i j-i)::filterconfig_line s j+1
-    else if i<strlen s then (filterconfig_word strsub s i nil)::nil;;
-
-fun filterconfig s i0=
-    let strreplace s "\13" "" -> s in
-    filterconfig_line s i0
-;;
-
-fun _configcbhttp http res=
-    if (nil != res) then
-    (
-        Secholn "config=";
-        let filterconfig Secholn httpgetcontent res 0-> conf in
-        (
-            // http urls
-            set pingsrv=listswitchstr conf "ping";
-            set broadcasturl=listswitchstr conf "broad";
-
-#ifdef PING
-            sleep_end;
-            if pingsrv!=nil && broadcasturl!=nil then set run=pingstartRun;
-#endif
-#ifdef XMPP
-        /****** XMPP ****/
-            let listswitchstr conf "xmpp_domain" -> xmpp_domain in
-                if xmpp_domain != nil then
-                    XmppSessionStart xmpp_domain 1; // START 1 XMPP SESSION HERE (1 == Display Leds for connexion Details)
-
-            set run = xmppLoginRun;
-#endif
-#ifdef SERVERLESS
-            sleep_end;
-#endif
-            0
-        )
-    )
-    else
-    (
-        // l'appel à locate.jsp a échoué -> ... rebooter tout ?
-        Secholn "call to locate.jsp failed, rebooting";
-        ///////// reboot 0x0407FE58 0x13fb6754;
-        0
-    )
-;;
-
-var gConfigStart = 0;;
-fun runconfigstart=
-    if netState==RT2501_S_CONNECTED && wavrunning==0 then (
-        set gConfigStart = time_ms;
-        leds_set_state LEDS_STATE_CONFIG_WAIT ;
-#ifdef SERVERLESS
-        meteo_get;
-        get_time_from_timeserver;
-        sleep_end
-#else
-        set run=configwaitRun httprequest "GET" Secholn configurl nil #_configcbhttp HTTP_NORMAL
-#endif
-    );
-    0;;
-
-fun runconfigwait http=
-    // check timeout and retry : cligne + ou - la led middle body toutes les secondes en bleu
-    if ((httpinactive http) > STD_NET_TIMEOUT) then
-    (
-        Secholn "##timeout on configwait";
-        httpabort http;
-        set run=configstartRun
-    );
-
-    0;;
-
-
-// replace the prefix string "broadcast" (if present) by broadcasturl
-fun rscfilterurl url=
-    if 0==strstr url BROADCAST_KEYWORD 0 then strcat broadcasturl strsub url strlen BROADCAST_KEYWORD nil
-    else url;;
-
-
-// ********** loading resources
-
-// callback from rscLoadWaitRun : a resource has been loaded
-fun _rscLoadCBhttp http res maxsize=
-    if recording then
-    (
-        httpabort http;
-        nil
-    )
-    else if res!=nil then
-    (
-        // received a result, store it in rsctmp
-        // Je ne comprends pas la logique ici (AS sept07) : a quoi sert rsctmp et maxsize, et comment passe-t-il à la suite ?
-//      Secholn res;
-        set rsctmp=res::rsctmp;
-        if maxsize!=nil && (slistlen rsctmp)>maxsize then
-        (
-            // too big ? (?)
-            httpabort http;
-            _rscLoadCBhttp http nil nil
-        );
-        0
-    )
-    else
-    (
-        let hd rsctoget ->[url _] in
-        // remember rsc loaded
-        set rscloaded=[url tl rev rsctmp nil]::rscloaded;
-
-        // load next rsc
-        set rsctoget=tl rsctoget;
-        set run=rscLoadNextRun;
-        0
-    );;
-
-// Recursive : loads all needed resources of the list 'rsctoget' and then starts current program
-fun runRscLoadNext=
-    let hd rsctoget -> [url maxsize] in
-    if url==nil then
-    (
-        // nothing (else) to load : start execute msgs now
-        Secholn "rsrcs loaded, starting prgm";
-        trame_program_start;
-        0
-    )
-    else if nil!=listswitchstr rscloaded url then
-    (
-        // already loaded : load next
-        set rsctoget=tl rsctoget;
-        runRscLoadNext
-    )
-    else
-    (
-        // load resource
-        set rsctmp=nil;
-        Secho "loading ";
-        set run=rscLoadWaitRun httprequest "GET" Secholn (rscfilterurl url) nil (fixarg3 #_rscLoadCBhttp maxsize) HTTP_STREAM;
-        0
-    );;
-
-fun runRscLoadWait http=
-    // wait for loading resource
-    if (httpinactive http)>STD_NET_TIMEOUT then
-    (
-        Secholn "##timeout in runRscLoadWait";
-        httpabort http;
-        // skip, load next
-        set rsctoget=tl rsctoget;
-        set run=rscLoadNextRun
-    );
-    0;;
-
-
-/**
-    Called when a program has to end.
-    If doNotNotify is set (!=0) then the server is not notified of the end of the program
-*/
-fun endOfProgram doNotNotify =
-    Secholn "endOfProgram";
-    set gProcessingState = 0;
-    set gProcessingWaitState = 0; // just in case
-    set gCurrentProgram = nil;
-    if (gItState && !doNotNotify) then (
-        // notifier fini
-        interactive_program_done
-    ) else (
-        // retour normal
-        set run = idleRun;
-        0
-    );
-    0;;
-
 #ifdef RECLIB
 #include utils/record.mtl
 #else
 fun record_control mode=0;;
 fun record_uploading=0;;
 #endif
+
 #include utils/choreographic.mtl
 #include utils/interactive.mtl
 #include utils/streaming.mtl
-
-
-fun runEarReset cb=
-    if (!earResetting) then
-        call cb []
-    ;;
-
 #include utils/sleep.mtl
 #include utils/trame.mtl
-
-fun runIdle=
-    // if trame waiting, execute it
-    let trame_get_next_pending -> trame in
-    if trame != nil then (
-        trame_eval trame;
-        0
-    ) else (
-        set gProcessingState = 0;
-#ifdef SERVERLESS
-        if check_surprise then (
-            surprise;
-            0
-        )
-        else
-#endif
-        if dotaichinow then (
-            taichistart;
-            0
-        ) else (
-#ifdef PING
-            runpingstart;
-#endif
-            0
-        )
-    );
-    0
-;;
-
-
-var gWasNetActivity = 0;;
-fun noseled=
-    if !earDetecting then
-    // led tete clignote if netactivity or wav_buffering //
-    let record_uploading || (match run with (rscLoadWaitRun _-> 1)|(interactiveReqWaitRun _->1)|(_->0)) -> netactivity in
-    if (netactivity) then (
-        led LED_NOSE (if time_ms&256 then RGB_BLUE else RGB_BLACK);
-        set gWasNetActivity = 1
-    ) else if (wav_buffering) then (
-        led LED_NOSE (if time_ms&128 then RGB_VIOLET else RGB_BLACK);
-        set gWasNetActivity = 1
-    ) else if (gWasNetActivity) then (
-        // show off the light
-        led LED_NOSE RGB_BLACK;
-        set gWasNetActivity = 0
-    );
-    0;;
-
-fun bottomled=
-    if gSleepState == 0 then
-    if !earDetecting then
-        (let osc time_ms>>4 -> v in led LED_BASE v*0x000100); // pulse green - was violet 0x10001
-    0;;
-
 #include hw/rfid.mtl
-
-fun controlplay=
-    let buttongetevent -> ev in
-    if ev!=nil then (
-        Secholn "controlplay";
-        wavstop;
-        earStop 0;
-        let atoi listswitchstr gCurrentProgram "ID" -> id in
-            if ev==BUTTON_CLIC then (controlsound midi_abort; if (gStreamingState) then stopStream; endOfProgram 0; XmppSessionSendButtonMsg ev 1 id) //pause
-            else if ev==BUTTON_DCLIC then (controlsound midi_ack;if (gStreamingState) then stopStream; endOfProgram 0; XmppSessionSendButtonMsg ev 1 id) //ackall
-            else if ev==BUTTON_LCLIC then nil //pause ou record ? callPingRequest 5
-    )
-    ;;
-
-fun controlwait=
-    let buttongetevent -> ev in
-    let if ev==nil then eargetevent else ev -> ev in
-    if ev!=nil then
-    (
-        Secho "controlwait ev="; Iecholn ev;
-        wavstop;
-        earStop 0;
-        if ev==BUTTON_CLIC then (hookClick time_ms;0) // click
-        else if ev==BUTTON_DCLIC then (controlsound midi_ack; hookDblClick time_ms;0) //ackall
-        else if ev==BUTTON_LCLIC then record_control 0  //  //back ou record
-        else if ev==BUTTON_DLCLIC then record_control 1 // //back ou record
-        else if ev&0x8000 then (
-            // oreilles
-            controlsound midi_acquired;
-            let (ev-0x8000)&0xFF00>>8 -> leftpos in
-            let (ev-0x8000)&0xFF -> rightPos in (
-                // remember for after sleep, etc...
-                set extleft=leftpos;
-                set extright=rightPos;
-                hookEars leftpos rightPos
-            );
-            0
-        )
-    );
-    controlrfid
-    ;;
-
-fun controlinteractif =
-    let buttongetevent -> ev in
-    if ev!=nil then
-    (
-        Secholn "controlinteractif";
-        if ev==BUTTON_CLIC || ev==BUTTON_DCLIC then (
-            if (g_int_mask&MASK_BUTTON == 0) then interactive_send_btn ev
-        ) else if ev==BUTTON_LCLIC then (
-            if (g_record_enabled) then (
-                // remember wav position and start record
-#ifdef RECLIB
-                set record_last_wav_bytes = wav_curplayedbytes ;
-#endif
-                record_control 0
-            ) else (
-                // like BUTTON_CLIC
-                set ev = BUTTON_CLIC;
-                if (g_int_mask&MASK_BUTTON == 0) then interactive_send_btn ev
-            )
-        )
-    );
-    controlrfid
-    ;;
-
 #include srv/run.mtl
 
 
 fun loop=
-    wifi_run;
-    buttonloop;
-    run_step;
+    job_loop;
+    0;;
 
+
+fun jobs_init=
+    job_start "wifi_run" #wifi_run;
+    job_start "buttonloop" #buttonloop;
+    job_start "run_step" #run_step;
 #ifdef XMPP
-    XmppSessionRun; // On envois éventuellement les packets en attente
-    XmppSessionIdle;
+    job_start "XmppSessionRun" #XmppSessionRun;
+    job_start "XmppSessionIdle" #XmppSessionIdle;
 #endif
 #ifdef RECLIB
-    record_upload_timeout;
+    job_start "record_upload_timeout" #record_upload_timeout;
 #endif
 #ifdef SERVERLESS
-    run_icmp_ping;
-    periodic_send_gratuitous_arp;
+    job_start "run_icmp_ping" #run_icmp_ping;
+    job_start "periodic_send_gratuitous_arp" #periodic_send_gratuitous_arp;
 #endif
-    dhcp_check;
-
-    // if ears touched while interactive : process it
-    interactiveEarProcessTouched;
-
-    update_time_internal;
-    audiolib_wav_time;
-
-    updatevol;
+#ifdef SIMU
+#else
+    job_start "dhcp_check" #dhcp_check;
+#endif
+    job_start "ear_process_touched" #interactiveEarProcessTouched;
+    job_start "update_time_internal" #update_time_internal;
+    job_start "audiolib_wav_time" #audiolib_wav_time;
+    job_start "updatevol" #updatevol;
     0;;
+
 
 fun main=
     leds_set_state LEDS_STATE_START ;
@@ -647,7 +274,12 @@ fun main=
     startwebserver 80;
 #endif
 #endif
-    runinit;
+    run_init;
+    jobs_init;
+#ifdef SIMU
+// Secholn json_jobs;
+// reboot 0x0407FE58 0x13fb6754;
+#endif
     interactive_init;
     0;;
 

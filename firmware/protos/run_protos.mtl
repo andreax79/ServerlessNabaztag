@@ -1,3 +1,15 @@
-proto setRunState 1;;
-proto getRunState 0;;
+// Main loop states
+type Run = configstartRun | configwaitRun _ | interactiveReqWaitRun _ |
+#ifdef PING
+    pingstartRun | pingwaitRun _| stdWaitRun _ | pingRequestWaitRun _ |
+#endif
+    rscLoadNextRun | rscLoadWaitRun _ | chorCmdRun _ |streamCmdRun _ | waitCmdRun _ | cmdEvalOne _ | idleRun | sleepRun |
+#ifdef RECLIB
+    recordRun | recordStartRun |
+#endif
+    earResetWaitRun _ | xmppLoginRun | xmppReconnectRun _ ;;
+
+proto run_init 0;;
+proto run_set_state 1;;
+proto run_get_state 0;;
 proto stopEverythingAndResetToIdle 0;;

@@ -70,7 +70,7 @@ fun update_time_internal=
             // only check when initialized
             if (_last_read_internal_time !=nil) then crontab_check
         );
-    0;;
+    JobRun;;
 
 
 // Zero pad a string to length l

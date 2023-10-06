@@ -264,8 +264,7 @@ fun wifi_run=
         0
     );
     wifi_check;
-    0
-    ;;
+    JobRun;;
 
 
 #include net/dhcp.mtl

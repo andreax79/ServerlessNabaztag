@@ -1,3 +1,101 @@
+// ********** loading resources
+
+// replace the prefix string "broadcast" (if present) by broadcasturl
+fun _streaming_prepare_url url=
+    if 0==strstr url BROADCAST_KEYWORD 0 then strcat broadcasturl strsub url strlen BROADCAST_KEYWORD nil
+    else url;;
+
+
+// callback from rscLoadWaitRun : a resource has been loaded
+fun _streaming_load_cb http res maxsize=
+    if recording then
+    (
+        httpabort http;
+        nil
+    )
+    else if res!=nil then
+    (
+        // received a result, store it in rsctmp
+        // Je ne comprends pas la logique ici (AS sept07) : a quoi sert rsctmp et maxsize, et comment passe-t-il à la suite ?
+//      Secholn res;
+        set rsctmp=res::rsctmp;
+        if maxsize!=nil && (slistlen rsctmp)>maxsize then
+        (
+            // too big ? (?)
+            httpabort http;
+            _streaming_load_cb http nil nil
+        );
+        0
+    )
+    else
+    (
+        let hd rsctoget ->[url _] in
+        // remember rsc loaded
+        set rscloaded=[url tl rev rsctmp nil]::rscloaded;
+
+        // load next rsc
+        set rsctoget=tl rsctoget;
+        run_set_state rscLoadNextRun;
+        0
+    );;
+
+// Recursive : loads all needed resources of the list 'rsctoget' and then starts current program
+fun runRscLoadNext=
+    let hd rsctoget -> [url maxsize] in
+    if url==nil then
+    (
+        // nothing (else) to load : start execute msgs now
+        Secholn "rsrcs loaded, starting prgm";
+        trame_program_start;
+        0
+    )
+    else if nil!=listswitchstr rscloaded url then
+    (
+        // already loaded : load next
+        set rsctoget=tl rsctoget;
+        runRscLoadNext
+    )
+    else
+    (
+        // load resource
+        set rsctmp=nil;
+        Secho "loading ";
+        run_set_state rscLoadWaitRun httprequest "GET" Secholn (_streaming_prepare_url url) nil (fixarg3 #_streaming_load_cb maxsize) HTTP_STREAM;
+        0
+    );;
+
+fun runRscLoadWait http=
+    // wait for loading resource
+    if (httpinactive http)>STD_NET_TIMEOUT then
+    (
+        Secholn "##timeout in runRscLoadWait";
+        httpabort http;
+        // skip, load next
+        set rsctoget=tl rsctoget;
+        run_set_state rscLoadNextRun
+    );
+    0;;
+
+/**
+    Called when a program has to end.
+    If doNotNotify is set (!=0) then the server is not notified of the end of the program
+*/
+fun endOfProgram doNotNotify =
+    Secholn "endOfProgram";
+    set gProcessingState = 0;
+    set gProcessingWaitState = 0; // just in case
+    set gCurrentProgram = nil;
+    if (gItState && !doNotNotify) then (
+        // notifier fini
+        interactive_program_done
+    ) else (
+        // retour normal
+        run_set_state idleRun;
+        0
+    );
+    0;;
+
+
 // ****************************************
 // Exécution des chorégraphies de streaming
 // v17 - AS 25may07
@@ -183,7 +281,7 @@ fun runStreamingCmd i0=
         // Fin du stream
         stopStream;
         // next command
-        set run=cmdEvalOne i0+1;
+        run_set_state cmdEvalOne i0+1;
 
         nil
     ) else (
@@ -195,7 +293,7 @@ fun runStreamingCmd i0=
 
 
 fun _cbGotoNextCmd i0=
-    set run=cmdEvalOne i0+1;
+    run_set_state cmdEvalOne i0+1;
     0;;
 
 fun _cbWavError=
@@ -218,7 +316,7 @@ fun runWaitCmd i0 =
     if (time_ms > _chor_wait_end_time_ms) then
     (
         set gProcessingWaitState = 1;
-        set run=cmdEvalOne i0+1
+        run_set_state cmdEvalOne i0+1
     )
 ;;
 
@@ -245,7 +343,7 @@ fun runEvalOneCommand i0=
         let listswitchstr rscloaded Secholn val -> music in
             if music==nil then Secholn "###nilmusic";
         audiolib_wav_start_local listswitchstr rscloaded val;
-        set run=cmdEvalOne i0+1;
+        run_set_state cmdEvalOne i0+1;
         0
     )
     else if !strcmp key "ST" then
@@ -259,8 +357,8 @@ fun runEvalOneCommand i0=
         set gCurAudioCmdIndex=gCurAudioCmdIndex+1;
         set gCurStreamName= nil;
         set chorst_pasdedanse=nil;
-        let rscfilterurl val -> music in audiolib_start_http music #_cbWavError;
-        set run=streamCmdRun i0;
+        let _streaming_prepare_url val -> music in audiolib_start_http music #_cbWavError;
+        run_set_state streamCmdRun i0;
         0
     )
     else if !strcmp key "SP" then
@@ -275,7 +373,7 @@ fun runEvalOneCommand i0=
         set gCurStreamName= nil;
         set chorst_pasdedanse=nil;
         // Romain
-        let rscfilterurl val -> music in (
+        let _streaming_prepare_url val -> music in (
             set music = strcatlist music::"&sn="::(webmac netMac)::nil;
             let music -> tmpval in (
                 set tmpval = md5(strcatlist music::"teloiv"::nil);
@@ -283,7 +381,7 @@ fun runEvalOneCommand i0=
             );
             audiolib_start_http music #_cbWavError
         );
-        set run=streamCmdRun i0;
+        run_set_state streamCmdRun i0;
         0
     )
     else if !strcmp key "SI" then
@@ -292,7 +390,7 @@ fun runEvalOneCommand i0=
         // nomme le stream courant
         if gStreamingState then set gCurStreamName = val;
         // play next
-        set run=cmdEvalOne i0+1;
+        run_set_state cmdEvalOne i0+1;
         0
     )
     else if !strcmp key "SE" then
@@ -305,7 +403,7 @@ fun runEvalOneCommand i0=
             stopStream
         );
         // play next
-        set run=cmdEvalOne i0+1;
+        run_set_state cmdEvalOne i0+1;
         0
     )
     else if !strcmp key "MS" then
@@ -314,16 +412,16 @@ fun runEvalOneCommand i0=
         // Music Stream : streams the music (like ST), no choregraphy (assumed to be done by CH), not blocking (like MU)
         set gCurAudioCmdIndex=gCurAudioCmdIndex+1;
         // starts the streamed music
-        let rscfilterurl val -> music in audiolib_start_http music #_cbWavError;
+        let _streaming_prepare_url val -> music in audiolib_start_http music #_cbWavError;
         // play next
-        set run=cmdEvalOne i0+1;
+        run_set_state cmdEvalOne i0+1;
 
         0
     )
     else if !strcmp key "MW" then
     (
         // wait for the end of music
-        if wavrunning==0 then set run=cmdEvalOne i0+1;
+        if wavrunning==0 then run_set_state cmdEvalOne i0+1;
         0
     )
     else if !strcmp key "CH" then
@@ -354,7 +452,7 @@ fun runEvalOneCommand i0=
         set gProcessingWaitState = 1;
 
         _chor_set_wait_end_time_ms time_ms + (atoi val);
-        set run = waitCmdRun i0+1;
+        run_set_state waitCmdRun i0+1;
       0
     )
     else
@@ -368,6 +466,6 @@ fun runEvalOneCommand i0=
         else (Secholn "unknown, dropping";0);
 
         // and skip command
-        set run=cmdEvalOne i0+1;
+        run_set_state cmdEvalOne i0+1;
         runEvalOneCommand i0+1
     );;

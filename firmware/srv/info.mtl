@@ -213,7 +213,6 @@ fun __infosrc_del key i=
 fun _infosrc_del key=
     __infosrc_del key 0;;
 
-proto controlsound 1;;
 
 const midi_communion=
 "\$4d\$54\$68\$64\$00\$00\$00\$06\$00\$00\$00\$01\$01\$e0\$4d\$54\
@@ -282,7 +281,7 @@ fun infoUpdate data=
             set extleft=newleft;
             set extright=newright;
             if ((!gSleepState) && (!earResetting)) then (
-                controlsound midi_communion;
+                midi_play midi_communion;
                 earsGoToRefPos
             )
         )
@@ -320,7 +319,7 @@ fun newInfoUpdate data=
             set extleft=newleft;
             set extright=newright;
             if ((!gSleepState) && (!earResetting)) then (
-//              controlsound midi_communion;
+//              midi_play midi_communion;
                 earsGoToRefPos
             )
         )

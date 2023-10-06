@@ -121,4 +121,4 @@ fun periodic_send_gratuitous_arp=
         set last_gratuitous_arp_time = time;
         send_gratuitous_arp
     );
-    nil;;
+    JobRun;;

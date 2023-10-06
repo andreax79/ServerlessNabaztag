@@ -3,9 +3,16 @@ type Job=[n name f status];;
 
 var _jobs = nil;; // list of Job
 
+fun job_status job =
+    match job.status with
+        (JobRun -> "run") |
+        (JobSuspend -> "suspend") |
+        (_ -> nil)
+    ;;
+
 // Add a job at the end of jobs list
 fun _jobs_add e l =
-	if l==nil then
+    if l==nil then
         e::nil
     else
         (hd l)::_jobs_add e tl l

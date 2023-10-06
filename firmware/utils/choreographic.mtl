@@ -20,7 +20,7 @@ fun msgchorstart chor cb i0=
     set chor_paused_since = nil;
     set chor_paused= 0;
     setleds RGB_BLACK; // shut off all leds at start (or should it be in the chor ?)
-    set run=chorCmdRun i0;
+    run_set_state chorCmdRun i0;
     0;;
 
 fun msgendchor i0=
@@ -103,7 +103,7 @@ fun runChorCmd i0=
         else if code==CH_randmidi then
         (
             //Secholn "randmidi";
-            let getmidilist -> t in
+            let midi_get_list -> t in
             let tablen t -> n in
             if n>0 then
             let ((rand&255)*n)>>8 -> imusic in // v16 start
@@ -159,7 +159,7 @@ fun runChorCmd i0=
 fun _cbtaichiend unused=
     set gProcessingState = 0;
     earSetWaitAndDetectMode;
-    set run=idleRun;
+    run_set_state idleRun;
     0
     ;;
 
