@@ -174,3 +174,25 @@ fun taichistart=
     set gProcessingState = 1; // block all trames during taichi
     msgchorstart chordef_taichi::nil #_cbtaichiend nil;
     0;;
+
+// R=60*((rand&127)+64)) => 64 à 196 mn
+// donc si x=30, (x*R)>>7 => 15 à 45 mn
+// donc si x=40, (x*R)>>7 => 20 à 61 mn
+// donc si x=80, (x*R)>>7 => 40 à 122 mn
+// donc si x=216, (x*R)>>7 => 108 à 330 mn
+// donc si x=255, (x*R)>>7 => 127 à 390 mn, soit 2 à 6,5h
+var nexttaichi;;
+fun dotaichinow=
+    //Secho "checktaichi ";
+    if infotaichi && (infotaichi != nil) && (!gSleepState) then let (if nexttaichi!=nil then (time>nexttaichi) else 0) -> now in (
+        if now || nexttaichi==nil then // compute nexttaichi
+        let if (infotaichi == 40) then 255 else if (infotaichi == 255) then 40 else 80 -> correctedTaichi in // etait inversé
+        let ((correctedTaichi*60*((rand&127)+64))>>7) -> delaye in (
+            Secho "taichi in "; Iecho delaye; Secholn "s";
+            set nexttaichi=time+delaye
+        );
+        now
+    ) else (
+        set nexttaichi=nil;
+        0
+    );;

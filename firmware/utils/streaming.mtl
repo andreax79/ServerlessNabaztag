@@ -1,0 +1,373 @@
+// ****************************************
+// Exécution des chorégraphies de streaming
+// v17 - AS 25may07
+
+// - 4 pas de danse fournis (dans chorstream_chorslist)
+// - une séquence :
+//  - une fois sur chorst_oreille_chance, bouger les oreilles :
+//      - pour chaque oreille, choisir une position au hasard entre les 4 possibles (0, 4, 8, 12 dents) et, si elle est différente de la position courante, y aller, dans le sens 'vers l'avant'.
+//  - tirer un pas de danse au hasard (parmi les 4 fournis)
+//  - tirer un nombre de boucles N au hasard entre 3 et 20 (inclus)
+//  - tirer un frame_duration au hasard entre 16 et 25 (soit entre 160 ms et 250 ms par frame)
+// or les pas durent de 44 à 71 frames, donc le pas dure de 7 à 17 secs,
+// donc la séquence dure de 21s à 5m40s
+//  -> jouer le pas de danse N fois à ce tempo, puis nouvelle séquence
+// A chaque pas de danse : tirer 3 couleurs au hazard dans la palette courante : tete, ventre, pied
+// Si palette aléatoire : la changer à toutes les séquences
+// sinon, fixée par le serveur.
+//
+var chorst_pasdedanse;;
+var chorst_index;;
+var chorst_tempo;;
+var chorst_loops;;
+var chorst_nexttime;;
+var chorst_palettecolors = {0 0 0};;
+
+// v17 AS 25may07 : ratio entre changt de séquence et mvt d'oreille. Plus c'est grand moins souvent les moteurs joueront.
+// = 0 : à chaque chgt de seq (en myenne toutes les 2,5 minutes)
+// = 1 : une fois sur 2 (soit en moyenne ttes les 5 minutes)
+// = 2 : une fois sur 3 (soit en moyenne ttes les 7,5 minutes), etc...
+var chorst_oreille_chance;;
+
+// mouvement des leds et oreilles
+fun dochorstream=
+    if chorst_pasdedanse==nil || ((chorst_index>=strlen chorst_pasdedanse)&&(chorst_loops<1)) then
+    (
+        // nouvelle séquence
+        // Secho "Sequence suivante ";
+
+        // ears enabled ?
+        if (g_streaming_chor_enabled) then
+        (
+        // movements moteur
+        // toutes les chorst_oreille_chance fois en moyenne
+        // et aussi la première fois forcément histoire de montrer qu'on commence
+        if (chorst_pasdedanse == nil) then
+        (
+            // une des oreilles en haut, une autre en bas : radio...
+            if ((random 2) == 1) then (earGo 0 0 0; earGo 1 10 0) else (earGo 0 10 0; earGo 1 0 0);
+
+            // initialisation chorst_oreille_chance
+            set chorst_oreille_chance = 0
+
+        ) else if ((random chorst_oreille_chance) == 0) then
+        (
+            // pour chaque oreille, choisir une position au hasard entre les 4 possibles (0, 5, 10, 14 dents) et, si elle est différente de la position courante, y aller, dans le sens 'vers l'avant'.
+            let 0::5::10::14::nil -> ear4Positions in
+            (
+                let listnth ear4Positions rand&3 -> p in earGo 0 p 0;
+                let listnth ear4Positions rand&3 -> p in earGo 1 p 0
+            );
+
+            // de moins en moins souvent, puis de nouveau souvent, etc..
+            if ((set chorst_oreille_chance = chorst_oreille_chance + 1) > 4) then set chorst_oreille_chance = 0
+        )
+        );
+
+        // choix d'une séquence = pas de danse (chorst_pasdedanse), tempo et nb de boucles
+        set chorst_pasdedanse = listnth chorstream_chorslist Iecholn rand&3;
+
+        set chorst_index=4+1; // on saute le header (4 bytes)
+        set chorst_tempo=160+random 90; // entre 16 et 25 (soit entre 160 ms et 250 ms par frame)
+        //Secho "tempo "; Iecholn chorst_tempo;
+        set chorst_loops=3+random 18; // entre 3 et 20 (inclus)
+        //Secho "loops "; Iecholn chorst_loops;
+
+        if (current_palette_is_random) then
+            // changer palette courante
+            set_current_palette random 7;
+
+        // choisir 3 couleurs au hasard dans la palette
+        set chorst_palettecolors={(random 7) (random 7) (random 7)};
+
+        set chorst_nexttime=time_ms
+
+    );
+
+    // continuer à jouer
+    while (chorst_index < strlen chorst_pasdedanse) && time_ms >= chorst_nexttime do
+    (
+        // interprète la choragraphie. Uniquement des set_led_palette et des set_led_off et des set_led_color
+
+        let strget chorst_pasdedanse chorst_index -> cmd in
+            // avance l'index de...
+            set chorst_index=chorst_index+2+
+                if (cmd == CH_set_led_palette) then
+                (
+                    // palette index
+                    let strget chorst_pasdedanse chorst_index+1 -> iled in
+                    let strget chorst_pasdedanse chorst_index+2 -> icol in
+                    let chorst_palettecolors.(3&icol) -> palcol in
+                        // jouer la LED
+                        led iled current_palette.palcol;
+
+                    // 2 bytes : led, color
+                    2
+                )
+                else if (cmd == CH_set_led_off) then
+                (
+                    // off
+                    let strget chorst_pasdedanse chorst_index+1 -> iled in
+                        led iled 0;
+
+                    // 1 byte : led
+                    1
+                )
+                else if (cmd == CH_set_led_color) then
+                (
+                    led strget chorst_pasdedanse chorst_index+1
+                        ((strget chorst_pasdedanse chorst_index+2)<<16) +
+                        ((strget chorst_pasdedanse chorst_index+3)<<8) +
+                        ((strget chorst_pasdedanse chorst_index+4));
+
+                        // 6 bytes : 2 qui ne servent à rien
+                        6
+                )
+                else if (cmd==CH_frame_duration) then
+                (
+                    // on ne le prend pas en compte : c'est chorst_tempo qui gère le tempo
+                    // 1 byte : duree
+                    1
+                )
+
+                else (
+                    // problème : commande inconnue : forcer à recommencer au début en incrémentant beaucoup trop
+                    strlen chorst_pasdedanse
+                );
+
+        // pas de danse fini ?
+        if (chorst_index>=strlen chorst_pasdedanse) then
+        (
+            // on est arrivés au bout du pas de danse
+            // next repeat
+            set chorst_loops=chorst_loops-1;
+            //Secho "loops "; Iecholn chorst_loops;
+            if (chorst_loops > 0) then
+            (
+                // recommencer pas de danse
+                set chorst_index=4+1;  // on saute le header (4 bytes)
+                // tout de suite
+                set chorst_nexttime=time_ms;
+
+                0 // pour avoir le même type de return value que les autres branches du if...
+
+            ) // sinon on laisse chorst_loops = 0 et chorst_index trop loin, ce qui force un passage à la séq suivante
+
+        ) else
+            // date de la prochaine commande
+            // note : on repart de time_ms, histoire de se caler sur le temps présent et non pas sur le temps de
+            // la chorégraphie, sinon, on a des coups de speed car cette fonction n'est pas toujours appelée de manière régulière.
+            let strget chorst_pasdedanse chorst_index-1 -> delay in
+                set chorst_nexttime = time_ms+delay*chorst_tempo
+
+    );
+
+    0;;
+
+// boucle principale de la chorégraphie de streaming
+fun stopStream=
+    // oreilles
+    earsGoToRefPos;
+
+    set gStreamingState = 0;
+    // which resource now ? Can only be interactive or idle
+    if (!gBusyState) then ( // don't get a resource if we're busy
+        if (gItState) then XmppSessionRequestResource "itmode"
+        else XmppSessionRequestResource "idle"
+    )
+
+    ;;
+
+fun runStreamingCmd i0=
+    if wavrunning==0 then (
+        // Fin du stream
+        stopStream;
+        // next command
+        set run=cmdEvalOne i0+1;
+
+        nil
+    ) else (
+        // execute streaming choreography
+        if !wav_buffering then dochorstream;
+
+        0
+    );;
+
+
+fun _cbGotoNextCmd i0=
+    set run=cmdEvalOne i0+1;
+    0;;
+
+fun _cbWavError=
+    if (gItState) then interactive_error;
+    0;;
+
+var _chor_wait_end_time = 0;;
+
+fun _chor_wait_end_time_ms =
+    _chor_wait_end_time;;
+
+fun _chor_set_wait_end_time_ms t =
+    set _chor_wait_end_time = t;;
+
+/**
+    quand on a rencontre une instruction "WT" dans un programme, qui demandait
+  d'attendre <n> millisecondes avant de continuer le programme
+*/
+fun runWaitCmd i0 =
+    if (time_ms > _chor_wait_end_time_ms) then
+    (
+        set gProcessingWaitState = 1;
+        set run=cmdEvalOne i0+1
+    )
+;;
+
+
+
+//********************************************************
+// Executes the i0'th command in the 'gCurrentProgram' program
+// a command is a list [key val]
+fun runEvalOneCommand i0=
+//  Secho "runEvalOneCommand ";Iecholn i0;
+    interactive_reset_ears_touched;
+
+    let listnth gCurrentProgram i0 -> [key val] in
+    if (/* Secho "eval cmd:";Secholn */ key)==nil then
+    (
+        // toutes commandes jouées : demander la suite
+        endOfProgram 0;
+        0
+    )
+    else if (!strcmp key "MU") || (!strcmp key "MC") then
+    (
+        Secho "exec "; Secho key; Secholn " : start music";
+        set gCurAudioCmdIndex=gCurAudioCmdIndex+1;
+        let listswitchstr rscloaded Secholn val -> music in
+            if music==nil then Secholn "###nilmusic";
+        audiolib_wav_start_local listswitchstr rscloaded val;
+        set run=cmdEvalOne i0+1;
+        0
+    )
+    else if !strcmp key "ST" then
+    (
+        Secholn "exec ST : Start streaming";
+        //IPecho netdns 0 1;
+        //startdnsclient;
+        set gStreamingState = 1;
+        setleds 0;
+        if !gBusyState then XmppSessionRequestResource "streaming";
+        set gCurAudioCmdIndex=gCurAudioCmdIndex+1;
+        set gCurStreamName= nil;
+        set chorst_pasdedanse=nil;
+        let rscfilterurl val -> music in audiolib_start_http music #_cbWavError;
+        set run=streamCmdRun i0;
+        0
+    )
+    else if !strcmp key "SP" then
+    (
+        Secholn "exec SP : Start streaming (protected)";
+        //IPecho netdns 0 1;
+        //startdnsclient;
+        set gStreamingState = 1;
+        setleds 0;
+        if !gBusyState then XmppSessionRequestResource "streaming";
+        set gCurAudioCmdIndex=gCurAudioCmdIndex+1;
+        set gCurStreamName= nil;
+        set chorst_pasdedanse=nil;
+        // Romain
+        let rscfilterurl val -> music in (
+            set music = strcatlist music::"&sn="::(webmac netMac)::nil;
+            let music -> tmpval in (
+                set tmpval = md5(strcatlist music::"teloiv"::nil);
+                set music = strcatlist music::"&cs="::tmpval::nil
+            );
+            audiolib_start_http music #_cbWavError
+        );
+        set run=streamCmdRun i0;
+        0
+    )
+    else if !strcmp key "SI" then
+    (
+        Secho "exec SI : "; Secholn val;
+        // nomme le stream courant
+        if gStreamingState then set gCurStreamName = val;
+        // play next
+        set run=cmdEvalOne i0+1;
+        0
+    )
+    else if !strcmp key "SE" then
+    (
+        Secho "exec SE : "; Secholn val;
+        // stoppe le stream courant s'il est nommé comme ca
+        if gStreamingState && (!strcmp gCurStreamName val) then (
+            wavstop;
+            earStop 0;
+            stopStream
+        );
+        // play next
+        set run=cmdEvalOne i0+1;
+        0
+    )
+    else if !strcmp key "MS" then
+    (
+        Secholn "exec MS : "; Secho val;
+        // Music Stream : streams the music (like ST), no choregraphy (assumed to be done by CH), not blocking (like MU)
+        set gCurAudioCmdIndex=gCurAudioCmdIndex+1;
+        // starts the streamed music
+        let rscfilterurl val -> music in audiolib_start_http music #_cbWavError;
+        // play next
+        set run=cmdEvalOne i0+1;
+
+        0
+    )
+    else if !strcmp key "MW" then
+    (
+        // wait for the end of music
+        if wavrunning==0 then set run=cmdEvalOne i0+1;
+        0
+    )
+    else if !strcmp key "CH" then
+    (
+        Secholn "exec CH : "; Secho val;
+        msgchorstart (listswitchstr rscloaded val) #_cbGotoNextCmd i0;
+        0
+    )
+    else if !strcmp key "IS" then
+    (
+        Secho "exec IS : "; Secholn val;
+        // Start Interactive mode
+        interactive_start val;
+        0
+    )
+    else if !strcmp key "IE" then
+    (
+        Secholn "exec IE : ";
+        // Ends Interactive mode
+        interactive_stop;
+        0
+    )
+    else if !strcmp key "WT" then
+    (
+        // need to wait for val miliseconds, staying in interactive mode. at the end, program continues.
+        // if button pressed, program stops.
+        // if rfid detected, send info.
+        set gProcessingWaitState = 1;
+
+        _chor_set_wait_end_time_ms time_ms + (atoi val);
+        set run = waitCmdRun i0+1;
+      0
+    )
+    else
+    (
+        Secho key ; Secholn " : "; Secholn val;
+        if !strcmp key "PL" then (set_current_palette_mode atoi val;0)
+        else if !strcmp key "CL" then (
+                let atoi val -> x in set_current_palette_color (x>>24) x&0xffffff;
+                0)
+        else if !strcmp key "IC" then (interactive_eval_IC_msg val;0)
+        else (Secholn "unknown, dropping";0);
+
+        // and skip command
+        set run=cmdEvalOne i0+1;
+        runEvalOneCommand i0+1
+    );;

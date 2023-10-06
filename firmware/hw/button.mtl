@@ -51,9 +51,3 @@ fun buttongetevent=
 		set buttonevent=nil;
 		ev
 	);;
-
-proto loop 0;;
-fun buttoncheckevent=
-	buttonloop;
-	if buttonevent!=nil then loop;
-	0;;

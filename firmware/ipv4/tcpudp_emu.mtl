@@ -75,9 +75,10 @@ fun nettcp t val msg=
 	else let listswitch ltcp t -> cb in
 		call cb [t val msg];;
 
-fun startdhcp=0;;
-fun startdhcpserver=0;;
-fun checkdhcp unused=0;;
+fun startdhcp = 0;;
+fun startdhcpserver = 0;;
+fun dhcp_check_force = nil;;
+fun dhcp_check = 0;;
 
 fun nettime=0;;
 

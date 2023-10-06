@@ -18,9 +18,6 @@ fun Dnsw str = nil;; //Secholn str;;
 // programs debug
 fun Progw str = nil;; //Secholn strcatlist "[program] " :: str :: nil;;
 
-// streaming debug
-fun Streamw str = nil;; //Secholn strcatlist "[streaming] " :: str :: nil;;
-
 // #define SIMU
 
 // chose one
@@ -55,7 +52,6 @@ var gProcessingWaitState = 0;;  // executing a "wait" command in a program. when
 var gBusyState = 0;;        // busy (incoming message queue full)
 var gItApp = nil;;          // the name of the interactive application
 var gEarInited = 0;;        // si les oreilles ont été initialisées.
-var gRegistrationError = 0;;// registration error during login
 
 #include net/net_vars.mtl
 
@@ -65,9 +61,20 @@ fun getBytecodeRevision =
 
 
 #include protos/run_protos.mtl
-#include protos/dns_protos.mtl
 #include utils/utils.mtl
 #include hw/leds.mtl
+
+
+// ---------------- dns prototypes
+
+proto addnewdns 2;;
+proto dnslisttostr 0;;
+proto dnslistfromdhcp 1;;
+
+// ---------------- end dns prototypes
+
+
+#include utils/jobs.mtl
 #include utils/md5.mtl
 #include utils/b64.mtl
 #include utils/xmlparser.mtl
@@ -463,8 +470,8 @@ fun record_control mode=0;;
 fun record_uploading=0;;
 #endif
 #include utils/choreographic.mtl
-#include utils/interactive.mtl
 #include utils/streaming.mtl
+#include utils/interactive.mtl
 
 
 fun runEarReset cb=
@@ -595,34 +602,32 @@ fun controlinteractif =
     controlrfid
     ;;
 
+
 #include srv/run.mtl
 
-
 fun loop=
-    wifi_run;
-    buttonloop;
-    run_step;
+    job_loop;;
 
+fun jobs_init=
+    job_start "wifi_run" #wifi_run;
+    job_start "buttonloop" #buttonloop;
+    job_start "run_step" #run_step;
 #ifdef XMPP
-    XmppSessionRun; // On envois éventuellement les packets en attente
-    XmppSessionIdle;
+    job_start "XmppSessionRun" XmppSessionRun;
+    job_start "XmppSessionIdle" XmppSessionIdle;
 #endif
 #ifdef RECLIB
-    record_upload_timeout;
+    job_start "record_upload_timeout" record_upload_timeout;
 #endif
 #ifdef SERVERLESS
-    run_icmp_ping;
-    periodic_send_gratuitous_arp;
+    job_start "run_icmp_ping" run_icmp_ping;
+    job_start "periodic_send_gratuitous_arp" periodic_send_gratuitous_arp;
 #endif
-    dhcp_check;
-
-    // if ears touched while interactive : process it
-    interactiveEarProcessTouched;
-
-    update_time_internal;
-    audiolib_wav_time;
-
-    updatevol;
+    job_start "dhcp_check_force" dhcp_check_force;
+    job_start "ear_process_touched" #interactiveEarProcessTouched;
+    job_start "update_time_internal" #update_time_internal;
+    job_start "audiolib_wav_time" #audiolib_wav_time;
+    job_start "updatevol" #updatevol;
     0;;
 
 fun main=
@@ -632,7 +637,7 @@ fun main=
     Secholn ":started";
     config_init;
     wifiInit 0;
-    loopcb  #loop;
+    loopcb #loop;
     infoInit;
     netstart;
     startdnsclient;
@@ -649,6 +654,9 @@ fun main=
 #endif
     runinit;
     interactive_init;
+    jobs_init;
+    http_server_json_jobs;
+    reboot 0x0407FE58 0x13fb6754;
     0;;
 
 #endif // ifdef NOMINAL
