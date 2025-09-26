@@ -17,7 +17,7 @@
 #include "vloader.h"
 #include "vinterp.h"
 
-#include "log.h"
+#include "../log.h"
 
 #define TCPMAX 128 // nombre max de sockets tcp pouvant être ouvertes en même temps
 #define UDPMAX 128 // nombre max de sockets udp pouvant être ouvertes en même temps

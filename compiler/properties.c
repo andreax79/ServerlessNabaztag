@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include<stdio.h>
-#include"vmem.h"
+//#include"vmem.h"
 #include"properties.h"
 #include "log.h"
 

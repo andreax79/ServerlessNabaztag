@@ -1,22 +1,22 @@
 // VLISP Virtual Machine - 2006 - by Sylvain Huet
 // Lowcost IS Powerfull
-#include"vmem.h"
-#include"properties.h"
+#include "vmem.h"
+#include "../properties.h"
 
 #ifdef VSIMU
 #include <string.h>
-#include<stdio.h>
-#include<time.h>
-#include "log.h"
+#include <stdio.h>
+#include <time.h>
+#include "../log.h"
 int netstatesimu=1;
 #endif
 #ifdef VREAL
 #include "rt2501usb.h"
 #endif
-#include"vloader.h"
-#include"vnet.h"
-#include"vlog.h"
-#include"vinterp.h"
+#include "vloader.h"
+#include "vnet.h"
+#include "vlog.h"
+#include "vinterp.h"
 int netState()
 {
 #ifdef VSIMU

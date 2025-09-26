@@ -6,6 +6,6 @@
 
 void interpGo();
 
-#include"vbc.h"
+#include"../vbc.h"
 #endif
 

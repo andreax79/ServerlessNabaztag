@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "log.h"
+#include "../log.h"
 
 #define A() my_printf(LOG_SIMUAUDIO, "[[%s]]\n", __func__);
 

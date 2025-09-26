@@ -14,8 +14,8 @@ extern "C" {
 #include"vmem.h"
 #include"vloader.h"
 #include"vinterp.h"
-#include"properties.h"
-#include "log.h"
+#include"../properties.h"
+#include "../log.h"
 
 #ifdef USE_GLUT
 #ifdef __APPLE__

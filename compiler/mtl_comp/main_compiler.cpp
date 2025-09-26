@@ -9,14 +9,14 @@
 #include <string.h>
 #include <unistd.h>
 extern "C" {
-#include"vmem.h"
-#include"vloader.h"
-#include"vinterp.h"
-#include"properties.h"
+//#include"vmem.h"
+//#include"vloader.h"
+#include"../vbc.h"
+#include"../properties.h"
 
 char srcbytecode[65536];
 
-
+/*
 void dump(uchar *src,int len)
 {
   int i,j;
@@ -35,7 +35,7 @@ void dump(uchar *src,int len)
 //    DelayMs(100);
   }
 }
-
+*/
 
 void loadbytecode(char *src)
 {

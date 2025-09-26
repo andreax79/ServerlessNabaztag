@@ -4,7 +4,7 @@
 #ifndef _LOGGER_
 #define _LOGGER_
 
-#include "log.h"
+#include "../log.h"
 
 #ifdef VSIMU
 #define consolestr(val) my_printf(LOG_VM, "%s",val)

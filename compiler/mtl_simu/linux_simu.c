@@ -57,7 +57,7 @@ void simuSetMotor(vub i,vub val){}
 
 #include "linux_simuaudio.h"
 #include "linux_simunet.h"
-#include "log.h"
+#include "../log.h"
 
 // définition de l'échelle d'affichage de la simulation
 #define SCALE 2

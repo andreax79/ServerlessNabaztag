@@ -64,7 +64,7 @@ $ sudo apt-get install gcc-multilib g++-multilib
 
 Build the compiler and the simulator:
 ```
-$ make compilter
+$ make compiler
 ```
 
 Build the firmware

@@ -2,8 +2,8 @@
 
 .PHONY: compiler clean firmware
 
-COMPILER="./compiler/mtl_comp"
-SIMULATOR="./compiler/mtl_simu"
+COMPILER="./compiler/mtl_comp/mtl_comp"
+SIMULATOR="./compiler/mtl_simu/mtl_simu"
 
 help:
 	@echo "- make compiler     Build the compiler and the simulator"
