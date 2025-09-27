@@ -71,7 +71,7 @@ fun record_upload_timeout=
                 // retry
                 set _record_retry=_record_retry-1;
                 if (!gItState) then (
-                    set recordreq=httprequest "POST" Secholn recordurl _record_mode recorddata #_record_cb_http HTTP_NORMAL;0
+                    set recordreq=httprequest "POST" Secholn url_record _record_mode recorddata #_record_cb_http HTTP_NORMAL;0
                 ) else (
                     _record_interactive_send_upload
                 );
@@ -106,7 +106,7 @@ fun runrecord=
             set _record_retry=3;
             set _record_play_end=time_ms+400;
             if (!gItState) then (
-                set recordreq=httprequest "POST" Secholn recordurl _record_mode recorddata #_record_cb_http HTTP_NORMAL;
+                set recordreq=httprequest "POST" Secholn url_record _record_mode recorddata #_record_cb_http HTTP_NORMAL;
                 run_set_state idleRun;
                 0
             ) else (

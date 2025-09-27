@@ -33,7 +33,11 @@ var dhcp_infinite_lease=0;;
 var dhcp_lease_t1=0;;
 
 // debug
-fun Dhcpw s = Secholn strcatlist "[dhcp] " :: s :: nil ;;
+#ifdef DHCP_DEBUG
+fun _dhcp_debug str= Secholn strcatlist "[dhcp] " :: str :: nil; nil;;
+#else
+fun _dhcp_debug str= nil;;
+#endif
 
 /**
  * Updates the var dhcp_lease_t1, that contains the time of the dhcp renewal time
@@ -42,12 +46,12 @@ fun updatedhcpleasetimes leaselen =
     if (leaselen == -1) then
     (
          set dhcp_infinite_lease = 1;
-         Dhcpw "Infinite DHCP lease !"
+         _dhcp_debug "Infinite DHCP lease !"
     )
     else
     (
         set dhcp_lease_t1 = dhcp_lease_start + leaselen/2;
-        Dhcpw strcatlist "Next dhcp renewal in " :: (itoa (dhcp_lease_t1 -time )) :: "seconds"::nil
+        _dhcp_debug strcatlist "Next dhcp renewal in " :: (itoa (dhcp_lease_t1 -time )) :: "seconds"::nil
     );
     0;;
 
@@ -145,7 +149,7 @@ fun cbnetdhcp src macfrom hostip=
         else if type==DHCP_NACK then
         (
             // TODO
-            Dhcpw "DHCP_NACK"; nil
+            _dhcp_debug "DHCP_NACK"; nil
         )
     );;
 
@@ -179,11 +183,13 @@ fun cbnetdhcp67 src macfrom hostip=
  * Ask to renew the lease
  */
 fun dhcp_check_force =
+#ifndef SIMU
     udpsend netip 68 ipbroadcast 67 (mkdhcp DHCP_REQUEST netip nil nil) macbroadcast;
     set dhcp_lease_start=time;
     if (0 != dhcp_lease_t1) then
         // if the request fails, try again in 10 seconds
         set dhcp_lease_t1=dhcp_lease_t1+10;
+#endif
     nil
     ;;
 
@@ -192,9 +198,13 @@ fun dhcp_check_force =
  * should ask for a renewal
  */
 fun dhcp_check =
+#ifndef SIMU
     if ((dhcp_client_started && dhcp_lease_t1 != 0 && time > dhcp_lease_t1 && !dhcp_infinite_lease)) then
         dhcp_check_force;
     JobRun;;
+#else
+    0;;
+#endif
 
 /**
  * Starts a dhcp client if needed, sending a DHCP_DISCOVER request.
@@ -202,10 +212,11 @@ fun dhcp_check =
  * a dhcp request during the boot and therefore already have a ip.
  */
 fun dhcp_start_client=
-    Dhcpw "dhcp_start_client";
+#ifndef SIMU
+    _dhcp_debug "dhcp_start_client";
     if (config_get_dhcp && !dhcp_client_started) then
     (
-        Dhcpw "really do dhcp_start_client";
+        _dhcp_debug "really do dhcp_start_client";
         regudp 68 #cbnetdhcp;
         if (!strcmp netip netip_empty) then
             udpsend netip 68 ipbroadcast 67 (mkdhcp DHCP_DISCOVER netip nil nil) macbroadcast
@@ -213,11 +224,14 @@ fun dhcp_start_client=
             dhcp_check_force;
         set dhcp_client_started=1
     );
+#endif
     0;;
 
 
 fun dhcp_start_srv=
+#ifndef SIMU
     regudp 67 #cbnetdhcp67;
+#endif
     0;;
 
 #include net/dns.mtl

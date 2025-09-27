@@ -1,17 +1,6 @@
-#ifdef SIMU
-// make sure the tcpudp emulation stuff gets loaded after the "real" code to override it all
-#include ipv4/icmp.mtl
-#include ipv4/arp.mtl
-#include ipv4/udp.mtl
-#include ipv4/tcp.mtl
-#include net/dhcp.mtl
-#include net/net.mtl
-#endif
-
-const TCPWRITE=0;;
-const TCPREAD=1;;
-const TCPCLOSE=-1;;
-const TCPSTART=2;;
+// -------------------------------------------------------------------------------------------------
+// UDP
+// -------------------------------------------------------------------------------------------------
 
 fun udpsend local localp dst dstp content mac=
 	udpSend localp dst dstp content 0 nil;;
@@ -27,67 +16,95 @@ fun netudp t src ip=
 	let listswitch ludp t -> cb in
 	call cb [src nil ip];;
 
+// -------------------------------------------------------------------------------------------------
+// TCP
+// -------------------------------------------------------------------------------------------------
+
+const TCPWRITE=0;;
+const TCPREAD=1;;
+const TCPCLOSE=-1;;
+const TCPSTART=2;;
+
+type Tcp=[tcpT locpT dstpT cbT enableT];;
 var ltcp;;
 
+fun _tcp_dump tcp=
+    strcatlist "tcpT:" :: (itoa tcp.tcpT) :: " locpT:" :: (itoa tcp.locpT) :: " dstpT:" :: (itoa tcp.dstpT) :: " cbT:" :: (if tcp.cbT==nil then "nil" else "notnil") :: " enableT:" :: (itoa tcp.enableT) :: nil;;
+
 fun writetcp t msg i=
-	tcpSend t msg i nil;;
+	tcpSend t.tcpT msg i nil;;
 
-fun remtcp l t= if l!=nil then let hd l->[tt _] in if t==tt then tl l
-	else (hd l)::remtcp tl l t;;
-
-fun updatetcp l t cb= if l!=nil then let hd l->[tt _] in if t==tt then [t cb]::tl l
-	else (hd l)::updatetcp tl l t cb;;
+/**
+ * Remove a TCP connection. takes a TCP connection as an argument
+ */
+fun remtcp t=
+    set t.enableT=0;
+    set ltcp=remfromlist ltcp t;;
 
 fun closetcp t=
-	set ltcp=remtcp ltcp t;
-	tcpClose t;;
+	remtcp t;
+	tcpClose t.tcpT;;
 
 fun tcpcb t cb=
-	set ltcp=updatetcp ltcp t cb;
-	cb;;
-
-fun listentcp port cb=
-	set ltcp=[tcpListen port cb]::ltcp;;
-
-fun opentcp local localp dst dstp cb=
-//	Secholn "opentcp";IPecho dst 0 0; Secho ":"; Iecholn dstp;
-
-	let tcpOpen dst dstp -> t in
-	if t!=nil then
-	(
-		set ltcp=[t cb]::ltcp;
-		t
-	);;
+    set t.cbT=cb;;
 
 fun enabletcp t v=
-	tcpEnable t v;;
-fun enabledtcpP t= 1;;
+    set t.enableT=v;;
+
+fun enabledtcpP t=
+    t.enableT;;
+
+/**
+ * Create a listening TCP socket
+ * localp: local port number to listen on
+ * cb: callback function to be executed when a new client connects
+ */
+fun listentcp port cb=
+	if cb == nil then Secholn strcatlist "listentcp cb is nil port:" :: (itoa port) :: nil;
+	let tcpListen port -> t in
+	let [tcpT:t locpT:port cbT:cb enableT:1] -> tcp in
+    (
+        // Secholn _tcp_dump tcp;
+        set ltcp=tcp::ltcp
+    );;
+
+/**
+ * Open a new client TCP connection
+ * local: local IP address
+ * localp: local port (can be nil to use an ephemeral port)
+ * dst: destination IP address
+ * dstp: destination port
+ * cb: callback function to handle connection events
+ */
+fun opentcp local localp dst dstp cb=
+	let tcpOpen dst dstp -> t in
+	let [tcpT:t locpT:localp dstpT:dstp cbT:cb enableT:1] -> tcp in
+	if t!=nil then
+	(
+		set ltcp=tcp::ltcp;
+		tcp
+	);;
+
+fun findtcp l idx=
+    if l==nil then nil
+    else let hd l -> t in (
+        if idx==t.tcpT then t
+        else findtcp tl l idx
+    );;
 
 fun nettcp t val msg=
-	if val==TCPSTART then
-		let listswitch ltcp atoi msg -> cb in
+	if val==TCPSTART then (
+		let atoi msg -> idx in
+        let findtcp ltcp idx -> tcp in
+        let [tcpT:t locpT:tcp.locpT cbT:tcp.cbT enableT:1] -> new_tcp in
 		(
-			if cb==nil then Secholn "callback is nil"
-			else Secholn "callback is not nil";
-			set ltcp=[t cb]::ltcp;
-			call cb [t val msg]
+            // Secholn strcatlist "TCPSTART idx:" :: (itoa idx) :: " val:" :: (itoa val) :: " tcpT:" :: (itoa new_tcp.tcpT) :: " locpT:" :: (itoa new_tcp.locpT) :: nil;
+			// if new_tcp.cbT == nil then Secholn "callback is nil";
+			set ltcp=new_tcp::ltcp;
+			call new_tcp.cbT [new_tcp val msg]
 		)
-	else let listswitch ltcp t -> cb in
-		call cb [t val msg];;
-
-fun dhcp_start_client = 0;;
-fun dhcp_start_srv = 0;;
-fun dhcp_check_force = nil;;
-fun dhcp_check = 0;;
-
-fun nettime=0;;
-
-fun netstart=
-	tcpCb #nettcp;
-	udpCb #netudp;
-	set ltcp=nil;
-	set ludp=nil;
-//	set wifi=stationW;
-	dns_add_new_srv "\192\168\1\1" 1;
-	set netip="\127\0\0\1";
-	0;;
+    )
+	else let findtcp ltcp t -> tcp in (
+        // Secholn strcatlist "TCP nettcp idx:" :: (itoa t) :: " val:" :: (itoa val) :: nil;
+		call tcp.cbT [tcp val msg]
+    );;

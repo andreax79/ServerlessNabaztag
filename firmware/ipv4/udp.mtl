@@ -21,9 +21,7 @@ fun mkudp ipsrc ipdst portsrc portdst content=
 	);;
 
 fun udpSend2 mac udp=
-	Secho ">u";
-//	dump udp;
-	netSend udp 0 nil (MACecho mac 0 1) 0 1;;
+	netSend udp 0 nil mac 0 1;;
 
 fun udpsend local localp dst dstp content mac=
 	let mkudp local dst localp dstp content -> udp in

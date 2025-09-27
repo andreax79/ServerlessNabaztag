@@ -1,6 +1,7 @@
 #include protos/meteo_protos.mtl
 #include protos/sleep_protos.mtl
 #include protos/audiolib_protos.mtl
+#include protos/streaming_protos.mtl
 
 //--------------------------------------------------------------------------------------------------
 // HTTP Server
@@ -14,6 +15,8 @@ const http_content_start="ontent-Length: ";;
 const http_content_start2="ontent-length: ";;
 const http_content_end="\13\n";;
 
+proto http_process_request 3 ;;
+
 /**
  * Generate the HTTP response header.
  */
@@ -24,6 +27,28 @@ fun http_header http_status content_type=
         (if content_type!=nil then (strcat "\13\10Content-Type: " content_type) else "")::
         "\13\10\13\10"::nil
 ;;
+
+/**
+ * Send a HTTP response header and close the connection.
+ * cnx: TCP connection
+ * sock: socket object for this connection
+ * jsonstatus: response string to send
+ */
+fun http_send_header_and_close http_status content_type cnx sock=
+    let http_header http_status content_type -> res in
+        sock_send_and_close cnx sock res;;
+
+/**
+ * Send a full HTTP response (header + content) and close the connection.
+ * cnx: TCP connection
+ * sock: socket object for this connection
+ * content_type: MIME type of the content
+ * content: response string to send
+ */
+fun http_send_content_and_close cnx sock content_type content=
+    let http_header HTTP_200 content_type -> header in
+    let strcat header content -> res in
+        sock_send_and_close cnx sock res;;
 
 /**
  * Extract the header of an HTTP message string.
@@ -80,11 +105,7 @@ fun http_sock_read cnx input sock=
             // Clear the input buffer
             set sock.sockInput=nil;
             // Call the callback function with the full request
-            let call sock.sockCallback [str] -> res in
-            (
-                sock_send cnx sock res;
-                sock_close_after cnx sock
-            )
+            call sock.sockCallback [str cnx sock]
         )
     );
     0;;
@@ -106,15 +127,11 @@ fun http_sock_event cnx val msg sock=
  * Callback function for the main HTTP listening socket.
  * This is called by the TCP stack whenever a new client connects.
  * cnx: TCP connection
- * cbrequest: function that will handle the logic for a request
  */
-fun http_server_cb cnx code msg cbrequest=
-    Secholn "httpsrv accept";
-    let [sockCallback:cbrequest]-> sock in
-    (
-        tcpcb cnx fixarg4 #http_sock_event sock;
-        0
-    );;
+fun http_server_cb cnx code msg=
+    Secholn "http server accept";
+    tcpcb cnx fixarg4 #http_sock_event [sockCallback:#http_process_request];
+    0;;
 
 //--------------------------------------------------------------------------------------------------
 
@@ -134,9 +151,9 @@ fun jsonlast s=
     strcat s "\n"
 ;;
 
-fun jsonstatus=
+fun http_get_json_status cnx sock args=
+    http_send_content_and_close cnx sock "application/json"
     strcatlist
-        (http_header HTTP_200 "application/json")::
         "{\n"::
             (jsonnext jsonvalue "mac" webmac netMac)::
             (jsonnext jsonvalue "ts" current_time_human)::
@@ -151,10 +168,10 @@ fun jsonstatus=
             (jsonnext jsonvalue "go_to_bed" itoa config_get_go_to_bed)::
             (jsonnext jsonvalue "taichi" itoa infotaichi)::
             (jsonnext jsonvalue "messages" itoa infomessages)::
-            (jsonnext jsonvalue "left" itoa extleft)::
-            (jsonnext jsonvalue "right" itoa extright)::
+            (jsonnext jsonvalue "left" itoa ears_left)::
+            (jsonnext jsonvalue "right" itoa ears_right)::
             (jsonnext jsonvalue "earsmode" itoa earsmode)::
-            (jsonnext jsonvalue "ear_detecting" itoa earDetecting)::
+            (jsonnext jsonvalue "ear_detecting" itoa ears_detecting)::
             (jsonnext jsonvalue "sleep_state" itoa gSleepState)::
             (jsonnext jsonvalue "streaming_state" itoa gStreamingState)::
             (jsonnext jsonvalue "processing_state" itoa gProcessingState)::
@@ -163,7 +180,8 @@ fun jsonstatus=
             (jsonnext jsonvalue "it_app" gItApp)::
             (jsonnext jsonvalue "meteo_weather_code" itoa _meteo_weather_code)::
             (jsonlast jsonvalue "rev" BYTECODE_REVISION_STR)::
-        "}"::nil
+        "}"
+        ::nil
 ;;
 
 fun job_format_json job =
@@ -174,29 +192,27 @@ fun job_format_json job =
         "}"::nil
 ;;
 
-fun json_jobs =
-    let strcat http_header HTTP_200 "application/json" "[\n" -> result in
-    let listlen _jobs -> n in
-    for l=_jobs;l!=nil; tl l do
-        let hd l -> job in
-        let if nil!=tl l then #jsonnext else #jsonlast -> jf in
-        let if nil!=tl l then ",\n" else "\n]" -> sep in
-        set result = strcatlist result::(job_format_json job)::sep::nil
+fun http_get_json_jobs cnx sock args =
+    let "[\n" -> result in
+    let listlen _jobs -> n in (
+        for l=_jobs;l!=nil; tl l do
+            let hd l -> job in
+            let if nil!=tl l then #jsonnext else #jsonlast -> jf in
+            let if nil!=tl l then ",\n" else "\n]" -> sep in
+            set result = strcatlist result::(job_format_json job)::sep::nil;
+        http_send_content_and_close cnx sock "application/json" result
+    )
 ;;
 
 //--------------------------------------------------------------------------------------------------
 
 fun httpindex=
-    strcat
-        http_header HTTP_200 "text/html"
         "
 #include srv/www/index.html
         "
 ;;
 
 fun milligram_css=
-    strcat
-        http_header HTTP_200 "text/css"
         "
 #include srv/www/milligram.css
         "
@@ -210,7 +226,6 @@ proto stopEverythingAndResetToIdle 0;;
 proto get_time_from_timeserver 0;;
 proto audiolib_start_http 2;;
 proto surprise 0;;
-proto _cbWavError 0;;
 proto _infosrc_update 2;;
 
 //--------------------------------------------------------------------------------------------------
@@ -240,7 +255,7 @@ fun uriextract uri =
     else [extractpage strsub uri 0 i extractargs uri i+1];;
 
 // Get a string value from the args by the key
-fun Sgetargvalue args key =
+fun _http_arg_str args key =
     let nil -> value in (
         for l=args; l!=nil; tl l do
             let hd l->[n v] in
@@ -250,7 +265,7 @@ fun Sgetargvalue args key =
     ;;
 
 // Get an integer value from the args by the key
-fun Igetargvalue args key =
+fun _http_arg_int args key =
     let nil -> value in (
         for l=args; l!=nil; tl l do
             let hd l->[n v] in
@@ -260,9 +275,165 @@ fun Igetargvalue args key =
     ;;
 
 /**
+ * Get time from the time server
+ */
+fun http_get_update_time cnx sock args=
+    get_time_from_timeserver;
+    http_send_header_and_close HTTP_204 nil cnx sock;;
+
+/**
+ * Get weather information from the weather server
+ */
+fun http_get_update_weather cnx sock args=
+    meteo_get;
+    http_send_header_and_close HTTP_204 nil cnx sock;
+    nil;;
+
+/**
+ * Stop everything we can be doing and resets to either idle or asleep
+ */
+fun http_get_stop cnx sock args=
+    stopEverythingAndResetToIdle;
+    http_send_header_and_close HTTP_204 nil cnx sock;
+    nil;;
+
+/**
+ * Reboot the system
+ */
+fun http_get_reboot cnx sock args=
+    http_send_header_and_close HTTP_204 nil cnx sock;
+    reboot 0x0407FE58 0x13fb6754;
+    nil;;
+
+/**
+ * Surprise action
+ */
+fun http_get_surprise cnx sock args=
+    surprise;
+    http_send_header_and_close HTTP_204 nil cnx sock;;
+
+/**
+ * Play a sound
+ */
+fun http_get_play_midi midi cnx sock args=
+    if !gSleepState then (
+        midi_play midi
+    );
+    http_send_header_and_close HTTP_204 nil cnx sock;;
+
+fun http_get_play cnx sock args=
+    if !gSleepState then (
+        audiolib_start_http _http_arg_str args 'u' #streaming_wav_error
+    );
+    http_send_header_and_close HTTP_204 nil cnx sock;;
+
+fun http_get_say cnx sock args=
+    if !gSleepState then (
+        audiolib_start_http (strcatlist "http://translate.google.com/translate_tts?ie=UTF-8&total=1&idx=0&textlen=32&client=tw-ob&tl=En-gb&q="::(strreplace (_http_arg_str args 't') " " "+")::nil) #streaming_wav_error
+    );
+    http_send_header_and_close HTTP_204 nil cnx sock;;
+
+fun http_get_taichi cnx sock args=
+    let _http_arg_int args 'v' -> v in
+        if v == 1000 && !gSleepState then
+            taichistart
+        else
+            set infotaichi = v;
+    http_send_header_and_close HTTP_204 nil cnx sock;;
+
+fun http_get_mp3 cnx sock args=
+    audiolib_start_http _http_arg_str args 'v' #streaming_wav_error;
+    http_send_header_and_close HTTP_204 nil cnx sock;;
+
+fun http_get_sleep cnx sock args=
+    sleep_start;
+    http_send_header_and_close HTTP_204 nil cnx sock;;
+
+fun http_get_wakeup cnx sock args=
+    sleep_end;
+    http_send_header_and_close HTTP_204 nil cnx sock;;
+
+fun http_get_left cnx sock args=
+    if !gSleepState then (
+        ears_go 0 _http_arg_int args 'p' _http_arg_int args 'd'
+    );
+    http_send_header_and_close HTTP_204 nil cnx sock;;
+
+fun http_get_right cnx sock args=
+    if !gSleepState then (
+        ears_go 1 _http_arg_int args 'p' _http_arg_int args 'd'
+    );
+    http_send_header_and_close HTTP_204 nil cnx sock;;
+
+fun http_get_nose cnx sock args=
+    set infomessages = _http_arg_int args 'v';
+    http_send_header_and_close HTTP_204 nil cnx sock;;
+
+fun http_get_weather cnx sock args=
+    if !gSleepState then (
+        _infosrc_update 1 _http_arg_int args 'v'
+    );
+    http_send_header_and_close HTTP_204 nil cnx sock;;
+
+fun http_get_stock cnx sock args=
+    if !gSleepState then (
+        _infosrc_update 2 _http_arg_int args 'v'
+    );
+    http_send_header_and_close HTTP_204 nil cnx sock;;
+
+fun http_get_traffic cnx sock args=
+    if !gSleepState then (
+        _infosrc_update 3 _http_arg_int args 'v'
+    );
+    http_send_header_and_close HTTP_204 nil cnx sock;;
+
+fun http_get_mail cnx sock args=
+    if !gSleepState then (
+        _infosrc_update 6 _http_arg_int args 'v'
+    );
+    http_send_header_and_close HTTP_204 nil cnx sock;;
+
+fun http_get_pollution cnx sock args=
+    if !gSleepState then (
+        _infosrc_update 7 _http_arg_int args 'v'
+    );
+    http_send_header_and_close HTTP_204 nil cnx sock;;
+
+fun http_get_clear cnx sock args=
+    for i=1;i<=8 do (
+        _infosrc_update 0 i
+    );
+    http_send_header_and_close HTTP_204 nil cnx sock;;
+
+fun _http_get_dns_cb ip x=
+	let x->[cnx sock] in
+    let strcatlist "{\n" :: (jsonlast jsonvalue "ip" ip) :: "}" :: nil -> res in
+    http_send_content_and_close cnx sock "application/json" res;;
+
+/**
+ * Perform a DNS lookup for the given domain and return the result as JSON.
+ * args: d=domain name
+ */
+fun http_get_dns cnx sock args=
+    let _http_arg_str args 'd' -> domain in
+        dnsreq domain fixarg2 #_http_get_dns_cb [cnx sock];;
+
+fun http_get_setup cnx sock args=
+    config_set_lang _http_arg_str args 'l';            // set language
+    config_set_city _http_arg_str args 'c';            // set city code
+    config_set_dst atoi _http_arg_str args 'd';        // set Daylight Saving Time
+    config_set_latitude _http_arg_str args 'j';        // set latitude
+    config_set_longitude _http_arg_str args 'k';       // set longitude
+    config_set_wake_up atoi _http_arg_str args 'w';    // set wake up time
+    config_set_go_to_bed atoi _http_arg_str args 'b';  // set go to bed time
+    config_save;
+    meteo_get;
+    http_send_header_and_close HTTP_204 nil cnx sock;;
+
+/**
  * Process an HTTP request and generate the response
  */
-fun http_process_request req=
+fun http_process_request req cnx sock=
     let strstr req " " 0 -> i in
     let strstr req " " i+1 -> j in
     let strsub req i+1 j-i-1 -> uri in
@@ -272,136 +443,53 @@ fun http_process_request req=
         Secho "page : "; Secholn page;
 
         // misc
-        if !strcmp page "update-time" then (  // get time from server
-            get_time_from_timeserver;
-            http_header HTTP_204 nil
-        )
-        else if !strcmp page "update-weather" then (  // get weather info
-            meteo_get;
-            http_header HTTP_204 nil
-        )
-        else if !strcmp page "stop" then (  // stop everything we can be doing and resets to either idle or asleep
-            stopEverythingAndResetToIdle;
-            http_header HTTP_204 nil
-        )
-        else if !strcmp page "reboot" then (  // reboot
-            reboot 0x0407FE58 0x13fb6754;
-            nil
-        )
-        else if !strcmp page "surprise" then (
-            if !gSleepState then surprise;
-            http_header HTTP_204 nil
-        )
-        else if !strcmp page "status" then (  // json status
-            jsonstatus
-        )
-        else if !strcmp page "jobs" then (
-            json_jobs
-        )
-        else if !strcmp page "communication" then (  // play sound
-            if !gSleepState then (midi_play midi_communion);
-            http_header HTTP_204 nil
-        )
-        else if !strcmp page "ack" then (
-            if !gSleepState then (midi_play midi_ack);
-            http_header HTTP_204 nil
-        )
-        else if !strcmp page "abort" then (
-            if !gSleepState then (midi_play midi_abort);
-            http_header HTTP_204 nil
-        )
-        else if !strcmp page "ministop" then (
-            midi_play midi_ministop;
-            http_header HTTP_204 nil
-        )
-        else if !strcmp page "play" then (
-            if !gSleepState then (audiolib_start_http Sgetargvalue args 'u' #_cbWavError);
-            http_header HTTP_204 nil
-        )
-        else if !strcmp page "say" then (
-            if !gSleepState then (audiolib_start_http (strcatlist "http://translate.google.com/translate_tts?ie=UTF-8&total=1&idx=0&textlen=32&client=tw-ob&tl=En-gb&q="::(strreplace (Sgetargvalue args 't') " " "+")::nil) #_cbWavError);
-            http_header HTTP_204 nil
-        )
-        else if !strcmp page "taichi" then let Igetargvalue args 'v' -> v in (  // taichi
-            if v == 1000 && !gSleepState then
-                taichistart
-            else
-                set infotaichi = v;
-            http_header HTTP_204 nil
-        )
-        else if !strcmp page "mp3" then (
-            audiolib_start_http Sgetargvalue args 'v' #_cbWavError;
-            http_header HTTP_204 nil
-        )
-        else if !strcmp page "sleep" then (  // sleep
-            sleep_start;
-            http_header HTTP_204 nil
-        )
-        else if !strcmp page "wakeup" then (  // wake up
-            sleep_end;
-            http_header HTTP_204 nil
-        )
-        else if !strcmp page "left" then (  // p=position d=direction
-            if !gSleepState then (earGo 0 Igetargvalue args 'p' Igetargvalue args 'd');
-            http_header HTTP_204 nil
-        )
-        else if !strcmp page "right" then (  // p=position d=direction
-            if !gSleepState then (earGo 1 Igetargvalue args 'p' Igetargvalue args 'd');
-            http_header HTTP_204 nil
-        )
-        else if !strcmp page "nose" then (  // v (0-4)
-            set infomessages = Igetargvalue args 'v';
-            http_header HTTP_204 nil
-        )
-        else if !strcmp page "weather" then (  // weather (0-5)
-            if !gSleepState then (_infosrc_update 1 Igetargvalue args 'v');
-            http_header HTTP_204 nil
-        )
-        else if !strcmp page "stock" then (  // stock market (0-6)
-            if !gSleepState then (_infosrc_update 2 Igetargvalue args 'v');
-            http_header HTTP_204 nil
-        )
-        else if !strcmp page "traffic" then (  // trafic (0-6)
-            if !gSleepState then (_infosrc_update 3 Igetargvalue args 'v');
-            http_header HTTP_204 nil
-        )
-        else if !strcmp page "mail" then (  // mail (0-4)
-            if !gSleepState then (_infosrc_update 6 Igetargvalue args 'v');
-            http_header HTTP_204 nil
-        )
-        else if !strcmp page "pollution" then (  // pollutions (0-10)
-            if !gSleepState then (_infosrc_update 7 Igetargvalue args 'v');
-            http_header HTTP_204 nil
-        )
-        else if !strcmp page "clear" then (
-            for i=1;i<=8 do (_infosrc_update 0 i);
-            http_header HTTP_204 nil
-        )
-        else if !strcmp page "setup" then (
-            config_set_lang Sgetargvalue args 'l';            // set language
-            config_set_city Sgetargvalue args 'c';            // set city code
-            config_set_dst atoi Sgetargvalue args 'd';        // set Daylight Saving Time
-            config_set_latitude Sgetargvalue args 'j';        // set latitude
-            config_set_longitude Sgetargvalue args 'k';       // set longitude
-            config_set_wake_up atoi Sgetargvalue args 'w';    // set wake up time
-            config_set_go_to_bed atoi Sgetargvalue args 'b';  // set go to bed time
-            config_save;
-            meteo_get;
-            http_header HTTP_204 nil
-        )
+        if !strcmp page "update-time" then http_get_update_time cnx sock args // get time from time server
+        else if !strcmp page "update-weather" then http_get_update_weather cnx sock args  // get weather from weather server
+        else if !strcmp page "stop" then http_get_stop cnx sock args // stop
+        else if !strcmp page "reboot" then http_get_reboot cnx sock args // reboot
+        else if !strcmp page "surprise" then http_get_surprise cnx sock args // surprise
+        else if !strcmp page "status" then http_get_json_status cnx sock args // status
+        else if !strcmp page "jobs" then http_get_json_jobs cnx sock args // jobs
+        else if !strcmp page "communication" then http_get_play_midi midi_communion cnx sock args // play communication sound
+        else if !strcmp page "ack" then http_get_play_midi midi_ack cnx sock args // play ack sound
+        else if !strcmp page "abort" then http_get_play_midi midi_abort cnx sock args // play abort sound
+        else if !strcmp page "ministop" then http_get_play_midi midi_ministop cnx sock args // play ministop sound
+        else if !strcmp page "play" then http_get_play cnx sock args // play a wav from url
+        else if !strcmp page "say" then http_get_say cnx sock args // text to speech
+        else if !strcmp page "taichi" then http_get_taichi cnx sock args // taichi
+        else if !strcmp page "mp3" then http_get_mp3 cnx sock args // play an mp3 from url
+        else if !strcmp page "sleep" then http_get_sleep cnx sock args // sleep
+        else if !strcmp page "wakeup" then http_get_wakeup cnx sock args // wake up
+        else if !strcmp page "left" then http_get_left cnx sock args // p=position d=direction
+        else if !strcmp page "right" then http_get_right cnx sock args // p=position d=direction
+        else if !strcmp page "nose" then http_get_nose cnx sock args // v=value
+        else if !strcmp page "weather" then http_get_weather cnx sock args // v=value
+        else if !strcmp page "stock" then http_get_stock cnx sock args // v=value
+        else if !strcmp page "traffic" then http_get_traffic cnx sock args // v=value
+        else if !strcmp page "mail" then http_get_mail cnx sock args // v=value
+        else if !strcmp page "pollution" then http_get_pollution cnx sock args // v=value
+        else if !strcmp page "clear" then http_get_clear cnx sock args // clear all infosrc
+        else if !strcmp page "dns" then http_get_dns cnx sock args // d=domain name
+        else if !strcmp page "setup" then http_get_setup cnx sock args // setup parameters
         else if !strcmp page "milligram.css" then (
-            milligram_css
+            let http_header HTTP_200 "text/css" -> header in
+            let strcat header milligram_css -> res in
+            sock_send_and_close cnx sock res
         )
         else if !strcmp page "" then (  // index page
-            httpindex
+            let http_header HTTP_200 "text/html" -> header in
+            let strcat header httpindex -> res in
+            sock_send_and_close cnx sock res
         )
         else (
-            strcat (http_header HTTP_404 "text/plain") "Not Found"
-        )
+            let http_header HTTP_404 "text/plain" -> header in
+            let strcat header "Not Found" -> res in
+            sock_send_and_close cnx sock res
+        );
+        0
     );;
 
 
-fun startwebserver port =
-    listentcp port fixarg4 #http_server_cb #http_process_request;
-    Secholn "startwebserver";
+fun http_server_start_srv port =
+    listentcp port #http_server_cb;
     0;;

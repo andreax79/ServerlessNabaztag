@@ -1,1 +1,24 @@
-proto earInit 0;;
+const EARSMODE_RESET=0;; // ears go to ref pos
+const EARSMODE_WAIT=1;;
+const EARSMODE_WAITANDDETECT=2;;
+const EARSMODE_DETECT=3;;
+
+const EARS_HOLES=17;; // number of holes in the ear that can help us track the moves
+const EARS_TIMEOUT=2000;; // delay (in ms) to wait when detecting ear movement (if there is no move for EARS_TIMEOUT ms, then consider the move done and do whatever there is to do)
+const EARS_OFFZERO=2;; // "offset" between hardware position zero (where there is a missing hole) and "real" position zero (ears pointing to the sky)
+const EARS_DIR_LEFT=0;; // left ear direction when going forward
+const EARS_DIR_RIGHT=1;; // right ear direction when going forward
+
+proto ears_complete 0 ;;
+proto ears_detecting 0 ;;
+proto ears_detecting 0 ;;
+proto ears_finished_moving 0 ;;
+proto ears_get_event 0 ;;
+proto ears_go 3 ;;
+proto ears_go_to_ref_pos 0 ;;
+proto ears_init 0 ;;
+proto ears_is_initialized 0;;
+proto ears_ready 0 ;;
+proto ears_resetting 0 ;;
+proto ears_set_wait_and_detect_mode 0 ;;
+proto ears_start_reset 0 ;;

@@ -1,3 +1,12 @@
+const SIGNCUTSIZE=40000;; // taille max du fichier audio de signature
+
+// debug
+#ifdef TRAME_DEBUG
+fun _trame_debug str= nil;;
+#else
+fun _trame_debug str= Secholn strcatlist "[program] " :: str :: nil; nil;;
+#endif
+
 fun _trame_filter_config_word s=
     let strstr s " " 0 -> i in
     if i!=nil then [strsub s 0 i strsub s i+1 nil]
@@ -16,9 +25,9 @@ fun trame_filter_config s i0=
 // ---------------------------------------------------------------------------
 
 fun _trame_dump_prgm l=
-    Progw "Program:";
+    _trame_debug "Program:";
     for l=l;l!=nil;tl l do let hd l->[key val] in (
-        Progw strcatlist ( key :: " " :: (if (val != nil) then val else "") :: nil)
+        _trame_debug strcatlist ( key :: " " :: (if (val != nil) then val else "") :: nil)
     );
     Secholn "---";
     l;;
@@ -50,7 +59,7 @@ fun _trame_rsc_from_program l=
 
 
 
-var paletteselected = 0;;
+var _trame_palette_selected = 0;;
 // v17 (add romain)
 // Fonction permettant d'activer la palette pour le programme en cours
 // au jour du 31 mai 2007, on recoit le PL apres le son a jouer, la palette associee au son est donc affichee juste apres la fin du programme
@@ -59,10 +68,10 @@ var paletteselected = 0;;
 fun _trame_check_for_palette_before l=
     for l=l;l!=nil;tl l do let hd l->[key val] in
     (
-        if (!strcmp key "PL") && (paletteselected==0) then
+        if (!strcmp key "PL") && (_trame_palette_selected==0) then
         (
             set_current_palette_mode atoi val;
-            set paletteselected = 1
+            set _trame_palette_selected = 1
         )
     );;
 
@@ -71,7 +80,7 @@ fun trame_program_start=
     // setleds RGB_RED;
 
     // Si la palette est definie pour ce programme, alors on ne met pas l'aleatoire
-    if(paletteselected==0) then (
+    if(_trame_palette_selected==0) then (
         set current_palette=tabnew 0 8; // v17 : c'était inversé
         set_current_palette_mode 8 // random palette par défaut
     );
@@ -162,22 +171,22 @@ fun trame_eval ping_trame=
             // post process : a program ?
             if program!=nil then (
                 // Initialize Program
-                set paletteselected = 0;
-                set gCurrentProgram = program;
+                set _trame_palette_selected = 0;
+                set streaming_current_program = program;
                 set gProcessingState = 1;
                 set gProcessingWaitState = 0;
                 _trame_check_for_palette_before program; // Permet de mettre la palette correspondante au programme, v17 (add romain)
                 // resources
                 set rsctoget=_trame_rsc_from_program program;
                 // empties the rsc cache
-                set rscloaded=nil;
+                set streaming_rsc_loaded=nil;
                 let hd rsctoget -> [url _] in
                 if url==nil then (
                     // no resources to load : start the program now
                     trame_program_start;
                     0
                 ) else (
-                    // will load rsctoget and then start the program 'gCurrentProgram'
+                    // will load rsctoget and then start the program 'streaming_current_program'
                     Secho "loading rsrcs...";
                     run_set_state rscLoadNextRun;
                     0

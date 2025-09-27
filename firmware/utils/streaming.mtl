@@ -1,8 +1,15 @@
 // ********** loading resources
 
-// replace the prefix string "broadcast" (if present) by broadcasturl
+const BROADCAST_KEYWORD="broadcast";;
+
+var _streaming_current=nil;;
+var _streaming_rsc_tmp;; // buffer de chargement des ressources en petits morceaux
+var streaming_rsc_loaded;; // list of resources loaded from current trame
+var streaming_current_program;; // the list of commands of the current program
+
+// replace the prefix string "broadcast" (if present) by url_broadcast
 fun _streaming_prepare_url url=
-    if 0==strstr url BROADCAST_KEYWORD 0 then strcat broadcasturl strsub url strlen BROADCAST_KEYWORD nil
+    if 0==strstr url BROADCAST_KEYWORD 0 then strcat url_broadcast strsub url strlen BROADCAST_KEYWORD nil
     else url;;
 
 
@@ -15,11 +22,11 @@ fun _streaming_load_cb http res maxsize=
     )
     else if res!=nil then
     (
-        // received a result, store it in rsctmp
-        // Je ne comprends pas la logique ici (AS sept07) : a quoi sert rsctmp et maxsize, et comment passe-t-il à la suite ?
+        // received a result, store it in _streaming_rsc_tmp
+        // Je ne comprends pas la logique ici (AS sept07) : a quoi sert _streaming_rsc_tmp et maxsize, et comment passe-t-il à la suite ?
 //      Secholn res;
-        set rsctmp=res::rsctmp;
-        if maxsize!=nil && (slistlen rsctmp)>maxsize then
+        set _streaming_rsc_tmp=res::_streaming_rsc_tmp;
+        if maxsize!=nil && (slistlen _streaming_rsc_tmp)>maxsize then
         (
             // too big ? (?)
             httpabort http;
@@ -31,7 +38,7 @@ fun _streaming_load_cb http res maxsize=
     (
         let hd rsctoget ->[url _] in
         // remember rsc loaded
-        set rscloaded=[url tl rev rsctmp nil]::rscloaded;
+        set streaming_rsc_loaded=[url tl rev _streaming_rsc_tmp nil]::streaming_rsc_loaded;
 
         // load next rsc
         set rsctoget=tl rsctoget;
@@ -49,7 +56,7 @@ fun runRscLoadNext=
         trame_program_start;
         0
     )
-    else if nil!=listswitchstr rscloaded url then
+    else if nil!=listswitchstr streaming_rsc_loaded url then
     (
         // already loaded : load next
         set rsctoget=tl rsctoget;
@@ -58,7 +65,7 @@ fun runRscLoadNext=
     else
     (
         // load resource
-        set rsctmp=nil;
+        set _streaming_rsc_tmp=nil;
         Secho "loading ";
         run_set_state rscLoadWaitRun httprequest "GET" Secholn (_streaming_prepare_url url) nil (fixarg3 #_streaming_load_cb maxsize) HTTP_STREAM;
         0
@@ -84,7 +91,7 @@ fun endOfProgram doNotNotify =
     Secholn "endOfProgram";
     set gProcessingState = 0;
     set gProcessingWaitState = 0; // just in case
-    set gCurrentProgram = nil;
+    set streaming_current_program = nil;
     if (gItState && !doNotNotify) then (
         // notifier fini
         interactive_program_done
@@ -143,7 +150,7 @@ fun dochorstream=
         if (chorst_pasdedanse == nil) then
         (
             // une des oreilles en haut, une autre en bas : radio...
-            if ((random 2) == 1) then (earGo 0 0 0; earGo 1 10 0) else (earGo 0 10 0; earGo 1 0 0);
+            if ((random 2) == 1) then (ears_go 0 0 0; ears_go 1 10 0) else (ears_go 0 10 0; ears_go 1 0 0);
 
             // initialisation chorst_oreille_chance
             set chorst_oreille_chance = 0
@@ -153,8 +160,8 @@ fun dochorstream=
             // pour chaque oreille, choisir une position au hasard entre les 4 possibles (0, 5, 10, 14 dents) et, si elle est différente de la position courante, y aller, dans le sens 'vers l'avant'.
             let 0::5::10::14::nil -> ear4Positions in
             (
-                let listnth ear4Positions rand&3 -> p in earGo 0 p 0;
-                let listnth ear4Positions rand&3 -> p in earGo 1 p 0
+                let listnth ear4Positions rand&3 -> p in ears_go 0 p 0;
+                let listnth ear4Positions rand&3 -> p in ears_go 1 p 0
             );
 
             // de moins en moins souvent, puis de nouveau souvent, etc..
@@ -263,9 +270,9 @@ fun dochorstream=
     0;;
 
 // boucle principale de la chorégraphie de streaming
-fun stopStream=
+fun streaming_stop=
     // oreilles
-    earsGoToRefPos;
+    ears_go_to_ref_pos;
 
     set gStreamingState = 0;
     // which resource now ? Can only be interactive or idle
@@ -276,10 +283,10 @@ fun stopStream=
 
     ;;
 
-fun runStreamingCmd i0=
+fun streaming_run_cmd i0=
     if wavrunning==0 then (
         // Fin du stream
-        stopStream;
+        streaming_stop;
         // next command
         run_set_state cmdEvalOne i0+1;
 
@@ -292,11 +299,11 @@ fun runStreamingCmd i0=
     );;
 
 
-fun _cbGotoNextCmd i0=
+fun _streaming_go_next_cmd i0=
     run_set_state cmdEvalOne i0+1;
     0;;
 
-fun _cbWavError=
+fun streaming_wav_error=
     if (gItState) then interactive_error;
     0;;
 
@@ -323,13 +330,13 @@ fun runWaitCmd i0 =
 
 
 //********************************************************
-// Executes the i0'th command in the 'gCurrentProgram' program
+// Executes the i0'th command in the 'streaming_current_program' program
 // a command is a list [key val]
 fun runEvalOneCommand i0=
 //  Secho "runEvalOneCommand ";Iecholn i0;
     interactive_reset_ears_touched;
 
-    let listnth gCurrentProgram i0 -> [key val] in
+    let listnth streaming_current_program i0 -> [key val] in
     if (/* Secho "eval cmd:";Secholn */ key)==nil then
     (
         // toutes commandes jouées : demander la suite
@@ -340,9 +347,9 @@ fun runEvalOneCommand i0=
     (
         Secho "exec "; Secho key; Secholn " : start music";
         set gCurAudioCmdIndex=gCurAudioCmdIndex+1;
-        let listswitchstr rscloaded Secholn val -> music in
+        let listswitchstr streaming_rsc_loaded Secholn val -> music in
             if music==nil then Secholn "###nilmusic";
-        audiolib_wav_start_local listswitchstr rscloaded val;
+        audiolib_wav_start_local listswitchstr streaming_rsc_loaded val;
         run_set_state cmdEvalOne i0+1;
         0
     )
@@ -355,9 +362,9 @@ fun runEvalOneCommand i0=
         setleds 0;
         if !gBusyState then XmppSessionRequestResource "streaming";
         set gCurAudioCmdIndex=gCurAudioCmdIndex+1;
-        set gCurStreamName= nil;
+        set _streaming_current= nil;
         set chorst_pasdedanse=nil;
-        let _streaming_prepare_url val -> music in audiolib_start_http music #_cbWavError;
+        let _streaming_prepare_url val -> music in audiolib_start_http music #streaming_wav_error;
         run_set_state streamCmdRun i0;
         0
     )
@@ -370,7 +377,7 @@ fun runEvalOneCommand i0=
         setleds 0;
         if !gBusyState then XmppSessionRequestResource "streaming";
         set gCurAudioCmdIndex=gCurAudioCmdIndex+1;
-        set gCurStreamName= nil;
+        set _streaming_current= nil;
         set chorst_pasdedanse=nil;
         // Romain
         let _streaming_prepare_url val -> music in (
@@ -379,7 +386,7 @@ fun runEvalOneCommand i0=
                 set tmpval = md5(strcatlist music::"teloiv"::nil);
                 set music = strcatlist music::"&cs="::tmpval::nil
             );
-            audiolib_start_http music #_cbWavError
+            audiolib_start_http music #streaming_wav_error
         );
         run_set_state streamCmdRun i0;
         0
@@ -388,7 +395,7 @@ fun runEvalOneCommand i0=
     (
         Secho "exec SI : "; Secholn val;
         // nomme le stream courant
-        if gStreamingState then set gCurStreamName = val;
+        if gStreamingState then set _streaming_current = val;
         // play next
         run_set_state cmdEvalOne i0+1;
         0
@@ -397,10 +404,10 @@ fun runEvalOneCommand i0=
     (
         Secho "exec SE : "; Secholn val;
         // stoppe le stream courant s'il est nommé comme ca
-        if gStreamingState && (!strcmp gCurStreamName val) then (
+        if gStreamingState && (!strcmp _streaming_current val) then (
             wavstop;
-            earStop 0;
-            stopStream
+            ears_stop 0;
+            streaming_stop
         );
         // play next
         run_set_state cmdEvalOne i0+1;
@@ -412,7 +419,7 @@ fun runEvalOneCommand i0=
         // Music Stream : streams the music (like ST), no choregraphy (assumed to be done by CH), not blocking (like MU)
         set gCurAudioCmdIndex=gCurAudioCmdIndex+1;
         // starts the streamed music
-        let _streaming_prepare_url val -> music in audiolib_start_http music #_cbWavError;
+        let _streaming_prepare_url val -> music in audiolib_start_http music #streaming_wav_error;
         // play next
         run_set_state cmdEvalOne i0+1;
 
@@ -427,7 +434,7 @@ fun runEvalOneCommand i0=
     else if !strcmp key "CH" then
     (
         Secholn "exec CH : "; Secho val;
-        msgchorstart (listswitchstr rscloaded val) #_cbGotoNextCmd i0;
+        msgchorstart (listswitchstr streaming_rsc_loaded val) #_streaming_go_next_cmd i0;
         0
     )
     else if !strcmp key "IS" then

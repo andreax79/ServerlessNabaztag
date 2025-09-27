@@ -31,9 +31,13 @@ var forcedvol=0;;
 fun volfrombutton v=let 255-v -> v in 255-((v*v)>>8);;
 
 // debug
-fun Audiowln str = nil;; // Secholn strcatlist "[audio] " :: str :: nil ;;
-fun Audiow str = nil;; // Secho str ;;
-
+#ifdef AUDIOLIB_DEBUG
+fun Audiowln str = Secholn strcatlist "[audio] " :: str :: nil; nil ;;
+fun Audiow str = Secho str; nil ;;
+#else
+fun Audiowln str= nil;;
+fun Audiow str= nil;;
+#endif
 
 fun updatevol=
     let button3 -> v in

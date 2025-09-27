@@ -1,0 +1,2 @@
+type JobStatus = JobRun | JobSuspend;;
+type Job=[n name f status];;

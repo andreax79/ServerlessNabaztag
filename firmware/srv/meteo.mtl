@@ -61,7 +61,9 @@ fun _weather_code_to_info_code weather_code =
     else if (weather_code >= 95) && (weather_code <= 99) then 5
     else nil;;
 
-// Get weather callback - parse the JSON, the the weather code and set the led status
+/**
+ * Get weather callback - parse the JSON, the the weather code and set the led status
+ */
 fun _meteo_get_cb httpreq res=
     let httpgetcontent res -> content in
     let _meteo_get_weathercode content -> weather_code in
@@ -71,7 +73,9 @@ fun _meteo_get_cb httpreq res=
         0
     );;
 
-// Get weather and set the led status
+/**
+ * Get weather and set the led status
+ */
 fun meteo_get =
     // Iecholn _meteo_get_weathercode METEO_TEST;
     let _meteo_prepare_url config_get_latitude config_get_longitude -> url in

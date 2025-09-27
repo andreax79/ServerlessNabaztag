@@ -45,8 +45,8 @@ fun calculate_local_time=
     let (ee / 1461) + 2000 + ((14 - month) / 12) -> year in
     (
         set local_time_year=year;
-        set local_time_month=month;
-        set local_time_day=day;
+        set local_time_month=if (month > 0) then month else 1;
+        set local_time_day=if (day > 0) then day else 1;
         set local_time_hour=(local_time / 3600 ) % 24;
         set local_time_minute=local_time / 60 % 60;
         set local_time_second=local_time % 60

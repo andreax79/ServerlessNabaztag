@@ -5,8 +5,18 @@
 // Interactivity
 // **********************
 
+#ifdef INTERACTIVE_DEBUG
+fun _interactive_debug str= Secholn strcatlist "[interactive] " :: str :: nil; nil;;
+#else
+fun _interactive_debug str= nil;;
+#endif
+
 type InteractiveSoundsType = intDefaultStart | intDefaultStop | intNone;;
 type InteractiveChorType = intchorDefaultStart | intchorDefaultStop | intchorStartNone | intchorStopNone;;
+
+proto _interactive_continue_error_cb 1;;
+proto _interactive_continue_start_cb 1;;
+proto _interactive_continue_stop_cb 1;;
 
 var _interactive_sounds;;
 var _interactive_chors;;
@@ -16,23 +26,23 @@ var _interactive_btn_2_snd = "chord";;
 
 // Construction des urls d'interactivité
 fun interactive_url_start application =
-    strcatlist (interactifurl application)::"&st=start"::g_cookie::nil
+    strcatlist (url_interactive application)::"&st=start"::g_cookie::nil
     ;;
 
 fun interactive_url_btn application position cmdindex btn =
-    strcatlist (interactifurl application)::"&st=btn&pos="::(itoa position)::"&idx="::(itoa cmdindex)::"&btn="::(itoa btn)::g_cookie::nil
+    strcatlist (url_interactive application)::"&st=btn&pos="::(itoa position)::"&idx="::(itoa cmdindex)::"&btn="::(itoa btn)::g_cookie::nil
     ;;
 
 fun interactive_url_done application =
-    strcatlist (interactifurl application)::"&st=done"::g_cookie::nil
+    strcatlist (url_interactive application)::"&st=done"::g_cookie::nil
     ;;
 
 fun interactive_url_ear application position cmdindex earg eard =
-    strcatlist (interactifurl application)::"&st=ear&pos="::(itoa position)::"&idx="::(itoa cmdindex)::"&el="::(itoa earg)::"&er="::(itoa eard)::g_cookie::nil
+    strcatlist (url_interactive application)::"&st=ear&pos="::(itoa position)::"&idx="::(itoa cmdindex)::"&el="::(itoa earg)::"&er="::(itoa eard)::g_cookie::nil
     ;;
 
 fun interactive_url_reco application position cmdindex =
-    strcatlist (interactifurl application)::"&st=reco&pos="::(itoa position)::"&idx="::(itoa cmdindex)::g_cookie::nil
+    strcatlist (url_interactive application)::"&st=reco&pos="::(itoa position)::"&idx="::(itoa cmdindex)::g_cookie::nil
     ;;
 
 
@@ -41,8 +51,8 @@ fun _interactive_control_sound Type =
     match Type with
     (intDefaultStart ->     midi_play midi_startInteractive )    // On joue le son par defaut
     | (intDefaultStop ->    midi_play midi_endInteractive )      // On joue le son par defaut
-    | (intNone ->           nil)                                    // On ne joue pas de son
-    | (_ -> Secholn "No Sound to Play!!"; nil );                    // Si on a indique un mauvais son, on ne joue rien
+    | (intNone ->           nil)                                 // On ne joue pas de son
+    | (_ -> _interactive_debug "No Sound to Play!!"; nil );      // Si on a indique un mauvais son, on ne joue rien
     0
 ;;
 
@@ -53,7 +63,7 @@ fun _interactive_control_chor Type =
     | (intchorDefaultStop ->    msgchorstart chordef_startInteractive::nil #_interactive_continue_stop_cb nil )        // On joue le chor par defaut
     | (intchorStartNone ->      _interactive_continue_start_cb nil )                                                   // On ne joue pas de chor
     | (intchorStopNone ->       _interactive_continue_stop_cb nil )                                                    // On ne joue pas de chor
-    | (_ -> Secholn "No Chor to Play!!"; nil );                 // Si on a indique un mauvais chor, on ne joue rien
+    | (_ -> _interactive_debug "No Chor to Play!!"; nil );                                                             // Si on a indique un mauvais chor, on ne joue rien
     0
 ;;
 
@@ -72,7 +82,7 @@ fun interactive_start application=
     interactive_state_enter;
 
     // oreilles vers l'avant
-    (earGo 0 3 0; earGo 1 3 0);
+    (ears_go 0 3 0; ears_go 1 3 0);
 
     // jingle
     let _interactive_sounds -> [gSoundStart gSoundStop] in
@@ -91,7 +101,7 @@ fun _interactive_continue_start_cb unused=
 
 fun interactive_error=
     // jingle error
-    Secho "interactive_error";
+    _interactive_debug "interactive_error";
     msgchorstart chordef_interactiveerror::nil #_interactive_continue_error_cb nil;
     0;;
 
@@ -100,7 +110,7 @@ fun _interactive_continue_error_cb unused=
     0;;
 
 fun interactive_stop=
-    Secholn "interactive_stop";
+    _interactive_debug "interactive_stop";
 
     // jingle de fin
     let _interactive_sounds -> [gSoundStart gSoundStop] in
@@ -113,7 +123,7 @@ fun interactive_stop=
     set _interactive_chors = [intchorDefaultStart intchorDefaultStop]; // on remet le chor par default a la fin
 
     // oreilles
-    earsGoToRefPos;
+    ears_go_to_ref_pos;
 
     // clean
     set g_cookie="";
@@ -131,9 +141,8 @@ fun _interactive_continue_stop_cb unused=
     0;;
 
 fun interactive_send_btn btn=
-    Xw "Inside interactive_send_btn";
     wavstop;
-    earStop 0;
+    ears_stop 0;
     let wav_curplayedbytes -> readBytes in ( // midi_play resets wav_curplayedbytes so we cache it
         // sound
         if (btn == BUTTON_CLIC) then (
@@ -222,7 +231,7 @@ fun touchedP i=
 fun interactiveSendEarTouched lefttouch righttouch=
     // right = 0, left = 1
     wavstop;
-    earStop 0;
+    ears_stop 0;
     let wav_curplayedbytes -> readBytes in  // midi_play resets wav_curplayedbytes so we cache it
     (
         if (lefttouch) then midi_play midi_precedent;
@@ -241,24 +250,19 @@ fun interactiveEarProcessTouched=
     );
     JobRun;;
 
-proto zeroRFIDchek 0;;
-
 // Interactive request answer
 fun interactive_req_cb_http http res=
-    Secholn "interactive_req_cb_http=";
+    _interactive_debug "interactive_req_cb_http=";
 
+#ifdef RECLIB
     if (record_uploading) then (
         // mode upload / record
-#ifdef RECLIB
         set recorddata=nil;
         set recordreq=nil;
-#endif
-        Secholn res;
+        _interactive_debug res;
         setleds RGB_BLACK
     );
-
-    // if the request was a rfid one...
-    zeroRFIDchek;
+#endif
 
     if !recording then
     let httpgetcontent res -> ping_trame in
@@ -270,10 +274,12 @@ fun interactive_req_cb_http http res=
 fun runInteractiveReqWait http=
     // Waiting for interactive request
     // check timeout
+#ifdef RECLIB
     if (!record_uploading) then // upload record mode : timeout managed by record_upload_timeout
+#endif
     if (httpinactive http)>STD_NET_TIMEOUT then
     (
-        Secholn "##timeout on runInteractiveReqWait";
+        _interactive_debug "##timeout on runInteractiveReqWait";
         httpabort http;
 
         // error

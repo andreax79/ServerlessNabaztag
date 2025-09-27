@@ -1,0 +1,27 @@
+var url_ping_server;;
+var url_broadcast;;
+
+fun url_config=
+    strcatlist config_get_server_url::"/locate.jsp?sn="::(webmac netMac)::"&h="::(itoa HARDWARE)::"&v="::(getBytecodeRevision)::nil;;
+
+fun url_record mode=
+    strcatlist "http://"::config_get_server_url::"/hooks/record.php"::nil;;
+
+fun url_rfid tag=
+    strcatlist url_ping_server::"/vl/rfid.jsp?sn="::(webmac netMac)::"&v="::(getBytecodeRevision)::"&h="::(itoa HARDWARE)::"&t="::(webmac tag)::nil;;
+
+fun url_interactive application=
+    strcatlist url_ping_server::"/vl/itmode.jsp?sn="::(webmac netMac)::"&v="::(getBytecodeRevision)::"&h="::(itoa HARDWARE)::"&a="::application::nil;;
+
+fun url_surprise n=
+	strcatlist "http://"::config_get_server_url::"/config/surprise/"::config_get_lang::"/"::(itoa n)::".mp3"::nil;;
+
+#ifdef PING
+fun url_ping senddata=
+    strcatlist url_ping_server::"/vl/p4.jsp?sn="::(webmac netMac)::"&v="::(getBytecodeRevision)::"&st=1&sd="::(itoh senddata)::"&h="::(itoa HARDWARE)::nil;;
+#endif
+
+#ifdef XMPP
+fun sendmailxmppurl xmppdomain data=
+    strcatlist url_ping_server::"/vl/sendMailXMPP.jsp?m="::(webmac netMac)::"&d="::xmppdomain::"&r="::data::"&v="::(getBytecodeRevision)::nil;;
+#endif

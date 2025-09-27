@@ -1,54 +1,54 @@
-var buttonlast;;
-var buttontime;;
-var buttonevent;;
-var buttonclicn;;
+var _button_last;;
+var _button_time;;
+var _button_event;;
+var _button_clic;;
 
 const BUTTON_CLIC=1;;
 const BUTTON_DCLIC=2;;
 const BUTTON_LCLIC=3;;
 const BUTTON_DLCLIC=4;;
-const T_DCLIC=500;;
-const T_LCLIC=1500;;
+const BUTTON_T_DCLIC=500;;
+const BUTTON_T_LCLIC=1500;;
 
 
-fun buttonloop=
+fun button_loop=
     let button2 -> b in
-    if b!=buttonlast then
+    if b!=_button_last then
     (
-        set buttonlast=b;
+        set _button_last=b;
         if b then
         (
-            if buttontime==nil then
+            if _button_time==nil then
             (
-                set buttonclicn=1;
-                set buttontime=time_ms
+                set _button_clic=1;
+                set _button_time=time_ms
             )
             else
             (
-                set buttonclicn=buttonclicn+1;
-                set buttontime=time_ms
+                set _button_clic=_button_clic+1;
+                set _button_time=time_ms
             )
         )
-        else if buttontime!=nil then set buttontime=time_ms
+        else if _button_time!=nil then set _button_time=time_ms
     )
-    else if (buttontime!=nil) then
+    else if (_button_time!=nil) then
     (
-        if ((time_ms-buttontime)>=T_LCLIC) then
+        if ((time_ms-_button_time)>=BUTTON_T_LCLIC) then
         (
-            if buttonlast then set buttonevent=if buttonclicn==1 then BUTTON_LCLIC else BUTTON_DLCLIC;
-            set buttontime=nil
+            if _button_last then set _button_event=if _button_clic==1 then BUTTON_LCLIC else BUTTON_DLCLIC;
+            set _button_time=nil
         )
-        else if ((time_ms-buttontime)>=T_DCLIC)&&!buttonlast then
+        else if ((time_ms-_button_time)>=BUTTON_T_DCLIC)&&!_button_last then
         (
-            set buttonevent=if buttonclicn==1 then BUTTON_CLIC else BUTTON_DCLIC;
-            set buttontime=nil
+            set _button_event=if _button_clic==1 then BUTTON_CLIC else BUTTON_DCLIC;
+            set _button_time=nil
         )
     );
     JobRun;;
 
-fun buttongetevent=
-    let buttonevent -> ev in
+fun button_get_event=
+    let _button_event -> ev in
     (
-        set buttonevent=nil;
+        set _button_event=nil;
         ev
     );;

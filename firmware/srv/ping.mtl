@@ -1,12 +1,10 @@
 #include protos/trame_protos.mtl
+#include protos/ears_protos.mtl
 
 // ******************
 // The Ping
 var pingdelay=10;;
-
-fun earReady= earsmode!=EARSMODE_RESET;;
-fun earDetecting= earsmode==EARSMODE_DETECT;;
-fun earComplete = earReady && (!ears.(0).dirE) && (!ears.(1).dirE);;
+var _ping_send_data=0;;
 
 // ping processing
 fun _pingcbhttp http res=
@@ -18,11 +16,11 @@ fun _pingcbhttp http res=
 fun runpingstart=
 	if gEarInited != 1 then (
 		set gEarInited = 1;
-		earInit						// we init the ears
+		ears_init						// we init the ears
 	);
 
 	if netState==RT2501_S_CONNECTED then
-		run_set_state pingwaitRun httprequest "GET" Secholn pingurl nil #_pingcbhttp HTTP_NORMAL;
+		run_set_state pingwaitRun httprequest "GET" Secholn url_ping _ping_send_data nil #_pingcbhttp HTTP_NORMAL;
 	0;;
 
 // waiting for ping return : manage timeout
@@ -45,20 +43,20 @@ fun runStdWait t=
 
 fun runidlewait=
 	// check timeout (oreille bloquÈe)
-	if earReady then
+	if ears_ready then
 	(
-		earStartDetect;
+		ears_start_detect;
 		setleds 0;
-		earGo 0 extleft 0;
-		earGo 1 extright 0;
+		ears_go 0 ears_left 0;
+		ears_go 1 ears_right 0;
 		run_set_state stdWaitRun time+pingdelay
 	);
 	0;;
 
 // L'appel du ping
 fun callPingRequest aSenddata=
-	if aSenddata!=nil then set senddata=aSenddata;
-	run_set_state pingRequestWaitRun httprequest "GET" Secholn pingurl nil #_pingcbhttp HTTP_NORMAL;
+	if aSenddata!=nil then set _ping_send_data=aSenddata;
+	run_set_state pingRequestWaitRun httprequest "GET" Secholn url_ping _ping_send_data nil #_pingcbhttp HTTP_NORMAL;
 	0;;
 
 fun runPingRequestWait http=

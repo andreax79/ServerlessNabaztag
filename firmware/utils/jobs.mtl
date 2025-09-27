@@ -1,5 +1,4 @@
-type JobStatus = JobRun | JobSuspend;;
-type Job=[n name f status];;
+#include protos/jobs_protos.mtl
 
 var _jobs = nil;; // list of Job
 

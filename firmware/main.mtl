@@ -3,24 +3,6 @@
 
 proto main 0;;
 
-// XMPP ECHO DEBUG
-fun Xw str =
-    Secholn str;;
-fun Xx i =
-    Iecholn i;;
-
-// ping echo debug
-fun Pingw str = nil;; //Secholn str;;
-
-// dns echo debug
-fun Dnsw str = nil;; //Secholn str;;
-
-// programs debug
-fun Progw str = nil;; //Secholn strcatlist "[program] " :: str :: nil;;
-
-// streaming debug
-fun Streamw str = nil;; //Secholn strcatlist "[streaming] " :: str :: nil;;
-
 // #define SIMU
 
 // chose one
@@ -30,19 +12,24 @@ fun Streamw str = nil;; //Secholn strcatlist "[streaming] " :: str :: nil;;
 
 #define WEBSERVER
 #define DAYTIMESERVER
-#define NOMINAL
 
-// set doPing to something else than nil to activate ping
-var doPing = nil ;;
+// #define WIFI_DEBUG
+// #define DHCP_DEBUG
+// #define DNS_DEBUG
+// #define HTTP_DEBUG
+// #define EARS_DEBUG
+// #define XMPP_DEBUG
+// #define TRAME_DEBUG
+// #define AUDIOLIB_DEBUG
+// #define INTERACTIVE_DEBUG
+
 // recording
 var recording = 0;;
 
-#ifdef NOMINAL
-#define AUDIOLIB;;
-#define EARSLIB;;
-#define INFOLIB;;
-#define RECLIB;;
-#endif
+#define AUDIOLIB
+#define EARSLIB
+#define INFOLIB
+#define RECLIB
 
 #ifdef SIMU
 const PORT_DAYTIME = 8013;;
@@ -65,16 +52,18 @@ var gBusyState = 0;;        // busy (incoming message queue full)
 var gItApp = nil;;          // the name of the interactive application
 var gEarInited = 0;;        // si les oreilles ont été initialisées.
 
-#include net/net_vars.mtl
-
 const BYTECODE_REVISION_STR = "$Rev: __DATE__ $";;
-fun getBytecodeRevision =
-    strsub BYTECODE_REVISION_STR 6 ((strlen BYTECODE_REVISION_STR) - 8);;
 
-
+#include protos/net_protos.mtl
 #include protos/run_protos.mtl
 #include protos/dns_protos.mtl
 #include protos/sock_protos.mtl
+#include protos/ears_protos.mtl
+#include protos/midi_protos.mtl
+#include protos/interactive_protos.mtl
+#include protos/trame_protos.mtl
+#include protos/url_protos.mtl
+
 #include hw/leds.mtl
 #include utils/utils.mtl
 #include utils/jobs.mtl
@@ -82,24 +71,15 @@ fun getBytecodeRevision =
 #include utils/b64.mtl
 #include utils/xmlparser.mtl
 #include utils/config.mtl
+#include utils/const_data.mtl
+#include utils/url.mtl
 
-#ifdef SIMU
-#include ipv4/tcpudp_emu.mtl
-#else
-#include ipv4/arp.mtl
-#include ipv4/udp.mtl
-#include ipv4/tcp.mtl
-#include ipv4/udp.mtl
-#include net/dhcp.mtl
 #include net/net.mtl
-#endif
-
+#include net/dhcp.mtl
 #include net/dns.mtl
 #include net/http.mtl
 #include net/sock.mtl
 #include srv/time.mtl
-#include protos/ears_protos.mtl
-#include protos/midi_protos.mtl
 
 proto XmppSessionRequestResource 1;;
 
@@ -108,7 +88,6 @@ proto XmppSessionRequestResource 1;;
 #else
 fun XmppSessionRequestResource newRes = 0 ;;
 fun XmppSessionSendButtonMsg btn withEvent eventValue = 0 ;;
-var senddata=0;;
 var currentTrameID=0;;
 #endif
 
@@ -134,63 +113,23 @@ var currentTrameID=0;;
 #include net/wifi.mtl
 #include utils/env.mtl
 
-#ifdef NOMINAL
-
-var pingsrv;;
-var broadcasturl;;
-var recorddelay=4;;
-
-var sources;;
-
-var gCurrentProgram;; // the list of commands of the current program
-var rsctoget;; // list of remaining resources to get for the execution of the current trame
-var rscloaded;; // list of resources loaded from current trame
-var rsctmp;;    // buffer de chargement des ressources en petits morceaux
-
-// settings, command="IC", managed in eval_IC_msg
-var g_streaming_chor_enabled=1;;
-var g_cookie="";;
 const MASK_BUTTON = 1;;
 const MASK_EAR_LEFT = 2;;
 const MASK_EAR_RIGHT = 4;;
 const MASK_RFID = 8;;
-var g_int_mask=0;;
-var g_record_enabled = 1;;
-
-#include protos/interactive_protos.mtl
-#include protos/trame_protos.mtl
-
-var gCurAudioCmdIndex=-1;;
-var gCurStreamName=nil;;
-
-const BROADCAST_KEYWORD="broadcast";;
-const SIGNCUTSIZE=40000;; // taille max du fichier audio de signature
-
-const MSG_IDLE=0x7fffffff;;
-const MSG_ASLEEP=0x7ffffffe;;
-
-const STREAMING_PING=60;;
 const STD_NET_TIMEOUT=10000;;
-
 const LED_TIMEOUT=600;; // 10 minutes
 
+var rsctoget;; // list of remaining resources to get for the execution of the current trame
+var g_streaming_chor_enabled=1;;  // settings, command="IC", managed in eval_IC_msg
+var g_cookie="";;
+var g_int_mask=0;;
+var g_record_enabled = 1;;
+var gCurAudioCmdIndex=-1;;
+
 #include utils/palette.mtl
-#include utils/const_data.mtl
 #include utils/midi.mtl
 #include hw/button.mtl
-
-// URLs normales
-fun configurl=strcatlist config_get_server_url::"/locate.jsp?sn="::(webmac netMac)::"&h="::(itoa HARDWARE)::"&v="::(getBytecodeRevision)::nil;;
-#ifdef PING
-fun pingurl =strcatlist pingsrv::"/vl/p4.jsp?sn="::(webmac netMac)::"&v="::(getBytecodeRevision)::"&st=1&sd="::(itoh senddata)::"&h="::(itoa HARDWARE)::nil;;
-#endif
-fun recordurl mode=strcatlist "http://"::config_get_server_url::"/hooks/record.php"::nil;;
-fun rfidurl tag=strcatlist pingsrv::"/vl/rfid.jsp?sn="::(webmac netMac)::"&v="::(getBytecodeRevision)::"&h="::(itoa HARDWARE)::"&t="::(webmac tag)::nil;;
-fun interactifurl application = strcatlist pingsrv::"/vl/itmode.jsp?sn="::(webmac netMac)::"&v="::(getBytecodeRevision)::"&h="::(itoa HARDWARE)::"&a="::application::nil;;
-#ifdef XMPP
-fun sendmailxmppurl xmppdomain data = strcatlist pingsrv::"/vl/sendMailXMPP.jsp?m="::(webmac netMac)::"&d="::xmppdomain::"&r="::data::"&v="::(getBytecodeRevision)::nil;;
-fun boshurl ip = strcatlist ip::"/http-bind"::nil;;
-#endif
 
 #include srv/meteo.mtl
 
@@ -207,9 +146,6 @@ fun boshurl ip = strcatlist ip::"/http-bind"::nil;;
 
 #ifdef RECLIB
 #include utils/record.mtl
-#else
-fun record_control mode=0;;
-fun record_uploading=0;;
 #endif
 
 #include utils/choreographic.mtl
@@ -220,15 +156,12 @@ fun record_uploading=0;;
 #include hw/rfid.mtl
 #include srv/run.mtl
 
-
-fun loop=
-    job_loop;
-    0;;
-
-
+/**
+ * Initialize the jobs
+ */
 fun jobs_init=
     job_start "wifi_run" #wifi_run;
-    job_start "buttonloop" #buttonloop;
+    job_start "button_loop" #button_loop;
     job_start "run_step" #run_step;
 #ifdef XMPP
     job_start "XmppSessionRun" #XmppSessionRun;
@@ -241,8 +174,7 @@ fun jobs_init=
     job_start "run_icmp_ping" #run_icmp_ping;
     job_start "periodic_send_gratuitous_arp" #periodic_send_gratuitous_arp;
 #endif
-#ifdef SIMU
-#else
+#ifndef SIMU
     job_start "dhcp_check" #dhcp_check;
 #endif
     job_start "ear_process_touched" #interactiveEarProcessTouched;
@@ -251,30 +183,28 @@ fun jobs_init=
     job_start "updatevol" #updatevol;
     0;;
 
-
 fun main=
     leds_set_state LEDS_STATE_START ;
     MACecho netMac 0 1;
     set master=0;
     Secholn ":started";
     config_init;
-    wifiInit 0;
-    loopcb  #loop;
-    infoInit;
+    wifi_init 0;
+    loopcb #job_loop;
+    info_init;
     netstart;
     dns_start_client;
+#ifndef SIMU
     dhcp_start_client;
+#endif
     Secholn ":done";
     srand time_ms;
     updatevol;
 #ifdef WEBSERVER
-    startwebserver PORT_HTTP;
+    http_server_start_srv PORT_HTTP;
 #endif
 #ifdef DAYTIMESERVER
-#ifdef SIMU
-#else
-    // daytime_start_srv PORT_DAYTIME;
-#endif
+    daytime_start_srv PORT_DAYTIME;
 #endif
     run_init;
     jobs_init;
@@ -284,5 +214,3 @@ fun main=
 #endif
     interactive_init;
     0;;
-
-#endif // ifdef NOMINAL

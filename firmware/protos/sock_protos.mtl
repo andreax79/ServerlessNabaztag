@@ -13,3 +13,4 @@ type Sock=[sockInput sockSize sockOutput sockIndex sockCloseAfter sockCallback];
 proto sock_write 2 ;;
 proto sock_send 3 ;;
 proto sock_close_after 2 ;;
+proto sock_send_and_close 3 ;;

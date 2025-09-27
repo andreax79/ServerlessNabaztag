@@ -2,19 +2,19 @@
 #include protos/meteo_protos.mtl
 #include protos/sleep_protos.mtl
 #include protos/audiolib_protos.mtl
+#include protos/streaming_protos.mtl
 
 //--------------------------------------------------------------------------------------------------
 // Crontab
 //--------------------------------------------------------------------------------------------------
 
 var _crontab_last_check = -1 ;; // last time (hour*100+min) of execution of crontab
-proto _cbWavError 0;;
 
 fun _crontab_play_time_sound hour =
     if !gSleepState then
         let strcatlist "http://"::config_get_server_url::"/config/clock/"::config_get_lang::"/"::(itoa hour)::"/"::(itoa 1 + random 6)::".mp3"::nil -> url in (
             Secho "Play "; Secholn url;
-            audiolib_start_http url #_cbWavError
+            audiolib_start_http url #streaming_wav_error
         );
     0;;
 
@@ -22,7 +22,7 @@ fun _crontab_play_halftime_sound =
     if !gSleepState then
         let strcatlist "http://"::config_get_server_url::"/config/clockall/"::config_get_lang::"/"::(itoa 1 + random 12)::".mp3"::nil -> url in (
             Secho "Play "; Secholn url;
-            audiolib_start_http url #_cbWavError
+            audiolib_start_http url #streaming_wav_error
         );
     0;;
 

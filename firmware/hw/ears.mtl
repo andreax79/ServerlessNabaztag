@@ -1,5 +1,6 @@
 #include protos/interactive_protos.mtl
 #include protos/leds_protos.mtl
+#include protos/ears_protos.mtl
 
 /*
  Ears management.
@@ -23,18 +24,11 @@
 
 */
 
-const EARSMODE_RESET=0;; // ears go to ref pos
-const EARSMODE_WAIT=1;;
-const EARSMODE_WAITANDDETECT=2;;
-const EARSMODE_DETECT=3;;
-
-const EARS_HOLES=17;; // number of holes in the ear that can help us track the moves
-const EARS_TIMEOUT=2000;; // delay (in ms) to wait when detecting ear movement (if there is no move for EARS_TIMEOUT ms, then consider the move done and do whatever there is to do)
-const EARS_OFFZERO=2;; // "offset" between hardware position zero (where there is a missing hole) and "real" position zero (ears pointing to the sky)
-
-// ears echo debug
-//fun Earsw str = nil;;
-fun Earsw str = Secholn strcatlist "[ears] " :: str :: nil;;
+#ifdef EARS_DEBUG
+fun _ears_debug str= Secholn strcatlist "[ears] " :: str :: nil; nil;;
+#else
+fun _ears_debug str= nil;;
+#endif
 
 /**
  - numE: the ear number, 0 for right, 1 for left.
@@ -52,23 +46,22 @@ type Ear=[numE dirE targetE targetLoopE posE lvalE ldelayE ltimeE countE brokenE
 
 var ears;; // tab of two structs type Ear
 var earsmode;;
-var earslastmove;;	// somme des deux compteurs
-var earslastmovetime;;	// heure du dernier mouvement, lors de la détection (=nil=> acquisition en cours)
-
-var earsInited = 0;; // 1 à partir du moment où les oreilles sont initialisées
-
-var earevent;;
+var _ears_last_move;;	// somme des deux compteurs
+var _ears_last_move_time;;	// heure du dernier mouvement, lors de la détection (=nil=> acquisition en cours)
+var _ears_initialized = 0;; // 1 à partir du moment où les oreilles sont initialisées
+var _ears_event;;
 
 // position désirées des oreilles
-var extleft;;
-var dirleft = 0 ;;
-var extright;;
-var dirright = 1 ;;
+var ears_left;;
+var ears_right;;
 
-fun eargetevent=
-	let earevent -> ev in
+fun ears_is_initialized=
+    _ears_initialized;;
+
+fun ears_get_event=
+	let _ears_event -> ev in
 	(
-		set earevent=nil;
+		set _ears_event=nil;
 		ev
 	);;
 
@@ -77,39 +70,39 @@ fun eargetevent=
 
  returns more or less (v / EAR_HOLES), > 0 (has to be called with prevLoop == 0)
 */
-fun earLoopCount v prevLoop=
-	if v<0 then earLoopCount v+EARS_HOLES prevLoop-1
-	else if v>=EARS_HOLES then earLoopCount v-EARS_HOLES prevLoop+1
+fun _ears_loop_count v prevLoop=
+	if v<0 then _ears_loop_count v+EARS_HOLES prevLoop-1
+	else if v>=EARS_HOLES then _ears_loop_count v-EARS_HOLES prevLoop+1
 	else prevLoop;;
 
 /*
   returns (v % EAR_HOLES), > 0
 */
-fun earCheck v=
-	if v<0 then earCheck v+EARS_HOLES
-	else if v>=EARS_HOLES then earCheck v-EARS_HOLES
+fun _ears_check v=
+	if v<0 then _ears_check v+EARS_HOLES
+	else if v>=EARS_HOLES then _ears_check v-EARS_HOLES
 	else v;;
 
 
-fun earMotorset e val =
-	Earsw strcatlist "earMotorset " :: (itoa e.numE) :: " " :: (itoa val) :: nil;
-	if (!earsInited) then
+fun _ears_motor_set e val =
+	_ears_debug strcatlist "_ears_motor_set " :: (itoa e.numE) :: " " :: (itoa val) :: nil;
+	if (!_ears_initialized) then
 	(
-		Earsw "ears not inited yet" ;
-		earInit
+		_ears_debug "ears not inited yet" ;
+		ears_init
 	);
 	set e.dirE=val;
 	motorset e.numE val
 ;;
 
-fun earStartReset=
+fun ears_start_reset=
 	if earsmode!=EARSMODE_RESET then (
-		Earsw "earStartReset";
+		_ears_debug "ears_start_reset";
 		set earsmode=EARSMODE_RESET;
 		for i=0;i<2 do let ears.i -> e in
 		(
-			Earsw strcatlist "asking for reset of ear " :: (itoa i) :: nil ;
-			earMotorset e 1;
+			_ears_debug strcatlist "asking for reset of ear " :: (itoa i) :: nil ;
+			_ears_motor_set e 1;
 			set e.brokenE=0;
 			set e.targetE=nil;
 			set e.targetLoopE=nil; // v16
@@ -117,51 +110,52 @@ fun earStartReset=
 			set e.ldelayE=nil;
 			set e.ltimeE=time_ms
 		);
-		Earsw "earStartReset end"
+		_ears_debug "ears_start_reset end";
+        0
 	);;
 
-/*
-  Creates the tab to handle the ears. No action should be made
-  concerning the ears before having called this function.
-*/
-fun earInit =
+/**
+ * Creates the tab to handle the ears. No action should be made
+ * concerning the ears before having called this function.
+ */
+fun ears_init=
 	set ears=tabnew nil 2;
 	for i=0;i<2 do set ears.i=[numE:i];
-	set earsInited = 1;
+	set _ears_initialized = 1;
 	set earsmode = -1;
-	earStartReset
+	ears_start_reset
 	;;
 
-fun earStartDetect=
-	Earsw "earStartDetect";
+fun ears_start_detect=
+	_ears_debug "ears_start_detect";
 	led LED_NOSE RGB_RED;
 	led LED_BODY_LEFT RGB_VIOLET;
 	led LED_BODY_MIDDLE RGB_BLACK;
 	led LED_BODY_RIGHT RGB_VIOLET;
 	set earsmode=EARSMODE_DETECT;
-	set earslastmovetime=time_ms;
-	set earslastmove=(motorget 0)+(motorget 1);;
+	set _ears_last_move_time=time_ms;
+	set _ears_last_move=(motorget 0)+(motorget 1);;
 
 
-fun earDetectRun=
-	if earslastmovetime!=nil then
+fun _ears_detect_run=
+	if _ears_last_move_time!=nil then
 	(
 		let (motorget 0)+(motorget 1)->newval in
-		if newval!=earslastmove then
+		if newval!=_ears_last_move then
 		(
-			set earslastmove=newval;
-			set earslastmovetime=time_ms
+			set _ears_last_move=newval;
+			set _ears_last_move_time=time_ms
 		)
-		else if time_ms-earslastmovetime>EARS_TIMEOUT then
+		else if time_ms-_ears_last_move_time>EARS_TIMEOUT then
 		(
-			set earslastmovetime=nil;
+			set _ears_last_move_time=nil;
 			for i=0;i<2 do let ears.i -> e in
 			if e.brokenE!=1 then
 			(
 				set e.lvalE=motorget i;
 				set e.ldelayE=0;
 				set e.ltimeE=time_ms;
-				earMotorset e 1;
+				_ears_motor_set e 1;
 				set e.countE=e.lvalE+EARS_HOLES
 			)
 		)
@@ -178,23 +172,22 @@ fun earDetectRun=
 				(
 					if d>e.ldelayE then
 					(
-						set e.posE=earCheck e.countE-e.lvalE-EARS_OFFZERO-1;
+						set e.posE=_ears_check e.countE-e.lvalE-EARS_OFFZERO-1;
 						set e.ldelayE=d
 					);
 					set e.ltimeE=t;
 					set e.lvalE=v;
-					if v-e.countE>=0 then earMotorset e 0
+					if v-e.countE>=0 then _ears_motor_set e 0
 				);
 		if (ears.(0).dirE)==0 && (ears.(1).dirE)==0 then
 		(
-			set earevent=0x8000+(ears.(0).posE<<8)+(ears.(1).posE);
+			set _ears_event=0x8000+(ears.(0).posE<<8)+(ears.(1).posE);
 			Secho "Acquisition : "; Iecho ears.(0).posE; Secho ", ";Iecholn ears.(1).posE;
 			set earsmode=EARSMODE_WAITANDDETECT
 		)
 	);;
 
-fun earResetRun=
-//	Earsw "earResetRun";
+fun _ears_reset_run=
 	for i=0;i<2 do let ears.i -> e in
 	if e.dirE then
 	(
@@ -206,24 +199,24 @@ fun earResetRun=
 			let t-e.ltimeE -> d in
 			if d>5000 then
 			(
-				Earsw strcatlist "broken :" :: (itoa i) :: nil;
+				_ears_debug strcatlist "broken :" :: (itoa i) :: nil;
 				set e.brokenE=1;
 				set e.posE=0;
 //				set e.lvalE=v;
 				set e.targetE=0;
 				set e.targetLoopE=0; // v16
 				set e.ldelayE=0;
-				earMotorset e 0
+				_ears_motor_set e 0
 			)
 		)
 		else
 		if e.targetE!=nil then
 		(	// moved and have a target : check arrived
-			set e.posE=earCheck e.posE+v-e.lvalE;
+			set e.posE=_ears_check e.posE+v-e.lvalE;
 			set e.lvalE=v;
 			if e.posE==e.targetE then
 				if e.targetLoopE == 0 then
-					earMotorset e 0
+					_ears_motor_set e 0
 				else if e.dirE>0 then
 					set e.targetLoopE = e.targetLoopE-1
 				else
@@ -238,7 +231,7 @@ fun earResetRun=
 				/* if entering there, we know the ear is at position "zero",
 					because of the delay between two holes. */
 				//Secho "gowait "; Iecholn d; Iecholn e.ldelayE;
-				set e.posE=earCheck -EARS_OFFZERO; // position "zero"
+				set e.posE=_ears_check -EARS_OFFZERO; // position "zero"
 				set e.targetE=0;
 				set e.targetLoopE=0 //v16
 			)
@@ -257,7 +250,7 @@ fun earResetRun=
 		set earsmode=EARSMODE_WAIT
 	);;
 
-fun earWaitRun=
+fun _ears_wait_run=
 	for i=0;i<2 do let ears.i -> e in
 	if e.brokenE!=1 then
 	(
@@ -267,21 +260,21 @@ fun earWaitRun=
 		let (/* Secho "dv="; Iecho */ v-e.lvalE) -> dv in
 		if e.dirE then (
 			// Oreille en train de tourner
-			//Earsw ", tourne e.dirE="; Iecho e.dirE;
+			//_ears_debug ", tourne e.dirE="; Iecho e.dirE;
 			set e.lvalE=v;
-			set e.posE=earCheck e.posE+ if e.dirE>0 then dv else -dv;
+			set e.posE=_ears_check e.posE+ if e.dirE>0 then dv else -dv;
 			if e.posE==e.targetE then
 			(
 //					Secho "stop "; Iecholn e.numE;
 				if e.targetLoopE == 0 then //v16
-					earMotorset e 0
+					_ears_motor_set e 0
 				else if e.dirE>0 then
 					set e.targetLoopE = e.targetLoopE-1 //v16
 				else
 					set e.targetLoopE = e.targetLoopE+1 // v16
 			)
 		) else if dv>2 then (
-			//Earsw "bouged";
+			//_ears_debug "bouged";
 			// Pas de mvt autonome.
 			// Veut dire qu'une oreille a été tournée par l'utilisateur :
 			// si interactif : le noter
@@ -290,81 +283,94 @@ fun earWaitRun=
 			if gItState then
 				(interactive_note_ear_touched i v dv)
 			else if earsmode==EARSMODE_WAITANDDETECT then
-				earStartDetect
+				ears_start_detect
 		)
 	);;
 
 // boucle pour faire tourner les oreilles vers leur targetobjectif
-fun earRun=
-	if (earsInited) then (
-//		Earsw strcatlist ("earRun " :: (itoa earsmode) :: nil);
-		if earsmode==EARSMODE_RESET then earResetRun
-		else if earsmode==EARSMODE_DETECT then earDetectRun
-		else earWaitRun
+fun ears_run=
+	if (_ears_initialized) then (
+		if earsmode==EARSMODE_RESET then _ears_reset_run
+		else if earsmode==EARSMODE_DETECT then _ears_detect_run
+		else _ears_wait_run
 	);
 	0;;
 
-fun earResetting= earsmode==EARSMODE_RESET;;
-fun earDetecting= earsmode==EARSMODE_DETECT;;
-fun earFinishedMoving = (!earResetting) && (!ears.(0).dirE) && (!ears.(1).dirE);;
+fun ears_resetting=
+    earsmode==EARSMODE_RESET;;
 
-fun earSetWaitAndDetectMode=
+fun ears_detecting=
+    earsmode==EARSMODE_DETECT;;
+
+fun ears_finished_moving=
+    (!ears_resetting) && (!ears.(0).dirE) && (!ears.(1).dirE);;
+
+fun ears_set_wait_and_detect_mode=
 	if earsmode==EARSMODE_WAIT then set earsmode=EARSMODE_WAITANDDETECT;;
 
-fun earSetWaitOnlyMode=
+fun ears_set_wait_only_mode=
 	if earsmode==EARSMODE_WAITANDDETECT then set earsmode=EARSMODE_WAIT;;
 
-fun earStop force =
-	Earsw (strcatlist "earStop " :: (itoa force) :: nil);
-	if (earsInited && (earsmode!=EARSMODE_RESET || force)) then (for i=0;i<2 do earMotorset ears.i 0) else ( Earsw "ears not inited yet"; 0 );
+fun ears_stop force =
+	_ears_debug (strcatlist "ears_stop " :: (itoa force) :: nil);
+	if (_ears_initialized && (earsmode!=EARSMODE_RESET || force)) then (for i=0;i<2 do _ears_motor_set ears.i 0) else ( _ears_debug "ears not inited yet"; 0 );
 	0;;
 
-fun earTarget i= ears.(i).targetE + ears.(i).targetLoopE*EARS_HOLES;; // v16
+fun ears_target i=
+    ears.(i).targetE + ears.(i).targetLoopE*EARS_HOLES;; // v16
 
 // oreille i doit aller à position p dans direction d
 // i==0 : droite, i==1 : gauche
 // p = int quelconque, même > 17
 // d==0 : vers l'avant, d!=0 : vers l'arrière
-fun earGo i p d=
-//	if (earsInited) then
+fun ears_go i p d=
 	if earsmode==EARSMODE_WAIT ||earsmode==EARSMODE_WAITANDDETECT then
 	let ears.i->e in
 	let (if d then -1 else 1) -> dir in // v16
 	if e.brokenE==1 then
 	(
-		Earsw strcatlist "earGo " :: (itoa i) :: " broken !" :: nil;
+		_ears_debug strcatlist "ears_go " :: (itoa i) :: " broken !" :: nil;
 		nil
 	)
 	else
-	if p!=earTarget i then //v16 add start
+	if p!=ears_target i then //v16 add start
 	(
-		Earsw strcatlist "earGo " :: (itoa i) :: " to " :: (itoa p) :: " dir " :: (itoa d) :: nil;
-		set e.targetE=earCheck p;
-		set e.targetLoopE=earLoopCount p 0;
-		Earsw strcatlist "targetE=" :: (itoa e.targetE) :: " targetLoopE=" :: (itoa e.targetLoopE) :: nil;
+		_ears_debug strcatlist "ears_go " :: (itoa i) :: " to " :: (itoa p) :: " dir " :: (itoa d) :: nil;
+		set e.targetE=_ears_check p;
+		set e.targetLoopE=_ears_loop_count p 0;
+		_ears_debug strcatlist "targetE=" :: (itoa e.targetE) :: " targetLoopE=" :: (itoa e.targetLoopE) :: nil;
 		if e.posE==e.targetE then
 			if e.targetLoopE==0 then
-			earMotorset e 0 // on est arrivés
+			_ears_motor_set e 0 // on est arrivés
 			else
 			(
 				if dir>0 then set e.targetLoopE = e.targetLoopE - 1
 				else set e.targetLoopE = e.targetLoopE + 1;
-				earMotorset e dir
+				_ears_motor_set e dir
 			)
 		else (
 		if e.targetLoopE<0 then set e.targetLoopE=e.targetLoopE+1; // sinon fait un tour de trop
-		earMotorset e dir //v16 add end
+		_ears_motor_set e dir //v16 add end
 		)
 	);
 	0;;
 
-fun earsGoToRefPos=
-	Earsw "earsGoToRefPos";
-	if (extleft != nil || extright != nil) then (
-		earGo 0 extleft dirleft;
-		earGo 1 extright dirright;
-		set extleft = set extright = nil
+fun ears_go_to_ref_pos=
+	_ears_debug "ears_go_to_ref_pos";
+	if (ears_left != nil || ears_right != nil) then (
+		ears_go 0 ears_left EARS_DIR_LEFT;
+		ears_go 1 ears_right EARS_DIR_RIGHT;
+		set ears_left = set ears_right = nil
 	) else (
-		earGo 0 0 0;
-		earGo 1 0 0
+		ears_go 0 0 0;
+		ears_go 1 0 0
 	);;
+
+fun ears_ready=
+    earsmode!=EARSMODE_RESET;;
+
+fun ears_detecting=
+    earsmode==EARSMODE_DETECT;;
+
+fun ears_complete=
+    ears_ready && (!ears.(0).dirE) && (!ears.(1).dirE);;

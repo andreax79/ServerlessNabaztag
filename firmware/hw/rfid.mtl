@@ -1,94 +1,74 @@
 #include protos/trame_protos.mtl
+#include protos/hooks_protos.mtl
 
 // ********** RFID **********************
 // v19 Amélioration de la lecteure RFID
-// v19 Les fonction ParseRfid servent à tester les caractères de l'identifiant RFID
+// v19 Les fonction _rfid_parse servent à tester les caractères de l'identifiant RFID
 
-var lastrfid;;
-var RFIDchar = 2;; // v19
-var RFIDint = 6;;  // v19
-var RFIDchek = 0;; // v19
-var RFIDlast = 0;; // v19
-
-var tmptps = 0;;
+var _rfid_last;;
+var _rfid_char = 2;; // v19
+var _rid_int = 6;;  // v19
+var _rfid_last_time = 0;; // v19
 
 fun _cbrfidhttp http res=
 	Secholn "Recv rfid:"; Secho res;
 	set gProcessingState = 0;
-	set RFIDchek = 0;
 	let httpgetcontent res -> ping_trame in
 		trame_eval ping_trame;
 	0;;
 
-fun dumprfid l0=
+fun _rfid_dump l0=
 	for l=l0;l!=nil;tl l do let hd l->x in Secholn webmac x;
 	l0;;
 
-fun ParseRfidChar id index= // v19
-	set RFIDchar = strget id index;
-	RFIDchar;;
+fun _rfid_parse_char id index= // v19
+	set _rfid_char = strget id index;
+	_rfid_char;;
 
-fun ParseRfid id = // v19
-	set RFIDint = 6;
-	for i=0;i<6 do ( if(ParseRfidChar id i) == 0 then set RFIDint = RFIDint - 1);
-	RFIDint;;
+fun _rfid_parse id = // v19
+	set _rid_int = 6;
+	for i=0;i<6 do ( if(_rfid_parse_char id i) == 0 then set _rid_int = _rid_int - 1);
+	_rid_int;;
 
-/**
-	Sets RFIDchek = 0
-*/
-fun zeroRFIDchek =
-	set RFIDchek = 0;;
-
-
-// *************** CONTROLS *************
-
-fun _cbrfidendchor unused=
+fun _rfid_end_chor unused=
 	// continue idle
 	run_set_state idleRun;
 	0
 	;;
 
-
 /**
-	Controls if a stamp is shown to the rabbit.
-	Does not control wether we _should_ control or not (according to the interactive state, ...)
-
-	Returns the rfid or nil.
+ * Controls if a stamp is shown to the rabbit.
+ * Does not control wether we _should_ control or not (according to the interactive state, ...)
+ * Returns the rfid or nil.
 */
-fun checkRfidPresence=
+fun _rfid_check_presence=
 	let rfidGet -> rfid in
-	if (strcmp rfid lastrfid) && (time_ms - RFIDlast > 750) then
+	if (strcmp rfid _rfid_last) && (time_ms - _rfid_last_time > 750) then
 		rfid
 	else
 		nil
 ;;
 
-fun controlrfid=
-//	let hd dumprfid rfidGetList -> rfid in
-//	if ((!gItState) // disabled when interactive except ...
-//      || (gItState && ((g_int_mask & MASK_RFID == 0) || (gProcessingState && gProcessingWaitState)))) then // enabled when mask set or executing a waiting command
-(
-	if ((time_ms - RFIDlast) > 1000) then
+fun rfid_control=
+	if ((time_ms - _rfid_last_time) > 1000) then
 	(
-		set lastrfid = "0000000"
+		set _rfid_last = "0000000"
 	);
-	let checkRfidPresence -> rfid in
+	let _rfid_check_presence -> rfid in
 	if rfid!=nil then
 	(
-		if (ParseRfid rfid) !=0 then
+		if (_rfid_parse rfid) !=0 then
 		(
-			set lastrfid=rfid;
-			set RFIDlast = time_ms;
+			set _rfid_last=rfid;
+			set _rfid_last_time = time_ms;
 			midi_play midi_RFIDok;
 
 			// lancer l'animation (v19)
-			msgchorstart chor_RFIDok::nil #_cbrfidendchor nil;
+			msgchorstart chor_RFIDok::nil #_rfid_end_chor nil;
 			//set chortimescale=10; // recopié d'avant, mas pourquoi ? Nécessaire ? [AS 24oct07]
 
-			hookRfid rfid
+			hook_rfid rfid
 		)
-	)
-	)
-;
+	);
 	0;;
 

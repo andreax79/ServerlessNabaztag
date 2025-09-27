@@ -1,31 +1,27 @@
 #include protos/audiolib_protos.mtl
 #include protos/config_protos.mtl
+#include protos/streaming_protos.mtl
 
 //--------------------------------------------------------------------------------------------------
 // Surprise
 //--------------------------------------------------------------------------------------------------
 
-proto _cbWavError 0;;
-
-var surprise_delay = 120 ;; // average delay, in minutes  (delay= (surprise_delay/2) + random (surprise_delay))
-var next_surprise;;
+var _surprise_delay = 120 ;; // average delay, in minutes  (delay= (_surprise_delay/2) + random (_surprise_delay))
+var _surprise_next;;
 
 fun surprise=
-	audiolib_start_http strcatlist "http://"::config_get_server_url::"/config/surprise/"::config_get_lang::"/"::(itoa 1 + random 299)::".mp3"::nil #_cbWavError;;
+	audiolib_start_http (url_surprise (random 299)) #streaming_wav_error;;
 
-fun check_surprise=
-	if surprise_delay && (surprise_delay != nil) && (!gSleepState) then
-		let (if next_surprise!=nil then (time>next_surprise) else 0) -> now in (
-			if now || next_surprise==nil then // compute next_surprise
-			let ((surprise_delay/2) + (random surprise_delay) + 1) -> delay in (
+fun surprise_check=
+	if _surprise_delay && (_surprise_delay != nil) && (!gSleepState) then
+		let (if _surprise_next!=nil then (time>_surprise_next) else 0) -> now in (
+			if now || _surprise_next==nil then // compute _surprise_next
+			let ((_surprise_delay/2) + (random _surprise_delay) + 1) -> delay in (
 				Secho "surprise in "; Iecho delay; Secholn "m";
-				set next_surprise = time + 60 * delay
+				set _surprise_next = time + 60 * delay
 			);
 		now
 	) else (
-		set next_surprise=nil;
+		set _surprise_next=nil;
 		0
 	);;
-
-fun get_next_surprise=
-	next_surprise;;

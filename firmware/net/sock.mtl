@@ -1,4 +1,4 @@
-/*
+/**
  * Writes the pending output data from a Sock object to a TCP connection.
  * This function supports partial writes, sending data in chunks as the network buffer becomes available.
  * cnx: TCP connection
@@ -9,7 +9,7 @@ fun sock_write cnx sock=
     if sock.sockOutput!=nil then
     (
         if sock.sockIndex==nil then set sock.sockIndex=0;
-        Iecholn set sock.sockIndex=writetcp cnx sock.sockOutput Iecholn sock.sockIndex;
+        set sock.sockIndex=writetcp cnx sock.sockOutput sock.sockIndex;
         // Check if the entire output buffer has been sent
         if sock.sockIndex!=nil && sock.sockIndex>=strlen sock.sockOutput then
         (   set sock.sockIndex=nil;
@@ -19,7 +19,7 @@ fun sock_write cnx sock=
     );
     0;;
 
-/*
+/**
  * Appends a string 's' to the socket's output buffer and initiates a write.
  * cnx: TCP connection
  * sock: socket object
@@ -29,7 +29,7 @@ fun sock_send cnx sock s =
     set sock.sockOutput=strcat sock.sockOutput s;
     sock_write cnx sock;;
 
-/*
+/**
  * Schedules the connection to be closed after the current write operation completes.
  * cnx: TCP connection
  * sock: socket object
@@ -37,4 +37,15 @@ fun sock_send cnx sock s =
 fun sock_close_after cnx sock =
     set sock.sockCloseAfter=1;
     if sock.sockIndex>=strlen sock.sockOutput then closetcp cnx
+    ;;
+
+/**
+ * Sends data and then schedules the connection to be closed after the send completes.
+ * cnx: TCP connection
+ * sock: socket object
+ * s: the content to send
+ */
+fun sock_send_and_close cnx sock s =
+    sock_send cnx sock s;
+    sock_close_after cnx sock
     ;;

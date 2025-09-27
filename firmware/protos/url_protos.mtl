@@ -1,0 +1,11 @@
+proto url_config 0 ;;
+proto url_record 1 ;;
+proto url_rfid 1 ;;
+proto url_interactive 1 ;;
+proto url_surprise 1 ;;
+#ifdef PING
+proto url_ping 1 ;;
+#endif
+#ifdef XMPP
+proto sendmailxmppurl 2 ;;
+#endif

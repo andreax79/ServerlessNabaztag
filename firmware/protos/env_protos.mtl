@@ -1,2 +1,2 @@
 // proto envmake 0 ;;
-proto envrestore 1 ;;
+proto env_restore 1 ;;

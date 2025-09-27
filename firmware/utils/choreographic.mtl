@@ -72,7 +72,7 @@ fun runChorCmd i0=
         )
         else if code==CH_set_motor then
         (
-            earGo (strget chordata chorindex+1) (strget chordata chorindex+2) (strget chordata chorindex+3);
+            ears_go (strget chordata chorindex+1) (strget chordata chorindex+2) (strget chordata chorindex+3);
             3
         )
         else if code==CH_set_led_color then
@@ -135,7 +135,7 @@ fun runChorCmd i0=
             let (strget chordata chorindex+1) -> motor in // v16 start
             let (strget chordata chorindex+2) -> delta in
             let chortaichimotordir.motor -> dir in
-            earGo motor (earTarget motor)+if dir then -delta else delta dir;
+            ears_go motor (ears_target motor)+if dir then -delta else delta dir;
             2
         )
         else if code==CH_setmotordir then
@@ -156,7 +156,7 @@ fun runChorCmd i0=
         else if code==CH_attend then
         (
             //Secholn "attend";
-            if earFinishedMoving && wavrunning==0 then 0
+            if ears_finished_moving && wavrunning==0 then 0
             else -2
         )
         else
@@ -173,7 +173,7 @@ fun runChorCmd i0=
 
 fun _cbtaichiend unused=
     set gProcessingState = 0;
-    earSetWaitAndDetectMode;
+    ears_set_wait_and_detect_mode;
     run_set_state idleRun;
     0
     ;;
@@ -185,7 +185,7 @@ fun taichistart=
     Secho "chorrandom="; Iecholn chorrandom;
     set chortaichimotordir={0 0};
 
-    earSetWaitOnlyMode;
+    ears_set_wait_only_mode;
     set gProcessingState = 1; // block all trames during taichi
     msgchorstart chordef_taichi::nil #_cbtaichiend nil;
     0;;

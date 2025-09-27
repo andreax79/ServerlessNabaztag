@@ -19,7 +19,7 @@ var infomessages=0;;
 // valeur de frequence du taichi (40: peu fréquent, 80: normal, 255: très fréquent)
 var infotaichi=0;;
 
-fun infoInit=
+fun info_init=
     set infosrc=tabnew 0 16;
     set infomessages=0;
     set infotaichi = 0;
@@ -149,14 +149,14 @@ fun dumpinfo=
     _dumpinfosrc 0;
     Secho "Messages#="; Iecho infomessages; Secho ",";
     Secho "TaiChi="; Iecho infotaichi; Secho ",";
-    Secho "EarL="; Iecho extleft; Secho ",";
-    Secho "EarR="; Iecho extright; Secho "]"
+    Secho "EarL="; Iecho ears_left; Secho ",";
+    Secho "EarR="; Iecho ears_right; Secho "]"
     ;;
 
 fun infoRun=
     if gSleepState == 0 then // no info while sleeping
     if (!gItState) then // no info while in interactive mode
-    if !earDetecting then
+    if !ears_detecting then
     (
         // passage au service suivant ?
         set infoType=(infosrc.(infoIndex))-1;
@@ -213,22 +213,6 @@ fun __infosrc_del key i=
 fun _infosrc_del key=
     __infosrc_del key 0;;
 
-
-const midi_communion=
-"\$4d\$54\$68\$64\$00\$00\$00\$06\$00\$00\$00\$01\$01\$e0\$4d\$54\
-\$72\$6b\$00\$00\$00\$9b\$00\$ff\$03\$0b\$63\$6f\$6d\$6d\$75\$6e\
-\$69\$6f\$6e\$30\$30\$00\$ff\$51\$03\$10\$59\$43\$00\$ff\$58\$04\
-\$04\$02\$18\$08\$00\$c0\$0c\$02\$90\$60\$67\$04\$48\$6a\$7b\$5f\
-\$4d\$12\$80\$60\$65\$2a\$90\$5d\$51\$0b\$80\$5f\$76\$18\$48\$2b\
-\$10\$5d\$7f\$07\$90\$60\$64\$08\$4f\$5e\$7c\$5f\$52\$15\$80\$60\
-\$71\$19\$90\$5d\$56\$1a\$80\$5f\$6c\$15\$5d\$7f\$0e\$90\$58\$56\
-\$0c\$80\$4f\$7c\$14\$90\$4d\$5e\$6e\$80\$58\$73\$01\$90\$5d\$62\
-\$75\$80\$5d\$7a\$0d\$4d\$67\$05\$90\$5b\$5a\$05\$54\$60\$2a\$80\
-\$5b\$65\$81\$1e\$54\$60\$51\$90\$58\$60\$15\$4c\$6a\$81\$1e\$80\
-\$58\$63\$0e\$4c\$45\$4d\$90\$24\$01\$72\$80\$24\$40\$00\$ff\$2f\
-\$00";;
-
-
 // met à jour ou rajoute cette source
 fun __infosrc_update key val i=
     if (i < 16) then
@@ -277,12 +261,12 @@ fun infoUpdate data=
         if len > 17 then
         let strget data 16 -> newleft in
         let strget data 17 -> newright in
-        if (newleft != nil || newright != nil) && ((newleft!=extleft) || (newright!=extright)) then (
-            set extleft=newleft;
-            set extright=newright;
-            if ((!gSleepState) && (!earResetting)) then (
+        if (newleft != nil || newright != nil) && ((newleft!=ears_left) || (newright!=ears_right)) then (
+            set ears_left=newleft;
+            set ears_right=newright;
+            if ((!gSleepState) && (!ears_resetting)) then (
                 midi_play midi_communion;
-                earsGoToRefPos
+                ears_go_to_ref_pos
             )
         )
 
@@ -313,14 +297,14 @@ fun newInfoUpdate data=
             set i = i + 2
         );
         // process ears
-        Secho "newleft="; Iecho newleft; Secho "newright="; Iecho newright; Secho "extleft="; Iecho extleft; Secho "extright="; Iecho extright;
-        Secho "gSleepState="; Iecho gSleepState; Secho "earResetting="; Iecho earResetting;
-        if (newleft != nil || newright != nil) && ((newleft!=extleft) || (newright!=extright)) then (
-            set extleft=newleft;
-            set extright=newright;
-            if ((!gSleepState) && (!earResetting)) then (
+        Secho "newleft="; Iecho newleft; Secho "newright="; Iecho newright; Secho "ears_left="; Iecho ears_left; Secho "ears_right="; Iecho ears_right;
+        Secho "gSleepState="; Iecho gSleepState; Secho "ears_resetting="; Iecho ears_resetting;
+        if (newleft != nil || newright != nil) && ((newleft!=ears_left) || (newright!=ears_right)) then (
+            set ears_left=newleft;
+            set ears_right=newright;
+            if ((!gSleepState) && (!ears_resetting)) then (
 //              midi_play midi_communion;
-                earsGoToRefPos
+                ears_go_to_ref_pos
             )
         )
     );

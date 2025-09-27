@@ -1,10 +1,19 @@
 #include protos/net_protos.mtl
-#include net/net_vars.mtl
 
 #include protos/icmp_protos.mtl
 #include protos/tcp_protos.mtl
 #include protos/udp_protos.mtl
 #include protos/arp_protos.mtl
+
+#include ipv4/arp.mtl
+#include ipv4/udp.mtl
+#include ipv4/tcp.mtl
+#include ipv4/udp.mtl
+
+// make sure the tcpudp emulation stuff gets loaded after the "real" code to override it all
+#ifdef SIMU
+#include ipv4/tcpudp_emu.mtl
+#endif
 
 proto cbnetarp 2 ;;
 
@@ -30,15 +39,26 @@ fun net src mac=
 	0;;
 
 fun netstart=
+#ifdef SIMU
+	tcpCb #nettcp;
+	udpCb #netudp;
+	set ltcp=nil;
+	set ludp=nil;
+	dns_add_new_srv "\192\168\1\1" 1;
+	set netip="\127\0\0\1";
+#else
 	netCb #net;
 	resetarp;
 	resettcp;
 	resetudp;
+#endif
 	0;;
 
 fun nettime=
+#ifndef SIMU
 	arptime;
 	tcptime;
+#endif
 	0;;
 
 

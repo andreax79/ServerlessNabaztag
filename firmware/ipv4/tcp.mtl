@@ -72,7 +72,7 @@ fun mktcp t flag content=
  * This function is used for TCP retransmission when an ACK is not received in time.
  */
 fun resendtcp t=
-	netSend t.lastsentT 0 nil (MACecho t.macT 0 1) 0 1;
+	netSend t.lastsentT 0 nil t.macT 0 1;
 	0;;
 
 /**
@@ -97,7 +97,7 @@ fun datalength src=(strgetword src 10)-20-headerlen src;;
  */
 fun sendtcp t trame=
 //	Secholn "tcpSend"; dump trame;
-	netSend trame 0 nil (/*MACecho*/ t.macT /*0 1*/) 0 1;
+	netSend trame 0 nil t.macT 0 1;
 	let strget trame 8+33 -> flag in
 	set t.seqT=netSeqAdd t.seqT (datalength trame)+(if flag&(TSYN|TFIN) then 1 else 0);
 	0;;
@@ -312,10 +312,14 @@ fun closetcp t=
 	else sendclose t;
 	0;;
 
-fun tcpcb t cb= set t.cbT=cb;;
+fun tcpcb t cb=
+    set t.cbT=cb;;
 
-fun enabletcp t v= set t.enableT=v;;
-fun enabledtcpP t= t.enableT;;
+fun enabletcp t v=
+    set t.enableT=v;;
+
+fun enabledtcpP t=
+    t.enableT;;
 
 fun tcptime =
 	for l=ltcp;l!=nil;tl l do let hd l-> t in
