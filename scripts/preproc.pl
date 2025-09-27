@@ -36,6 +36,10 @@ sub processThisFile
                         $ifdefLevel++;
                         $ifdefskip[$ifdefLevel] = (! exists $defines{$1});
                 }
+                elsif ($line =~ m/^#ifndef ([a-zA-Z0-9_-]+)/) {
+                        $ifdefLevel++;
+                        $ifdefskip[$ifdefLevel] = (exists $defines{$1});
+                }
                 elsif ($line =~ m/^#else/) {
                         if ($ifdefLevel > 0) {
                                 $ifdefskip[$ifdefLevel] = !($ifdefskip[$ifdefLevel]);
