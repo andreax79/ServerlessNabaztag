@@ -1,2 +1,2 @@
-proto startdhcp 0 ;;
-proto startdhcpserver 0 ;;
+proto dhcp_start_client 0 ;;
+proto dhcp_start_srv 0 ;;

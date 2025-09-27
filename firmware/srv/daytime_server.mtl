@@ -1,0 +1,34 @@
+/**
+ * Event handler for a connection being used for Daytime service.
+ * This function is registered as the callback for the TCP connection.
+ * cnx: TCP connection
+ * val: event type (e.g., TCPWRITE, TCPCLOSE)
+ * msg: dataa associated with the event (e.g., incoming data)
+ * sock: socket object for this connection
+ */
+fun daytime_sock_event cnx val msg sock=
+    if val==TCPWRITE then sock_write cnx sock
+    else 0;;
+
+/**
+ * Callback function for the main Daytime listening socket.
+ * This is called by the TCP stack whenever a new client connects.
+ * cnx: TCP connection
+ * cbrequest: function that will handle the logic for a request
+ */
+fun daytime_server_cb cnx code msg=
+    Secholn "day time accept";
+    let [sockCallback:nil]-> sock in
+    (
+        tcpcb cnx fixarg4 #daytime_sock_event sock;
+        // Generate the current time in a human-readable format
+        let strcatlist current_time_human::" "::config_get_city_code::"\13\10"::nil -> res in (
+            sock_send cnx sock res;
+            sock_close_after cnx sock
+        );
+        0
+    );;
+
+fun daytime_start_srv port =
+    listentcp port #daytime_server_cb;
+    0;;

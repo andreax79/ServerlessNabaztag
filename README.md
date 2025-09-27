@@ -72,7 +72,12 @@ Build the firmware
 $ make firmware
 ```
 
-Start local web server:
+Start a local web server on port 80 (you need root for this):
+```
+$ sudo python3 -m http.server 80
+```
+
+or start local web server on port 8000 and redirect port 80 to 8000 (you need root for the iptables command):
 ```
 $ sudo iptables -t nat -I PREROUTING -p tcp --dport 80 -j REDIRECT --to-ports 8000
 $ python3 -m http.server
@@ -84,3 +89,5 @@ $ python3 -m http.server
 * [Milligram, A minimalist CSS framework](https://milligram.io)
 * [open-meteo, Free Weather Forecast API for non-commercial use ](https://github.com/open-meteo/open-meteo)
 * [pynab](https://github.com/nabaztag2018/pynab)
+* [Vim syntax highlighting for the Metal language](https://github.com/andreax79/vim-metal-syntax)
+* [Metal language support in Atom](https://github.com/rngtng/language-metal)

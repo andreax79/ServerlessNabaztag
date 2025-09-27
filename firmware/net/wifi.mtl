@@ -107,7 +107,7 @@ fun wifiInit rescan=
             (
                 set netmask=config_get_netmask;
                 set netgateway=config_get_net_gw;
-                addnewdns config_get_net_dns 1;
+                dns_add_new_srv config_get_net_dns 1;
                 set netip=config_get_net_ip
             );
             0
@@ -215,7 +215,7 @@ fun wifi_run=
                 (
                     setleds RGB_BLUE;
                     Secholn "-------------master";
-                    startdhcpserver;
+                    dhcp_start_srv;
                     masterW)
             )
         |(masterW -> if !master then
@@ -228,8 +228,8 @@ fun wifi_run=
         |(gostationW x-> if state==RT2501_S_CONNECTED then
                 (
                     Secholn "-------------dhcp";
-                    if config_get_dhcp then startdhcp;
-                    startdnsclient;
+                    if config_get_dhcp then dhcp_start_client;
+                    dns_start_client;
                     dhcpW time
                 )
             )
@@ -240,7 +240,7 @@ fun wifi_run=
                 )
                 else if (time-t)>3 then // retry dhcp client
                 (
-                    startdhcp;
+                    dhcp_start_client;
                     dhcpW time
                 )
             )

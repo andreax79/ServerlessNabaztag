@@ -350,7 +350,7 @@ fun runEvalOneCommand i0=
     (
         Secholn "exec ST : Start streaming";
         //IPecho netdns 0 1;
-        //startdnsclient;
+        //dns_start_client;
         set gStreamingState = 1;
         setleds 0;
         if !gBusyState then XmppSessionRequestResource "streaming";
@@ -365,7 +365,7 @@ fun runEvalOneCommand i0=
     (
         Secholn "exec SP : Start streaming (protected)";
         //IPecho netdns 0 1;
-        //startdnsclient;
+        //dns_start_client;
         set gStreamingState = 1;
         setleds 0;
         if !gBusyState then XmppSessionRequestResource "streaming";

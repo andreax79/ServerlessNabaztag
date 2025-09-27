@@ -10,6 +10,21 @@ var chor_paused_dur;; // can be paused during buffering
 var chor_paused;;
 var chor_paused_since;;
 
+const CH_frame_duration=1;;
+//var CH_set_color=6;;
+const CH_set_led_color=7;;
+const CH_set_motor=8;;
+const CH_set_leds_color=9;; // v16
+const CH_set_led_off=10;; // v17
+const CH_set_led_palette=14;;
+//var CH_set_palette=15;;
+const CH_randmidi=16;;
+const CH_avance=17;;
+const CH_ifne=18;;
+const CH_attend=19;;
+const CH_setmotordir=20;; // v16
+
+
 fun msgchorstart chor cb i0=
     set chorendcb = cb;
     set chordata=strcatlist chor;

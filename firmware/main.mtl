@@ -29,6 +29,7 @@ fun Streamw str = nil;; //Secholn strcatlist "[streaming] " :: str :: nil;;
 #define SERVERLESS
 
 #define WEBSERVER
+#define DAYTIMESERVER
 #define NOMINAL
 
 // set doPing to something else than nil to activate ping
@@ -41,6 +42,14 @@ var recording = 0;;
 #define EARSLIB;;
 #define INFOLIB;;
 #define RECLIB;;
+#endif
+
+#ifdef SIMU
+const PORT_DAYTIME = 8013;;
+const PORT_HTTP = 8080;;
+#else
+const PORT_DAYTIME = 13;;
+const PORT_HTTP = 80;;
 #endif
 
 const HARDWARE=4;;
@@ -65,6 +74,7 @@ fun getBytecodeRevision =
 
 #include protos/run_protos.mtl
 #include protos/dns_protos.mtl
+#include protos/sock_protos.mtl
 #include hw/leds.mtl
 #include utils/utils.mtl
 #include utils/jobs.mtl
@@ -86,6 +96,7 @@ fun getBytecodeRevision =
 
 #include net/dns.mtl
 #include net/http.mtl
+#include net/sock.mtl
 #include srv/time.mtl
 #include protos/ears_protos.mtl
 #include protos/midi_protos.mtl
@@ -162,20 +173,6 @@ const STREAMING_PING=60;;
 const STD_NET_TIMEOUT=10000;;
 
 const LED_TIMEOUT=600;; // 10 minutes
-const CH_frame_duration=1;;
-//var CH_set_color=6;;
-const CH_set_led_color=7;;
-const CH_set_motor=8;;
-const CH_set_leds_color=9;; // v16
-const CH_set_led_off=10;; // v17
-const CH_set_led_palette=14;;
-//var CH_set_palette=15;;
-const CH_randmidi=16;;
-const CH_avance=17;;
-const CH_ifne=18;;
-const CH_attend=19;;
-const CH_setmotordir=20;; // v16
-
 
 #include utils/palette.mtl
 #include utils/const_data.mtl
@@ -203,6 +200,9 @@ fun boshurl ip = strcatlist ip::"/http-bind"::nil;;
 
 #ifdef WEBSERVER
 #include srv/http_server.mtl
+#endif
+#ifdef DAYTIMESERVER
+#include srv/daytime_server.mtl
 #endif
 
 #ifdef RECLIB
@@ -262,16 +262,18 @@ fun main=
     loopcb  #loop;
     infoInit;
     netstart;
-    startdnsclient;
-    startdhcp;
+    dns_start_client;
+    dhcp_start_client;
     Secholn ":done";
     srand time_ms;
     updatevol;
 #ifdef WEBSERVER
+    startwebserver PORT_HTTP;
+#endif
+#ifdef DAYTIMESERVER
 #ifdef SIMU
-    startwebserver 8080;
 #else
-    startwebserver 80;
+    // daytime_start_srv PORT_DAYTIME;
 #endif
 #endif
     run_init;

@@ -136,8 +136,8 @@ fun filterdns src=
 	else strcat ctoa strlen src src;;
 
 /**
-	makes a dns request
-*/
+ * Makes a dns request
+ */
 fun question id dns=
 	strcatlist (itobin2 id)::"\$01\$00\$00\$01\$00\$00\$00\$00\$00\$00"::(filterdns dns)::"\$00\$00\$01\$00\$01"::nil;;
 
@@ -197,22 +197,23 @@ fun dnsreq domain cb=
 	0;;
 
 /**
-	Tells, for a (failed) dns request, if there is another dns server that could possibly answear the request
-*/
+ * Tells, for a (failed) dns request, if there is another dns server that could possibly answear the request
+ */
 fun dnsHasAnotherServer x =
 	(listlen netdnslist) > (x.idxDnsD+1)
 ;;
 
 
 /**
-	Replaces the id at the beginning of the trame by a new one
-*/
+ * Replaces the id at the beginning of the trame by a new one
+ */
 fun dnsChangeIdInTrame oldTrame newId =
 	strcatlist (itobin2 newId)::(strsub oldTrame 2 nil) :: nil;;
 
 /**
-	Asks the next dns server in the list the dns request contained in x. It is assumed that there _is_ a next server, ie dnsHasAnotherServer has been called and returned != 0
-*/
+ * Asks the next dns server in the list the dns request contained in x.
+ * It is assumed that there _is_ a next server, ie dnsHasAnotherServer has been called and returned != 0
+ */
 fun dnsAskNextServer x =
 	Dnsw strcatlist ("DNS -- pas de reponse pour la requete " :: (itoa x.idD) :: " donc on en essaie un autre. dns numero " :: (itoa x.idxDnsD+1) :: " -> " :: (webip listnth netdnslist (x.idxDnsD+1)) :: nil);
 	let (listnth netdnslist (x.idxDnsD+1)) -> netdns in
@@ -226,12 +227,12 @@ fun dnsAskNextServer x =
 ;;
 
 /**
-	Helper func for select in cbnetdns
-*/
+ * Helper func for select in cbnetdns
+ */
 fun selectbyid d v= d.idD==v;;
 
 // callback appelé pour chaque paquet udp qui arrive
-// sur le port DNSLOCAL (setté dans startdnsclient)
+// sur le port DNSLOCAL (setté dans dns_start_client)
 fun cbnetdns msg mac ipfrom=
 	Dnsw strcatlist "cbnetdns [" :: msg :: "]" :: nil;
 	let strgetword msg 0 -> id in
@@ -261,15 +262,15 @@ fun cbnetdns msg mac ipfrom=
 	0;;
 
 /**
-	Removes from the list l the dns requests that have done a timeout
-*/
+ * Removes from the list l the dns requests that have done a timeout
+ */
 fun filterdnsdead l=if l!=nil then let hd l-> d in if d.timeoutD==nil then filterdnsdead tl l else (hd l)::filterdnsdead tl l;;
 
 /**
-	Checks if any dns request has timeouted and either relays the
-	request to the next dns server available or calls the callback with
-	a null answear.
-*/
+ * Checks if any dns request has timeouted and either relays the
+ * request to the next dns server available or calls the callback with
+ * a null answear.
+ */
 fun dnstime=
 	for l=ldnsreq;l!=nil;tl l do let hd l-> d in
 	if time-d.timeoutD>=0 then
@@ -288,10 +289,10 @@ fun dnstime=
 
 // démarre le client dns. en particulier, sette le callback qui sera
 // appelé pour tous les paquets udp entrants sur le port DNSLOCAL
-fun startdnsclient=
+fun dns_start_client=
 
 	// on ajoute les dns "de secours" s'ils ne sont pas déjà dans la liste
-	addnewdns config_get_net_dns 0;
+	dns_add_new_srv config_get_net_dns 0;
 
 	regudp DNSLOCAL #cbnetdns;
 	set ldnsreq=nil;
@@ -339,7 +340,7 @@ fun DnsSrvCb NotUse cb=
 fun DnsSrv Request CallBack=
 	set dnsid=if dnsid==nil then time_ms%9999 else dnsid+1;	// ON MET l'ID pour identifier par la suite
 	Dnsw strcatlist "requete DNS SRV. dnsid=" :: (itoa dnsid) :: nil;
-	Dnsw dnslisttostr;
+	Dnsw dns_list_to_str;
 	let filterdns Request -> domain in
 	let strcatlist (itobin2 dnsid)::"\$01\$00\$00\$01\$00\$00\$00\$00\$00\$00"::domain::"\$00\$00\$21\$00\$01"::nil -> dnssrvquestion in
 	let dump dnssrvquestion -> tramedns in // Creation de la question
@@ -355,26 +356,26 @@ fun DnsSrv Request CallBack=
 
 
 /**
-	Helper func for addnewdns_r.
-*/
-fun removedns_r dns lst =
+ * Helper func for _dns_add_new_srv_r.
+ */
+fun _dns_remove_srv_r dns lst =
 	if (nil != lst) then
 	(
 		if !(ipcmp dns hd lst) then
 			(tl lst)
 		else
-			(hd lst) :: (removedns_r dns tl lst)
+			(hd lst) :: (_dns_remove_srv_r dns tl lst)
 	)
 	else
 		nil
 ;;
 
 /**
-	Helper func for addnewdns.
-*/
-fun addnewdns_r dns lst front =
+ * Helper func for dns_add_new_srv.
+ */
+fun _dns_add_new_srv_r dns lst front =
 	if (front) then
-		dns :: (removedns_r dns lst)
+		dns :: (_dns_remove_srv_r dns lst)
 	else
 		(
 			if (nil!=lst) then
@@ -383,7 +384,7 @@ fun addnewdns_r dns lst front =
 						// dns is present, nothing to do
 						lst
 					else
-						(hd lst) :: (addnewdns_r dns tl lst 0)
+						(hd lst) :: (_dns_add_new_srv_r dns tl lst 0)
 				)
 			else
 				dns :: nil
@@ -391,51 +392,42 @@ fun addnewdns_r dns lst front =
 ;;
 
 /**
-	Adds a new dns server in list of dns servers.
-	Skips if dns is "0.0.0.0".
-
-	If the dns is already in the list and front si set, the dns is moved
-  to the front of the list. Otherwise nothing is done.
-
-	dns: the dns to add
-	front: if 1 the dns will be added in front, else at the back
-*/
-fun addnewdns dns front =
+ * Adds a new dns server in list of dns servers.
+ * Skips if dns is "0.0.0.0".
+ * If the dns is already in the list and front si set, the dns is moved
+ * to the front of the list. Otherwise nothing is done.
+ * dns: the dns to add
+ * front: if 1 the dns will be added in front, else at the back
+ */
+fun dns_add_new_srv dns front =
 	if !(strcmp dns "\0\0\0\0") then
 		netdnslist
 	else
-		set netdnslist = addnewdns_r dns netdnslist front
+		set netdnslist = _dns_add_new_srv_r dns netdnslist front
 ;;
 
 /**
-	Adds a list of new dns servers in front of the existing list of dns servers
-*/
-fun addnewdnslist dnslist =
-	set netdnslist = conc dnslist netdnslist
-;;
-
-/**
-	Helper func for dnslisttostr
-*/
-fun dnslisttostr_r l =
+ * Helper func for dns_list_to_str
+ */
+fun _dns_list_to_str_r l =
 	if (nil != l) then
-		(webip hd l) :: " " :: (dnslisttostr_r tl l)
+		(webip hd l) :: " " :: (_dns_list_to_str_r tl l)
 	else
 		nil
 ;;
 
 /**
-	Returns a string representation of the ip in the dns list
-*/
-fun dnslisttostr =
-	strcatlist "(" :: (itoa listlen netdnslist) :: ") - " :: (dnslisttostr_r netdnslist)
+ * Returns a string representation of the ip in the dns list
+ */
+fun dns_list_to_str =
+	strcatlist "(" :: (itoa listlen netdnslist) :: ") - " :: (_dns_list_to_str_r netdnslist)
 ;;
 
 
 /**
-	Called when receiving a new list of dns servers from dhcp. Updates the current dns list.
-*/
-fun dnslistfromdhcp dnslist =
+ * Called when receiving a new list of dns servers from dhcp. Updates the current dns list.
+ */
+fun dns_list_from_dhcp dnslist =
 	set netdnslist = dnslist;
-	addnewdns config_get_net_dns 0
+	dns_add_new_srv config_get_net_dns 0
 ;;

@@ -23,9 +23,9 @@ var dhcp_infinite_lease=0;;
 
 /***
     According to the DHCP RFC (1541 and 2132), the leases are timed from
-  the time of the request sending, and one should try to renew the lease
+    the time of the request sending, and one should try to renew the lease
     with the previous host from t1 = (start_time+lease_duration*0.5) to t2 =
-  (start_time+lease_duration*0.875). After t2, the dhcp request is to be
+    (start_time+lease_duration*0.875). After t2, the dhcp request is to be
     asked to every reachable server (broadcasting).
 
     TODO for the moment only t1 is used and all messages are broadcasted
@@ -36,8 +36,8 @@ var dhcp_lease_t1=0;;
 fun Dhcpw s = Secholn strcatlist "[dhcp] " :: s :: nil ;;
 
 /**
-    Updates the var dhcp_lease_t1, that contains the time of the dhcp renewal time
-*/
+ * Updates the var dhcp_lease_t1, that contains the time of the dhcp renewal time
+ */
 fun updatedhcpleasetimes leaselen =
     if (leaselen == -1) then
     (
@@ -49,8 +49,7 @@ fun updatedhcpleasetimes leaselen =
         set dhcp_lease_t1 = dhcp_lease_start + leaselen/2;
         Dhcpw strcatlist "Next dhcp renewal in " :: (itoa (dhcp_lease_t1 -time )) :: "seconds"::nil
     );
-    0
-;;
+    0;;
 
 fun mkdhcp op netip hostip newip =
     let 236+16+14->n in
@@ -69,8 +68,7 @@ fun mkdhcp op netip hostip newip =
             (strcatlist b:: ((if nil != hostip then strcatlist "\54\4"::hostip::nil else "")::(if nil != newip then strcatlist "\50\4"::newip::nil else "")::"\255"::nil))
         else
             (strcat b "\255")
-    )
-;;
+    );;
 
 fun mkdhcpans op tid newip dmac=
     let 236+7->n in
@@ -87,8 +85,8 @@ fun mkdhcpans op tid newip dmac=
     );;
 
 /**
-    returns a list of the ip adresses contained in src from start to start + len
-*/
+ * returns a list of the ip adresses contained in src from start to start + len
+ */
 fun extractdhcp_helper_dnslist src start len =
     if (len < 4) then
         nil
@@ -140,7 +138,7 @@ fun cbnetdhcp src macfrom hostip=
             Secho "type      ";Iecholn type;
             Secho "leasetime ";Iecholn lease; updatedhcpleasetimes lease;
             Secho "submask   ";IPecho set netmask=submask 0 1;
-            Secho "dns       "; dnslistfromdhcp dnslist; Secholn dnslisttostr;
+            Secho "dns       "; dns_list_from_dhcp dnslist; Secholn dns_list_to_str;
             Secho "gateway   ";IPecho set netgateway=gateway 0 1;
             nil
         )
@@ -177,7 +175,9 @@ fun cbnetdhcp67 src macfrom hostip=
     );;
 
 
-// Ask to renew the lease
+/**
+ * Ask to renew the lease
+ */
 fun dhcp_check_force =
     udpsend netip 68 ipbroadcast 67 (mkdhcp DHCP_REQUEST netip nil nil) macbroadcast;
     set dhcp_lease_start=time;
@@ -188,24 +188,24 @@ fun dhcp_check_force =
     ;;
 
 /**
-    checks if the dhcp lease is about to expire and checks if the rabbit
-  should ask for a renewal
-*/
+ * Checks if the dhcp lease is about to expire and checks if the rabbit
+ * should ask for a renewal
+ */
 fun dhcp_check =
     if ((dhcp_client_started && dhcp_lease_t1 != 0 && time > dhcp_lease_t1 && !dhcp_infinite_lease)) then
         dhcp_check_force;
     JobRun;;
 
 /**
-    Starts a dhcp client if needed, sending a DHCP_DISCOVER request.
-    As the boot will have ran before, we should always already have done
-    a dhcp request during the boot and therefore already have a ip.
-*/
-fun startdhcp=
-    Dhcpw "startdhcp";
+ * Starts a dhcp client if needed, sending a DHCP_DISCOVER request.
+ * As the boot will have ran before, we should always already have done
+ * a dhcp request during the boot and therefore already have a ip.
+ */
+fun dhcp_start_client=
+    Dhcpw "dhcp_start_client";
     if (config_get_dhcp && !dhcp_client_started) then
     (
-        Dhcpw "really do startdhcp";
+        Dhcpw "really do dhcp_start_client";
         regudp 68 #cbnetdhcp;
         if (!strcmp netip netip_empty) then
             udpsend netip 68 ipbroadcast 67 (mkdhcp DHCP_DISCOVER netip nil nil) macbroadcast
@@ -213,10 +213,10 @@ fun startdhcp=
             dhcp_check_force;
         set dhcp_client_started=1
     );
-0;;
+    0;;
 
 
-fun startdhcpserver=
+fun dhcp_start_srv=
     regudp 67 #cbnetdhcp67;
     0;;
 

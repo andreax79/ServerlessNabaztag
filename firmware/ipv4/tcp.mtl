@@ -29,9 +29,12 @@ fun Tcpw str = nil;; //Secholn strcatlist "[tcp] " :: str :: nil;;
 
 type Tcp=[stateT locT dstT locpT dstpT seqT ackT cbT macT lastsentT retryT locksendT enableT];;
 
+// List of all current tcp connections
+var ltcp;;
+
 /**
-	creates the full tcp frame
-*/
+ * Create the full tcp frame
+ */
 fun mktcp t flag content=
 	let strcatlist
 	"\$aa\$aa\$03\$00\$00\$00\$08\$00\$45\$00\$00\$00\$00\$00\$00\$00\100\6\0\0"::
@@ -64,20 +67,41 @@ fun mktcp t flag content=
 		tcp
 	);;
 
+/**
+ * Resends the last transmitted TCP packet for a given connection 't'.
+ * This function is used for TCP retransmission when an ACK is not received in time.
+ */
 fun resendtcp t=
 	netSend t.lastsentT 0 nil (MACecho t.macT 0 1) 0 1;
 	0;;
 
-fun headerlen src=((strget src 8+32)>>4)<<2;;
+/**
+ * Calculates the length of the TCP header in bytes from a packet frame.
+ * The 'src' argument is the packet frame.
+ */
+fun headerlen src=
+    // Get the byte containing the Data Offset field (at offset 8+32).
+    // The upper 4 bits of this byte represent the header length in 32-bit words.
+    ((strget src 8+32)>>4)<<2;;
 
+/**
+ * Calculates the length of the TCP payload (data segment) in bytes.
+ * The 'src' argument is the packet frame.
+ */
 fun datalength src=(strgetword src 10)-20-headerlen src;;
 
+/**
+ * Send a TCP packet and updating the sequence number.
+ * 't' is the TCP connection object.
+ * 'trame' is the packet frame to send.
+ */
 fun sendtcp t trame=
 //	Secholn "tcpSend"; dump trame;
 	netSend trame 0 nil (/*MACecho*/ t.macT /*0 1*/) 0 1;
 	let strget trame 8+33 -> flag in
 	set t.seqT=netSeqAdd t.seqT (datalength trame)+(if flag&(TSYN|TFIN) then 1 else 0);
 	0;;
+
 
 fun sendtcpforretry t trame=
 	set t.lastsentT=trame;
@@ -89,14 +113,27 @@ fun tcpSend2 mac tcp trame=
 	set tcp.macT=mac;
 	sendtcpforretry/*sendtcp*/ tcp trame;;
 
-// List of all current tcp requests
-var ltcp;;
 
 
-fun remtcp t=set t.stateT=STOFF; set ltcp=remfromlist ltcp t;;
+/**
+ * Remove a TCP connection. takes a TCP connection as an argument
+ */
+fun remtcp t=
+    set t.stateT=STOFF;
+    set ltcp=remfromlist ltcp t;;
 
+// Global variable used as a counter to generate unique, ephemeral local port numbers
+// for outgoing connections when a specific local port is not provided
 var counttcp;;
 
+/**
+ * Open a new client TCP connection
+ * local: local IP address
+ * localp: local port (can be nil to use an ephemeral port)
+ * dst: destination IP address
+ * dstp: destination port
+ * cb: callback function to handle connection events
+ */
 fun opentcp local localp dst dstp cb=
 	let if localp==nil then 1024+set counttcp=((if counttcp==nil then time_ms else counttcp)+1)&16383 else localp -> localp in
 	let [stateT:STSYN locT:local dstT:dst locpT:localp dstpT:dstp seqT:CLIENT_SEQ_START ackT:CLIENT_SEQ_NULL cbT:cb enableT:1] -> tcp in
@@ -108,20 +145,32 @@ fun opentcp local localp dst dstp cb=
 		tcp
 	);;
 
-// localp = port
-// cb = fun xxxsrv cnx code msg
-
+/**
+ * Create a listening TCP socket
+ * localp: local port number to listen on
+ * cb: callback function to be executed when a new client connects
+ */
 fun listentcp localp cb=
 	let [stateT:STLISTEN locpT:localp cbT:cb enableT:1] -> tcp in
 	(
 		set ltcp=tcp::ltcp
 	);;
 
+/**
+ * Function to find a TCP connection in a list 'l'
+ * l: list of TCP connections to search through (typically 'ltcp')
+ * localp: destination port from the incoming packet
+ * dstp: source port from the incoming packet
+ * src: incoming IP packet frame (a vector)
+ */
 fun findtcp l localp dstp src=
 	if l!=nil then let hd l-> t in
+	// Look for a fully established connection
 	if t.locpT==localp && t.dstpT==dstp && (!vstrcmp src 8+16 t.locT 0 4)&& (!vstrcmp src 8+12 t.dstT 0 4)
 	then t
+	// If no established connection was found, look for a listening socket
 	else if t.stateT==STLISTEN && t.locpT==localp then t
+	// If no match was found, search the rest of the list
 	else findtcp tl l localp dstp src;;
 
 fun sendclose t=
