@@ -150,7 +150,7 @@ int checkTcpEvents(void)
 				}
 		}
 
-	int nbevts = select(maxval+1, &fdset_r, NULL /* &fdset_w */, &fdset_err, &timeout);
+	int nbevts = select(maxval+1, &fdset_r, &fdset_w, &fdset_err, &timeout);
 	if (nbevts < 0)
 		{
 			my_printf(LOG_SIMUNET, "Sockets : Tcp select failed (%s)\n", strerror(errno));
@@ -159,8 +159,9 @@ int checkTcpEvents(void)
 
 	/*** write events ***/
 	for (i=0; i<TCPMAX; ++i)
-		if (tcp_writeEventToNotify[i])
+		if (tcp_writeEventToNotify[i]) {
 			tcpEventWrite(tcp_sock[i]);
+        }
 
 	/*** read events ***/
 	if (nbevts > 0)
@@ -450,11 +451,11 @@ int tcpservercreate(int port)
 		close(socksrv);
 		return -1;
 	}
-	my_printf(LOG_SIMUNET, "Sockets : create Tcp server :%d (socket=%d) (%s)\n",port,socksrv, strerror(errno));
+	my_printf(LOG_SIMUNET, "Sockets : create Tcp server :%d (socket=%d, idx=%d)\n", port, socksrv, i);
 	tcp_sock[i]=socksrv;
 	tcp_listen[i]=1;
 	
-	return 0;
+	return i;
 }
 
 
@@ -542,7 +543,7 @@ int udpsend(int localport,char* dstip,int dstport,char* msg, int len)
 		in_addr_t ip_192_168_1_1 = inet_addr("192.168.1.1");
 		if (!memcmp(&(ina.sin_addr),&ip_192_168_1_1, sizeof(ip_192_168_1_1))) {
 			my_printf(LOG_SIMUNET, "Sockets : (hack) converting 192.168.1.1 to real dns ip\n");
-//			res_init();
+			res_init();
 			if (_res.nscount <= 0) { my_printf(LOG_SIMUNET, "Fatal error: no DNS available. Should abort\n"); return 0; };
 			ina.sin_addr = _res.nsaddr_list[0].sin_addr;
 		}

@@ -92,7 +92,7 @@ int tcpservercreate(int port)
 	printf("Sockets : create Tcp server :%d (socket=%d)\n",port,socksrv);
 	tcp_sock[i]=socksrv;
 	
-	return 0;
+	return i;
 }
 
 
