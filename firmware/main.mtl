@@ -30,6 +30,7 @@ var recording = 0;;
 #define EARSLIB
 #define INFOLIB
 #define RECLIB
+#define WIFI_REBOOT_ON_LOST
 
 #ifdef SIMU
 const PORT_DAYTIME = 8013;;

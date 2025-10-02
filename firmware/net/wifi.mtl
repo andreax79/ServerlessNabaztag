@@ -177,6 +177,10 @@ fun wifi_check =
         _wifi_debug "######### wifi lost";
         set wifi=reconnectW;
         ears_stop 1; // make sure that ears are not moving while we're reconnecting.
+#ifdef WIFI_REBOOT_ON_LOST
+        _wifi_debug "######### rebooting";
+        reboot 0x0407FE58 0x13fb6754;
+#endif
         0
     )
     ;;
