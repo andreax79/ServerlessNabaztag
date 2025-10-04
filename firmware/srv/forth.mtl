@@ -1,9 +1,16 @@
 // https://www.forth.org/Ting/Forth-for-the-Complete-Idiot/Forth-79-Handy-Reference.pdf
 
 type Forth=[stack rstack pc] ;;
-type Word=[name code func int];;
 
-var forth_words;;
+type Word=[
+    name    // name of the defined word
+    code    // array of Words if a colon
+    func    // function if primitive
+    int     // data field - integer value for variables/constants
+];;
+
+// The dictionary is a list of Words
+var forth_dictionary;;
 
 fun forth_push f x=
     set f.stack = x :: f.stack;
@@ -103,80 +110,170 @@ fun forth_r_fetch f=
     );;
 
 /**
- * Count number of items on stack
+ * Count number of items on stack ( - count )
  */
 fun forth_depth f=
     let listlen f.stack -> l in
     forth_push f l;;
 
+/**
+ * Adds ( n1 n2 - sum )
+ */
 fun forth_sum f=
     let forth_pop f -> a in
     let forth_pop f -> b in
     forth_push f (a+b);;
 
+/**
+ * Subtracts ( n1 n2 - difference )
+ */
 fun forth_sub f=
     let forth_pop f -> a in
     let forth_pop f -> b in
     forth_push f (b-a);;
 
+/**
+ * Multiplies ( n1 n2 - product )
+ */
 fun forth_mul f=
     let forth_pop f -> a in
     let forth_pop f -> b in
     forth_push f (a*b);;
 
+/**
+ * Divides ( n1 n2 - quotient )
+ */
 fun forth_div f=
     let forth_pop f -> a in
     let forth_pop f -> b in
     if a==0 then forth_push f 0
     else forth_push f (b / a);;
 
+/**
+ * Modulus ( n1 n2 - remainder )
+ */
+fun forth_mod f=
+    let forth_pop f -> a in
+    let forth_pop f -> b in
+    if a==0 then forth_push f 0
+    else forth_push f (b % a);;
+
+/**
+ * Divides and Modulus ( n1 n2 - remainder quotient )
+ */
+fun forth_div_mod f=
+    let forth_pop f -> a in
+    let forth_pop f -> b in
+    if a==0 then (forth_push f 0; forth_push f 0)
+    else (forth_push f (b % a); forth_push f (b / a));;
+
+/**
+ * Multiplies and Divides ( n1 n2 n3 - (n2*n1)/n3 )
+ */
+fun forth_times_div f=
+    let forth_pop f -> a in
+    let forth_pop f -> b in
+    let forth_pop f -> c in
+    if c==0 then forth_push f 0
+    else forth_push f ((b*a) / c);;
+
+/**
+ * Multiplies and Divides and Modulus ( n1 n2 n3 - remainder quotient )
+ */
+fun forth_times_div_mod f=
+    let forth_pop f -> a in
+    let forth_pop f -> b in
+    let forth_pop f -> c in
+    if c==0 then (forth_push f 0; forth_push f 0)
+    else (forth_push f ((b*a) % c); forth_push f ((b*a) / c));;
+
+/**
+ * Minimum of top two numbers ( n1 n2 - min )
+ */
+fun forth_min f=
+    let forth_pop f -> a in
+    let forth_pop f -> b in
+    forth_push f if a<b then a else b;;
+
+/**
+ * Maximum of top two numbers ( n1 n2 - max )
+ */
+fun forth_max f=
+    let forth_pop f -> a in
+    let forth_pop f -> b in
+    forth_push f if a>b then a else b;;
+
+/**
+ * True if top two numbers equal ( n1 n2 - flag )
+ */
 fun forth_eq f=
     let forth_pop f -> a in
     let forth_pop f -> b in
     forth_push f if a==b then -1 else 0;;
 
 /**
- * True if top number zero
+ * True if top number zero ( n - flag )
  */
 fun forth_zero_eq f=
     let forth_pop f -> a in
     forth_push f if a==0 then -1 else 0;;
 
 /**
- * True if top number is not zero
+ * True if top number is not zero ( n - flag )
  */
 fun forth_zero_ne f=
     let forth_pop f -> a in
     forth_push f if a!=0 then -1 else 0;;
 
+/**
+ * True if second number less than top number ( n1 n2 - flag )
+ */
 fun forth_less f=
     let forth_pop f -> a in
     let forth_pop f -> b in
     forth_push f if a<b then -1 else 0;;
 
+/**
+ * True if top number less than zero ( n - flag )
+ */
 fun forth_zero_less f=
     let forth_pop f -> a in
     forth_push f if a<0 then -1 else 0;;
 
+/**
+ * True if second number greater than top number ( n1 n2 - flag )
+ */
 fun forth_more f=
     let forth_pop f -> a in
     let forth_pop f -> b in
     forth_push f if a>b then -1 else 0;;
 
+/**
+ * True if top number greater than zero ( n - flag )
+ */
 fun forth_zero_more f=
     let forth_pop f -> a in
     forth_push f if a>0 then -1 else 0;;
 
+/**
+ * Logical AND ( n1 n2 - flag )
+ */
 fun forth_and f=
     let forth_pop f -> a in
     let forth_pop f -> b in
     forth_push f if (a!=0) && (b!=0) then -1 else 0;;
 
+/**
+ * Logical OR ( n1 n2 - flag )
+ */
 fun forth_or f=
     let forth_pop f -> a in
     let forth_pop f -> b in
     forth_push f if (a!=0) || (b!=0) then -1 else 0;;
 
+/**
+ * Logical XOR ( n1 n2 - flag )
+ */
 fun forth_xor f=
     let forth_pop f -> a in
     let forth_pop f -> b in
@@ -213,11 +310,11 @@ fun forth_tokenize s=
         ;;
 
 
-fun forth_get_word label forth_words=
-    if forth_words==nil then [name:label int:(atoi label)]
-    else let hd forth_words -> head in
+fun forth_get_word label forth_dictionary=
+    if forth_dictionary==nil then [name:label int:(atoi label)]
+    else let hd forth_dictionary -> head in
         if !strcmp label head.name then head
-        else forth_get_word label (tl forth_words);;
+        else forth_get_word label (tl forth_dictionary);;
 
 /**
  * Compile a list of tokens into a table (array) of Words
@@ -227,7 +324,7 @@ fun forth_compile_tokens tokens =
     let tabnew [name:"" func:nil] (listlen tokens) -> t in (
         for p=tokens; p!=nil; tl p do
         (
-            set t.i=forth_get_word (hd p) forth_words;
+            set t.i=forth_get_word (hd p) forth_dictionary;
             set i=i+1
         );
         t
@@ -288,16 +385,19 @@ var text = ": bla 1 + exit 10 + ; 5 2 + bla exit 100 +";;
 
 fun forth_define_word name text=
     let forth_compile text -> code in
-    set forth_words=[ name:name code:code ]::forth_words;;
+    set forth_dictionary=[ name:name code:code ]::forth_dictionary;;
 
-fun inter text=
-    set forth_words =
+/**
+ * Initialize the dictionary with primitive words
+ */
+fun forth_init_dictionary=
+    set forth_dictionary =
         // Stack manipulation
         [ name:"dup"    func:#forth_dup ] ::
         [ name:"drop"   func:#forth_drop ] ::
         [ name:"swap"   func:#forth_swap ] ::
         [ name:"over"   func:#forth_over ] ::
-        // rot
+        [ name:"rot"    func:#forth_rot ] ::
         // pick
         // roll
         // ?dup
@@ -314,12 +414,18 @@ fun inter text=
         [ name:">0"     func:#forth_zero_more ] ::
         [ name:"0<>"    func:#forth_zero_ne ] ::
         [ name:"invert" func:#forth_invert ] ::
-        // Arithmetic and Logic
+        // Arithmetic
         [ name:"+"      func:#forth_sum ] ::
         [ name:"-"      func:#forth_sub ] ::
         [ name:"*"      func:#forth_mul ] ::
         [ name:"/"      func:#forth_div ] ::
-        [ name:"rot"    func:#forth_rot ] ::
+        [ name:"mod"    func:#forth_mod ] ::
+        [ name:"/mod"   func:#forth_div_mod ] ::
+        [ name:"*/"     func:#forth_times_div ] ::
+        [ name:"*/mod"  func:#forth_times_div_mod ] ::
+        [ name:"min"    func:#forth_min ] ::
+        [ name:"max"    func:#forth_max ] ::
+        // Logical
         [ name:"and"    func:#forth_and ] ::
         [ name:"or"     func:#forth_or ] ::
         [ name:"xor"    func:#forth_xor ] ::
@@ -330,8 +436,11 @@ fun inter text=
         [ name:";"      func:#forth_semi ] ::
         [ name:"exit"   func:#forth_exit ] ::
         nil
-    ;
+    ;;
 
+
+fun inter text=
+    if forth_dictionary==nil then forth_init_dictionary;
     // forth_define_word "bla" "1 2 * +";
 
     let forth_tokenize text -> tokens in
@@ -339,7 +448,7 @@ fun inter text=
         set f.pc = 0;
 		while (f.pc != nil) && (tokens != nil) do
             let hd tokens -> cur in
-            let forth_get_word cur forth_words -> word in (
+            let forth_get_word cur forth_dictionary -> word in (
                 set tokens = tl tokens;
 
                 if word.func == #forth_colon then (
@@ -355,7 +464,7 @@ fun inter text=
                         );
                         set tokens = tl tokens; // remove ";"
                         let forth_compile_tokens (rev definition nil) -> code in
-                            set forth_words=[ name:name code:code ]::forth_words;
+                            set forth_dictionary=[ name:name code:code ]::forth_dictionary;
                         0
                     )
                 ) else (
