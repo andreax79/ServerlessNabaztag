@@ -12,287 +12,19 @@ type Word=[
 // The dictionary is a list of Words
 var forth_dictionary;;
 
-fun forth_push f x=
-    set f.stack = x :: f.stack;
-    x;;
+#include forth/stack.mtl
+#include forth/arithmetic.mtl
+#include forth/comparison.mtl
+#include forth/logical.mtl
 
-fun forth_pop f=
-    if f.stack==nil then nil
-    else let hd f.stack -> head in (
-        set f.stack = tl f.stack;
-        head
-    );;
-
-fun forth_rpush f x=
-    set f.rstack = x :: f.rstack;
-    x;;
-
-fun forth_rpop f=
-    if f.rstack==nil then nil
-    else let hd f.rstack -> head in (
-        set f.rstack = tl f.rstack;
-        head
-    );;
-
-/**
- * Duplicate top of stack
- */
-fun forth_dup f=
-    if f.stack==nil then nil
-    else let hd f.stack -> head in (
-        set f.stack = head :: f.stack;
-        head
-    );;
-
-/**
- * Discard top of stack
- */
-fun forth_drop f=
-    let forth_pop f -> a in
-    a;;
-
-/**
- * Exchange top two stack items
- */
-fun forth_swap f=
-    let forth_pop f -> a in
-    let forth_pop f -> b in
-    (
-        set f.stack = b :: a :: f.stack;
-        b
-    );;
-
-/**
- * Make copy of second item on top
- */
-fun forth_over f=
-    let forth_pop f -> a in
-    let forth_pop f -> b in
-    (
-        set f.stack = b :: a :: b :: f.stack;
-        b
-    );;
-
-/**
- * Rotate third item to top
- */
-fun forth_rot f=
-    let forth_pop f -> a in
-    let forth_pop f -> b in
-    let forth_pop f -> c in
-    (
-        set f.stack = b :: a :: c :: f.stack;
-        b
-    );;
-
-/**
- * Move top item to ‘return stack” for temporary storage
- */
-fun forth_to_r f=
-    if f.stack==nil then nil
-    else forth_rpush f (forth_pop f);;
-
-/**
- * Retrieve item from return stack
- */
-fun forth_r_from f=
-    if f.rstack==nil then nil
-    else forth_push f (forth_rpop f);;
-
-/**
- * Copy top of return stack onto stack
- */
-fun forth_r_fetch f=
-    if f.rstack==nil then nil
-    else let hd f.rstack -> head in (
-        set f.stack = head :: f.stack;
-        head
-    );;
-
-/**
- * Count number of items on stack ( - count )
- */
-fun forth_depth f=
-    let listlen f.stack -> l in
-    forth_push f l;;
-
-/**
- * Adds ( n1 n2 - sum )
- */
-fun forth_sum f=
-    let forth_pop f -> a in
-    let forth_pop f -> b in
-    forth_push f (a+b);;
-
-/**
- * Subtracts ( n1 n2 - difference )
- */
-fun forth_sub f=
-    let forth_pop f -> a in
-    let forth_pop f -> b in
-    forth_push f (b-a);;
-
-/**
- * Multiplies ( n1 n2 - product )
- */
-fun forth_mul f=
-    let forth_pop f -> a in
-    let forth_pop f -> b in
-    forth_push f (a*b);;
-
-/**
- * Divides ( n1 n2 - quotient )
- */
-fun forth_div f=
-    let forth_pop f -> a in
-    let forth_pop f -> b in
-    if a==0 then forth_push f 0
-    else forth_push f (b / a);;
-
-/**
- * Modulus ( n1 n2 - remainder )
- */
-fun forth_mod f=
-    let forth_pop f -> a in
-    let forth_pop f -> b in
-    if a==0 then forth_push f 0
-    else forth_push f (b % a);;
-
-/**
- * Divides and Modulus ( n1 n2 - remainder quotient )
- */
-fun forth_div_mod f=
-    let forth_pop f -> a in
-    let forth_pop f -> b in
-    if a==0 then (forth_push f 0; forth_push f 0)
-    else (forth_push f (b % a); forth_push f (b / a));;
-
-/**
- * Multiplies and Divides ( n1 n2 n3 - (n2*n1)/n3 )
- */
-fun forth_times_div f=
-    let forth_pop f -> a in
-    let forth_pop f -> b in
-    let forth_pop f -> c in
-    if c==0 then forth_push f 0
-    else forth_push f ((b*a) / c);;
-
-/**
- * Multiplies and Divides and Modulus ( n1 n2 n3 - remainder quotient )
- */
-fun forth_times_div_mod f=
-    let forth_pop f -> a in
-    let forth_pop f -> b in
-    let forth_pop f -> c in
-    if c==0 then (forth_push f 0; forth_push f 0)
-    else (forth_push f ((b*a) % c); forth_push f ((b*a) / c));;
-
-/**
- * Minimum of top two numbers ( n1 n2 - min )
- */
-fun forth_min f=
-    let forth_pop f -> a in
-    let forth_pop f -> b in
-    forth_push f if a<b then a else b;;
-
-/**
- * Maximum of top two numbers ( n1 n2 - max )
- */
-fun forth_max f=
-    let forth_pop f -> a in
-    let forth_pop f -> b in
-    forth_push f if a>b then a else b;;
-
-/**
- * True if top two numbers equal ( n1 n2 - flag )
- */
-fun forth_eq f=
-    let forth_pop f -> a in
-    let forth_pop f -> b in
-    forth_push f if a==b then -1 else 0;;
-
-/**
- * True if top number zero ( n - flag )
- */
-fun forth_zero_eq f=
-    let forth_pop f -> a in
-    forth_push f if a==0 then -1 else 0;;
-
-/**
- * True if top number is not zero ( n - flag )
- */
-fun forth_zero_ne f=
-    let forth_pop f -> a in
-    forth_push f if a!=0 then -1 else 0;;
-
-/**
- * True if second number less than top number ( n1 n2 - flag )
- */
-fun forth_less f=
-    let forth_pop f -> a in
-    let forth_pop f -> b in
-    forth_push f if a<b then -1 else 0;;
-
-/**
- * True if top number less than zero ( n - flag )
- */
-fun forth_zero_less f=
-    let forth_pop f -> a in
-    forth_push f if a<0 then -1 else 0;;
-
-/**
- * True if second number greater than top number ( n1 n2 - flag )
- */
-fun forth_more f=
-    let forth_pop f -> a in
-    let forth_pop f -> b in
-    forth_push f if a>b then -1 else 0;;
-
-/**
- * True if top number greater than zero ( n - flag )
- */
-fun forth_zero_more f=
-    let forth_pop f -> a in
-    forth_push f if a>0 then -1 else 0;;
-
-/**
- * Logical AND ( n1 n2 - flag )
- */
-fun forth_and f=
-    let forth_pop f -> a in
-    let forth_pop f -> b in
-    forth_push f if (a!=0) && (b!=0) then -1 else 0;;
-
-/**
- * Logical OR ( n1 n2 - flag )
- */
-fun forth_or f=
-    let forth_pop f -> a in
-    let forth_pop f -> b in
-    forth_push f if (a!=0) || (b!=0) then -1 else 0;;
-
-/**
- * Logical XOR ( n1 n2 - flag )
- */
-fun forth_xor f=
-    let forth_pop f -> a in
-    let forth_pop f -> b in
-    forth_push f if (a!=0) != (b!=0) then -1 else 0;;
-
-fun forth_invert f=
-    let forth_pop f -> a in
-    forth_push f if a==0 then -1 else 0;;
-
-fun forth_true f=
-    forth_push f (-1);;
-
-fun forth_false f=
-    forth_push f 0;;
 
 fun forth_colon f=
     0;;
 
 fun forth_semi f=
+    0;;
+
+fun forth_p f=
     0;;
 
 fun forth_exit f=
@@ -380,8 +112,14 @@ fun forth_run_code f code=
     ;;
 
 // var text = "5 2 + 10 * dup 1 + >";;
-var text = ": bla 1 + exit 10 + ; 5 2 + bla exit 100 +";;
+//var text = ": bla 1 + exit 10 + ; 5 2 + bla exit 100 +";;
+// var text = "1 2 3 4 dup";;
+// var text = "9 8 7 1 2 over";;
+// var text = "9 8 7 1 2 1 pick";;
+var text = ": test dup >r 10 + r> * ; 10 test";;
 // var text = "' bla";;
+
+// TODO: case insensitive dictionary lookup
 
 fun forth_define_word name text=
     let forth_compile text -> code in
@@ -398,9 +136,9 @@ fun forth_init_dictionary=
         [ name:"swap"   func:#forth_swap ] ::
         [ name:"over"   func:#forth_over ] ::
         [ name:"rot"    func:#forth_rot ] ::
-        // pick
-        // roll
-        // ?dup
+        [ name:"pick"   func:#forth_pick ] ::
+        //[ name:"roll"   func:#forth_roll ] ::
+        [ name:"?dup"   func:#forth_qdup ] ::
         [ name:">r"     func:#forth_to_r] ::
         [ name:"r>"     func:#forth_r_from ] ::
         [ name:"r@"     func:#forth_r_fetch ] ::
@@ -413,7 +151,6 @@ fun forth_init_dictionary=
         [ name:"0="     func:#forth_zero_eq ] ::
         [ name:">0"     func:#forth_zero_more ] ::
         [ name:"0<>"    func:#forth_zero_ne ] ::
-        [ name:"invert" func:#forth_invert ] ::
         // Arithmetic
         [ name:"+"      func:#forth_sum ] ::
         [ name:"-"      func:#forth_sub ] ::
@@ -429,6 +166,7 @@ fun forth_init_dictionary=
         [ name:"and"    func:#forth_and ] ::
         [ name:"or"     func:#forth_or ] ::
         [ name:"xor"    func:#forth_xor ] ::
+        [ name:"invert" func:#forth_invert ] ::
         [ name:"true"   func:#forth_true ] ::
         [ name:"false"  func:#forth_false ] ::
         //

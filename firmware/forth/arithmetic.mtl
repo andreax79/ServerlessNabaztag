@@ -1,0 +1,93 @@
+/**
+ * Arithmetic operations words for Forth interpreter
+ * Copyright (c) 2025 Andrea Bonomi
+ * This code is licensed under the MIT License
+ */
+
+/**
+ * Adds ( n1 n2 - sum )
+ */
+fun forth_sum f=
+    let forth_pop f -> a in
+    let forth_pop f -> b in
+    forth_push f (a+b);;
+
+/**
+ * Subtracts ( n1 n2 - difference )
+ */
+fun forth_sub f=
+    let forth_pop f -> a in
+    let forth_pop f -> b in
+    forth_push f (b-a);;
+
+/**
+ * Multiplies ( n1 n2 - product )
+ */
+fun forth_mul f=
+    let forth_pop f -> a in
+    let forth_pop f -> b in
+    forth_push f (a*b);;
+
+/**
+ * Divides ( n1 n2 - quotient )
+ */
+fun forth_div f=
+    let forth_pop f -> a in
+    let forth_pop f -> b in
+    if a==0 then forth_push f 0
+    else forth_push f (b / a);;
+
+/**
+ * Modulus ( n1 n2 - remainder )
+ */
+fun forth_mod f=
+    let forth_pop f -> a in
+    let forth_pop f -> b in
+    if a==0 then forth_push f 0
+    else forth_push f (b % a);;
+
+/**
+ * Divides and Modulus ( n1 n2 - remainder quotient )
+ */
+fun forth_div_mod f=
+    let forth_pop f -> a in
+    let forth_pop f -> b in
+    if a==0 then (forth_push f 0; forth_push f 0)
+    else (forth_push f (b % a); forth_push f (b / a));;
+
+/**
+ * Multiplies and Divides ( n1 n2 n3 - (n2*n1)/n3 )
+ */
+fun forth_times_div f=
+    let forth_pop f -> a in
+    let forth_pop f -> b in
+    let forth_pop f -> c in
+    if c==0 then forth_push f 0
+    else forth_push f ((b*a) / c);;
+
+/**
+ * Multiplies and Divides and Modulus ( n1 n2 n3 - remainder quotient )
+ */
+fun forth_times_div_mod f=
+    let forth_pop f -> a in
+    let forth_pop f -> b in
+    let forth_pop f -> c in
+    if c==0 then (forth_push f 0; forth_push f 0)
+    else (forth_push f ((b*a) % c); forth_push f ((b*a) / c));;
+
+/**
+ * Minimum of top two numbers ( n1 n2 - min )
+ */
+fun forth_min f=
+    let forth_pop f -> a in
+    let forth_pop f -> b in
+    forth_push f if a<b then a else b;;
+
+/**
+ * Maximum of top two numbers ( n1 n2 - max )
+ */
+fun forth_max f=
+    let forth_pop f -> a in
+    let forth_pop f -> b in
+    forth_push f if a>b then a else b;;
+

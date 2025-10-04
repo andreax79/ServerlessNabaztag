@@ -1,0 +1,147 @@
+/**
+ * Stack manipulation words for Forth interpreter
+ * Copyright (c) 2025 Andrea Bonomi
+ * This code is licensed under the MIT License
+ */
+
+/**
+ * Push a value onto the stack
+ */
+fun forth_push f x=
+    set f.stack = x :: f.stack;
+    x;;
+
+/**
+ * Pop a value from the stack
+ */
+fun forth_pop f=
+    if f.stack==nil then nil
+    else let hd f.stack -> head in (
+        set f.stack = tl f.stack;
+        head
+    );;
+
+/**
+ * Get an element from the stack at a given position without removing it
+ */
+fun forth_stack_at f i=
+    listnth f.stack i;;
+    // if !i then hd f.stack else if i>0 then forth_stack_at tl f (i-1);;
+
+/**
+ * Push a value onto the return stack
+ */
+fun forth_rpush f x=
+    set f.rstack = x :: f.rstack;
+    x;;
+
+/**
+ * Pop a value from the return stack
+ */
+fun forth_rpop f=
+    if f.rstack==nil then nil
+    else let hd f.rstack -> head in (
+        set f.rstack = tl f.rstack;
+        head
+    );;
+
+/**
+ * Duplicate top of stack ( n -- n n )
+ */
+fun forth_dup f=
+    if f.stack==nil then nil
+    else let hd f.stack -> head in (
+        set f.stack = head :: f.stack;
+        head
+    );;
+
+/**
+ * Discard top of stack ( n --  )
+ */
+fun forth_drop f=
+    let forth_pop f -> a in
+    a;;
+
+/**
+ * Exchange top two stack items ( n1 n2 -- n2 n1 )
+ */
+fun forth_swap f=
+    let forth_pop f -> a in
+    let forth_pop f -> b in
+    (
+        set f.stack = b :: a :: f.stack;
+        b
+    );;
+
+/**
+ * Make copy of second item on top ( n1 n2 -- n1 n2 n1 )
+ */
+fun forth_over f=
+    let forth_pop f -> a in
+    let forth_pop f -> b in
+    (
+        set f.stack = b :: a :: b :: f.stack;
+        b
+    );;
+
+/**
+ * Rotate third item to top ( n1 n2 n3 -- n2 n3 n1 )
+ */
+fun forth_rot f=
+    let forth_pop f -> a in
+    let forth_pop f -> b in
+    let forth_pop f -> c in
+    (
+        set f.stack = b :: a :: c :: f.stack;
+        b
+    );;
+
+/**
+ * Copy nth item to top of stack ( n ... ni - n ... ni ni )
+ */
+fun forth_pick f=
+    let forth_pop f -> n in
+    let forth_stack_at f n -> v in
+    forth_push f v;;
+
+// fun forth_roll f= // TODO
+
+/**
+ * Duplicate top of stack if not zero ( x -- 0 | x x )
+ */
+fun forth_qdup f=
+    if f.stack==nil then nil
+    else let hd f.stack -> v in
+    if v!=0 then forth_push f v;;
+
+/**
+ * Move top item to ‘return stack” for temporary storage ( x -- ) ( R: -- x )
+ */
+fun forth_to_r f=
+    if f.stack==nil then nil
+    else forth_rpush f (forth_pop f);;
+
+/**
+ * Retrieve item from return stack ( -- x ) ( R: x -- )
+ */
+fun forth_r_from f=
+    if f.rstack==nil then nil
+    else forth_push f (forth_rpop f);;
+
+/**
+ * Copy top of return stack onto data stack  ( -- x ) ( R: x -- x )
+ */
+fun forth_r_fetch f=
+    if f.rstack==nil then nil
+    else let hd f.rstack -> head in (
+        set f.stack = head :: f.stack;
+        head
+    );;
+
+/**
+ * Count number of items on stack ( -- count )
+ */
+fun forth_depth f=
+    let listlen f.stack -> l in
+    forth_push f l;;
+

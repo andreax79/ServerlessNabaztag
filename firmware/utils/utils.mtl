@@ -229,5 +229,23 @@ fun dumpListI l0=
     for l=l0;l!=nil;tl l do (Iecho hd l; Secho "::");
     Secholn "nil";;
 
+fun dumpListS l0=
+    for l=l0;l!=nil;tl l do (Secho hd l; Secho " :: ");
+    Secholn "nil";;
+
+/**
+ * Converts a list to a table (array).
+ */
+fun listtotab l=
+    let 0 -> i in
+    let tabnew 0 (listlen l) -> t in (
+        for p=l;p!=nil;tl p do
+        (
+            set t.i=hd p;
+            set i=i+1
+        );
+        t
+    );;
+
 fun getBytecodeRevision =
     strsub BYTECODE_REVISION_STR 6 ((strlen BYTECODE_REVISION_STR) - 8);;
