@@ -1,6 +1,21 @@
+/**
+ * Forth interpreter
+ * Copyright (c) 2025 Andrea Bonomi
+ * This code is licensed under the MIT License
+ */
+
+// https://forth-standard.org/
 // https://www.forth.org/Ting/Forth-for-the-Complete-Idiot/Forth-79-Handy-Reference.pdf
 
-type Forth=[stack rstack pc] ;;
+type Forth=[
+    stack               // data stack
+    rstack              // return stack
+    pc                  // program counter
+    state               // normal (0) or compilation state (-1)
+    output              // list of collected output strings
+    new_word_name       // name of the word being defined if in compilation state
+    new_word_definition // list of Words being defined if in compilation state
+];;
 
 type Word=[
     name    // name of the defined word
@@ -9,27 +24,23 @@ type Word=[
     int     // data field - integer value for variables/constants
 ];;
 
+const FORTH_TRUE = -1;;
+const FORTH_FALSE = 0;;
+const FORTH_STATE_NORMAL = 0;;
+const FORTH_STATE_COMPILATION = -1;;
+
 // The dictionary is a list of Words
 var forth_dictionary;;
+
+proto forth_get_word 2;;
 
 #include forth/stack.mtl
 #include forth/arithmetic.mtl
 #include forth/comparison.mtl
 #include forth/logical.mtl
-
-
-fun forth_colon f=
-    0;;
-
-fun forth_semi f=
-    0;;
-
-fun forth_p f=
-    0;;
-
-fun forth_exit f=
-    set f.pc = nil; // end execution
-    0;;
+#include forth/output.mtl
+#include forth/misc.mtl
+#include forth/dictionary.mtl
 
 fun forth_tokenize s=
     if s=="" then nil
@@ -42,31 +53,16 @@ fun forth_tokenize s=
         ;;
 
 
-fun forth_get_word label forth_dictionary=
-    if forth_dictionary==nil then [name:label int:(atoi label)]
-    else let hd forth_dictionary -> head in
-        if !strcmp label head.name then head
-        else forth_get_word label (tl forth_dictionary);;
-
-/**
- * Compile a list of tokens into a table (array) of Words
- */
-fun forth_compile_tokens tokens =
+fun forth_word_list_to_array words =
     let 0 -> i in
-    let tabnew [name:"" func:nil] (listlen tokens) -> t in (
-        for p=tokens; p!=nil; tl p do
+    let tabnew [name:"" func:nil] (listlen words) -> t in (
+        for p=words; p!=nil; tl p do
         (
-            set t.i=forth_get_word (hd p) forth_dictionary;
+            set t.i=hd p;
             set i=i+1
         );
         t
     );;
-
-/**
- * Compile a forth text into a table (array) of Words
- */
-fun forth_compile text=
-    forth_compile_tokens (forth_tokenize text);;
 
 fun forth_print_word w=
     Secho w.name; Secho " [";
@@ -75,211 +71,110 @@ fun forth_print_word w=
     else (Secho "int "; Iecho w.int; 0);
     Secholn "]";;
 
-proto forth_run_code 2;;
+proto forth_execute_word_code 2;;
 
 /**
- * Execute a single word. Update the program counter (pc) as needed.
+ * Execute a single word.
+ * Update the program counter and state as needed.
  */
 fun forth_execute_word f word=
     Secho "pc: "; Iecho f.pc; Secho " word: "; forth_print_word word;
     set f.pc = f.pc + 1;
-    if word.func != nil then (
-        // Secho "  Calling "; Secho word.name; Secholn "";
+
+    if word.func == #forth_colon then (
+        // Enter compilation state
+        set f.state = FORTH_STATE_COMPILATION;
+        set f.new_word_name = nil;
+        set f.new_word_definition = nil;
+        0
+
+    ) else if word.func != nil then (
+        // Execute primitive function
         call word.func [f]
     )
     else if word.code != nil then (
-        // Secho "  Entering "; Secho word.name; Secholn "";
-        forth_rpush f f.pc;
-        forth_run_code f word.code;
-        // Secho "  Returning from "; Secho word.name; Secholn "";
-        set f.pc = forth_rpop f
+        // Call a colon-defined word
+        forth_execute_word_code f word.code
     )
     else (
-        // Secho "  Pushing "; Iecho word.int; Secholn "";
+        // Push integer value onto the stack
         forth_push f word.int
     );
     dumpListI f.stack;
     0;;
 
 /**
- * Execute a table (array) of Words
+ * Run a sequence of Words as code, managing the return stack for nested calls.
  */
-fun forth_run_code f code=
+fun forth_execute_word_code f code=
+    forth_rpush f f.pc;
     set f.pc = 0;
     while (f.pc != nil) && (f.pc < (tablen code)) do
         let code.(f.pc) -> word in
-            forth_execute_word f word
-    ;;
+            forth_execute_word f word;
+    set f.pc = forth_rpop f;
+    0;;
+
 
 // var text = "5 2 + 10 * dup 1 + >";;
-//var text = ": bla 1 + exit 10 + ; 5 2 + bla exit 100 +";;
+// var text = ": bla 1 + exit 10 + ; 5 2 + bla exit 100 +";;
 // var text = "1 2 3 4 dup";;
 // var text = "9 8 7 1 2 over";;
 // var text = "9 8 7 1 2 1 pick";;
-var text = ": test dup >r 10 + r> * ; 10 test";;
+// var text = ": test dup >r 10 + r> * ; 10 test";;
 // var text = "' bla";;
-
-// TODO: case insensitive dictionary lookup
-
-fun forth_define_word name text=
-    let forth_compile text -> code in
-    set forth_dictionary=[ name:name code:code ]::forth_dictionary;;
-
-/**
- * Initialize the dictionary with primitive words
- */
-fun forth_init_dictionary=
-    set forth_dictionary =
-        // Stack manipulation
-        [ name:"dup"    func:#forth_dup ] ::
-        [ name:"drop"   func:#forth_drop ] ::
-        [ name:"swap"   func:#forth_swap ] ::
-        [ name:"over"   func:#forth_over ] ::
-        [ name:"rot"    func:#forth_rot ] ::
-        [ name:"pick"   func:#forth_pick ] ::
-        //[ name:"roll"   func:#forth_roll ] ::
-        [ name:"?dup"   func:#forth_qdup ] ::
-        [ name:">r"     func:#forth_to_r] ::
-        [ name:"r>"     func:#forth_r_from ] ::
-        [ name:"r@"     func:#forth_r_fetch ] ::
-        [ name:"depth"  func:#forth_depth ] ::
-        // Comparison
-        [ name:"<"      func:#forth_less ] ::
-        [ name:"="      func:#forth_eq ] ::
-        [ name:">"      func:#forth_more ] ::
-        [ name:"<0"     func:#forth_zero_less ] ::
-        [ name:"0="     func:#forth_zero_eq ] ::
-        [ name:">0"     func:#forth_zero_more ] ::
-        [ name:"0<>"    func:#forth_zero_ne ] ::
-        // Arithmetic
-        [ name:"+"      func:#forth_sum ] ::
-        [ name:"-"      func:#forth_sub ] ::
-        [ name:"*"      func:#forth_mul ] ::
-        [ name:"/"      func:#forth_div ] ::
-        [ name:"mod"    func:#forth_mod ] ::
-        [ name:"/mod"   func:#forth_div_mod ] ::
-        [ name:"*/"     func:#forth_times_div ] ::
-        [ name:"*/mod"  func:#forth_times_div_mod ] ::
-        [ name:"min"    func:#forth_min ] ::
-        [ name:"max"    func:#forth_max ] ::
-        // Logical
-        [ name:"and"    func:#forth_and ] ::
-        [ name:"or"     func:#forth_or ] ::
-        [ name:"xor"    func:#forth_xor ] ::
-        [ name:"invert" func:#forth_invert ] ::
-        [ name:"true"   func:#forth_true ] ::
-        [ name:"false"  func:#forth_false ] ::
-        //
-        [ name:":"      func:#forth_colon ] ::
-        [ name:";"      func:#forth_semi ] ::
-        [ name:"exit"   func:#forth_exit ] ::
-        nil
-    ;;
-
+var text = "1 . space 2 . space 3 . space 4 . ( test aa bb ) space 65 emit";;
 
 fun inter text=
     if forth_dictionary==nil then forth_init_dictionary;
-    // forth_define_word "bla" "1 2 * +";
 
-    let forth_tokenize text -> tokens in
-    let [stack:nil rstack:nil] -> f in (
-        set f.pc = 0;
-		while (f.pc != nil) && (tokens != nil) do
-            let hd tokens -> cur in
-            let forth_get_word cur forth_dictionary -> word in (
-                set tokens = tl tokens;
-
-                if word.func == #forth_colon then (
-                    let nil -> definition in
-                    let hd tokens -> name in  (// next token is word name
-                        set tokens = tl tokens; // remove word name
-                        Secho "Defining new word "; Secholn name;
-                        // gather until ";"
-                        while (tokens != nil) && strcmp (hd tokens) ";" do (
-                            set definition = (hd tokens) :: definition;
-                            set tokens = tl tokens;
-                            0
-                        );
-                        set tokens = tl tokens; // remove ";"
-                        let forth_compile_tokens (rev definition nil) -> code in
-                            set forth_dictionary=[ name:name code:code ]::forth_dictionary;
-                        0
-                    )
-                ) else (
-                    forth_execute_word f word
-                );
-                // forth_print_word word;
-                // if stmt_f != nil then call stmt_f [f]
-                // else forth_push f atoi cur;
-                // dumpListI f.stack;
-                0
-            );
-        dumpListI f.stack
-    );
-    0;;
-
-#ifdef XXXX
-    let forth_tokenize text -> tokens in (
-        for hd tokens -> t do Secho t; Secho " :: "; 0;
-        Secho "Tokens: "; dumpListS tokens;
-        0
-    );;
-
-    let tokenize text -> tokens in
-    let [stack:nil prog:prog] -> f in (
-        dumpListS f.prog;
-		while f.prog != nil do
-            let hd f.prog -> cur in
-            let get_statement cur statements -> stmt_f in (
-                set f.prog = tl f.prog;
-                if stmt_f != nil then call stmt_f [f]
-                else forth_push f atoi cur;
-                dumpListI f.stack;
-                0
-            );
-        dumpListI f.stack;
-        0
-    );;
-
-
-/*
-    let forth_compile text -> code in
+    let 0 -> start in // current token start
+    let 0 -> end in  // current token end
+    let 0 -> parentheses in // parentheses depth
+    let strlen text -> text_len in
     let [stack:nil rstack:nil pc:0] -> f in (
-        forth_run_code f code;
-        0
+        while (f.pc != nil) && (end != text_len) do (
+            // TODO Skip leading spaces
+            set end = strstr text " " start;
+            if end == nil then set end = text_len;
+            let strsub text start (end-start) -> cur in (
+                set start = end + 1;
+                let forth_get_word cur forth_dictionary -> word in (
+                    if word.func == #forth_p then ( // open parentheses
+                        set parentheses = parentheses + 1
+                    );
+
+                    if parentheses > 0 then ( // inside parentheses
+                        if !strcmp cur ")" then set parentheses = parentheses - 1;
+                        0
+
+                    ) else if f.state == FORTH_STATE_COMPILATION then (  // compilation state
+                        if word.func == #forth_semi then (
+                            set f.state = FORTH_STATE_NORMAL;
+                            let forth_word_list_to_array (rev f.new_word_definition nil) -> code in
+                            set forth_dictionary=[ name:f.new_word_name code:code ]::forth_dictionary;
+                            set f.new_word_name = nil;
+                            set f.new_word_definition = nil;
+                            0
+                        ) else if f.new_word_name == nil then (
+                            // first word after ":" is the new word's name
+                            set f.new_word_name = cur;
+                            0
+                        ) else (
+                            // add word to the latest defined word's code
+                            set f.new_word_definition = word :: f.new_word_definition;
+                            0
+                        )
+
+                    ) else ( // normal state
+                        forth_execute_word f word
+                    )
+                )
+            )
+        );
+        if f.output != nil then (
+            Secho "Output:";
+            Secholn strcatlist (rev f.output nil)
+        );
+        f
     );;
-*/
-        /*
-        while f.pc < (tablen code) do (
-            let code.(f.pc) -> word in (
-                Secho "pc: "; Iecho f.pc; Secho " word: "; Secho word.name; Secholn "";
-                if word.func != nil then call word.func [f]
-                else if word.code != nil then 0
-                else forth_push f word.int;
-                dumpListI f.stack;
-                0
-            );
-            set f.pc = f.pc + 1;
-            0
-        );
-        */
-/*
-        let tabnew 0 32 -> tab in (
-            Iecholn tab.0;
-            0
-        );
-*/
-/*
-        dumpListS f.prog;
-		while f.prog != nil do
-            let hd f.prog -> cur in
-            let get_statement cur statements -> stmt_f in (
-                set f.prog = tl f.prog;
-                if stmt_f != nil then call stmt_f [f]
-                else forth_push f atoi cur;
-                dumpListI f.stack;
-                0
-            );
-        dumpListI f.stack;
-*/
-#endif

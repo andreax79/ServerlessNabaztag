@@ -10,7 +10,7 @@
 fun forth_and f=
     let forth_pop f -> a in
     let forth_pop f -> b in
-    forth_push f if (a!=0) && (b!=0) then -1 else 0;;
+    forth_push f if (a!=FORTH_FALSE) && (b!=FORTH_FALSE) then FORTH_TRUE else FORTH_FALSE;;
 
 /**
  * Logical OR ( n1 n2 -- flag )
@@ -18,7 +18,7 @@ fun forth_and f=
 fun forth_or f=
     let forth_pop f -> a in
     let forth_pop f -> b in
-    forth_push f if (a!=0) || (b!=0) then -1 else 0;;
+    forth_push f if (a!=FORTH_FALSE) || (b!=FORTH_FALSE) then FORTH_TRUE else FORTH_FALSE;;
 
 /**
  * Logical XOR ( n1 n2 -- flag )
@@ -26,23 +26,23 @@ fun forth_or f=
 fun forth_xor f=
     let forth_pop f -> a in
     let forth_pop f -> b in
-    forth_push f if (a!=0) != (b!=0) then -1 else 0;;
+    forth_push f if (a!=FORTH_FALSE) != (b!=FORTH_FALSE) then FORTH_TRUE else FORTH_FALSE;;
 
 /**
  * Logical NOT ( n -- flag )
  */
 fun forth_invert f=
     let forth_pop f -> a in
-    forth_push f if a==0 then -1 else 0;;
+    forth_push f if a==FORTH_FALSE then FORTH_TRUE else FORTH_FALSE;;
 
 /**
- * True ( -- -1 )
+ * True ( -- true )
  */
 fun forth_true f=
-    forth_push f (-1);;
+    forth_push f (FORTH_TRUE);;
 
 /**
- * False ( -- 0 )
+ * False ( -- false )
  */
 fun forth_false f=
-    forth_push f 0;;
+    forth_push f FORTH_FALSE;;

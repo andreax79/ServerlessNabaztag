@@ -1,0 +1,78 @@
+/**
+ * Forth dictionary functions
+ * Copyright (c) 2025 Andrea Bonomi
+ * This code is licensed under the MIT License
+ */
+
+/**
+ * Initialize the dictionary with primitive words
+ */
+fun forth_init_dictionary=
+    set forth_dictionary =
+        // Stack manipulation
+        [ name:"dup"    func:#forth_dup ] ::
+        [ name:"drop"   func:#forth_drop ] ::
+        [ name:"swap"   func:#forth_swap ] ::
+        [ name:"over"   func:#forth_over ] ::
+        [ name:"rot"    func:#forth_rot ] ::
+        [ name:"pick"   func:#forth_pick ] ::
+        [ name:"nip"    func:#forth_nip ] ::
+        [ name:"tuck"   func:#forth_tuck ] ::
+        //[ name:"roll"   func:#forth_roll ] ::
+        [ name:"?dup"   func:#forth_qdup ] ::
+        [ name:">r"     func:#forth_to_r] ::
+        [ name:"r>"     func:#forth_r_from ] ::
+        [ name:"r@"     func:#forth_r_fetch ] ::
+        [ name:"depth"  func:#forth_depth ] ::
+        // Comparison
+        [ name:"<"      func:#forth_less ] ::
+        [ name:"="      func:#forth_eq ] ::
+        [ name:">"      func:#forth_more ] ::
+        [ name:"<0"     func:#forth_zero_less ] ::
+        [ name:"0="     func:#forth_zero_eq ] ::
+        [ name:">0"     func:#forth_zero_more ] ::
+        [ name:"0<>"    func:#forth_zero_ne ] ::
+        // Arithmetic
+        [ name:"+"      func:#forth_sum ] ::
+        [ name:"-"      func:#forth_sub ] ::
+        [ name:"1+"     func:#forth_one_plus ] ::
+        [ name:"1-"     func:#forth_one_minus ] ::
+        [ name:"2+"     func:#forth_two_plus ] ::
+        [ name:"2-"     func:#forth_two_minus ] ::
+        [ name:"*"      func:#forth_mul ] ::
+        [ name:"/"      func:#forth_div ] ::
+        [ name:"mod"    func:#forth_mod ] ::
+        [ name:"/mod"   func:#forth_div_mod ] ::
+        [ name:"*/"     func:#forth_times_div ] ::
+        [ name:"*/mod"  func:#forth_times_div_mod ] ::
+        [ name:"max"    func:#forth_max ] ::
+        [ name:"min"    func:#forth_min ] ::
+        [ name:"abs"    func:#forth_abs ] ::
+        // Logical
+        [ name:"and"    func:#forth_and ] ::
+        [ name:"or"     func:#forth_or ] ::
+        [ name:"xor"    func:#forth_xor ] ::
+        [ name:"invert" func:#forth_invert ] ::
+        [ name:"true"   func:#forth_true ] ::
+        [ name:"false"  func:#forth_false ] ::
+        // Output
+        [ name:"."      func:#forth_d ] ::
+        [ name:"emit"   func:#forth_emit ] ::
+        [ name:"cr"     func:#forth_cr ] ::
+        [ name:"space"  func:#forth_space ] ::
+        [ name:"bl"     func:#forth_bl ] ::
+        //
+        [ name:":"      func:#forth_colon ] ::
+        [ name:";"      func:#forth_semi ] ::
+        [ name:"("      func:#forth_p ] ::
+        [ name:"exit"   func:#forth_exit ] ::
+        nil
+    ;;
+
+
+// TODO: case insensitive dictionary lookup
+fun forth_get_word name forth_dictionary=
+    if forth_dictionary==nil then [name:name int:(atoi name)]
+    else let hd forth_dictionary -> head in
+        if !strcmp name head.name then head
+        else forth_get_word name (tl forth_dictionary);;

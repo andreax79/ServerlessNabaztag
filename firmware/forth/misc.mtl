@@ -1,0 +1,12 @@
+fun forth_colon f=
+    0;;
+
+fun forth_semi f=
+    0;;
+
+fun forth_p f=
+    0;;
+
+fun forth_exit f=
+    set f.pc = nil; // end execution
+    0;;

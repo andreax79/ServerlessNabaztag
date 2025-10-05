@@ -107,6 +107,28 @@ fun forth_pick f=
 // fun forth_roll f= // TODO
 
 /**
+ * Drop the first item below the top of stack ( n1 n2 -- n2 )
+ */
+fun forth_nip f=
+    let forth_pop f -> a in
+    let forth_pop f -> b in
+    (
+        set f.stack = a :: f.stack;
+        a
+    );;
+
+/**
+ * Copy the first (top) stack item below the second stack item ( n1 n2 -- n1 n2 n1 )
+ */
+fun forth_tuck f=
+    let forth_pop f -> a in
+    let forth_pop f -> b in
+    (
+        set f.stack = b :: a :: b :: f.stack;
+        b
+    );;
+
+/**
  * Duplicate top of stack if not zero ( x -- 0 | x x )
  */
 fun forth_qdup f=

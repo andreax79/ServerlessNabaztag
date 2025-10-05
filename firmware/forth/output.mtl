@@ -1,0 +1,44 @@
+/**
+ * Stack output words for Forth interpreter
+ * Copyright (c) 2025 Andrea Bonomi
+ * This code is licensed under the MIT License
+ */
+
+/**
+ * Display n ( n -- )
+ */
+fun forth_d f=
+    let forth_pop f -> a in
+    set f.output = (itoa a) :: f.output;
+    0;;
+
+/**
+ * Display CR ( -- )
+ */
+fun forth_cr f=
+    set f.output = "\n" :: f.output;
+    0;;
+
+/**
+ * Display space ( -- )
+ */
+fun forth_space f=
+    set f.output = " " :: f.output;
+    0;;
+
+/**
+ * Emit character ( char -- )
+ */
+fun forth_emit f=
+    let forth_pop f -> a in
+    let " " -> s in (
+        strset s 0 a;
+        set f.output = s :: f.output;
+        0
+    );;
+
+/**
+ * Character value for a space ( -- char )
+ */
+fun forth_bl f=
+    forth_push f 20;;
