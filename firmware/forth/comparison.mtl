@@ -5,7 +5,7 @@
  */
 
 /**
- * True if second number less than top number ( n1 n2 -- flag )
+ * < True if second number less than top number ( n1 n2 -- flag )
  */
 fun forth_less f=
     let forth_pop f -> a in
@@ -13,7 +13,7 @@ fun forth_less f=
     forth_push f if a<b then -1 else 0;;
 
 /**
- * True if top two numbers equal ( n1 n2 -- flag )
+ * = True if top two numbers equal ( n1 n2 -- flag )
  */
 fun forth_eq f=
     let forth_pop f -> a in
@@ -21,7 +21,7 @@ fun forth_eq f=
     forth_push f if a==b then -1 else 0;;
 
 /**
- * True if second number greater than top number ( n1 n2 -- flag )
+ * > True if second number greater than top number ( n1 n2 -- flag )
  */
 fun forth_more f=
     let forth_pop f -> a in
@@ -29,28 +29,28 @@ fun forth_more f=
     forth_push f if a>b then -1 else 0;;
 
 /**
- * True if top number less than zero ( n -- flag )
+ * <0 True if top number less than zero ( n -- flag )
  */
 fun forth_zero_less f=
     let forth_pop f -> a in
     forth_push f if a<0 then -1 else 0;;
 
 /**
- * True if top number zero ( n -- flag )
+ * 0= True if top number zero ( n -- flag )
  */
 fun forth_zero_eq f=
     let forth_pop f -> a in
     forth_push f if a==0 then -1 else 0;;
 
 /**
- * True if top number greater than zero ( n -- flag )
+ * >0 True if top number greater than zero ( n -- flag )
  */
 fun forth_zero_more f=
     let forth_pop f -> a in
     forth_push f if a>0 then -1 else 0;;
 
 /**
- * True if top number is not zero ( n -- flag )
+ * 0<> True if top number is not zero ( n -- flag )
  */
 fun forth_zero_ne f=
     let forth_pop f -> a in

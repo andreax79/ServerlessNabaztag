@@ -62,10 +62,13 @@ fun forth_init_dictionary=
         [ name:"space"  func:#forth_space ] ::
         [ name:"bl"     func:#forth_bl ] ::
         //
-        [ name:":"      func:#forth_colon ] ::
-        [ name:";"      func:#forth_semi ] ::
-        [ name:"("      func:#forth_p ] ::
+        [ name:":"      func:#forth_colon] ::
+        [ name:";"      func:#forth_semi immediate:FORTH_TRUE] ::
+        [ name:"("      func:#forth_p] ::
+        [ name:"abort"  func:#forth_abort ] ::
         [ name:"exit"   func:#forth_exit ] ::
+        [ name:"begin"  func:#forth_begin immediate:FORTH_TRUE] ::
+        [ name:"until"  func:#forth_until immediate:FORTH_TRUE] ::
         nil
     ;;
 

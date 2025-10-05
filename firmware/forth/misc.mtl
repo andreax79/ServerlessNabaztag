@@ -1,12 +1,95 @@
+/**
+ * Misc words for Forth interpreter
+ * Copyright (c) 2025 Andrea Bonomi
+ * This code is licensed under the MIT License
+ */
+
+/**
+ * ABORT Empty the data stack and the return stack ( i * x -- ) ( R: j * x -- )
+ */
+fun forth_abort f=
+    set f.stack = nil;
+    set f.rstack = nil;
+    set f.pc = nil; // end execution
+    0;;
+
+/**
+ * EXIT Return control to the caller
+ */
+fun forth_exit f=
+    set f.pc = nil; // end execution
+    0;;
+
 fun forth_colon f=
     0;;
 
+/**
+ * ; End a word definition
+ */
 fun forth_semi f=
-    0;;
+    if f.state != FORTH_STATE_COMPILATION then (
+        set f.output = "\n; Compile mode only\n" :: f.output;
+        forth_exit f
+    ) else (
+        set f.state = FORTH_STATE_NORMAL;
+        let forth_word_list_to_array (rev f.new_word_definition nil) -> code in
+        set forth_dictionary=[ name:f.new_word_name code:code ]::forth_dictionary;
+        set f.new_word_name = nil;
+        set f.new_word_definition = nil;
+        0
+    );;
 
 fun forth_p f=
     0;;
 
-fun forth_exit f=
-    set f.pc = nil; // end execution
+/**
+ * Unconditional jump ( addr -- )
+ */
+fun forth_jmp f=
+    let forth_pop f -> addr in
+    if addr != nil then set f.pc = addr; // jump to addr
     0;;
+
+/**
+ * Jump if zero ( addr cond -- )
+ */
+fun forth_jz f=
+    let forth_pop f -> addr in
+    let forth_pop f -> cond in
+    if (cond == 0) && (addr != nil) then set f.pc = addr; // if cond is false , jump to addr
+    0;;
+
+/**
+ * BEGIN Begin a loop (immediate)  ( -- )
+ * Store the current position in the control stack
+ */
+fun forth_begin f=
+    if f.state != FORTH_STATE_COMPILATION then (
+        set f.output = "\nBEGIN Compile mode only\n" :: f.output;
+        forth_exit f
+    ) else (
+        set f.cstack = (listlen f.new_word_definition) :: f.cstack;
+        0
+    );;
+
+/**
+ * UNTIL End a loop (immediate)  ( x -- )
+ * Compile a conditional jump back to the matching BEGIN
+ */
+fun forth_until f=
+    if f.state != FORTH_STATE_COMPILATION then (
+        set f.output = "\nUNTIL Compile mode only\n" :: f.output;
+        forth_exit f
+    ) else (
+        let hd f.cstack -> loop_start in (
+            if loop_start == nil then (
+                forth_abort f;
+                0
+            ) else (
+                // Remove the loop start from the control stack
+                set f.cstack = tl f.cstack;
+                set f.new_word_definition = [ name:"jz" func:#forth_jz] :: [int:loop_start] :: f.new_word_definition;
+                0
+            )
+        )
+    );;

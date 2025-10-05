@@ -6,10 +6,12 @@
 
 // https://forth-standard.org/
 // https://www.forth.org/Ting/Forth-for-the-Complete-Idiot/Forth-79-Handy-Reference.pdf
+// https://win32forth.sourceforge.net/doc/Guide/primer.htm
 
 type Forth=[
     stack               // data stack
     rstack              // return stack
+    cstack              // control stack
     pc                  // program counter
     state               // normal (0) or compilation state (-1)
     output              // list of collected output strings
@@ -18,10 +20,21 @@ type Forth=[
 ];;
 
 type Word=[
-    name    // name of the defined word
-    code    // array of Words if a colon
-    func    // function if primitive
-    int     // data field - integer value for variables/constants
+    name                // name of the defined word
+    code                // array of Words if a colon
+    immediate           // true if immediate word
+    func                // function if primitive
+    int                 // data field - integer value for variables/constants
+];;
+
+type Interpreter=[
+    start               // current token start
+    end                 // current token end
+    end_ln              // next end of line position
+    parentheses         // parentheses depth
+    input               // input text
+    text_len            // length of the input text
+    token               // current token
 ];;
 
 const FORTH_TRUE = -1;;
@@ -33,6 +46,7 @@ const FORTH_STATE_COMPILATION = -1;;
 var forth_dictionary;;
 
 proto forth_get_word 2;;
+proto forth_word_list_to_array 1;;
 
 #include forth/stack.mtl
 #include forth/arithmetic.mtl
@@ -41,17 +55,6 @@ proto forth_get_word 2;;
 #include forth/output.mtl
 #include forth/misc.mtl
 #include forth/dictionary.mtl
-
-fun forth_tokenize s=
-    if s=="" then nil
-    else
-        let strstr s " " 0 -> p in
-        if p==nil then s::nil
-        else let strsub s 0 p -> word in
-             let strsub s (p+1) ((strlen s) - (p+1)) -> rest in
-             word :: forth_tokenize rest
-        ;;
-
 
 fun forth_word_list_to_array words =
     let 0 -> i in
@@ -100,8 +103,10 @@ fun forth_execute_word f word=
         // Push integer value onto the stack
         forth_push f word.int
     );
-    dumpListI f.stack;
+    // dumpListI f.stack;
     0;;
+
+// TODO recursive words
 
 /**
  * Run a sequence of Words as code, managing the return stack for nested calls.
@@ -115,6 +120,20 @@ fun forth_execute_word_code f code=
     set f.pc = forth_rpop f;
     0;;
 
+/**
+ * Extract the next token from the input text.
+ * Tokens are separated by spaces or newlines.
+ */
+fun forth_get_token i=
+    set i.end = strstr i.input " " i.start;
+    set i.end_ln = strstr i.input "\n" i.start;
+    if (i.end_ln != nil) && ((i.end == nil) || (i.end_ln < i.end)) then set i.end = i.end_ln;
+    if i.end == nil then set i.end = i.text_len;
+    // Skip leading spaces
+    while (i.start < i.end) && ((strget i.input i.start) == 32) do set i.start = i.start + 1;
+    set i.token = strsub i.input i.start (i.end-i.start);
+    set i.start = i.end + 1;
+    0;;
 
 // var text = "5 2 + 10 * dup 1 + >";;
 // var text = ": bla 1 + exit 10 + ; 5 2 + bla exit 100 +";;
@@ -123,52 +142,50 @@ fun forth_execute_word_code f code=
 // var text = "9 8 7 1 2 1 pick";;
 // var text = ": test dup >r 10 + r> * ; 10 test";;
 // var text = "' bla";;
-var text = "1 . space 2 . space 3 . space 4 . ( test aa bb ) space 65 emit";;
+// var text = "
+// : bla 1 + exit 10 + ; 5 2 + bla . space
+// 1 . space 2 . space 3 . space 4 . ( test aa bb )
+// space 65 emit";;
+var text = ": bla begin dup . 1 - dup 0 = until ; 5 bla";;
 
 fun inter text=
     if forth_dictionary==nil then forth_init_dictionary;
 
-    let 0 -> start in // current token start
-    let 0 -> end in  // current token end
-    let 0 -> parentheses in // parentheses depth
-    let strlen text -> text_len in
+    let [start:0 end:0 end_ln:0 parentheses:0 input:text text_len:(strlen text) token:nil] -> i in
     let [stack:nil rstack:nil pc:0] -> f in (
-        while (f.pc != nil) && (end != text_len) do (
-            // TODO Skip leading spaces
-            set end = strstr text " " start;
-            if end == nil then set end = text_len;
-            let strsub text start (end-start) -> cur in (
-                set start = end + 1;
-                let forth_get_word cur forth_dictionary -> word in (
-                    if word.func == #forth_p then ( // open parentheses
-                        set parentheses = parentheses + 1
-                    );
+        while (f.pc != nil) && (i.end != i.text_len) do (
+            forth_get_token i;
+            let forth_get_word i.token forth_dictionary -> word in (
+                // TODO \ comment to end of line
 
-                    if parentheses > 0 then ( // inside parentheses
-                        if !strcmp cur ")" then set parentheses = parentheses - 1;
-                        0
+                if word.func == #forth_p then ( // open parentheses
+                    set i.parentheses = i.parentheses + 1
+                );
 
-                    ) else if f.state == FORTH_STATE_COMPILATION then (  // compilation state
-                        if word.func == #forth_semi then (
-                            set f.state = FORTH_STATE_NORMAL;
-                            let forth_word_list_to_array (rev f.new_word_definition nil) -> code in
-                            set forth_dictionary=[ name:f.new_word_name code:code ]::forth_dictionary;
-                            set f.new_word_name = nil;
-                            set f.new_word_definition = nil;
-                            0
-                        ) else if f.new_word_name == nil then (
+                if i.parentheses > 0 then ( // inside parentheses
+                    if !strcmp i.token ")" then set i.parentheses = i.parentheses - 1;
+                    0
+
+                ) else if f.state == FORTH_STATE_COMPILATION then (  // compilation state
+                    if word.immediate == FORTH_TRUE then (
+                        // immediate word, execute now
+                        forth_execute_word f word
+
+                    ) else (
+                        Secho "--> compiling "; Secho i.token; Secholn "";
+                        if f.new_word_name == nil then (
                             // first word after ":" is the new word's name
-                            set f.new_word_name = cur;
+                            set f.new_word_name = i.token;
                             0
                         ) else (
                             // add word to the latest defined word's code
                             set f.new_word_definition = word :: f.new_word_definition;
                             0
                         )
-
-                    ) else ( // normal state
-                        forth_execute_word f word
                     )
+
+                ) else ( // normal state
+                    forth_execute_word f word
                 )
             )
         );

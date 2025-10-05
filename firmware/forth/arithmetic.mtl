@@ -5,7 +5,7 @@
  */
 
 /**
- * Adds ( n1 n2 - sum )
+ * + Adds ( n1 n2 - sum )
  */
 fun forth_sum f=
     let forth_pop f -> a in
@@ -13,7 +13,7 @@ fun forth_sum f=
     forth_push f (a+b);;
 
 /**
- * Subtracts ( n1 n2 - difference )
+ * - Subtracts ( n1 n2 - difference )
  */
 fun forth_sub f=
     let forth_pop f -> a in
@@ -21,35 +21,35 @@ fun forth_sub f=
     forth_push f (b-a);;
 
 /**
- * Increments top of stack by 1 ( n -- n+1 )
+ * 1+ Increments top of stack by 1 ( n -- n+1 )
  */
 fun forth_one_plus f=
     let forth_pop f -> a in
     forth_push f (a+1);;
 
 /**
- * Decrements top of stack by 1 ( n -- n-1 )
+ * 1- Decrements top of stack by 1 ( n -- n-1 )
  */
 fun forth_one_minus f=
     let forth_pop f -> a in
     forth_push f (a-1);;
 
 /**
- * Increments top of stack by 2 ( n -- n+2 )
+ * 2+ Increments top of stack by 2 ( n -- n+2 )
  */
 fun forth_two_plus f=
     let forth_pop f -> a in
     forth_push f (a+2);;
 
 /**
- * Decrements top of stack by 2 ( n -- n-2 )
+ * 2- Decrements top of stack by 2 ( n -- n-2 )
  */
 fun forth_two_minus f=
     let forth_pop f -> a in
     forth_push f (a-2);;
 
 /**
- * Multiplies ( n1 n2 - product )
+ * * Multiplies ( n1 n2 - product )
  */
 fun forth_mul f=
     let forth_pop f -> a in
@@ -57,7 +57,7 @@ fun forth_mul f=
     forth_push f (a*b);;
 
 /**
- * Divides ( n1 n2 - quotient )
+ * / Divides ( n1 n2 - quotient )
  */
 fun forth_div f=
     let forth_pop f -> a in
@@ -66,7 +66,7 @@ fun forth_div f=
     else forth_push f (b / a);;
 
 /**
- * Modulus ( n1 n2 - remainder )
+ * MOD Modulus ( n1 n2 - remainder )
  */
 fun forth_mod f=
     let forth_pop f -> a in
@@ -75,7 +75,7 @@ fun forth_mod f=
     else forth_push f (b % a);;
 
 /**
- * Divides and Modulus ( n1 n2 - remainder quotient )
+ * /MOD Divides and Modulus ( n1 n2 - remainder quotient )
  */
 fun forth_div_mod f=
     let forth_pop f -> a in
@@ -84,7 +84,7 @@ fun forth_div_mod f=
     else (forth_push f (b % a); forth_push f (b / a));;
 
 /**
- * Multiplies and Divides ( n1 n2 n3 - (n2*n1)/n3 )
+ * * / Multiplies and Divides ( n1 n2 n3 - (n2*n1)/n3 )
  */
 fun forth_times_div f=
     let forth_pop f -> a in
@@ -94,7 +94,7 @@ fun forth_times_div f=
     else forth_push f ((b*a) / c);;
 
 /**
- * Multiplies and Divides and Modulus ( n1 n2 n3 - remainder quotient )
+ * * /MOD Multiplies and Divides and Modulus ( n1 n2 n3 - remainder quotient )
  */
 fun forth_times_div_mod f=
     let forth_pop f -> a in
@@ -104,7 +104,7 @@ fun forth_times_div_mod f=
     else (forth_push f ((b*a) % c); forth_push f ((b*a) / c));;
 
 /**
- * Minimum of top two numbers ( n1 n2 - min )
+ * MIN Minimum of top two numbers ( n1 n2 - min )
  */
 fun forth_min f=
     let forth_pop f -> a in
@@ -112,7 +112,7 @@ fun forth_min f=
     forth_push f if a<b then a else b;;
 
 /**
- * Maximum of top two numbers ( n1 n2 - max )
+ * MAX Maximum of top two numbers ( n1 n2 - max )
  */
 fun forth_max f=
     let forth_pop f -> a in
@@ -120,7 +120,7 @@ fun forth_max f=
     forth_push f if a>b then a else b;;
 
 /**
- * Absolute value ( n -- abs(n) )
+ * ABS Absolute value ( n -- abs(n) )
  */
 fun forth_abs f=
     let forth_pop f -> a in

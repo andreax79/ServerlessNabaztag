@@ -5,7 +5,7 @@
  */
 
 /**
- * Display n ( n -- )
+ * . Display n ( n -- )
  */
 fun forth_d f=
     let forth_pop f -> a in
@@ -13,21 +13,21 @@ fun forth_d f=
     0;;
 
 /**
- * Display CR ( -- )
+ * CR Display CR ( -- )
  */
 fun forth_cr f=
     set f.output = "\n" :: f.output;
     0;;
 
 /**
- * Display space ( -- )
+ * SPACE Display space ( -- )
  */
 fun forth_space f=
     set f.output = " " :: f.output;
     0;;
 
 /**
- * Emit character ( char -- )
+ * EMIT Emit character ( char -- )
  */
 fun forth_emit f=
     let forth_pop f -> a in
@@ -38,7 +38,7 @@ fun forth_emit f=
     );;
 
 /**
- * Character value for a space ( -- char )
+ * BL Character value for a space ( -- char )
  */
 fun forth_bl f=
-    forth_push f 20;;
+    forth_push f 32;;
