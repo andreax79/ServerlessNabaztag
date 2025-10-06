@@ -11,14 +11,14 @@ fun forth_abort f=
     set f.stack = nil;
     set f.rstack = nil;
     set f.pc = nil; // end execution
-    0;;
+    nil;;
 
 /**
  * EXIT Return control to the caller
  */
 fun forth_exit f=
     set f.pc = nil; // end execution
-    0;;
+    nil;;
 
 /**
  * : Begin a new word definition
@@ -32,7 +32,7 @@ fun forth_colon f=
         set f.state = FORTH_STATE_COMPILATION;
         set f.new_word_name = nil;
         set f.new_word_definition = nil;
-        0
+        nil
     );;
 
 /**
@@ -48,19 +48,19 @@ fun forth_semi f=
         set forth_dictionary=[ name:f.new_word_name code:code ]::forth_dictionary;
         set f.new_word_name = nil;
         set f.new_word_definition = nil;
-        0
+        nil
     );;
 
 fun forth_p f=
-    0;;
+    nil;;
 
 /**
  * Unconditional jump ( addr -- )
  */
 fun forth_jmp f=
     let forth_pop f -> addr in
-    if addr != nil then set f.pc = addr; // jump to addr
-    0;;
+    if addr.int != nil then set f.pc = addr.int; // jump to addr
+    nil;;
 
 /**
  * Jump if zero ( addr cond -- )
@@ -68,8 +68,8 @@ fun forth_jmp f=
 fun forth_jz f=
     let forth_pop f -> addr in
     let forth_pop f -> cond in
-    if (cond == 0) && (addr != nil) then set f.pc = addr; // if cond is false , jump to addr
-    0;;
+    if (cond.int == 0) && (addr.int != nil) then set f.pc = addr.int; // if cond is false , jump to addr
+    nil;;
 
 /**
  * BEGIN Begin a loop (immediate)  ( -- )
@@ -81,7 +81,7 @@ fun forth_begin f=
         forth_exit f
     ) else (
         set f.cstack = (listlen f.new_word_definition) :: f.cstack;
-        0
+        nil
     );;
 
 /**
@@ -95,13 +95,12 @@ fun forth_until f=
     ) else (
         let hd f.cstack -> loop_start in (
             if loop_start == nil then (
-                forth_abort f;
-                0
+                forth_abort f
             ) else (
                 // Remove the loop start from the control stack
                 set f.cstack = tl f.cstack;
                 set f.new_word_definition = [ name:"jz" func:#forth_jz] :: [int:loop_start] :: f.new_word_definition;
-                0
+                nil
             )
         )
     );;

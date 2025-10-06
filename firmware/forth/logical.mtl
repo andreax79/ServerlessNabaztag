@@ -5,12 +5,24 @@
  */
 
 /**
+ * True ( -- true )
+ */
+fun forth_true f=
+    forth_push f [int:FORTH_TRUE];;
+
+/**
+ * False ( -- false )
+ */
+fun forth_false f=
+    forth_push f [int:FORTH_FALSE];;
+
+/**
  * Logical AND ( n1 n2 -- flag )
  */
 fun forth_and f=
     let forth_pop f -> a in
     let forth_pop f -> b in
-    forth_push f if (a!=FORTH_FALSE) && (b!=FORTH_FALSE) then FORTH_TRUE else FORTH_FALSE;;
+    if (a.int!=FORTH_FALSE) && (b.int!=FORTH_FALSE) then forth_true f else forth_false f;;
 
 /**
  * Logical OR ( n1 n2 -- flag )
@@ -18,7 +30,7 @@ fun forth_and f=
 fun forth_or f=
     let forth_pop f -> a in
     let forth_pop f -> b in
-    forth_push f if (a!=FORTH_FALSE) || (b!=FORTH_FALSE) then FORTH_TRUE else FORTH_FALSE;;
+    if (a.int!=FORTH_FALSE) || (b.int!=FORTH_FALSE) then forth_true f else forth_false f;;
 
 /**
  * Logical XOR ( n1 n2 -- flag )
@@ -26,23 +38,12 @@ fun forth_or f=
 fun forth_xor f=
     let forth_pop f -> a in
     let forth_pop f -> b in
-    forth_push f if (a!=FORTH_FALSE) != (b!=FORTH_FALSE) then FORTH_TRUE else FORTH_FALSE;;
+    if (a.int!=FORTH_FALSE) != (b.int!=FORTH_FALSE) then forth_true f else forth_false f;;
 
 /**
  * Logical NOT ( n -- flag )
  */
 fun forth_invert f=
     let forth_pop f -> a in
-    forth_push f if a==FORTH_FALSE then FORTH_TRUE else FORTH_FALSE;;
+    if (a.int==FORTH_FALSE) then forth_true f else forth_false f;;
 
-/**
- * True ( -- true )
- */
-fun forth_true f=
-    forth_push f (FORTH_TRUE);;
-
-/**
- * False ( -- false )
- */
-fun forth_false f=
-    forth_push f FORTH_FALSE;;

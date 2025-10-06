@@ -10,7 +10,7 @@
 fun forth_sum f=
     let forth_pop f -> a in
     let forth_pop f -> b in
-    forth_push f (a+b);;
+    forth_push f [int:(a.int+b.int)];;
 
 /**
  * - Subtracts ( n1 n2 - difference )
@@ -18,35 +18,35 @@ fun forth_sum f=
 fun forth_sub f=
     let forth_pop f -> a in
     let forth_pop f -> b in
-    forth_push f (b-a);;
+    forth_push f [int:(b.int-a.int)];;
 
 /**
  * 1+ Increments top of stack by 1 ( n -- n+1 )
  */
 fun forth_one_plus f=
     let forth_pop f -> a in
-    forth_push f (a+1);;
+    forth_push f [int:(a.int+1)];;
 
 /**
  * 1- Decrements top of stack by 1 ( n -- n-1 )
  */
 fun forth_one_minus f=
     let forth_pop f -> a in
-    forth_push f (a-1);;
+    forth_push f [int:(a.int-1)];;
 
 /**
  * 2+ Increments top of stack by 2 ( n -- n+2 )
  */
 fun forth_two_plus f=
     let forth_pop f -> a in
-    forth_push f (a+2);;
+    forth_push f [int:(a.int+2)];;
 
 /**
  * 2- Decrements top of stack by 2 ( n -- n-2 )
  */
 fun forth_two_minus f=
     let forth_pop f -> a in
-    forth_push f (a-2);;
+    forth_push f [int:(a.int-2)];;
 
 /**
  * * Multiplies ( n1 n2 - product )
@@ -54,7 +54,7 @@ fun forth_two_minus f=
 fun forth_mul f=
     let forth_pop f -> a in
     let forth_pop f -> b in
-    forth_push f (a*b);;
+    forth_push f [int:(a.int*b.int)];;
 
 /**
  * / Divides ( n1 n2 - quotient )
@@ -62,8 +62,8 @@ fun forth_mul f=
 fun forth_div f=
     let forth_pop f -> a in
     let forth_pop f -> b in
-    if a==0 then forth_push f 0
-    else forth_push f (b / a);;
+    if a.int==0 then forth_push f [int:0]
+    else forth_push f [int:(b.int / a.int)];;
 
 /**
  * MOD Modulus ( n1 n2 - remainder )
@@ -71,8 +71,8 @@ fun forth_div f=
 fun forth_mod f=
     let forth_pop f -> a in
     let forth_pop f -> b in
-    if a==0 then forth_push f 0
-    else forth_push f (b % a);;
+    if a.int==0 then forth_push f [int:0]
+    else forth_push f [int:(b.int % a.int)];;
 
 /**
  * /MOD Divides and Modulus ( n1 n2 - remainder quotient )
@@ -80,8 +80,13 @@ fun forth_mod f=
 fun forth_div_mod f=
     let forth_pop f -> a in
     let forth_pop f -> b in
-    if a==0 then (forth_push f 0; forth_push f 0)
-    else (forth_push f (b % a); forth_push f (b / a));;
+    if a.int==0 then (
+        forth_push f [int:0];
+        forth_push f [int:0]
+    ) else (
+        forth_push f [int:(b.int % a.int)];
+        forth_push f [int:(b.int / a.int)]
+    );;
 
 /**
  * * / Multiplies and Divides ( n1 n2 n3 - (n2*n1)/n3 )
@@ -90,8 +95,8 @@ fun forth_times_div f=
     let forth_pop f -> a in
     let forth_pop f -> b in
     let forth_pop f -> c in
-    if c==0 then forth_push f 0
-    else forth_push f ((b*a) / c);;
+    if c.int==0 then forth_push f [int:0]
+    else forth_push f [int:((b.int*a.int) / c.int)];;
 
 /**
  * * /MOD Multiplies and Divides and Modulus ( n1 n2 n3 - remainder quotient )
@@ -100,8 +105,13 @@ fun forth_times_div_mod f=
     let forth_pop f -> a in
     let forth_pop f -> b in
     let forth_pop f -> c in
-    if c==0 then (forth_push f 0; forth_push f 0)
-    else (forth_push f ((b*a) % c); forth_push f ((b*a) / c));;
+    if c.int==0 then (
+        forth_push f [int:0];
+        forth_push f [int:0]
+    ) else (
+        forth_push f [int:((b.int*a.int) % c.int)];
+        forth_push f [int:((b.int*a.int) / c.int)]
+    );;
 
 /**
  * MIN Minimum of top two numbers ( n1 n2 - min )
@@ -109,7 +119,7 @@ fun forth_times_div_mod f=
 fun forth_min f=
     let forth_pop f -> a in
     let forth_pop f -> b in
-    forth_push f if a<b then a else b;;
+    forth_push f [int:(if a.int<b.int then a.int else b.int)];;
 
 /**
  * MAX Maximum of top two numbers ( n1 n2 - max )
@@ -117,11 +127,11 @@ fun forth_min f=
 fun forth_max f=
     let forth_pop f -> a in
     let forth_pop f -> b in
-    forth_push f if a>b then a else b;;
+    forth_push f [int:(if a.int>b.int then a.int else b.int)];;
 
 /**
  * ABS Absolute value ( n -- abs(n) )
  */
 fun forth_abs f=
     let forth_pop f -> a in
-    forth_push f (abs a);;
+    forth_push f [int:abs a.int];;

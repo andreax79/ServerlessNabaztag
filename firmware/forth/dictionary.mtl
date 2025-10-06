@@ -61,6 +61,11 @@ fun forth_init_dictionary=
         [ name:"cr"     func:#forth_cr ] ::
         [ name:"space"  func:#forth_space ] ::
         [ name:"bl"     func:#forth_bl ] ::
+        // List
+        [ name:"nil"    func:#forth_nil ] ::
+        [ name:"::"     func:#forth_colon_colon] ::
+        [ name:"hd"     func:#forth_hd ] ::
+        [ name:"tl"     func:#forth_tl ] ::
         //
         [ name:":"      func:#forth_colon] ::
         [ name:";"      func:#forth_semi immediate:FORTH_TRUE] ::
@@ -75,7 +80,8 @@ fun forth_init_dictionary=
 
 // TODO: case insensitive dictionary lookup
 fun forth_get_word name forth_dictionary=
-    if forth_dictionary==nil then [name:name int:(atoi name)]
+    // TODO: other types of words
+    if forth_dictionary==nil then nil // [name:name int:(atoi name)]
     else let hd forth_dictionary -> head in
         if !strcmp name head.name then head
         else forth_get_word name (tl forth_dictionary);;

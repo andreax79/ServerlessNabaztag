@@ -9,7 +9,7 @@
  */
 fun forth_push f x=
     set f.stack = x :: f.stack;
-    x;;
+    nil;;
 
 /**
  * Pop a value from the stack
@@ -33,7 +33,7 @@ fun forth_stack_at f i=
  */
 fun forth_rpush f x=
     set f.rstack = x :: f.rstack;
-    x;;
+    nil;;
 
 /**
  * Pop a value from the return stack
@@ -50,17 +50,17 @@ fun forth_rpop f=
  */
 fun forth_dup f=
     if f.stack==nil then nil
-    else let hd f.stack -> head in (
+    else
+        let hd f.stack -> head in
         set f.stack = head :: f.stack;
-        head
-    );;
+    nil;;
 
 /**
  * Discard top of stack ( n --  )
  */
 fun forth_drop f=
     let forth_pop f -> a in
-    a;;
+    nil;;
 
 /**
  * Exchange top two stack items ( n1 n2 -- n2 n1 )
@@ -68,10 +68,8 @@ fun forth_drop f=
 fun forth_swap f=
     let forth_pop f -> a in
     let forth_pop f -> b in
-    (
-        set f.stack = b :: a :: f.stack;
-        b
-    );;
+    set f.stack = b :: a :: f.stack;
+    nil;;
 
 /**
  * Make copy of second item on top ( n1 n2 -- n1 n2 n1 )
@@ -79,10 +77,8 @@ fun forth_swap f=
 fun forth_over f=
     let forth_pop f -> a in
     let forth_pop f -> b in
-    (
-        set f.stack = b :: a :: b :: f.stack;
-        b
-    );;
+    set f.stack = b :: a :: b :: f.stack;
+    nil;;
 
 /**
  * Rotate third item to top ( n1 n2 n3 -- n2 n3 n1 )
@@ -91,17 +87,15 @@ fun forth_rot f=
     let forth_pop f -> a in
     let forth_pop f -> b in
     let forth_pop f -> c in
-    (
-        set f.stack = b :: a :: c :: f.stack;
-        b
-    );;
+    set f.stack = b :: a :: c :: f.stack;
+    nil;;
 
 /**
  * Copy nth item to top of stack ( n ... ni - n ... ni ni )
  */
 fun forth_pick f=
     let forth_pop f -> n in
-    let forth_stack_at f n -> v in
+    let forth_stack_at f n.int -> v in
     forth_push f v;;
 
 // fun forth_roll f= // TODO
@@ -112,10 +106,8 @@ fun forth_pick f=
 fun forth_nip f=
     let forth_pop f -> a in
     let forth_pop f -> b in
-    (
-        set f.stack = a :: f.stack;
-        a
-    );;
+    set f.stack = a :: f.stack;
+    nil;;
 
 /**
  * Copy the first (top) stack item below the second stack item ( n1 n2 -- n1 n2 n1 )
@@ -123,18 +115,17 @@ fun forth_nip f=
 fun forth_tuck f=
     let forth_pop f -> a in
     let forth_pop f -> b in
-    (
-        set f.stack = b :: a :: b :: f.stack;
-        b
-    );;
+    set f.stack = b :: a :: b :: f.stack;
+    nil;;
 
 /**
  * Duplicate top of stack if not zero ( x -- 0 | x x )
  */
 fun forth_qdup f=
     if f.stack==nil then nil
-    else let hd f.stack -> v in
-    if v!=0 then forth_push f v;;
+    else
+        let hd f.stack -> v in
+        if v.int!=0 then forth_push f v;;
 
 /**
  * Move top item to ‘return stack” for temporary storage ( x -- ) ( R: -- x )
@@ -155,15 +146,15 @@ fun forth_r_from f=
  */
 fun forth_r_fetch f=
     if f.rstack==nil then nil
-    else let hd f.rstack -> head in (
+    else
+        let hd f.rstack -> head in
         set f.stack = head :: f.stack;
-        head
-    );;
+    nil;;
 
 /**
  * Count number of items on stack ( -- count )
  */
 fun forth_depth f=
     let listlen f.stack -> l in
-    forth_push f l;;
+    forth_push f [int:l];;
 

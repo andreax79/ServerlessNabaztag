@@ -25,8 +25,8 @@ type Word=[
     immediate           // true if immediate word
     func                // function if primitive
     int                 // data field - integer value for variables/constants
-    // str                 // data field - string value
-    // lst                 // data field - list of Words
+    str                 // data field - string value
+    lst                 // data field - list of Words
 ];;
 
 type Interpreter=[
@@ -41,6 +41,7 @@ type Interpreter=[
 
 const FORTH_TRUE = -1;;
 const FORTH_FALSE = 0;;
+
 const FORTH_STATE_NORMAL = 0;;
 const FORTH_STATE_COMPILATION = -1;;
 const FORTH_SPACE = 32;; // ASCII space
@@ -53,9 +54,9 @@ proto forth_get_word 2;;
 proto forth_word_list_to_array 1;;
 
 #include forth/stack.mtl
+#include forth/logical.mtl
 #include forth/arithmetic.mtl
 #include forth/comparison.mtl
-#include forth/logical.mtl
 #include forth/output.mtl
 #include forth/list.mtl
 #include forth/misc.mtl
@@ -73,11 +74,15 @@ fun forth_word_list_to_array words =
     );;
 
 fun forth_print_word w=
+    if w.int != nil then (Iecholn w.int; 0)
+    else if w.str != nil then (Secho w.str; Secholn " [str]"; 0)
+    else (
     Secho w.name; Secho " [";
     if w.func!=nil then (Secho "func"; 0)
     else if w.code!=nil then (Secho "code"; 0)
     else (Secho "int "; Iecho w.int; 0);
-    Secholn "]";;
+    Secholn "]"; 0
+    );;
 
 proto forth_execute_word_code 2;;
 
@@ -88,21 +93,13 @@ proto forth_execute_word_code 2;;
 fun forth_execute_word f word=
     Secho "pc: "; Iecho f.pc; Secho " word: "; forth_print_word word;
     set f.pc = f.pc + 1;
-
-    if word.func != nil then (
-        // Execute primitive function
-        call word.func [f]
-    )
-    else if word.code != nil then (
-        // Call a colon-defined word
-        forth_execute_word_code f word.code
-    )
-    else (
-        // Push integer value onto the stack
-        forth_push f word.int
-    );
-    // dumpListI f.stack;
-    0;;
+    // Execute primitive function
+    if word.func != nil then call word.func [f]
+    // Execute a colon-defined word
+    else if word.code != nil then forth_execute_word_code f word.code
+    // Push the word onto the stack
+    else forth_push f word
+    ;;
 
 // TODO recursive words
 
@@ -110,12 +107,13 @@ fun forth_execute_word f word=
  * Run a sequence of Words as code, managing the return stack for nested calls.
  */
 fun forth_execute_word_code f code=
-    forth_rpush f f.pc;
+    forth_rpush f [int:f.pc];
     set f.pc = 0;
     while (f.pc != nil) && (f.pc < (tablen code)) do
         let code.(f.pc) -> word in
             forth_execute_word f word;
-    set f.pc = forth_rpop f;
+    let forth_rpop f -> ret_addr in
+        set f.pc = ret_addr.int;
     0;;
 
 /**
@@ -139,6 +137,12 @@ fun forth_get_token i=
     set i.start = i.end + 1;
     0;;
 
+fun forth_new_word token=
+    if is_numeric token then
+        [int:(atoi token)]
+    else
+        [str:token];;
+
 // var text = "5 2 + 10 * dup 1 + >";;
 // var text = ": bla 1 + exit 10 + ; 5 2 + bla exit 100 +";;
 // var text = "1 2 3 4 dup";;
@@ -148,8 +152,9 @@ fun forth_get_token i=
 // var text = "' bla";;
 var text = "
 : bla 1 + exit 10 + ; 5 2 + bla . space
-1 . space 2 . space 3 . space 4 . ( test aa bb )
-space 65 emit";;
+1 . space 2 . space 3 . space 4 . ( test aa bb ) space 65 emit cr
+Spaghetti . cr
+nil 10 :: 20 :: 30 :: dup dup . space tl . space . cr";;
 // var text = ": bla begin dup . 1 - dup 0 = until ; 5 bla \"ciao\" emit";;
 // var text = "\"ciao ciao\" emit";;
 
@@ -161,13 +166,15 @@ fun inter text=
         while (f.pc != nil) && (i.end != i.text_len) do (
             forth_get_token i;
             let forth_get_word i.token forth_dictionary -> word in (
+                // TODO: other types of words
+                if word == nil then set word = forth_new_word i.token;
                 // TODO \ comment to end of line
 
                 if word.func == #forth_p then ( // open parentheses
                     set i.parentheses = i.parentheses + 1
                 );
 
-                if i.parentheses > 0 then ( // inside parentheses
+                if i.parentheses > 0 then ( // inside parentheses - ignore tokens until closing parenthesis
                     if !strcmp i.token ")" then set i.parentheses = i.parentheses - 1;
                     0
 

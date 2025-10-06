@@ -4,41 +4,57 @@
  * This code is licensed under the MIT License
  */
 
+proto forth_lst_to_str 1 ;;
+
+fun forth_word_fmt word=
+    if word.int != nil then itoa word.int
+    else if word.str != nil then word.str
+    else if word.lst != nil then forth_lst_to_str word.lst
+    else "?";;
+
+fun forth_lst_to_str lst=
+    let nil -> t in (
+        for l=lst; l!=nil; tl l do
+            set t = (forth_word_fmt (hd l)) :: (if (l != nil) then " " else "") :: t;
+        strcatlist t
+    );;
+
 /**
  * . Display n ( n -- )
  */
 fun forth_d f=
     let forth_pop f -> a in
-    set f.output = (itoa a) :: f.output;
-    0;;
+    if a.int != nil then set f.output = (itoa a.int) :: f.output
+    else if a.str != nil then set f.output = a.str :: f.output
+    else if a.lst != nil then set f.output = (forth_lst_to_str a.lst) :: f.output
+    else set f.output = "?" :: f.output;
+    nil;;
 
 /**
  * CR Display CR ( -- )
  */
 fun forth_cr f=
     set f.output = "\n" :: f.output;
-    0;;
+    nil;;
 
 /**
  * SPACE Display space ( -- )
  */
 fun forth_space f=
     set f.output = " " :: f.output;
-    0;;
+    nil;;
 
 /**
  * EMIT Emit character ( char -- )
  */
 fun forth_emit f=
     let forth_pop f -> a in
-    let " " -> s in (
-        strset s 0 a;
-        set f.output = s :: f.output;
-        0
-    );;
+    let " " -> s in
+    set f.output = (strset s 0 a.int) :: f.output;
+    nil;;
 
 /**
  * BL Character value for a space ( -- char )
  */
 fun forth_bl f=
-    forth_push f 32;;
+    forth_push f [int:32];;
