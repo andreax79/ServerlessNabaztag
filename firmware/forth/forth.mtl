@@ -25,6 +25,8 @@ type Word=[
     immediate           // true if immediate word
     func                // function if primitive
     int                 // data field - integer value for variables/constants
+    // str                 // data field - string value
+    // lst                 // data field - list of Words
 ];;
 
 type Interpreter=[
@@ -41,6 +43,8 @@ const FORTH_TRUE = -1;;
 const FORTH_FALSE = 0;;
 const FORTH_STATE_NORMAL = 0;;
 const FORTH_STATE_COMPILATION = -1;;
+const FORTH_SPACE = 32;; // ASCII space
+const FORTH_DOUBLE_QUOTE = 34;; // ASCII " (double quote)
 
 // The dictionary is a list of Words
 var forth_dictionary;;
@@ -53,6 +57,7 @@ proto forth_word_list_to_array 1;;
 #include forth/comparison.mtl
 #include forth/logical.mtl
 #include forth/output.mtl
+#include forth/list.mtl
 #include forth/misc.mtl
 #include forth/dictionary.mtl
 
@@ -84,14 +89,7 @@ fun forth_execute_word f word=
     Secho "pc: "; Iecho f.pc; Secho " word: "; forth_print_word word;
     set f.pc = f.pc + 1;
 
-    if word.func == #forth_colon then (
-        // Enter compilation state
-        set f.state = FORTH_STATE_COMPILATION;
-        set f.new_word_name = nil;
-        set f.new_word_definition = nil;
-        0
-
-    ) else if word.func != nil then (
+    if word.func != nil then (
         // Execute primitive function
         call word.func [f]
     )
@@ -130,7 +128,13 @@ fun forth_get_token i=
     if (i.end_ln != nil) && ((i.end == nil) || (i.end_ln < i.end)) then set i.end = i.end_ln;
     if i.end == nil then set i.end = i.text_len;
     // Skip leading spaces
-    while (i.start < i.end) && ((strget i.input i.start) == 32) do set i.start = i.start + 1;
+    while (i.start < i.end) && ((strget i.input i.start) == FORTH_SPACE) do set i.start = i.start + 1;
+    // if (strget i.input i.start) == FORTH_DOUBLE_QUOTE then  // Token is a string enclosed in double quotes
+    //     let strstr i.input "\"" (i.start+1) -> quote_end in
+    //         if quote_end != nil then (
+    //             set i.start = i.start + 1; // skip opening quote
+    //             set i.end = quote_end  // position before closing quote
+    //         );
     set i.token = strsub i.input i.start (i.end-i.start);
     set i.start = i.end + 1;
     0;;
@@ -142,11 +146,12 @@ fun forth_get_token i=
 // var text = "9 8 7 1 2 1 pick";;
 // var text = ": test dup >r 10 + r> * ; 10 test";;
 // var text = "' bla";;
-// var text = "
-// : bla 1 + exit 10 + ; 5 2 + bla . space
-// 1 . space 2 . space 3 . space 4 . ( test aa bb )
-// space 65 emit";;
-var text = ": bla begin dup . 1 - dup 0 = until ; 5 bla";;
+var text = "
+: bla 1 + exit 10 + ; 5 2 + bla . space
+1 . space 2 . space 3 . space 4 . ( test aa bb )
+space 65 emit";;
+// var text = ": bla begin dup . 1 - dup 0 = until ; 5 bla \"ciao\" emit";;
+// var text = "\"ciao ciao\" emit";;
 
 fun inter text=
     if forth_dictionary==nil then forth_init_dictionary;
@@ -172,7 +177,7 @@ fun inter text=
                         forth_execute_word f word
 
                     ) else (
-                        Secho "--> compiling "; Secho i.token; Secholn "";
+                        // Secho "--> compiling "; Secho i.token; Secholn "";
                         if f.new_word_name == nil then (
                             // first word after ":" is the new word's name
                             set f.new_word_name = i.token;

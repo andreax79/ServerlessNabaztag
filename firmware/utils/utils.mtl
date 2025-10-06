@@ -247,5 +247,22 @@ fun listtotab l=
         t
     );;
 
+/**
+ * Checks if a string represents a numeric value (integer).
+ * Allows an optional leading minus sign.
+ * Returns 1 if numeric, 0 otherwise.
+ */
+fun is_numeric str=
+    let 1 -> result in
+    let strlen str -> length in (
+        for i=0; i<length do (
+            let strget str i -> ch in (
+                if (i==0) && (ch=='-') then 0 // allow leading minus
+                else if ((ch < 48) || (ch > 57)) then set result = 0
+            )
+        );
+        result
+    );;
+
 fun getBytecodeRevision =
     strsub BYTECODE_REVISION_STR 6 ((strlen BYTECODE_REVISION_STR) - 8);;

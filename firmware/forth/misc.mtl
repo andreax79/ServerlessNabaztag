@@ -20,8 +20,20 @@ fun forth_exit f=
     set f.pc = nil; // end execution
     0;;
 
+/**
+ * : Begin a new word definition
+ */
 fun forth_colon f=
-    0;;
+    if f.state == FORTH_STATE_COMPILATION then (
+        set f.output = "\n; Nested definitions not allowed\n" :: f.output;
+        forth_exit f
+    ) else (
+        // Enter compilation state
+        set f.state = FORTH_STATE_COMPILATION;
+        set f.new_word_name = nil;
+        set f.new_word_definition = nil;
+        0
+    );;
 
 /**
  * ; End a word definition
