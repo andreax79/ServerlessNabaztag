@@ -22,11 +22,11 @@ type Forth=[
 type Word=[
     name                // name of the defined word
     code                // array of Words if a colon
-    immediate           // true if immediate word
     func                // function if primitive
     int                 // data field - integer value for variables/constants
     str                 // data field - string value
-    lst                 // data field - list of Words
+    wstack              // data field - stack of Words
+    immediate           // true if immediate word
 ];;
 
 type Interpreter=[
@@ -37,6 +37,7 @@ type Interpreter=[
     input               // input text
     text_len            // length of the input text
     token               // current token
+    quoted              // true if the token is a quoted string
 ];;
 
 const FORTH_TRUE = -1;;
@@ -58,7 +59,8 @@ proto forth_word_list_to_array 1;;
 #include forth/arithmetic.mtl
 #include forth/comparison.mtl
 #include forth/output.mtl
-#include forth/list.mtl
+#include forth/wstack.mtl
+#include forth/control.mtl
 #include forth/misc.mtl
 #include forth/dictionary.mtl
 
@@ -127,14 +129,18 @@ fun forth_get_token i=
     if i.end == nil then set i.end = i.text_len;
     // Skip leading spaces
     while (i.start < i.end) && ((strget i.input i.start) == FORTH_SPACE) do set i.start = i.start + 1;
-    // if (strget i.input i.start) == FORTH_DOUBLE_QUOTE then  // Token is a string enclosed in double quotes
-    //     let strstr i.input "\"" (i.start+1) -> quote_end in
-    //         if quote_end != nil then (
-    //             set i.start = i.start + 1; // skip opening quote
-    //             set i.end = quote_end  // position before closing quote
-    //         );
-    set i.token = strsub i.input i.start (i.end-i.start);
-    set i.start = i.end + 1;
+    // Handle quoted strings
+    if (strget i.input i.start) == FORTH_DOUBLE_QUOTE then (
+        set i.start = i.start + 1; // skip opening quote
+        set i.end = strstr i.input "\"" (i.start) + 1;
+        set i.token = strsub i.input i.start (i.end-i.start);
+        set i.start = i.end + 2; // skip closing quote and following space
+        set i.quoted = 1
+    ) else (
+        set i.token = strsub i.input i.start (i.end-i.start);
+        set i.start = i.end + 1;
+        set i.quoted = 0
+    );
     0;;
 
 fun forth_new_word token=
@@ -151,10 +157,19 @@ fun forth_new_word token=
 // var text = ": test dup >r 10 + r> * ; 10 test";;
 // var text = "' bla";;
 var text = "
-: bla 1 + exit 10 + ; 5 2 + bla . space
+: bla 1 + exit 10 + ;
+5 2 + bla . space
 1 . space 2 . space 3 . space 4 . ( test aa bb ) space 65 emit cr
 Spaghetti . cr
-nil 10 :: 20 :: 30 :: dup dup . space tl . space . cr";;
+nil 10 :: 20 :: 30 :: dup dup . space tl . space . cr
+\"ciao mondo\" . cr
+: test2 \"v: \" . dup . space if \"true\" . else \"false\" . then cr ;
+0 test2
+1 test2
+: test3 \"v: \" . dup . space if \"true\" . then cr ;
+0 test3
+1 test3
+";;
 // var text = ": bla begin dup . 1 - dup 0 = until ; 5 bla \"ciao\" emit";;
 // var text = "\"ciao ciao\" emit";;
 
@@ -165,8 +180,7 @@ fun inter text=
     let [stack:nil rstack:nil pc:0] -> f in (
         while (f.pc != nil) && (i.end != i.text_len) do (
             forth_get_token i;
-            let forth_get_word i.token forth_dictionary -> word in (
-                // TODO: other types of words
+            let if i.quoted then nil else forth_get_word i.token forth_dictionary -> word in (
                 if word == nil then set word = forth_new_word i.token;
                 // TODO \ comment to end of line
 
@@ -177,6 +191,34 @@ fun inter text=
                 if i.parentheses > 0 then ( // inside parentheses - ignore tokens until closing parenthesis
                     if !strcmp i.token ")" then set i.parentheses = i.parentheses - 1;
                     0
+                ) else if (strlen i.token) == 0 then ( // empty token, skip
+                    0
+                ) else if word.func == #forth_colon then ( // start of new word definition
+                    if f.state == FORTH_STATE_COMPILATION then (
+                        set f.output = "\nError: Nested ':' not allowed\n" :: f.output;
+                        forth_exit f
+                    ) else (
+                        set f.state = FORTH_STATE_COMPILATION;
+                        set f.new_word_name = nil;
+                        set f.new_word_definition = nil;
+                        0
+                    )
+                ) else if word.func == #forth_semi then ( // end of new word definition
+                    if f.state != FORTH_STATE_COMPILATION then (
+                        set f.output = "\nError: ';' without matching ':'\n" :: f.output;
+                        forth_exit f
+                    ) else if f.new_word_name == nil then (
+                        set f.output = "\nError: ';' without word name\n" :: f.output;
+                        forth_exit f
+                    ) else (
+                        // Finish the new word definition
+                        let forth_word_list_to_array (rev f.new_word_definition nil) -> code in
+                            set forth_dictionary = [ name:f.new_word_name code:code ]::forth_dictionary;
+                            set f.new_word_name = nil;
+                            set f.new_word_definition = nil;
+                            set f.state = FORTH_STATE_NORMAL;
+                            0
+                    )
 
                 ) else if f.state == FORTH_STATE_COMPILATION then (  // compilation state
                     if word.immediate == FORTH_TRUE then (

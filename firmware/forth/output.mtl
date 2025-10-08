@@ -1,20 +1,24 @@
 /**
- * Stack output words for Forth interpreter
+ * Output words for Forth interpreter
  * Copyright (c) 2025 Andrea Bonomi
  * This code is licensed under the MIT License
  */
 
-proto forth_lst_to_str 1 ;;
+proto forth_wstack_to_str 1 ;;
+
+fun forth_write f s=
+    set f.output = s :: f.output;
+    nil;;
 
 fun forth_word_fmt word=
     if word.int != nil then itoa word.int
     else if word.str != nil then word.str
-    else if word.lst != nil then forth_lst_to_str word.lst
+    else if word.wstack != nil then forth_wstack_to_str word.wstack
     else "?";;
 
-fun forth_lst_to_str lst=
+fun forth_wstack_to_str wstack=
     let nil -> t in (
-        for l=lst; l!=nil; tl l do
+        for l=wstack; l!=nil; tl l do
             set t = (forth_word_fmt (hd l)) :: (if (l != nil) then " " else "") :: t;
         strcatlist t
     );;
@@ -24,25 +28,23 @@ fun forth_lst_to_str lst=
  */
 fun forth_d f=
     let forth_pop f -> a in
-    if a.int != nil then set f.output = (itoa a.int) :: f.output
-    else if a.str != nil then set f.output = a.str :: f.output
-    else if a.lst != nil then set f.output = (forth_lst_to_str a.lst) :: f.output
-    else set f.output = "?" :: f.output;
-    nil;;
+    forth_write f
+        if a.int != nil then (itoa a.int)
+        else if a.str != nil then a.str
+        else if a.wstack != nil then forth_wstack_to_str a.wstack
+        else "?";;
 
 /**
  * CR Display CR ( -- )
  */
 fun forth_cr f=
-    set f.output = "\n" :: f.output;
-    nil;;
+    forth_write f "\n";;
 
 /**
  * SPACE Display space ( -- )
  */
 fun forth_space f=
-    set f.output = " " :: f.output;
-    nil;;
+    forth_write f " ";;
 
 /**
  * EMIT Emit character ( char -- )
@@ -50,8 +52,7 @@ fun forth_space f=
 fun forth_emit f=
     let forth_pop f -> a in
     let " " -> s in
-    set f.output = (strset s 0 a.int) :: f.output;
-    nil;;
+    forth_write f (strset s 0 a.int);;
 
 /**
  * BL Character value for a space ( -- char )

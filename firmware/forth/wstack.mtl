@@ -1,0 +1,31 @@
+/**
+ * NIL Push empty stack ( -- wstack )
+ */
+fun forth_nil f=
+    forth_push f [wstack:nil];;
+
+/**
+ * :: Construct a new stack by prepending an element ( wstack x -- wstack' )
+ */
+fun forth_colon_colon f=
+    let forth_pop f -> x in
+    let forth_pop f -> wstack in forth_push f [wstack:(x :: wstack.wstack)];;
+
+/**
+ * HD Get the head of a list ( wstack -- wstack x )
+ */
+fun forth_hd f=
+    let forth_pop f -> wstack in
+    if wstack.wstack == nil then forth_nil f
+    else (
+        forth_push f wstack;
+        forth_push f (hd wstack.wstack)
+    );;
+
+/**
+ * TL Get the tail of a list ( wstack -- wstack' )
+ */
+fun forth_tl f=
+    let forth_pop f -> wstack in
+    if wstack.wstack == nil then forth_nil f
+    else forth_push f [wstack:tl wstack.wstack];;

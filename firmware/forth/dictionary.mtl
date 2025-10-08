@@ -66,14 +66,20 @@ fun forth_init_dictionary=
         [ name:"::"     func:#forth_colon_colon] ::
         [ name:"hd"     func:#forth_hd ] ::
         [ name:"tl"     func:#forth_tl ] ::
-        //
+        // Control
+        [ name:"begin"  func:#forth_begin immediate:FORTH_TRUE] ::
+        [ name:"until"  func:#forth_until immediate:FORTH_TRUE] ::
+        [ name:"if"     func:#forth_if immediate:FORTH_TRUE ] ::
+        [ name:"else"   func:#forth_else immediate:FORTH_TRUE ] ::
+        [ name:"then"   func:#forth_then immediate:FORTH_TRUE ] ::
+        [ name:"jmp"    func:#forth_jmp ] ::
+        [ name:"?jmp"   func:#forth_qjmp ] ::
+        [ name:"abort"  func:#forth_abort ] ::
+        [ name:"exit"   func:#forth_exit ] ::
+        // Misc
         [ name:":"      func:#forth_colon] ::
         [ name:";"      func:#forth_semi immediate:FORTH_TRUE] ::
         [ name:"("      func:#forth_p] ::
-        [ name:"abort"  func:#forth_abort ] ::
-        [ name:"exit"   func:#forth_exit ] ::
-        [ name:"begin"  func:#forth_begin immediate:FORTH_TRUE] ::
-        [ name:"until"  func:#forth_until immediate:FORTH_TRUE] ::
         nil
     ;;
 

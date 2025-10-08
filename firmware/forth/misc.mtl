@@ -5,22 +5,6 @@
  */
 
 /**
- * ABORT Empty the data stack and the return stack ( i * x -- ) ( R: j * x -- )
- */
-fun forth_abort f=
-    set f.stack = nil;
-    set f.rstack = nil;
-    set f.pc = nil; // end execution
-    nil;;
-
-/**
- * EXIT Return control to the caller
- */
-fun forth_exit f=
-    set f.pc = nil; // end execution
-    nil;;
-
-/**
  * : Begin a new word definition
  */
 fun forth_colon f=
@@ -54,53 +38,3 @@ fun forth_semi f=
 fun forth_p f=
     nil;;
 
-/**
- * Unconditional jump ( addr -- )
- */
-fun forth_jmp f=
-    let forth_pop f -> addr in
-    if addr.int != nil then set f.pc = addr.int; // jump to addr
-    nil;;
-
-/**
- * Jump if zero ( addr cond -- )
- */
-fun forth_jz f=
-    let forth_pop f -> addr in
-    let forth_pop f -> cond in
-    if (cond.int == 0) && (addr.int != nil) then set f.pc = addr.int; // if cond is false , jump to addr
-    nil;;
-
-/**
- * BEGIN Begin a loop (immediate)  ( -- )
- * Store the current position in the control stack
- */
-fun forth_begin f=
-    if f.state != FORTH_STATE_COMPILATION then (
-        set f.output = "\nBEGIN Compile mode only\n" :: f.output;
-        forth_exit f
-    ) else (
-        set f.cstack = (listlen f.new_word_definition) :: f.cstack;
-        nil
-    );;
-
-/**
- * UNTIL End a loop (immediate)  ( x -- )
- * Compile a conditional jump back to the matching BEGIN
- */
-fun forth_until f=
-    if f.state != FORTH_STATE_COMPILATION then (
-        set f.output = "\nUNTIL Compile mode only\n" :: f.output;
-        forth_exit f
-    ) else (
-        let hd f.cstack -> loop_start in (
-            if loop_start == nil then (
-                forth_abort f
-            ) else (
-                // Remove the loop start from the control stack
-                set f.cstack = tl f.cstack;
-                set f.new_word_definition = [ name:"jz" func:#forth_jz] :: [int:loop_start] :: f.new_word_definition;
-                nil
-            )
-        )
-    );;
