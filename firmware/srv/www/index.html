@@ -3,11 +3,27 @@
   <title>Nabaztag</title>
   <link rel="stylesheet" href="milligram.css" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style type="text/css">
+body {
+  background: #2c2f34;
+  color: #f2f2f2;
+}
+input, select, textarea {
+  color: #f2f2f2;
+}
+  </style>
 </head>
 <body>
 <div class="container">
   <div class="row">
     <h1>Nabaztag</h1>
+  </div>
+  <div class="row">
+    <div class="column">
+       <ul>
+         <li><a id="openAPI" href="http://andreax79.github.io/ServerlessNabaztag/vl/api/" target="_blank">API Documentation</a></li>
+       </ul>
+    </div>
   </div>
 
   <div class="row">
@@ -333,6 +349,8 @@ async function load() {
     document.getElementById("longitudeField").value = status.longitude;
     document.getElementById("wakeUpField").value = status.wake_up;
     document.getElementById("goToBedField").value = status.go_to_bed;
+
+    document.getElementById("openAPI").href += "?openapi_url=http%3A%2F%2F" + window.location.host + "%2Fopenapi.yaml";
 }
 
 load();

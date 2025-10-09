@@ -22,6 +22,7 @@ firmware:
 	@$(COMPILER) -s "nominal.mtl" "bootcode.bin"
 	@rm -f nominal.mtl
 	@cp bootcode.bin vl/bc.jsp
+	@cp firmware/srv/www/openapi.yaml vl/api/openapi.yaml
 	@echo "Firmware copied to $$PWD/vl/bc.jsp"
 
 run-sim:

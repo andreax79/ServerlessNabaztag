@@ -7,6 +7,9 @@ With this firmware, you can connect at http://\<YOURNABAZTAGIP\>/ and completely
 
 ![](/imgs/screenshot.png "Screenshot")
 
+The OpenAPI specification is available ad http://\<YOURNABAZTAGIP\>/openapi.json and
+the swagger UI at http://andreax79.github.io/ServerlessNabaztag/vl/api/
+
 All the commands can be called with a single HTTP requests from an external program/script, example:
 
 ```
@@ -15,25 +18,22 @@ $ curl http://nabaztag/wakeup
 
 In examples/check_mail.py, there is a script that turns on the nose when you have unread email and changes the lights color according to the weather forecast.
 
-Configure the rabbit
+Configure the rabbit 
 --------------------
 
 * Unplug the rabbit, press the button on its head and hold it while you replug your rabbit. When all the lights are blue, you can release the button
 * On your computer, connect to the wifi network created by your rabbit (the name should be Nabaztag\<XX\>)
 * Go to the configuration page at the following address: http://192.168.0.1
-* At the bottom of the page, in General Info, change "Violet Platform" to http://nabaztag.joe.dj/vl
+* At the bottom of the page, in General Info, change "Violet Platform" to andreax79.github.io/ServerlessNabaztag/vl (without http://)
 * Click on Update settings and wait for rabbit to reboot.
 * You can now connect to the IP of your rabbit, configure and control it. (note: if your rabbit IP is assigned with DHCP, you have to discover the IP address. Usually you can check the assigned IP from some page on your router)
 
+Install on your web server (HTTP only)
+--------------------------------------
 
-Server install instruction
---------------------------
-
-* Create a folder "vl" an a website
-* Download the file vl/bc.jsp
-* Copy the file "bc.jsp" to the web server into the "vl" folder (note: it's not a Java Server Page, it's a binary file)
-* Download the mp3 files from https://github.com/andreax79/ServerlessNabaztag/tree/main/vl
-* Copy the mp3 files in the "vl/config" directory on the web server. The resulting directroy structure is the following:
+* Create a folder "vl" on your website (only HTTP is supported, HTTPS is not supported by the rabbit)
+* Copy all the contents from https://github.com/andreax79/ServerlessNabaztag/tree/main/vl to the "vl" folder on the web server
+* The resulting directroy structure is the following:
 
 ![](/imgs/files.jpg "Directory structure")
 

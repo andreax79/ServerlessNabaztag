@@ -24,6 +24,7 @@ fun http_header http_status content_type=
     strcatlist
         "HTTP/1.0 "::http_status::
         "\13\10Server: MTL HTTP server"::
+        "\13\10Access-Control-Allow-Origin: *"::
         (if content_type!=nil then (strcat "\13\10Content-Type: " content_type) else "")::
         "\13\10\13\10"::nil
 ;;
@@ -218,6 +219,11 @@ fun milligram_css=
         "
 ;;
 
+fun openapi_yaml=
+        "
+#include srv/www/openapi.yaml
+        "
+;;
 
 //--------------------------------------------------------------------------------------------------
 
@@ -474,6 +480,12 @@ fun http_process_request req cnx sock=
         else if !strcmp page "milligram.css" then (
             let http_header HTTP_200 "text/css" -> header in
             let strcat header milligram_css -> res in
+            sock_send_and_close cnx sock res
+        )
+        else if !strcmp page "openapi.yaml" then (
+            let webip netip -> ip in
+            let http_header HTTP_200 "application/yaml" -> header in
+            let strcat header (strreplace openapi_yaml "192.168.1.100" ip) -> res in
             sock_send_and_close cnx sock res
         )
         else if !strcmp page "" then (  // index page

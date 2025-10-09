@@ -1,0 +1,346 @@
+openapi: 3.0.3
+info:
+  title: Serverless Nabaztag API
+  description: An OpenAPI specification for controlling a Serverless Nabaztag smart rabbit.
+  version: 1.0.0
+  contact:
+    url: https://github.com/andreax79/ServerlessNabaztag
+servers:
+  - url: http://{nabaztag_ip}
+    description: Local Nabaztag device
+    variables:
+      nabaztag_ip:
+        default: 192.168.1.100
+        description: The IP address of your Nabaztag rabbit.
+paths:
+  /taichi:
+    get:
+      summary: Control Taichi frequency
+      tags: [Actions]
+      description: Sets the frequency of the Taichi ear movements or performs a one-shot movement.
+      parameters:
+        - name: v
+          in: query
+          required: true
+          description: >
+            The frequency or command for the Taichi movement.
+            - `0`: Off
+            - `255`: Maximum speed
+            - `1000`: Do Taichi now (one-shot)
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Command sent successfully.
+  /nose:
+    get:
+      summary: Control the nose LED
+      tags: [Leds]
+      description: Sets the color or state of the nose LED to indicate a status.
+      parameters:
+        - name: v
+          in: query
+          required: true
+          description: The desired state for the nose LED.
+          schema:
+            type: integer
+            enum: [0, 1, 2, 3, 4]
+      responses:
+        '204':
+          description: Command sent successfully.
+  /left:
+    get:
+      summary: Set left ear position
+      tags: [Ears]
+      description: Moves the left ear to a specific position.
+      parameters:
+        - name: p
+          in: query
+          required: true
+          description: The target position for the left ear.
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 16
+        - name: d
+          in: query
+          required: true
+          description: Direction parameter (`0` front, `1` back).
+          schema:
+            type: integer
+            enum: [0, 1]
+      responses:
+        '204':
+          description: Command sent successfully.
+  /right:
+    get:
+      summary: Set right ear position
+      tags: [Ears]
+      description: Moves the right ear to a specific position.
+      parameters:
+        - name: p
+          in: query
+          required: true
+          description: The target position for the right ear.
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 16
+        - name: d
+          in: query
+          required: true
+          description: Direction parameter (`0` front, `1` back).
+          schema:
+            type: integer
+            enum: [0, 1]
+      responses:
+        '204':
+          description: Command sent successfully.
+  /clear:
+    get:
+      summary: Turn off info LEDs
+      tags: [Leds]
+      description: Clears the state of all informational LEDs (e.g., weather, traffic).
+      responses:
+        '204':
+          description: Command sent successfully.
+  /weather:
+    get:
+      summary: Display weather status
+      tags: [Leds]
+      description: Sets the LEDs to show a specific weather condition.
+      parameters:
+        - name: v
+          in: query
+          required: true
+          description: The weather condition to display.
+          schema:
+            type: integer
+            enum: [0, 1, 2, 3, 4, 5]
+      responses:
+        '204':
+          description: Command sent successfully.
+  /stock:
+    get:
+      summary: Display stock market status
+      tags: [Leds]
+      description: Sets the LEDs to show a stock market trend.
+      parameters:
+        - name: v
+          in: query
+          required: true
+          description: The stock market trend to display.
+          schema:
+            type: integer
+            enum: [0, 1, 2, 3, 4, 5, 6]
+      responses:
+        '204':
+          description: Command sent successfully.
+  /traffic:
+    get:
+      summary: Display traffic status
+      tags: [Leds]
+      description: Sets the LEDs to show the current traffic condition.
+      parameters:
+        - name: v
+          in: query
+          required: true
+          description: The traffic condition to display.
+          schema:
+            type: integer
+            enum: [0, 1, 2, 3, 4, 5, 6]
+      responses:
+        '204':
+          description: Command sent successfully.
+  /pollution:
+    get:
+      summary: Display air pollution level
+      tags: [Leds]
+      description: Sets the LEDs to show the air pollution level.
+      parameters:
+        - name: v
+          in: query
+          required: true
+          description: The pollution level to display.
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 10
+      responses:
+        '204':
+          description: Command sent successfully.
+  /communication:
+    get:
+      summary: Play 'Communication' sound
+      tags: [Sound]
+      responses:
+        '204':
+          description: Command sent successfully.
+  /ack:
+    get:
+      summary: Play 'Ack' sound
+      tags: [Sound]
+      responses:
+        '204':
+          description: Command sent successfully.
+  /abort:
+    get:
+      summary: Play 'Abort' sound
+      tags: [Sound]
+      responses:
+        '204':
+          description: Command sent successfully.
+  /ministop:
+    get:
+      summary: Play 'Ministop' sound
+      tags: [Sound]
+      responses:
+        '204':
+          description: Command sent successfully.
+  /play:
+    get:
+      summary: Play an MP3 from a URL
+      tags: [Sound]
+      description: Streams and plays an MP3 file from a given HTTP URL. HTTPS is not supported.
+      parameters:
+        - name: u
+          in: query
+          required: true
+          description: The HTTP URL of the MP3 file to play.
+          schema:
+            type: string
+            format: uri
+      responses:
+        '204':
+          description: Command sent successfully.
+  /say:
+    get:
+      summary: Text to Speech
+      tags: [Sound]
+      description: Makes the Nabaztag speak the provided text.
+      parameters:
+        - name: t
+          in: query
+          required: true
+          description: The text to be spoken.
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Command sent successfully.
+  /surprise:
+    get:
+      summary: Perform a surprise action
+      tags: [Actions]
+      description: Triggers the surprise action, which includes ear movements and sound.
+      responses:
+        '204':
+          description: Command sent successfully.
+  /stop:
+    get:
+      summary: Stop everything
+      tags: [Actions]
+      description: Halts all current movements and sound playback.
+      responses:
+        '204':
+          description: Command sent successfully.
+  /sleep:
+    get:
+      summary: Put Nabaztag to sleep
+      tags: [Sleep]
+      responses:
+        '204':
+          description: Command sent successfully.
+  /wakeup:
+    get:
+      summary: Wake up Nabaztag
+      tags: [Sleep]
+      responses:
+        '204':
+          description: Command sent successfully.
+  /status:
+    get:
+      summary: Get device status
+      tags: [System]
+      description: Retrieves the current status of the Nabaztag as a JSON object.
+      responses:
+        '200':
+          description: A JSON object with the device's status.
+          content:
+            application/json:
+              schema:
+                type: object
+  /update-time:
+    get:
+      summary: Update system time
+      tags: [System]
+      description: Forces an update of the system time from an NTP server.
+      responses:
+        '204':
+          description: Command sent successfully.
+  /update-weather:
+    get:
+      summary: Update weather info
+      tags: [System]
+      description: Forces an update of the weather information using the configured location.
+      responses:
+        '204':
+          description: Command sent successfully.
+  /reboot:
+    get:
+      summary: Reboot the Nabaztag
+      tags: [System]
+      description: Restarts the Nabaztag.
+      responses:
+        '204':
+          description: Command sent successfully.
+  /setup:
+    get:
+      summary: Configure the Nabaztag settings
+      tags: [System]
+      description: Sets various system-level configurations.
+      parameters:
+        - name: j
+          in: query
+          description: Latitude.
+          schema:
+            type: number
+        - name: k
+          in: query
+          description: Longitude.
+          schema:
+            type: number
+        - name: l
+          in: query
+          description: Language.
+          schema:
+            type: string
+            enum: [uk, it, fr, es]
+        - name: c
+          in: query
+          description: City code for timezone.
+          schema:
+            type: string
+        - name: d
+          in: query
+          description: Daylight Saving Time setting.
+          schema:
+            type: integer
+            enum: [0, 1]
+        - name: w
+          in: query
+          description: The hour the Nabaztag should automatically wake up (0-23).
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 23
+        - name: b
+          in: query
+          description: The hour the Nabaztag should automatically go to sleep (0-23).
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 23
+      responses:
+        '204':
+          description: Command sent successfully.
