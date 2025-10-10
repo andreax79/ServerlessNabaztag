@@ -80,6 +80,10 @@ fun forth_init_dictionary=
         [ name:":"      func:#forth_colon] ::
         [ name:";"      func:#forth_semi immediate:FORTH_TRUE] ::
         [ name:"("      func:#forth_p] ::
+        // Nabaztag
+        [ name:"sleeping"   func:#forth_sleeping ] ::
+        [ name:"sleep"      func:#forth_sleep ] ::
+        [ name:"wakeup"     func:#forth_wakeup ] ::
         nil
     ;;
 

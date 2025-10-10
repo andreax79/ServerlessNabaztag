@@ -1,4 +1,4 @@
-// VLISP - Feb 06 - by Sylvain Huet
+// VuISP - Feb 06 - by Sylvain Huet
 // Metal
 
 proto main 0;;
@@ -12,6 +12,7 @@ proto main 0;;
 
 #define WEBSERVER
 #define DAYTIMESERVER
+#define FORTH
 
 // #define WIFI_DEBUG
 // #define DHCP_DEBUG
@@ -45,13 +46,11 @@ const HARDWARE=4;;
 //
 // Etats generaux
 var gItState = 0;;          // interactif
-var gSleepState = 1;;       // sleeping
 var gStreamingState = 0;;   // streaming
 var gProcessingState = 0;;  // processing a program
 var gProcessingWaitState = 0;;  // executing a "wait" command in a program. when checking this var, check gProcessingState first, as it is not always reseted to 0
 var gBusyState = 0;;        // busy (incoming message queue full)
 var gItApp = nil;;          // the name of the interactive application
-var gEarInited = 0;;        // si les oreilles ont été initialisées.
 
 const BYTECODE_REVISION_STR = "$Rev: __DATE__ $";;
 
@@ -64,13 +63,13 @@ const BYTECODE_REVISION_STR = "$Rev: __DATE__ $";;
 #include protos/interactive_protos.mtl
 #include protos/trame_protos.mtl
 #include protos/url_protos.mtl
+#include protos/sleep_protos.mtl
+#include protos/forth_protos.mtl
 
 #include hw/leds.mtl
 #include utils/utils.mtl
 #include utils/jobs.mtl
 #include utils/md5.mtl
-#include utils/b64.mtl
-#include utils/xmlparser.mtl
 #include utils/config.mtl
 #include utils/const_data.mtl
 #include utils/url.mtl
@@ -84,6 +83,8 @@ const BYTECODE_REVISION_STR = "$Rev: __DATE__ $";;
 
 proto XmppSessionRequestResource 1;;
 
+#include utils/b64.mtl
+#include utils/xmlparser.mtl
 #ifdef XMPP
 #include srv/xmpp.mtl
 #else
@@ -157,6 +158,10 @@ var gCurAudioCmdIndex=-1;;
 #include hw/rfid.mtl
 #include srv/run.mtl
 
+#ifdef FORTH
+#include forth/forth.mtl
+#endif
+
 /**
  * Initialize the jobs
  */
@@ -184,7 +189,15 @@ fun jobs_init=
     job_start "updatevol" #updatevol;
     0;;
 
+// fun xxx=
+//     inter text;
+//     0;;
+//
 fun main=
+    // xxx;
+    // reboot 0x0407FE58 0x13fb6754;
+
+    interactive_init;
     leds_set_state LEDS_STATE_START ;
     MACecho netMac 0 1;
     set master=0;
@@ -213,5 +226,4 @@ fun main=
 // Secholn json_jobs;
 // reboot 0x0407FE58 0x13fb6754;
 #endif
-    interactive_init;
     0;;

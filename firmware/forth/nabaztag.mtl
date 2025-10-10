@@ -1,0 +1,30 @@
+
+/**
+ * True ( -- true )
+ */
+// fun forth_nabaztag_gc f=
+//     forth_push f [int:gc];;
+//
+// var ears_left;;
+// var ears_right;;
+//
+
+/**
+ * SLEEPING Return true if the Nabaztag is in sleep mode ( -- flag )
+ */
+fun forth_sleeping f=
+    forth_push f [int:if sleep_status then FORTH_TRUE else FORTH_FALSE];;
+
+/**
+ * SLEEP Put the Nabaztag into sleep mode ( -- )
+ */
+fun forth_sleep f=
+    sleep_start;
+    nil;;
+
+/**
+ * WAKEUP Wake up the Nabaztag from sleep mode ( -- )
+ */
+fun forth_wakeup f=
+    sleep_end;
+    nil;;

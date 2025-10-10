@@ -122,6 +122,10 @@ fun config_get_wake_up =
 fun config_get_go_to_bed =
     strget _config_get CONF_GO_TO_BED 1 0;;
 
+// Set the server URL
+fun config_set_server_url server_url =
+    _config_set_str CONF_SERVERURL server_url 40;;
+
 // Set Language
 fun config_set_lang lang =
     _config_set_str CONF_LANGUAGE lang 3;;

@@ -94,7 +94,7 @@ fun stopEverythingAndResetToIdle =
     set gProcessingState = 0;
     set gStreamingState = 0;
     set streaming_current_program = nil;
-    run_set_state if (!gSleepState) then idleRun else sleepRun;
+    run_set_state if !sleep_status then idleRun else sleepRun;
     0
 ;;
 
@@ -149,7 +149,7 @@ fun _run_osc x=
 
 
 fun _run_bottom_led=
-    if gSleepState == 0 then
+    if !sleep_status then
     if !ears_detecting then
         (let _run_osc time_ms>>4 -> v in led LED_BASE v*0x000100); // pulse green - was violet 0x10001
     0;;
@@ -210,7 +210,7 @@ fun _run_idle =
     0;;
 
 
-fun _configcbhttp http res=
+fun _run_get_config_cb http res=
     if (nil != res) then
     (
         Secholn "config=";
@@ -219,6 +219,8 @@ fun _configcbhttp http res=
             // http urls
             set url_ping_server=listswitchstr conf "ping";
             set url_broadcast=listswitchstr conf "broad";
+            if !strcmp url_ping_server "0.0.0.0" then set url_ping_server = config_get_server_url;
+            if !strcmp url_broadcast "0.0.0.0" then set url_broadcast = config_get_server_url;
 
 #ifdef PING
             sleep_end;
@@ -238,13 +240,6 @@ fun _configcbhttp http res=
             0
         )
     )
-    else
-    (
-        // l'appel à locate.jsp a échoué -> ... rebooter tout ?
-        Secholn "call to locate.jsp failed, rebooting";
-        ///////// reboot 0x0407FE58 0x13fb6754;
-        0
-    )
 ;;
 
 fun _run_config_start =
@@ -255,7 +250,9 @@ fun _run_config_start =
         get_time_from_timeserver;
         sleep_end
 #else
-        run_set_state configwaitRun httprequest "GET" Secholn url_config nil #_configcbhttp HTTP_NORMAL
+        Secho "config_get_server_url: "; Secholn config_get_server_url;
+        Secho "url_config: "; Secholn url_config;
+        run_set_state configwaitRun httprequest "GET" url_config nil #_run_get_config_cb HTTP_NORMAL
 #endif
     );
     0;;
@@ -310,7 +307,7 @@ fun run_step=
     CONTROL_WAIT) |
     ( xmppReconnectRun params ->
     if (ears_resetting && ears_is_initialized) then ears_run else ears_stop 1;
-    if gSleepState == 0 then (
+    if !sleep_status then (
         // Affichage des sources.
         infoRun;
         // On fige la base en violet

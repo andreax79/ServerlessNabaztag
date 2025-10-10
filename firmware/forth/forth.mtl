@@ -40,20 +40,10 @@ type Interpreter=[
     quoted              // true if the token is a quoted string
 ];;
 
-const FORTH_TRUE = -1;;
-const FORTH_FALSE = 0;;
-
-const FORTH_STATE_NORMAL = 0;;
-const FORTH_STATE_COMPILATION = -1;;
-const FORTH_SPACE = 32;; // ASCII space
-const FORTH_DOUBLE_QUOTE = 34;; // ASCII " (double quote)
-
 // The dictionary is a list of Words
 var forth_dictionary;;
 
-proto forth_get_word 2;;
-proto forth_word_list_to_array 1;;
-
+#include protos/forth_protos.mtl
 #include forth/stack.mtl
 #include forth/logical.mtl
 #include forth/arithmetic.mtl
@@ -62,6 +52,7 @@ proto forth_word_list_to_array 1;;
 #include forth/wstack.mtl
 #include forth/control.mtl
 #include forth/misc.mtl
+#include forth/nabaztag.mtl
 #include forth/dictionary.mtl
 
 fun forth_word_list_to_array words =
@@ -85,8 +76,6 @@ fun forth_print_word w=
     else (Secho "int "; Iecho w.int; 0);
     Secholn "]"; 0
     );;
-
-proto forth_execute_word_code 2;;
 
 /**
  * Execute a single word.
@@ -173,7 +162,7 @@ nil 10 :: 20 :: 30 :: dup dup . space tl . space . cr
 // var text = ": bla begin dup . 1 - dup 0 = until ; 5 bla \"ciao\" emit";;
 // var text = "\"ciao ciao\" emit";;
 
-fun inter text=
+fun forth_interpreter text=
     if forth_dictionary==nil then forth_init_dictionary;
 
     let [start:0 end:0 end_ln:0 parentheses:0 input:text text_len:(strlen text) token:nil] -> i in

@@ -4,6 +4,8 @@
 
 COMPILER="./compiler/mtl_comp/mtl_comp"
 SIMULATOR="./compiler/mtl_simu/mtl_simu"
+# init,vm,simunet,simuleds,simuaudio
+LOGS="init,vm"
 
 help:
 	@echo "- make compiler     Build the compiler and the simulator"
@@ -27,5 +29,5 @@ firmware:
 
 run-sim:
 	@./scripts/make_nominal.sh -D SIMU
-	@$(SIMULATOR) --mac 0123456789ab --source "nominal.mtl" || true
+	@$(SIMULATOR) --mac 0123456789ab --logs $(LOGS) --source "nominal.mtl" || true
 	@rm -f nominal.mtl foo.bin

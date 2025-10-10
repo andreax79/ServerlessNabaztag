@@ -11,7 +11,7 @@
 var _crontab_last_check = -1 ;; // last time (hour*100+min) of execution of crontab
 
 fun _crontab_play_time_sound hour =
-    if !gSleepState then
+    if !sleep_status then
         let strcatlist "http://"::config_get_server_url::"/config/clock/"::config_get_lang::"/"::(itoa hour)::"/"::(itoa 1 + random 6)::".mp3"::nil -> url in (
             Secho "Play "; Secholn url;
             audiolib_start_http url #streaming_wav_error
@@ -19,7 +19,7 @@ fun _crontab_play_time_sound hour =
     0;;
 
 fun _crontab_play_halftime_sound =
-    if !gSleepState then
+    if !sleep_status then
         let strcatlist "http://"::config_get_server_url::"/config/clockall/"::config_get_lang::"/"::(itoa 1 + random 12)::".mp3"::nil -> url in (
             Secho "Play "; Secholn url;
             audiolib_start_http url #streaming_wav_error
@@ -34,7 +34,7 @@ fun crontab_check =
     if crontab_check != _crontab_last_check then (
         set _crontab_last_check = crontab_check;
 
-        if (gSleepState && local_time_hour == config_get_wake_up) then sleep_end;
+        if (sleep_status && local_time_hour == config_get_wake_up) then sleep_end;
 
         if local_time_minute == 0 then (
             _crontab_play_time_sound local_time_hour
@@ -46,7 +46,7 @@ fun crontab_check =
             get_time_from_timeserver
         );
 
-        if (!gSleepState && local_time_hour == config_get_go_to_bed) then sleep_start;
+        if (!sleep_status && local_time_hour == config_get_go_to_bed) then sleep_start;
 
         0
     )

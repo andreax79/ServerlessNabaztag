@@ -69,7 +69,7 @@ fun _meteo_get_cb httpreq res=
     let _meteo_get_weathercode content -> weather_code in
     let _weather_code_to_info_code weather_code -> info_code in (
         set _meteo_weather_code = weather_code;
-        _infosrc_update 1 (if (!gSleepState && info_code!=nil) then info_code else 0);
+        _infosrc_update 1 (if (!sleep_status && info_code!=nil) then info_code else 0);
         0
     );;
 

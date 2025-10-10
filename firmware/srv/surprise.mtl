@@ -13,7 +13,7 @@ fun surprise=
 	audiolib_start_http (url_surprise (random 299)) #streaming_wav_error;;
 
 fun surprise_check=
-	if _surprise_delay && (_surprise_delay != nil) && (!gSleepState) then
+	if _surprise_delay && (_surprise_delay != nil) && (!sleep_status) then
 		let (if _surprise_next!=nil then (time>_surprise_next) else 0) -> now in (
 			if now || _surprise_next==nil then // compute _surprise_next
 			let ((_surprise_delay/2) + (random _surprise_delay) + 1) -> delay in (

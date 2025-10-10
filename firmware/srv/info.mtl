@@ -154,7 +154,7 @@ fun dumpinfo=
     ;;
 
 fun infoRun=
-    if gSleepState == 0 then // no info while sleeping
+    if (!sleep_status) then // no info while sleeping
     if (!gItState) then // no info while in interactive mode
     if !ears_detecting then
     (
@@ -264,7 +264,7 @@ fun infoUpdate data=
         if (newleft != nil || newright != nil) && ((newleft!=ears_left) || (newright!=ears_right)) then (
             set ears_left=newleft;
             set ears_right=newright;
-            if ((!gSleepState) && (!ears_resetting)) then (
+            if ((!sleep_status) && (!ears_resetting)) then (
                 midi_play midi_communion;
                 ears_go_to_ref_pos
             )
@@ -298,11 +298,11 @@ fun newInfoUpdate data=
         );
         // process ears
         Secho "newleft="; Iecho newleft; Secho "newright="; Iecho newright; Secho "ears_left="; Iecho ears_left; Secho "ears_right="; Iecho ears_right;
-        Secho "gSleepState="; Iecho gSleepState; Secho "ears_resetting="; Iecho ears_resetting;
+        Secho "sleep_status="; Iecho sleep_status; Secho "ears_resetting="; Iecho ears_resetting;
         if (newleft != nil || newright != nil) && ((newleft!=ears_left) || (newright!=ears_right)) then (
             set ears_left=newleft;
             set ears_right=newright;
-            if ((!gSleepState) && (!ears_resetting)) then (
+            if ((!sleep_status) && (!ears_resetting)) then (
 //              midi_play midi_communion;
                 ears_go_to_ref_pos
             )

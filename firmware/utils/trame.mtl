@@ -210,7 +210,7 @@ fun trame_is_resource_valid rsrcName=
     else if (!strcmp rsrcName "boot") then 1 // tjrs
     else if (gStreamingState) then (if (!strcmp rsrcName "streaming") then 1 else 0)
     else if (gItState) then (if (!strcmp rsrcName "itmode") then 1 else 0)
-    else if (gSleepState) then (if (!strcmp rsrcName "asleep") then 1 else 0)
+    else if (sleep_status) then (if (!strcmp rsrcName "asleep") then 1 else 0)
     else if (gProcessingState) then 0
     else 1;;
 
@@ -224,7 +224,7 @@ fun _trame_queue_remove_entry binome=
         Secholn "trame queue not full anymore, warning server";
         set gBusyState = 0;
         // which resource now ? Can be in this order asleep, streaming, itmode or idle
-        if (gSleepState) then XmppSessionRequestResource "asleep"
+        if (sleep_status) then XmppSessionRequestResource "asleep"
         else if (gStreamingState) then XmppSessionRequestResource "streaming"
         else if (gItState) then XmppSessionRequestResource "itmode"
         else XmppSessionRequestResource "idle"

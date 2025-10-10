@@ -1863,10 +1863,8 @@ fun XmppSessionUpdate xSession =
     (sOpening ->    set xSession.sNextRestart = time + 12;  // Update for the next restart
     0)|(sLogging -> set xSession.sNextRestart = time + 12;  // Update for the next restart
     0)|(sLoggedin -> set xSession.sNextRestart = time + 12; // Update for the next restart
-        if gEarInited != 1 then (
-            set gEarInited = 1;
-            ears_init                     // we init the ears
-        );
+        if ears_is_initialized != 1 then
+            ears_init; // we init the ears
         run_set_state idleRun;        // On s'est connecté.
     0)|(sOpened -> set xSession.sNextRestart = -1;  // Update for the next restart
     0)|(sClosed ->
@@ -2735,7 +2733,7 @@ fun XmppSessionProcessHandleStanzaIqSet xSession xmlStanza =
                     :: "<field var='sState'><value>" :: (xmppStateToStr xSession.sState) :: "</value></field>"
                     :: "<field var='sResource'><value>" :: xSession.sResource :: "</value></field>"
                     :: "<field var='gItState'><value>" :: (itoa gItState) :: "</value></field>"
-                    :: "<field var='gSleepState'><value>" :: (itoa gSleepState) :: "</value></field>"
+                    :: "<field var='gSleepState'><value>" :: (itoa sleep_status) :: "</value></field>"
                     :: "<field var='gStreamingState'><value>" :: (itoa gStreamingState) :: "</value></field>"
                     :: "<field var='gProcessingState'><value>" :: (itoa gProcessingState) :: "</value></field>"
                     :: "<field var='gProcessingWaitState'><value>" :: (itoa gProcessingWaitState) :: "</value></field>"
