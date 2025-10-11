@@ -7,7 +7,8 @@ typedef enum {
 	LOG_SIMUNET = 4,      // les logs de simulation réseau
 	LOG_SIMUAUDIO = 8,    // les logs de simulation audio
 	LOG_SIMULEDS = 16,    // les logs de simulation des leds
-	LOG_SIMUMOTORS = 32   // les messages écrits pendant l'init
+	LOG_SIMUMOTORS = 32,  // les messages écrits pendant l'init
+    LOG_HTTP_SERVER = 64  // embedded HTTP server logs
 } e_logtypes;
 
 void my_printf(e_logtypes t, const char *fmt, ...);

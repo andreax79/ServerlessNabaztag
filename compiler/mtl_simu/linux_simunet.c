@@ -16,11 +16,15 @@
 #include "vmem.h"
 #include "vloader.h"
 #include "vinterp.h"
+#include "http_server.h"
 
 #include "../log.h"
+#include"../properties.h"
 
 #define TCPMAX 128 // nombre max de sockets tcp pouvant être ouvertes en même temps
 #define UDPMAX 128 // nombre max de sockets udp pouvant être ouvertes en même temps
+
+int http_server_idx = -1;
 
 int tcp_sock[TCPMAX];	// =-1 -> disponible
 int tcp_enable[TCPMAX];
@@ -99,6 +103,12 @@ int simunetinit(void)
 	memset(&tcp_writeEventToNotify, 0, sizeof(tcp_writeEventToNotify));
 	memset(&udp_sock, 0, sizeof(udp_sock));
 	memset(&udp_port, 0, sizeof(udp_port));
+
+    // Start the embedded HTTP server if configured
+	if (PropGet("HTTP_SERVER_PATH") != NULL && PropGetInt("HTTP_SERVER_PORT") != 0) {
+        my_printf(LOG_HTTP_SERVER, "HTTP Server: start embedded HTTP server on port %d\n", PropGetInt("HTTP_SERVER_PORT"));
+        http_server_idx = tcpservercreate(PropGetInt("HTTP_SERVER_PORT"));
+    }
 
 	return 0;
 }
@@ -217,13 +227,18 @@ int tcpEventRead(int fd)
 			ns=accept(fd,(struct sockaddr*)&cor,&sizecor);
 			if (ns==-1) return 1;
 
+            // Internal HTTP server
+            if (idx == http_server_idx) {
+                return http_server(ns);
+            }
+
 			ni=tcpgetfree();
 			if (ni<0)
 				{
 					close(ns);
 					return 1;
 				}
-			
+
 			ip=cor.sin_addr.s_addr;
 			port=ntohs(cor.sin_port);
 
@@ -331,7 +346,7 @@ int tcpgetfree(void)
 /**
 	 Ouvre une connection tcp
 
-	 dstip: 
+	 dstip:
  */
 int tcpopen(char* dstip,int dstport)
 {
@@ -438,7 +453,7 @@ int tcpservercreate(int port)
 	ina.sin_family = AF_INET;
 	ina.sin_port   = htons((unsigned short)port);
 	ina.sin_addr.s_addr = INADDR_ANY;
-	
+
 	if (bind(socksrv,(struct sockaddr*)&ina,sizeof(ina))!=0)
 	{
 		my_printf(LOG_SIMUNET, "Sockets : Tcp port %d busy (%s)\n",port, strerror(errno));
@@ -454,7 +469,7 @@ int tcpservercreate(int port)
 	my_printf(LOG_SIMUNET, "Sockets : create Tcp server :%d (socket=%d, idx=%d)\n", port, socksrv, i);
 	tcp_sock[i]=socksrv;
 	tcp_listen[i]=1;
-	
+
 	return i;
 }
 
@@ -488,7 +503,7 @@ int udpcreate(int port)
 	int i;
 
 	udpclose(port);
-	
+
 	i=udpgetfree();
 	if (i<0) return i;
 
@@ -507,7 +522,7 @@ int udpcreate(int port)
 	setsockopt(sockudp, SOL_SOCKET, SO_REUSEADDR, (char*)&opt, sizeof (opt));
 	setsockopt(sockudp, SOL_SOCKET, SO_BROADCAST, (char*)&opt, sizeof (opt));
 	my_printf(LOG_SIMUNET, "Sockets : create Udp :%d (socket=%d)\n",port,sockudp);
-	
+
 	udp_port[i]=port;
 	udp_sock[i]=sockudp;
 	return i;

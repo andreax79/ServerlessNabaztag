@@ -205,6 +205,14 @@ int handle_options(int argc, char **argv)
 			++i;
 			if (i>=argc) { usage(); return 0; }
 			PropSet("SOURCE", argv[i]);
+		} else if (!strcmp(argv[i], "--http_server_path")) {
+			++i;
+			if (i>=argc) { usage(); return 0; }
+			PropSet("HTTP_SERVER_PATH", argv[i]);
+		} else if (!strcmp(argv[i], "--http_server_port")) {
+			++i;
+			if (i>=argc) { usage(); return 0; }
+			PropSet("HTTP_SERVER_PORT", argv[i]);
 		} else if (!strcmp(argv[i], "--logs")) {
 			++i;
 			if (i>=argc) { usage(); return 0; }
@@ -250,5 +258,7 @@ void usage()
 				 "          --maxlogsize <n>: specifie qu'un fichier de log ne peut depasser <n> octets\n" \
 				 "          --maxlogtime <n>: specifie qu'il doit y avoir une rotation du fichier de log au moins toutes les <n> secondes\n" \
 				 "          --dologtime: specifie qu'on doit afficher sur chaque ligne de log le nombre de secondes ecoulees depuis le lancement du simulateur\n" \
+                 "          --http_server_path <path>: embedded http server path\n" \
+                 "          --http_server_port <port>: embedded http server port\n" \
 				 "Toutes les options sont prioritaires sur les valeurs contenues dans config.txt\n");
 }

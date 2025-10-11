@@ -53,6 +53,8 @@ static const char *get_prefix(e_logtypes t)
 		res = "simuleds"; break;
 	case LOG_SIMUMOTORS:
 		res = "simumotors"; break;
+    case LOG_HTTP_SERVER:
+        res = "http_server"; break;
 	}
 	return res;
 }
@@ -175,6 +177,8 @@ void my_printf_set_options(const char *s)
 			my_msk |= LOG_SIMULEDS;
 		else if (!strcmp(token,"simumotors"))
 			my_msk |= LOG_SIMUMOTORS;
+		else if (!strcmp(token,"http_server"))
+			my_msk |= LOG_HTTP_SERVER;
 		else {
 				fprintf(stderr, "erreur: %s n'est pas une option valide pour les logs\n", token);
 				break;
