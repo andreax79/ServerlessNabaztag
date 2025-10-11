@@ -14,9 +14,11 @@ const FORTH_STATE_COMPILATION = -1;;
 const FORTH_SPACE = 32;; // ASCII space
 const FORTH_DOUBLE_QUOTE = 34;; // ASCII " (double quote)
 
-proto forth_get_word 2;;
+proto forth_get_word 1;;
 proto forth_word_list_to_array 1;;
 proto forth_execute_word_code 2;;
 proto forth_interpreter 1;;
+
+proto http_post_forth 3;;
 
 #endif

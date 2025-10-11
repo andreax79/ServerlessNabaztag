@@ -68,6 +68,7 @@ const BYTECODE_REVISION_STR = "$Rev: __DATE__ $";;
 
 #include hw/leds.mtl
 #include utils/utils.mtl
+#include utils/json.mtl
 #include utils/jobs.mtl
 #include utils/md5.mtl
 #include utils/config.mtl
@@ -113,7 +114,6 @@ var currentTrameID=0;;
 #include srv/crontab.mtl
 #include utils/hooks.mtl
 #include net/wifi.mtl
-#include utils/env.mtl
 
 const MASK_BUTTON = 1;;
 const MASK_EAR_LEFT = 2;;
@@ -189,19 +189,9 @@ fun jobs_init=
     job_start "updatevol" #updatevol;
     0;;
 
-// fun xxx=
-//     inter text;
-//     0;;
-//
 fun main=
-    // xxx;
-    // reboot 0x0407FE58 0x13fb6754;
-
     interactive_init;
-    leds_set_state LEDS_STATE_START ;
-    MACecho netMac 0 1;
-    set master=0;
-    Secholn ":started";
+    leds_set_state LEDS_STATE_START;
     config_init;
     wifi_init 0;
     loopcb #job_loop;
@@ -211,7 +201,6 @@ fun main=
 #ifndef SIMU
     dhcp_start_client;
 #endif
-    Secholn ":done";
     srand time_ms;
     updatevol;
 #ifdef WEBSERVER
@@ -222,8 +211,4 @@ fun main=
 #endif
     run_init;
     jobs_init;
-#ifdef SIMU
-// Secholn json_jobs;
-// reboot 0x0407FE58 0x13fb6754;
-#endif
     0;;

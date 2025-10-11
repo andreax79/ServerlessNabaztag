@@ -169,7 +169,7 @@ fun forth_interpreter text=
     let [stack:nil rstack:nil pc:0] -> f in (
         while (f.pc != nil) && (i.end != i.text_len) do (
             forth_get_token i;
-            let if i.quoted then nil else forth_get_word i.token forth_dictionary -> word in (
+            let if i.quoted then nil else forth_get_word i.token -> word in (
                 if word == nil then set word = forth_new_word i.token;
                 // TODO \ comment to end of line
 
@@ -237,4 +237,17 @@ fun forth_interpreter text=
             Secholn strcatlist (rev f.output nil)
         );
         f
+    );;
+
+
+fun http_post_forth cnx sock args=
+    Secholn "http_post_forth";
+    let _http_arg_str args 'c' -> code in
+    let forth_interpreter code -> f in (
+        http_send_content_and_close cnx sock "application/json"
+        strcatlist
+            "{\n" ::
+                (json_str "output" (strcatlist (rev f.output nil))) ::
+            "\n}"
+            ::nil
     );;

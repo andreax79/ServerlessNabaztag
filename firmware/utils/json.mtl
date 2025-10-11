@@ -1,0 +1,66 @@
+const JSON_TAB=9;; // ASCII code for tab
+const JSON_NEWLINE=10;; // ASCII code for newline
+const JSON_DOUBLE_QUOTE=34;; // ASCII code for double quote
+const JSON_SLASH=47;; // ASCII code for slash
+const JSON_BACK_SLASH=92;; // ASCII code for backslash
+
+/**
+ * Check if a character is a special character that needs to be escaped in JSON.
+ */
+fun _json_is_special_char c =
+    (c == JSON_TAB) ||
+    (c == JSON_NEWLINE) ||
+    (c == JSON_DOUBLE_QUOTE) ||
+    (c == JSON_SLASH) ||
+    (c == JSON_BACK_SLASH);;
+
+/**
+ * Count the number of special characters in a string that need to be escaped for JSON.
+ */
+fun _json_count_special_char s =
+    let 0 -> count in
+    let strlen s -> length in (
+        for i=0; i<length do if _json_is_special_char strget s i then set count = count + 1;
+        count
+    );;
+
+/**
+ * Quote a string for JSON output, escaping special characters.
+ * If the input string is nil, returns an empty quoted string "".
+ */
+fun json_quote_str str=
+    if str == nil then "\"\"" else
+    let strlen str -> len in
+    let _json_count_special_char str -> nquote in
+	let strnew (len + nquote + 2) -> s in (
+        strset s 0 34; // opening quote
+        let 1 -> j in
+        for i=0; i<len do (
+            let strget str i -> ch in (
+                if ch == JSON_TAB then (strset s j 92; set j = j + 1; set ch = 116) // 't'
+                else if ch == JSON_NEWLINE then (strset s j 92; set j = j + 1; set ch = 110) // 'n'
+                else if ch == JSON_DOUBLE_QUOTE then (strset s j 92; set j = j + 1; set ch = 34) // '"'
+                else if ch == JSON_SLASH then (strset s j 92; set j = j + 1; set ch = 47) // '/'
+                else if ch == JSON_BACK_SLASH then (strset s j 92; set j = j + 1; set ch = 92); // '\'
+                strset s j ch;
+                set j = j + 1
+            )
+        );
+        strset s (len + nquote + 1) 34; // closing quote
+        s
+    )
+;;
+
+/**
+ * Create a JSON integer key-value pair string.
+ */
+fun json_int k v=
+    strcatlist "\"" :: k :: "\": " :: (itoa v) :: nil
+;;
+
+/**
+ * Create a JSON string key-value pair string, quoting the value.
+ */
+fun json_str k v=
+    strcatlist "\"" :: k :: "\": " :: (json_quote_str v) :: nil
+;;

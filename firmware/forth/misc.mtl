@@ -9,8 +9,7 @@
  */
 fun forth_colon f=
     if f.state == FORTH_STATE_COMPILATION then (
-        set f.output = "\n; Nested definitions not allowed\n" :: f.output;
-        forth_exit f
+        forth_abort_msg f ": Nested definitions not allowed"
     ) else (
         // Enter compilation state
         set f.state = FORTH_STATE_COMPILATION;
@@ -24,8 +23,7 @@ fun forth_colon f=
  */
 fun forth_semi f=
     if f.state != FORTH_STATE_COMPILATION then (
-        set f.output = "\n; Compile mode only\n" :: f.output;
-        forth_exit f
+        forth_abort_msg f "; Compile mode only"
     ) else (
         set f.state = FORTH_STATE_NORMAL;
         let forth_word_list_to_array (rev f.new_word_definition nil) -> code in
@@ -38,3 +36,20 @@ fun forth_semi f=
 fun forth_p f=
     nil;;
 
+/**
+ * Helper function to print words in the dictionary
+ */
+fun _forth_print_words f forth_dictionary=
+    if forth_dictionary==nil then nil
+    else let hd forth_dictionary -> head in (
+        set f.output = " " :: head.name :: f.output;
+        _forth_print_words f (tl forth_dictionary)
+    );;
+
+/**
+ * WORDS List the words in the dictionary ( -- )
+ */
+fun forth_words f=
+    _forth_print_words f forth_dictionary;
+    set f.output = "\n" :: f.output;
+    nil;;

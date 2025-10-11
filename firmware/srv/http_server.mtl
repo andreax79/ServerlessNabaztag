@@ -136,61 +136,44 @@ fun http_server_cb cnx code msg=
 
 //--------------------------------------------------------------------------------------------------
 
-fun doublequote s=
-    strcatlist "\""::s::"\""::nil
-;;
-
-fun jsonvalue k v=
-    strcatlist (doublequote k)::": "::(doublequote v)::nil
-;;
-
-fun jsonnext s=
-    strcat s ",\n"
-;;
-
-fun jsonlast s=
-    strcat s "\n"
-;;
-
 fun http_get_json_status cnx sock args=
     http_send_content_and_close cnx sock "application/json"
     strcatlist
         "{\n"::
-            (jsonnext jsonvalue "mac" webmac netMac)::
-            (jsonnext jsonvalue "ts" current_time_human)::
-            (jsonnext jsonvalue "time" itoa time)::
-            (jsonnext jsonvalue "city_code" config_get_city_code)::
-            (jsonnext jsonvalue "dst" itoa config_get_dst)::
-            (jsonnext jsonvalue "time_offset" itoa get_time_offset)::
-            (jsonnext jsonvalue "language" config_get_lang)::
-            (jsonnext jsonvalue "latitude" config_get_latitude)::
-            (jsonnext jsonvalue "longitude" config_get_longitude)::
-            (jsonnext jsonvalue "wake_up" itoa config_get_wake_up)::
-            (jsonnext jsonvalue "go_to_bed" itoa config_get_go_to_bed)::
-            (jsonnext jsonvalue "taichi" itoa infotaichi)::
-            (jsonnext jsonvalue "messages" itoa infomessages)::
-            (jsonnext jsonvalue "left" itoa ears_left)::
-            (jsonnext jsonvalue "right" itoa ears_right)::
-            (jsonnext jsonvalue "earsmode" itoa earsmode)::
-            (jsonnext jsonvalue "ear_detecting" itoa ears_detecting)::
-            (jsonnext jsonvalue "sleep_state" itoa sleep_status)::
-            (jsonnext jsonvalue "streaming_state" itoa gStreamingState)::
-            (jsonnext jsonvalue "processing_state" itoa gProcessingState)::
-            (jsonnext jsonvalue "busy_state" itoa gBusyState)::
-            (jsonnext jsonvalue "it_state" itoa gItState)::
-            (jsonnext jsonvalue "it_app" gItApp)::
-            (jsonnext jsonvalue "meteo_weather_code" itoa _meteo_weather_code)::
-            (jsonlast jsonvalue "rev" BYTECODE_REVISION_STR)::
-        "}"
-        ::nil
+            (json_str "mac" webmac netMac) :: ",\n" ::
+            (json_str "ts" current_time_human) :: ",\n" ::
+            (json_int "time" time) :: ",\n" ::
+            (json_str "city_code" config_get_city_code) :: ",\n" ::
+            (json_int "dst" config_get_dst) :: ",\n" ::
+            (json_int "time_offset" get_time_offset) :: ",\n" ::
+            (json_str "language" config_get_lang) :: ",\n" ::
+            (json_str "latitude" config_get_latitude) :: ",\n" ::
+            (json_str "longitude" config_get_longitude) :: ",\n" ::
+            (json_int "wake_up" config_get_wake_up) :: ",\n" ::
+            (json_int "go_to_bed" config_get_go_to_bed) :: ",\n" ::
+            (json_int "taichi" infotaichi) :: ",\n" ::
+            (json_int "messages" infomessages) :: ",\n" ::
+            (json_int "left" ears_left) :: ",\n" ::
+            (json_int "right" ears_right) :: ",\n" ::
+            (json_int "earsmode" earsmode) :: ",\n" ::
+            (json_int "ear_detecting" ears_detecting) :: ",\n" ::
+            (json_int "sleep_state" sleep_status) :: ",\n" ::
+            (json_int "streaming_state" gStreamingState) :: ",\n" ::
+            (json_int "processing_state" gProcessingState) :: ",\n" ::
+            (json_int "busy_state" gBusyState) :: ",\n" ::
+            (json_int "it_state" gItState) :: ",\n" ::
+            (json_str "it_app" gItApp) :: ",\n" ::
+            (json_int "meteo_weather_code" _meteo_weather_code) :: ",\n" ::
+            (json_str "rev" BYTECODE_REVISION_STR) :: "\n" ::
+        "}" :: nil
 ;;
 
 fun job_format_json job =
     strcatlist
-        "{\n"::
-            (jsonnext jsonvalue "name" job.name)::
-            (jsonlast jsonvalue "status" job_status job)::
-        "}"::nil
+        "{ "::
+            (json_str "name" job.name) :: ", " ::
+            (json_str "status" job_status job) ::
+        " }" :: nil
 ;;
 
 fun http_get_json_jobs cnx sock args =
@@ -198,7 +181,6 @@ fun http_get_json_jobs cnx sock args =
     let listlen _jobs -> n in (
         for l=_jobs;l!=nil; tl l do
             let hd l -> job in
-            let if nil!=tl l then #jsonnext else #jsonlast -> jf in
             let if nil!=tl l then ",\n" else "\n]" -> sep in
             set result = strcatlist result::(job_format_json job)::sep::nil;
         http_send_content_and_close cnx sock "application/json" result
@@ -429,7 +411,7 @@ fun http_get_clear cnx sock args=
 
 fun _http_get_dns_cb ip x=
 	let x->[cnx sock] in
-    let strcatlist "{\n" :: (jsonlast jsonvalue "ip" ip) :: "}" :: nil -> res in
+    let strcatlist "{ " :: (json_str "ip" ip) :: " }" :: nil -> res in
     http_send_content_and_close cnx sock "application/json" res;;
 
 /**
@@ -453,12 +435,12 @@ fun http_get_setup cnx sock args=
     http_send_header_and_close HTTP_204 nil cnx sock;;
 
 
-fun http_post_forth cnx sock args=
-    Secholn "http_post_forth";
-    let _http_arg_str args 'c' -> code in
-    let forth_interpreter code -> f in (
-        http_send_header_and_close HTTP_204 nil cnx sock
-    );;
+// fun http_post_forth cnx sock args=
+//     Secholn "http_post_forth";
+//     let _http_arg_str args 'c' -> code in
+//     let forth_interpreter code -> f in (
+//         http_send_header_and_close HTTP_204 nil cnx sock
+//     );;
 
 /**
  * Process an HTTP request and generate the response

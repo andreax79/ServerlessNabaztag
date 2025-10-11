@@ -80,6 +80,7 @@ fun forth_init_dictionary=
         [ name:":"      func:#forth_colon] ::
         [ name:";"      func:#forth_semi immediate:FORTH_TRUE] ::
         [ name:"("      func:#forth_p] ::
+        [ name:"words"  func:#forth_words] ::
         // Nabaztag
         [ name:"sleeping"   func:#forth_sleeping ] ::
         [ name:"sleep"      func:#forth_sleep ] ::
@@ -88,10 +89,14 @@ fun forth_init_dictionary=
     ;;
 
 
-// TODO: case insensitive dictionary lookup
-fun forth_get_word name forth_dictionary=
-    // TODO: other types of words
-    if forth_dictionary==nil then nil // [name:name int:(atoi name)]
+fun _forth_get_word name forth_dictionary=
+    if forth_dictionary==nil then nil  // not found
     else let hd forth_dictionary -> head in
         if !strcmp name head.name then head
-        else forth_get_word name (tl forth_dictionary);;
+        else _forth_get_word name (tl forth_dictionary);;
+
+/**
+ * Get a word from the dictionary by name (case insensitive)
+ */
+fun forth_get_word name=
+    _forth_get_word (to_lower name) forth_dictionary;;

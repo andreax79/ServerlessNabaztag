@@ -1,6 +1,3 @@
-var wifi;;
-var wifiscans;;
-
 type Wifi=initW | gomasterW | masterW | gostationW _ | dhcpW _| stationW | reconnectW;;
 
 // debug
@@ -10,36 +7,47 @@ fun _wifi_debug str= Secholn strcatlist "[wifi] " :: str :: nil; nil;;
 fun _wifi_debug str= nil;;
 #endif
 
-const RT2501_S_BROKEN=0;;
-const RT2501_S_IDLE=1;;
-const RT2501_S_SCAN=2;;
-const RT2501_S_CONNECTING=3;;
-const RT2501_S_CONNECTED=4;;
-const RT2501_S_MASTER=5;;
+const RT2501_S_BROKEN=0;; // Device state: broken
+const RT2501_S_IDLE=1;; // Device state: idle
+const RT2501_S_SCAN=2;; // Device state: scanning for networks
+const RT2501_S_CONNECTING=3;; // Device state: connecting to a network
+const RT2501_S_CONNECTED=4;; // Device state: connected
+const RT2501_S_MASTER=5;; // Device state: acting as master (access point)
 
-const IEEE80211_M_MANAGED=0;;
-const IEEE80211_M_MASTER=1;;
+const IEEE80211_M_MANAGED=0;; // Operation mode: managed (client)
+const IEEE80211_M_MASTER=1;; // Operation mode: master (access point)
 
-var wifitry;;
-var master=0;;
+const IEEE80211_CRYPT_NONE=0;; // Encryption: none
+const IEEE80211_CRYPT_WEP64=1;; // Encryption: WEP 64-bit
+const IEEE80211_CRYPT_WEP128=2;; // Encryption: WEP 128-bit
+const IEEE80211_CRYPT_WPA=3;; // Encryption: WPA
+const IEEE80211_CRYPT_WPA_UNSUPPORTED=4;; // Encryption: WPA unsupported
+
+const IEEE80211_AUTH_OPEN=0;; // Authentication type: open
+const IEEE80211_AUTH_SHARED=1;; // Authentication type: shared key
+
+var wifi;;
+var _wifi_scans;;
+var _wifi_master=0;; // 1 = master mode (access point), 0 = client mode (station)
+var _wifi_retry_time;;
+var _wifi_last_state;;
 
 #include utils/utils.mtl
 #include protos/dhcp_protos.mtl
 #include protos/udp_protos.mtl
 #include protos/dns_protos.mtl
 #include protos/net_protos.mtl
-#include protos/env_protos.mtl
 #include protos/leds_protos.mtl
 #include protos/config_protos.mtl
 
-fun _scanserialize l=
+fun _wifi_scan_serialize l=
     if l!=nil then
     let hd l->[ssid mac bssid rssi channel rateset encryption] in
     ssid::"\0"::mac::bssid::(itoh4 rssi)::(itoh4 channel)::(itoh4 rateset)::(itoh4 encryption)::
-    _scanserialize tl l;;
+    _wifi_scan_serialize tl l;;
 
-fun scanserialize l=
-    (itoh4 listlen l)::_scanserialize l;;
+fun wifi_scan_serialize l=
+    (itoh4 listlen l)::_wifi_scan_serialize l;;
 
 fun _wifi_dump_scan l0=
     _wifi_debug "## DUMPSCAN >>>>";
@@ -57,14 +65,14 @@ fun _wifi_dump_scan l0=
     );
     l0;;
 
-fun ssidlen s i=
+fun _wifi_ssid_len s i=
     if i>=strlen s then i
     else if !strget s i then i
-    else ssidlen s i+1;;
+    else _wifi_ssid_len s i+1;;
 
-fun scanunserialize s n i0=
+fun _wifi_scan_unserialize s n i0=
     if n>0 then
-    let ssidlen s i0 -> j in
+    let _wifi_ssid_len s i0 -> j in
     let j+1->i in
     [
         strsub s i0 j-i0
@@ -74,32 +82,36 @@ fun scanunserialize s n i0=
         htoi strsub s i+20 8
         htoi strsub s i+28 8
         htoi strsub s i+36 8
-    ]::scanunserialize s n-1 i+44;;
+    ]::_wifi_scan_unserialize s n-1 i+44;;
 
-
-const IEEE80211_CRYPT_NONE=0;;
-const IEEE80211_CRYPT_WEP64=1;;
-const IEEE80211_CRYPT_WEP128=2;;
-const IEEE80211_CRYPT_WPA=3;;
-const IEEE80211_CRYPT_WPA_UNSUPPORTED=4;;
-
-const IEEE80211_AUTH_OPEN=0;;
-const IEEE80211_AUTH_SHARED=1;;
-
-fun scancmpssid a b=
+fun _wifi_scan_cmp_ssid a b=
     let a->[sa _ _ _ _ _ _] in
     let b->[sb _ _ _ _ _ _] in
     strcmp sa sb;;
 
 fun wifi_init rescan=
-    set wifitry=nil;
+    set _wifi_master = 0;
     let envget -> env in
-    if env==nil then
+    if env != nil then
     (
+        setleds RGB_GREEN;
+        set mymac = netMac;
+        set wifi = stationW;
+		set netip = strsub env 0 4;
+		set netmask = strsub env 4 4;
+		set netgateway = strsub env 8 4;
+		set netdnslist = nil; dns_add_new_srv (strsub env 12 4) 0;
+		let htoi strsub env 16 8 -> nscan in
+		set _wifi_scans = _wifi_scan_unserialize env nscan 24;
+
+        envset nil;
+        nil
+
+    ) else (
         setleds RGB_VIOLET;
         set wifi=initW;
-        if rescan then set wifiscans=nil;
-        if master then
+        if rescan then set _wifi_scans=nil;
+        if _wifi_master then
         (
             set netip=netip_master;
             set netmask=netmask_master;
@@ -117,55 +129,41 @@ fun wifi_init rescan=
                 set netip=config_get_net_ip
             );
             0
-        );
-        0
-    )
-    else
-    (
-        setleds RGB_GREEN;
-        set mymac=netMac;
-        set wifi=stationW;
-        env_restore env;
-        envset nil;
-        nil
+        )
     );
     0;;
 
-var laststate;;
 
-fun wifibyssid x v=let x->[s _ _ _ _ _ _] in (s!=nil)&& !strcmp v s;;
+fun _wifi_by_ssid x v=
+    let x->[s _ _ _ _ _ _] in (s!=nil)&& !strcmp v s;;
 
-
-var retrytime;;
-
-fun _wifiwepkey val i len=
+fun _wifi_wep_key val i len=
     if i<len then
-    (htoi strsub val i 2)::_wifiwepkey val i+2 len;;
+    (htoi strsub val i 2)::_wifi_wep_key val i+2 len;;
 
-fun wifiwepkey val=
+fun wifi_wep_key val=
     let strlen val -> len in
     if len==5 || len==13 then val
     else let strreplace val ":" "" -> val in
     let if len<10 then 0 else if len<26 then 5 else 13 -> len in
-    listtostr _wifiwepkey val 0 len<<1;;
+    listtostr _wifi_wep_key val 0 len<<1;;
 
-fun wificrypttype crypt key=
+fun _wifi_crypt_type crypt key=
     if crypt==1 then if 5==strlen key then IEEE80211_CRYPT_WEP64 else IEEE80211_CRYPT_WEP128
     else if crypt==2 then IEEE80211_CRYPT_WPA
     else IEEE80211_CRYPT_NONE;;
 
-fun wifiAuth=
+fun _wifi_auth=
     setleds RGB_AMBER;
-    if wifiscans==nil then 0
+    if _wifi_scans==nil then 0
     else
         let config_get_wifi_crypt -> crypt in
         let config_get_wifi_auth -> auth in
-        let if crypt==1 then wifiwepkey config_get_wifi_key0
+        let if crypt==1 then wifi_wep_key config_get_wifi_key0
             else if crypt==2 then config_get_wifi_pmk -> key in
             (
                 dump key;
-                set wifitry=time;
-                netAuth hd wifiscans auth (wificrypttype crypt key) key;    //## ajouter les paramètres de crypto
+                netAuth hd _wifi_scans auth (_wifi_crypt_type crypt key) key;    //## ajouter les paramètres de crypto
                 1
             );;
 
@@ -188,7 +186,7 @@ fun wifi_check =
 fun wifi_run=
     let netState -> state in
     (
-        if state!=laststate then (
+        if state!=_wifi_last_state then (
             _wifi_debug strcatlist "wifi state: " :: (itoa state) :: nil
         );
         let match wifi with
@@ -197,25 +195,25 @@ fun wifi_run=
                 (
                     set mymac=MAC_to_str netMac 0 1;
                     setleds RGB_AMBER;
-                    if master then
+                    if _wifi_master then
                     (
-                        _wifi_dump_scan set wifiscans=sort netScan nil #scancmpssid;
+                        _wifi_dump_scan set _wifi_scans=sort netScan nil #_wifi_scan_cmp_ssid;
                         netSetmode IEEE80211_M_MASTER (strcat "Nabaztag" ctoh strget mymac 5) 1;
                         _wifi_debug strcatlist mymac :: " -------------gomaster" :: nil;
                         gomasterW
                     )
                     else
                     (
-                        if wifiscans==nil then
+                        if _wifi_scans==nil then
                         (
                             let config_get_wifi_ssid -> ssid in
                             let if strlen ssid then ssid else nil -> ssid in
                             let netScan ssid -> lscan in
-                            let sort lscan #scancmpssid -> l in
-                            let if ssid==nil then l else select l ssid #wifibyssid-> l in
-                            _wifi_dump_scan set wifiscans=l
+                            let sort lscan #_wifi_scan_cmp_ssid -> l in
+                            let if ssid==nil then l else select l ssid #_wifi_by_ssid-> l in
+                            _wifi_dump_scan set _wifi_scans=l
                         );
-                        if wifiAuth then
+                        if _wifi_auth then
                         (
                             _wifi_debug strcatlist config_get_wifi_ssid :: ":-------------gostation" :: nil;
                             gostationW [0 time]
@@ -230,7 +228,7 @@ fun wifi_run=
                     dhcp_start_srv;
                     masterW)
             )
-        |(masterW -> if !master then
+        |(masterW -> if !_wifi_master then
                     (
                         wifi_init 1;
                         resetudp;
@@ -258,7 +256,7 @@ fun wifi_run=
             )
         |(reconnectW ->
             netSetmode IEEE80211_M_MANAGED nil 11;
-            if wifiAuth then
+            if _wifi_auth then
             (
                 _wifi_debug strcatlist config_get_wifi_ssid :: ":-------------gostation" :: nil;
                 gostationW [0 time]
@@ -266,11 +264,11 @@ fun wifi_run=
          )
         -> nwifi in
         if nwifi!=nil then set wifi=nwifi;
-        set laststate=state
+        set _wifi_last_state=state
     );
-    if retrytime!=time then
+    if _wifi_retry_time!=time then
     (
-        set retrytime=time;
+        set _wifi_retry_time=time;
         nettime;
         dns_time;
         0
@@ -283,6 +281,5 @@ fun wifi_run=
 #include ipv4/udp.mtl
 #include net/dns.mtl
 #include net/net.mtl
-#include utils/env.mtl
 #include hw/leds.mtl
 #include utils/config.mtl

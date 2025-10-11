@@ -264,5 +264,52 @@ fun is_numeric str=
         result
     );;
 
+/**
+ * Converts a string to lowercase.
+ */
+fun to_lower str=
+    let strlen str -> length in
+    let strnew length -> res in (
+        for i=0; i<length do (
+            let strget str i -> ch in (
+                if (ch >= 'A') && (ch <= 'Z') then
+                    strset res i (ch + 32) // convert to lowercase
+                else
+                    strset res i ch
+            )
+        );
+        res
+    );;
+
+/**
+ * Converts a string to uppercase.
+ */
+fun to_upper str=
+    let strlen str -> length in
+    let strnew length -> res in (
+        for i=0; i<length do (
+            let strget str i -> ch in (
+                if (ch >= 'a') && (ch <= 'z') then
+                    strset res i (ch - 32) // convert to uppercase
+                else
+                    strset res i ch
+            )
+        );
+        res
+    );;
+
+/**
+ * Count the number of occurrences of a character in a string.
+ */
+fun count_char s c =
+    let 0 -> count in
+    let strlen s -> length in (
+        for i=0; i<length do (
+            if (strget s i) == c then
+                set count = count + 1
+        );
+        count
+    );;
+
 fun getBytecodeRevision =
     strsub BYTECODE_REVISION_STR 6 ((strlen BYTECODE_REVISION_STR) - 8);;
