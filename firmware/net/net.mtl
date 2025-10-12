@@ -61,12 +61,17 @@ fun nettime=
 #endif
 	0;;
 
-
 /**
-	Simplified version of the builtin netSend.
-*/
-fun netSend2 trame mac =
-	netSend trame 0 nil mac 0 1
+ * Return network status as JSON
+ */
+fun net_json=
+    strcatlist
+        "{\n"::
+            (json_str "ip" webip netip) :: ",\n" ::
+            (json_str "mask" webip netmask) :: ",\n" ::
+            (json_str "gateway" webip netgateway) :: ",\n" ::
+            (json_obj "dns" dns_list_to_json) :: "\n" ::
+        "}" :: nil
 ;;
 
 #include ipv4/icmp.mtl

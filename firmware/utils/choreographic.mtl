@@ -199,9 +199,9 @@ fun taichistart=
 var nexttaichi;;
 fun dotaichinow=
     //Secho "checktaichi ";
-    if infotaichi && (infotaichi != nil) && (!sleep_status) then let (if nexttaichi!=nil then (time>nexttaichi) else 0) -> now in (
+    if info_taichi && (info_taichi != nil) && (!sleep_status) then let (if nexttaichi!=nil then (time>nexttaichi) else 0) -> now in (
         if now || nexttaichi==nil then // compute nexttaichi
-        let if (infotaichi == 40) then 255 else if (infotaichi == 255) then 40 else 80 -> correctedTaichi in // etait inversé
+        let if (info_taichi == 40) then 255 else if (info_taichi == 255) then 40 else 80 -> correctedTaichi in // etait inversé
         let ((correctedTaichi*60*((rand&127)+64))>>7) -> delaye in (
             Secho "taichi in "; Iecho delaye; Secholn "s";
             set nexttaichi=time+delaye

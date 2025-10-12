@@ -64,6 +64,7 @@ const BYTECODE_REVISION_STR = "$Rev: __DATE__ $";;
 #include protos/trame_protos.mtl
 #include protos/url_protos.mtl
 #include protos/sleep_protos.mtl
+#include protos/info_protos.mtl
 #include protos/forth_protos.mtl
 
 #include hw/leds.mtl
@@ -190,6 +191,8 @@ fun jobs_init=
     0;;
 
 fun main=
+    // forth_test;
+
     interactive_init;
     leds_set_state LEDS_STATE_START;
     config_init;

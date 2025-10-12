@@ -64,3 +64,10 @@ fun json_int k v=
 fun json_str k v=
     strcatlist "\"" :: k :: "\": " :: (json_quote_str v) :: nil
 ;;
+
+/**
+ * Create a JSON object key-value pair string.
+ */
+fun json_obj k v=
+    strcatlist "\"" :: k :: "\": " :: v :: nil
+;;

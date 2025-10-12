@@ -140,7 +140,6 @@ fun http_get_json_status cnx sock args=
     http_send_content_and_close cnx sock "application/json"
     strcatlist
         "{\n"::
-            (json_str "mac" webmac netMac) :: ",\n" ::
             (json_str "ts" current_time_human) :: ",\n" ::
             (json_int "time" time) :: ",\n" ::
             (json_str "city_code" config_get_city_code) :: ",\n" ::
@@ -151,8 +150,6 @@ fun http_get_json_status cnx sock args=
             (json_str "longitude" config_get_longitude) :: ",\n" ::
             (json_int "wake_up" config_get_wake_up) :: ",\n" ::
             (json_int "go_to_bed" config_get_go_to_bed) :: ",\n" ::
-            (json_int "taichi" infotaichi) :: ",\n" ::
-            (json_int "messages" infomessages) :: ",\n" ::
             (json_int "left" ears_left) :: ",\n" ::
             (json_int "right" ears_right) :: ",\n" ::
             (json_int "earsmode" earsmode) :: ",\n" ::
@@ -164,6 +161,9 @@ fun http_get_json_status cnx sock args=
             (json_int "it_state" gItState) :: ",\n" ::
             (json_str "it_app" gItApp) :: ",\n" ::
             (json_int "meteo_weather_code" _meteo_weather_code) :: ",\n" ::
+            (json_obj "info" info_json) :: ",\n" ::
+            (json_obj "network" net_json) :: ",\n" ::
+            (json_obj "wifi" wifi_json) :: ",\n" ::
             (json_str "rev" BYTECODE_REVISION_STR) :: "\n" ::
         "}" :: nil
 ;;
@@ -214,7 +214,6 @@ proto stopEverythingAndResetToIdle 0;;
 proto get_time_from_timeserver 0;;
 proto audiolib_start_http 2;;
 proto surprise 0;;
-proto _infosrc_update 2;;
 
 //--------------------------------------------------------------------------------------------------
 
@@ -252,8 +251,9 @@ fun _http_server_parse_req req=
             // For GET requests, extract arguments from the path
             let strstr path "?" 0 -> i in
                 if i!=nil then (
+                    set args=(extractargs path i+1);
                     set path=(strsub path 0 i);
-                    set args=(extractargs path i+1)
+                    nil
                 );
     [verb path args]
     );;
@@ -290,16 +290,14 @@ fun http_get_update_time cnx sock args=
  */
 fun http_get_update_weather cnx sock args=
     meteo_get;
-    http_send_header_and_close HTTP_204 nil cnx sock;
-    nil;;
+    http_send_header_and_close HTTP_204 nil cnx sock;;
 
 /**
  * Stop everything we can be doing and resets to either idle or asleep
  */
 fun http_get_stop cnx sock args=
     stopEverythingAndResetToIdle;
-    http_send_header_and_close HTTP_204 nil cnx sock;
-    nil;;
+    http_send_header_and_close HTTP_204 nil cnx sock;;
 
 /**
  * Reboot the system
@@ -342,7 +340,7 @@ fun http_get_taichi cnx sock args=
         if v == 1000 && !sleep_status then
             taichistart
         else
-            set infotaichi = v;
+            set info_taichi = v;
     http_send_header_and_close HTTP_204 nil cnx sock;;
 
 fun http_get_mp3 cnx sock args=
@@ -370,42 +368,42 @@ fun http_get_right cnx sock args=
     http_send_header_and_close HTTP_204 nil cnx sock;;
 
 fun http_get_nose cnx sock args=
-    set infomessages = _http_arg_int args 'v';
+    set info_messages = _http_arg_int args 'v';
     http_send_header_and_close HTTP_204 nil cnx sock;;
 
 fun http_get_weather cnx sock args=
     if !sleep_status then (
-        _infosrc_update 1 _http_arg_int args 'v'
+        info_src_update INFO_WEATHER _http_arg_int args 'v'
     );
     http_send_header_and_close HTTP_204 nil cnx sock;;
 
 fun http_get_stock cnx sock args=
     if !sleep_status then (
-        _infosrc_update 2 _http_arg_int args 'v'
+        info_src_update INFO_STOCK _http_arg_int args 'v'
     );
     http_send_header_and_close HTTP_204 nil cnx sock;;
 
 fun http_get_traffic cnx sock args=
     if !sleep_status then (
-        _infosrc_update 3 _http_arg_int args 'v'
+        info_src_update INFO_TRAFFIC _http_arg_int args 'v'
     );
     http_send_header_and_close HTTP_204 nil cnx sock;;
 
 fun http_get_mail cnx sock args=
     if !sleep_status then (
-        _infosrc_update 6 _http_arg_int args 'v'
+        info_src_update INFO_MAIL _http_arg_int args 'v'
     );
     http_send_header_and_close HTTP_204 nil cnx sock;;
 
 fun http_get_pollution cnx sock args=
     if !sleep_status then (
-        _infosrc_update 7 _http_arg_int args 'v'
+        info_src_update INFO_POLLUTION _http_arg_int args 'v'
     );
     http_send_header_and_close HTTP_204 nil cnx sock;;
 
 fun http_get_clear cnx sock args=
     for i=1;i<=8 do (
-        _infosrc_update 0 i
+        info_src_update 0 i
     );
     http_send_header_and_close HTTP_204 nil cnx sock;;
 

@@ -426,6 +426,20 @@ fun dns_list_to_str =
 	strcatlist "(" :: (itoa listlen netdnslist) :: ") - " :: (_dns_list_to_str_r netdnslist)
 ;;
 
+fun _dns_list_to_json_r l =
+	if l == nil then nil
+    else
+		"\"" :: (webip hd l) :: "\"" :: if (tl l) != nil then
+            (", " :: _dns_list_to_json_r tl l)
+        else
+            "]" :: nil;;
+
+/**
+ * Returns a json array representation of the DNS list
+ */
+fun dns_list_to_json =
+	strcatlist "[" :: (_dns_list_to_json_r netdnslist)
+;;
 
 /**
  * Called when receiving a new list of dns servers from dhcp. Updates the current dns list.

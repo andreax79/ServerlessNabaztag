@@ -137,11 +137,11 @@ fun trame_eval ping_trame=
                     let ((strget val 3) == 0xFF) -> fromHttp in
                     if fromHttp then (
                         // old format
-                        infoUpdate strsub val 4 nil;
+                        info_update strsub val 4 nil;
                         nil
                     ) else (
                         // new format
-                        newInfoUpdate strsub val 4 nil;
+                        info_update_v2 strsub val 4 nil;
                         nil
                     )
                 ) else if code == 9 then (

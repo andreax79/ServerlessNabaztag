@@ -276,6 +276,19 @@ fun wifi_run=
     wifi_check;
     JobRun;;
 
+/**
+ * Return WIFI status as JSON
+ */
+fun wifi_json=
+    strcatlist
+        "{\n"::
+            (json_str "mac" webmac netMac) :: ",\n" ::
+            (json_int "master" _wifi_master) :: ",\n" ::
+            (json_int "retry_time" _wifi_retry_time) :: ",\n" ::
+            (json_int "last_state" _wifi_last_state) :: ",\n" ::
+            (json_str "ssid" config_get_wifi_ssid) :: "\n" ::
+        "}" :: nil
+;;
 
 #include net/dhcp.mtl
 #include ipv4/udp.mtl

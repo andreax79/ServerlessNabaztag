@@ -1,0 +1,10 @@
+proto info_src_update 2;;
+proto info_update 1;;
+proto info_update_v2 1;;
+proto info_json 0;;
+
+const INFO_WEATHER = 1;;
+const INFO_STOCK = 2;;
+const INFO_TRAFFIC = 3;;
+const INFO_MAIL = 6;;
+const INFO_POLLUTION = 7;;

@@ -1,30 +1,30 @@
 // gestion des services
 
-// infodata : les definitions des animations visuelles des services (meteo, traffic, etc..)
+// _info_data : les definitions des animations visuelles des services (meteo, traffic, etc..)
 // Liste de tuples. Un tuple = [<type de service> <animations>]
 // animations = tableau de N animations, une par valeur du service. Animation = tuple = [tempo <couleurs>]
 // couleurs = X fois 3 couleurs pour les 3 leds du ventre (led 1, 2, 3)
-// couleur = index dans le tableau 'infoPalette'
+// couleur = index dans le tableau 'INFO_PALETTE'
 // tempo = 0.5*log2 du nombre d'itérations à durer sur la couleur courante (ex : tempo = 3, durée = 16 itérations)
-var infodata;;
+var _info_data;;
 
-// infosrc : les services courants affichés par ce lapin (envoyé par le serveur et mis à jour par le fonction 'infoUpdate')
+// info_src : les services courants affichés par ce lapin (envoyé par le serveur et mis à jour par le fonction 'info_update')
 // Un tableau de 16 valeurs, pour les services courants. 2 valeurs par service donc 8 services max.
 // 2 valeurs par service : la première valeur vaut 1+infoType (ex : 1 pour meteo), la deuxième vaut infoVal, la valeur du service (ex : 0 pour soleil)
-var infosrc;;
+var info_src;;
 
 // nombre de messages utilisateur en attente (0, 1, 2 et +)
-var infomessages=0;;
+var info_messages=0;;
 
 // valeur de frequence du taichi (40: peu fréquent, 80: normal, 255: très fréquent)
-var infotaichi=0;;
+var info_taichi=0;;
 
 fun info_init=
-    set infosrc=tabnew 0 16;
-    set infomessages=0;
-    set infotaichi = 0;
+    set info_src=tabnew 0 16;
+    set info_messages=0;
+    set info_taichi = 0;
 
-    set infodata=
+    set _info_data=
 [0 // meteo
 {
     [40 {0 3 0 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3}] // sun
@@ -83,7 +83,7 @@ fun info_init=
 nil;;
 
 // v21 : changé couleur jaune clair (11) de 0xffff80 à 0xffcc00 (bug 197)
-const infoPalette={
+const INFO_PALETTE={
 //    0:black  1:red    2:green  3:yellow 4:blue   5:violet 6:cyan   7:white
     0x000000 0xff0000 0x00ff00 0xffff00 0x0000ff 0xff00ff 0x00ffff 0xffffff
 //    8:gray   9:rose  10:lt gr 11:lt yel 12:lt bl 13:lt vio 14:lt cy 15:orange
@@ -93,7 +93,7 @@ const infoPalette={
 
 // heure de démarrage du service courant
 var infoStartTime;;
-// index du service courant (dans infosrc)
+// index du service courant (dans info_src)
 var infoIndex=0;;
 // type du service courant
 var infoType;;
@@ -109,18 +109,18 @@ var infoAnimColorDur;;
 // durée d'affichage d'un service, en secondes
 const INFO_TIMEOUT=15;;
 
-fun infoAnimationsOf typ=listswitch infodata typ;;
+fun infoAnimationsOf typ=listswitch _info_data typ;;
 
 // retourne le prochain index utile (infoType non nul)
 fun _infoNextIndex i=
     let i+2-> i in
-    if i>=16 then 0 else if infosrc.i then i else _infoNextIndex i;;
+    if i>=16 then 0 else if info_src.i then i else _infoNextIndex i;;
 
 // le service suivant
 fun infoStartOne i=
     set infoIndex= i;
-    set infoType=(infosrc.(infoIndex))-1;
-    set infoVal=infosrc.(infoIndex+1);
+    set infoType=(info_src.(infoIndex))-1;
+    set infoVal=info_src.(infoIndex+1);
     set infoStartTime=time;
     set infoAnimColori=0;
     set infoAnimColorStart=time_ms;
@@ -133,25 +133,34 @@ fun infoNext=
     infoStartOne (_infoNextIndex infoIndex);
     0;;
 
-fun _dumpinfosrc i=
-    if (i < 16) then (
-        let infosrc.i -> key in
-        let infosrc.(i+1) -> val in
-        if key == 1 then ( Secho "Meteo="; Iecho val; Secho ",")
-        else if key == 2 then ( Secho "Bourse="; Iecho val; Secho ",")
-        else if key == 3 then ( Secho "Traffic="; Iecho val; Secho ",")
-        else if key == 6 then ( Secho "Mails="; Iecho val; Secho ",")
-        else if key == 7 then ( Secho "Pollution="; Iecho val; Secho ",");
-        _dumpinfosrc i+2
+/**
+ * Return _info_src as JSON
+ */
+fun _info_src_json=
+    let nil -> result in (
+        for i=0;i<16 do
+            let info_src.(i*2) -> key in
+            let info_src.(i*2+1) -> val in (
+                if key == INFO_WEATHER then set result = (json_int "weather" val) :: ",\n" :: result
+                else if key == INFO_STOCK then set result = (json_int "stock" val) :: ",\n" :: result
+                else if key == INFO_TRAFFIC then set result = (json_int "traffic" val) :: ",\n" :: result
+                else if key == INFO_MAIL then set result = (json_int "emails" val) :: ",\n" :: result
+                else if key == INFO_POLLUTION then set result = (json_int "pollution" val) :: ",\n" :: result
+            );
+        strcatlist result
     );;
-fun dumpinfo=
-    Secho "infos=[";
-    _dumpinfosrc 0;
-    Secho "Messages#="; Iecho infomessages; Secho ",";
-    Secho "TaiChi="; Iecho infotaichi; Secho ",";
-    Secho "EarL="; Iecho ears_left; Secho ",";
-    Secho "EarR="; Iecho ears_right; Secho "]"
-    ;;
+
+/**
+ * Return info as JSON
+ */
+fun info_json=
+    strcatlist
+        "{\n"::
+            _info_src_json ::
+            (json_int "messages" info_messages) :: ",\n" ::
+            (json_int "taichi" info_taichi) :: "\n" ::
+        "}" :: nil
+;;
 
 fun infoRun=
     if (!sleep_status) then // no info while sleeping
@@ -159,23 +168,23 @@ fun infoRun=
     if !ears_detecting then
     (
         // passage au service suivant ?
-        set infoType=(infosrc.(infoIndex))-1;
+        set infoType=(info_src.(infoIndex))-1;
         if infoStartTime==nil || (time-infoStartTime>INFO_TIMEOUT) || infoType<0 then infoNext;
 
-        // Allumage de la tête en verde si message(s) en attente (infomessages)
+        // Allumage de la tête en verde si message(s) en attente (info_messages)
         let (time_ms>>8)&7 -> t in
-            led LED_NOSE if (((infomessages>3) && (t==7)) || ((infomessages>2) && (t==5)) || ((infomessages>1) && (t==3)) || ((infomessages>0) && (t==1))) then RGB_GREEN else RGB_BLACK;
+            led LED_NOSE if (((info_messages>3) && (t==7)) || ((info_messages>2) && (t==5)) || ((info_messages>1) && (t==3)) || ((info_messages>0) && (t==1))) then RGB_GREEN else RGB_BLACK;
 
         // couleurs des 3 leds du ventre (service courant/animation courante/couleur courante)
-        set infoType=(infosrc.(infoIndex))-1;
-        set infoVal=infosrc.(infoIndex+1);
+        set infoType=(info_src.(infoIndex))-1;
+        set infoVal=info_src.(infoIndex+1);
         let infoAnimationsOf infoType -> anims in
         let anims.infoVal ->[dur anime] in
         if anime!=nil then
         (
-            led LED_BODY_LEFT infoPalette.(anime.infoAnimColori);
-            led LED_BODY_MIDDLE infoPalette.(anime.(1+infoAnimColori));
-            led LED_BODY_RIGHT infoPalette.(anime.(2+infoAnimColori));
+            led LED_BODY_LEFT INFO_PALETTE.(anime.infoAnimColori);
+            led LED_BODY_MIDDLE INFO_PALETTE.(anime.(1+infoAnimColori));
+            led LED_BODY_RIGHT INFO_PALETTE.(anime.(2+infoAnimColori));
             if (time_ms-infoAnimColorStart >= infoAnimColorDur) then
             (
                 // next colors
@@ -192,68 +201,77 @@ fun infoRun=
     );;
 
 // util : slide tableau pour effacer case vide
-fun __infoslide i=
+fun _info_slide i=
     if (i == 16-2) then (
-        set infosrc.i = 0;
-        set infosrc.(i+1) = 0
+        set info_src.i = 0;
+        set info_src.(i+1) = 0
     ) else (
-        set infosrc.i = infosrc.(i+2);
-        set infosrc.(i+1) = infosrc.(i+3);
+        set info_src.i = info_src.(i+2);
+        set info_src.(i+1) = info_src.(i+3);
         // recurse
-        if (infosrc.i > 0) then __infoslide i+2
+        if (info_src.i > 0) then _info_slide i+2
     );;
 
 // enlève cette source de la liste
-fun __infosrc_del key i=
+fun __info_src_del key i=
     if (i < 16) then
-    if (infosrc.i == key) then (
+    if (info_src.i == key) then (
         // delete
-        __infoslide i
-    ) else __infosrc_del key i+2;;
-fun _infosrc_del key=
-    __infosrc_del key 0;;
+        _info_slide i
+    ) else __info_src_del key i+2;;
+
+fun _info_src_del key=
+    __info_src_del key 0;;
 
 // met à jour ou rajoute cette source
-fun __infosrc_update key val i=
+fun _info_src_update key val i=
     if (i < 16) then
-    if (infosrc.i == 0 || infosrc.i == key) then (
+    if (info_src.i == 0 || info_src.i == key) then (
         // add or update
-        set infosrc.(i+1) = val;
-        if (infosrc.i == 0) then (
+        set info_src.(i+1) = val;
+        if (info_src.i == 0) then (
             // add
-            set infosrc.i = key;
+            set info_src.i = key;
             // set lapin to play this new one now
             infoStartOne i
         )
-    ) else __infosrc_update key val i+2;; // recurse
+    ) else _info_src_update key val i+2;; // recurse
 
-fun _infosrc_update key val=
+/**
+ * Update info source
+ * key: 1=weather, 2=stock, 3=traffic, 6=emails, 7=pollution
+ * val: value of the source (or key to delete if key=0)
+ */
+fun info_src_update key val=
+    Secho "info_src_update key: "; Iecho key; Secho " val: "; Iecholn val;
     // allow for deletion
-    if key == 0 then _infosrc_del val
-    else __infosrc_update key val 0;;
+    if key == 0 then _info_src_del val
+    else _info_src_update key val 0;;
 
 
-// ancien format
-fun infoUpdate data=
-    Secho "infoUpdate OLD FORMAT:";
+/**
+ * Update sources, messages number and ears (old format)
+ */
+fun info_update data=
+    Secho "info_update OLD FORMAT:";
     let strlen data -> len in (
         // /14/80/0/0/0/0/0/0/0/0/0/0/0/0/0/0/14/13/0/
         Secho "len="; Iecho len; Secho ":";
         for i=0;i<len do (Iecho strget data i; Secho "/");
 
         // sources
-        for i=0;i<(min 16 len) do set infosrc.i=strget data i;
+        for i=0;i<(min 16 len) do set info_src.i=strget data i;
 
         // messages
-        set infomessages = 0;
-        if (len > 16+3) && (strget data (16+3)) then set infomessages = 2
-        else if (len > 16+2) && (strget data (16+2)) then set infomessages = 1;
+        set info_messages = 0;
+        if (len > 16+3) && (strget data (16+3)) then set info_messages = 2
+        else if (len > 16+2) && (strget data (16+2)) then set info_messages = 1;
 
         // taichi
         let 0 -> found in
         for i=0;(i<(min 16 len) && !found);i+2 do
         if ((strget data i) == 14) then (
-            set infotaichi = strget data i+1;
+            set info_taichi = strget data i+1;
             set found = 1
         );
 
@@ -271,12 +289,13 @@ fun infoUpdate data=
         )
 
     );
-    dumpinfo;
-
     0;;
 
-fun newInfoUpdate data=
-    Secho "newInfoUpdate:";
+/**
+ * Update sources, messages number and ears (new format)
+ */
+fun info_update_v2 data=
+    Secho "info_update_v2:";
     let 0 -> i in
     let nil -> newleft in
     let nil -> newright in (
@@ -284,14 +303,14 @@ fun newInfoUpdate data=
             let strget data i -> key in
             let strget data i+1 -> val in (
                 Secho "key:"; Iecho key; Secho "="; Iecho val; Secho ",";
-                if key == 8 then set infomessages = val
-                else if key == 0 then _infosrc_del val
-                else if key == 1 || key == 2 || key == 3 || key == 6 || key == 7 then _infosrc_update key val
+                if key == 8 then set info_messages = val
+                else if key == 0 then _info_src_del val
+                else if key == 1 || key == 2 || key == 3 || key == 6 || key == 7 then info_src_update key val
                 else if key == 4 then set newleft = val
                 else if key == 5 then set newright = val
-                else if key == 14 then set infotaichi = val
+                else if key == 14 then set info_taichi = val
                 else (
-                    Secho "ERROR newInfoUpdate unknown key="; Iecholn key;0
+                    Secho "ERROR info_update_v2 unknown key="; Iecholn key;0
                 )
             );
             set i = i + 2
@@ -308,6 +327,5 @@ fun newInfoUpdate data=
             )
         )
     );
-    Secholn "";
-    dumpinfo
+    Secholn ""
     ;;

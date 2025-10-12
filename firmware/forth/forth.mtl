@@ -138,14 +138,14 @@ fun forth_new_word token=
     else
         [str:token];;
 
-// var text = "5 2 + 10 * dup 1 + >";;
-// var text = ": bla 1 + exit 10 + ; 5 2 + bla exit 100 +";;
-// var text = "1 2 3 4 dup";;
-// var text = "9 8 7 1 2 over";;
-// var text = "9 8 7 1 2 1 pick";;
-// var text = ": test dup >r 10 + r> * ; 10 test";;
-// var text = "' bla";;
-var text = "
+// const FORTH_TEST = "5 2 + 10 * dup 1 + >";;
+// const FORTH_TEST = ": bla 1 + exit 10 + ; 5 2 + bla exit 100 +";;
+// const FORTH_TEST = "1 2 3 4 dup";;
+// const FORTH_TEST = "9 8 7 1 2 over";;
+// const FORTH_TEST = "9 8 7 1 2 1 pick";;
+// const FORTH_TEST = ": test dup >r 10 + r> * ; 10 test";;
+// const FORTH_TEST = "' bla";;
+const FORTH_TEST = "
 : bla 1 + exit 10 + ;
 5 2 + bla . space
 1 . space 2 . space 3 . space 4 . ( test aa bb ) space 65 emit cr
@@ -159,10 +159,10 @@ nil 10 :: 20 :: 30 :: dup dup . space tl . space . cr
 0 test3
 1 test3
 ";;
-// var text = ": bla begin dup . 1 - dup 0 = until ; 5 bla \"ciao\" emit";;
-// var text = "\"ciao ciao\" emit";;
+// const FORTH_TEST = ": bla begin dup . 1 - dup 0 = until ; 5 bla \"ciao\" emit";;
+// const FORTH_TEST = "\"ciao ciao\" emit";;
 
-fun forth_interpreter text=
+fun forth_interpreter text cb=
     if forth_dictionary==nil then forth_init_dictionary;
 
     let [start:0 end:0 end_ln:0 parentheses:0 input:text text_len:(strlen text) token:nil] -> i in
@@ -232,22 +232,37 @@ fun forth_interpreter text=
                 )
             )
         );
-        if f.output != nil then (
-            Secho "Output:";
-            Secholn strcatlist (rev f.output nil)
-        );
-        f
+        call cb [f]
     );;
 
+/**
+  * Handle HTTP callback for Forth interpreter. Teturn the output as JSON.
+  */
+fun _forth_http_cb f cb_args=
+    Secholn "_forth_http_cb";
+    let cb_args -> [cnx sock] in
+    http_send_content_and_close cnx sock "application/json"
+    strcatlist
+        "{\n" ::
+            (json_str "output" (strcatlist (rev f.output nil))) ::
+        "\n}" ::
+        nil;;
 
 fun http_post_forth cnx sock args=
     Secholn "http_post_forth";
     let _http_arg_str args 'c' -> code in
-    let forth_interpreter code -> f in (
-        http_send_content_and_close cnx sock "application/json"
-        strcatlist
-            "{\n" ::
-                (json_str "output" (strcatlist (rev f.output nil))) ::
-            "\n}"
-            ::nil
-    );;
+    forth_interpreter code (fixarg2 #_forth_http_cb [cnx sock]);;
+
+fun _forth_test_cb f cb_args=
+    Secholn "_forth_test_cb";
+    if f.output != nil then (
+        Secholn "------------\nOutput:";
+        Secholn strcatlist (rev f.output nil);
+        Secholn "------------"
+    );
+    // Avoid compiler error
+    let cb_args -> [cnx sock] in 0;;
+
+fun forth_test=
+    forth_interpreter FORTH_TEST (fixarg2 #_forth_test_cb [nil nil]);
+    reboot 0x0407FE58 0x13fb6754;;
