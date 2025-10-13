@@ -13,10 +13,10 @@ fun _pingcbhttp http res=
 		trame_eval httpgetcontent res;
 	0;;
 
-fun runpingstart=
+fun ping_run_start=
 	if ears_is_initialized != 1 then ears_init; // we init the ears
 
-	if netState==RT2501_S_CONNECTED then
+	if wifi_connected then
 		run_set_state pingwaitRun httprequest "GET" Secholn url_ping _ping_send_data nil #_pingcbhttp HTTP_NORMAL;
 	0;;
 
@@ -43,9 +43,9 @@ fun runidlewait=
 	if ears_ready then
 	(
 		ears_start_detect;
-		setleds 0;
-		ears_go 0 ears_left 0;
-		ears_go 1 ears_right 0;
+		leds_set_all RGB_BLACK;
+		ears_go EARS_LEFT ears_left 0;
+		ears_go EARS_RIGHT ears_right 0;
 		run_set_state stdWaitRun time+pingdelay
 	);
 	0;;

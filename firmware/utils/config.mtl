@@ -150,6 +150,6 @@ fun config_set_longitude val =
 fun config_set_wake_up val =
     strset _config_data CONF_WAKE_UP val;;
 
-// Set go to bd time
+// Set go to bed time
 fun config_set_go_to_bed val =
     strset _config_data CONF_GO_TO_BED val;;

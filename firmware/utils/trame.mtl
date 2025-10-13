@@ -77,7 +77,7 @@ fun _trame_check_for_palette_before l=
 
 fun trame_program_start=
     // Starts playing the program
-    // setleds RGB_RED;
+    // leds_set_all RGB_RED;
 
     // Si la palette est definie pour ce programme, alors on ne met pas l'aleatoire
     if(_trame_palette_selected==0) then (
@@ -108,7 +108,7 @@ fun trame_eval ping_trame=
         Secholn "bad trame";
         dump ping_trame;
         Secholn "dropping";
-        if (gItState) then (
+        if (interactive_status) then (
             // display error
             interactive_error;
             nil
@@ -209,7 +209,7 @@ fun trame_is_resource_valid rsrcName=
     else if (!strcmp rsrcName "sources") then 1 // tjrs
     else if (!strcmp rsrcName "boot") then 1 // tjrs
     else if (gStreamingState) then (if (!strcmp rsrcName "streaming") then 1 else 0)
-    else if (gItState) then (if (!strcmp rsrcName "itmode") then 1 else 0)
+    else if (interactive_status) then (if (!strcmp rsrcName "itmode") then 1 else 0)
     else if (sleep_status) then (if (!strcmp rsrcName "asleep") then 1 else 0)
     else if (gProcessingState) then 0
     else 1;;
@@ -226,7 +226,7 @@ fun _trame_queue_remove_entry binome=
         // which resource now ? Can be in this order asleep, streaming, itmode or idle
         if (sleep_status) then XmppSessionRequestResource "asleep"
         else if (gStreamingState) then XmppSessionRequestResource "streaming"
-        else if (gItState) then XmppSessionRequestResource "itmode"
+        else if (interactive_status) then XmppSessionRequestResource "itmode"
         else XmppSessionRequestResource "idle"
     );
     0;;

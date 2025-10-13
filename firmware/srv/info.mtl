@@ -162,10 +162,8 @@ fun info_json=
         "}" :: nil
 ;;
 
-fun infoRun=
-    if (!sleep_status) then // no info while sleeping
-    if (!gItState) then // no info while in interactive mode
-    if !ears_detecting then
+fun info_run=
+    if (!sleep_status && !interactive_status && !ears_detecting) then // no info while sleeping and while in interactive mode
     (
         // passage au service suivant ?
         set infoType=(info_src.(infoIndex))-1;
@@ -173,7 +171,11 @@ fun infoRun=
 
         // Allumage de la tête en verde si message(s) en attente (info_messages)
         let (time_ms>>8)&7 -> t in
-            led LED_NOSE if (((info_messages>3) && (t==7)) || ((info_messages>2) && (t==5)) || ((info_messages>1) && (t==3)) || ((info_messages>0) && (t==1))) then RGB_GREEN else RGB_BLACK;
+        let if (((info_messages>3) && (t==7)) ||
+                ((info_messages>2) && (t==5)) ||
+                ((info_messages>1) && (t==3)) ||
+                ((info_messages>0) && (t==1))) then RGB_GREEN else RGB_BLACK -> color in
+            led LED_NOSE color;
 
         // couleurs des 3 leds du ventre (service courant/animation courante/couleur courante)
         set infoType=(info_src.(infoIndex))-1;
@@ -196,7 +198,9 @@ fun infoRun=
         )
         else
         (
-            led LED_BODY_LEFT RGB_BLACK; led LED_BODY_MIDDLE RGB_BLACK; led LED_BODY_RIGHT RGB_BLACK
+            led LED_BODY_LEFT RGB_BLACK;
+            led LED_BODY_MIDDLE RGB_BLACK;
+            led LED_BODY_RIGHT RGB_BLACK
         )
     );;
 

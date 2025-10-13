@@ -1608,7 +1608,7 @@ fun xmpps_sendStanza xSession NextState To Type Content =
 // This open a new Xmpp Session
 fun XmppSessionStart domain displayChor=
     _xmpp_debug strcatlist "Xmpp Session Start on : "::domain::nil;
-    if displayChor == 1 then setleds RGB_GREEN;     // DISPLAY STATUS WITH LIGHT TODO
+    if displayChor == 1 then leds_set_all RGB_GREEN;     // DISPLAY STATUS WITH LIGHT TODO
     if XmppGlobalSession != nil then XmppSessionStop XmppGlobalSession;
     let [sStatus:sOpening sUsername:(webmac netMac) sPassword:_xmpp_get_password sDomain:domain/*"xmpp-dev.nabaztag.com"*/ sDisplayLeds:displayChor sState:ssLogging sLastIOTime:time sNextRestart:-1 sPacketQueue:nil sDataToSend:[nil 0 0] sLastPingTime:time sLastPingIqId:nil ] -> NewSession in
     (
@@ -1809,7 +1809,7 @@ fun XmppSessionIdle=
                             )
                         );
                     0)|(sClosed -> // la session est fermee...
-                    0)|(sRegistrationError -> setleds RGB_RED; nil; // TODO _xmpp_debug "HERRRRE IN ERROR";
+                    0)|(sRegistrationError -> leds_set_all RGB_RED; nil; // TODO _xmpp_debug "HERRRRE IN ERROR";
                     0)|(_ -> 0);
                 0
             )
@@ -2732,7 +2732,7 @@ fun XmppSessionProcessHandleStanzaIqSet xSession xmlStanza =
                     :: "<field var='net_dns'><value>" :: (dns_list_to_str) :: "</value></field>"
                     :: "<field var='sState'><value>" :: (xmppStateToStr xSession.sState) :: "</value></field>"
                     :: "<field var='sResource'><value>" :: xSession.sResource :: "</value></field>"
-                    :: "<field var='gItState'><value>" :: (itoa gItState) :: "</value></field>"
+                    :: "<field var='gItState'><value>" :: (itoa interactive_status) :: "</value></field>"
                     :: "<field var='gSleepState'><value>" :: (itoa sleep_status) :: "</value></field>"
                     :: "<field var='gStreamingState'><value>" :: (itoa gStreamingState) :: "</value></field>"
                     :: "<field var='gProcessingState'><value>" :: (itoa gProcessingState) :: "</value></field>"

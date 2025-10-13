@@ -1,0 +1,42 @@
+var _reclib_lrec;;
+
+fun _reclib_rec_cb s=
+	Iecho strlen s; Secho "!";
+	let 255-(Iecholn sqrt recVol s 0) -> vol in
+	let 255-((vol*vol)>>8) -> vol in
+	let vol<<16 -> vol in
+	(
+		led LED_BODY_LEFT vol; led LED_BODY_MIDDLE vol; led LED_BODY_RIGHT vol
+	);
+	set _reclib_lrec=s::_reclib_lrec;
+	0;;
+
+fun _reclib_mkriff ldata=
+	let liststrlen ldata 0 -> len in
+        (strcatlist
+            "RIFF" ::
+            (itobin4 len+52) ::
+            "WAVEfmt \$14\0\0\0\$11\0\1\0\$40\$1f\0\0\$d7\$0f\0\0\0\1\4\0\2\0\$f9\01" ::
+	        "fact\4\0\0\0" ::
+            (itobin4 (len>>8)*505) ::
+            "data" ::
+            (itobin4 len) ::
+            nil
+        ) :: ldata;;
+
+fun reclib_rec_start =
+	recStop;
+	set recording=1;
+	set _reclib_lrec=nil;
+	recStart 8000 0 #_reclib_rec_cb;;
+
+fun reclib_rec_stop =
+	set recording=0;
+	recStop;;
+
+fun reclib_recriff =
+	let _reclib_mkriff rev _reclib_lrec nil -> res in
+	(
+		set _reclib_lrec=nil;
+		res
+	);;

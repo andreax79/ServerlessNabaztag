@@ -1,5 +1,5 @@
 /** met toutes les leds du lapin dans la couleur rgbCode */
-proto setleds 1 ;; // rgbCode
+proto leds_set_all 1 ;; // rgbCode
 
 /** constantes qui pour les leds du lapin */
 const LED_NOSE = 0 ;;

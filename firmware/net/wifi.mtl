@@ -40,6 +40,12 @@ var _wifi_last_state;;
 #include protos/leds_protos.mtl
 #include protos/config_protos.mtl
 
+/**
+ * Return true if the wifi is connected
+ */
+fun wifi_connected=
+    netState == RT2501_S_CONNECTED;;
+
 fun _wifi_scan_serialize l=
     if l!=nil then
     let hd l->[ssid mac bssid rssi channel rateset encryption] in
@@ -94,7 +100,7 @@ fun wifi_init rescan=
     let envget -> env in
     if env != nil then
     (
-        setleds RGB_GREEN;
+        leds_set_all RGB_GREEN;
         set mymac = netMac;
         set wifi = stationW;
 		set netip = strsub env 0 4;
@@ -108,7 +114,7 @@ fun wifi_init rescan=
         nil
 
     ) else (
-        setleds RGB_VIOLET;
+        leds_set_all RGB_VIOLET;
         set wifi=initW;
         if rescan then set _wifi_scans=nil;
         if _wifi_master then
@@ -154,7 +160,7 @@ fun _wifi_crypt_type crypt key=
     else IEEE80211_CRYPT_NONE;;
 
 fun _wifi_auth=
-    setleds RGB_AMBER;
+    leds_set_all RGB_AMBER;
     if _wifi_scans==nil then 0
     else
         let config_get_wifi_crypt -> crypt in
@@ -194,7 +200,7 @@ fun wifi_run=
         |(initW -> if state==RT2501_S_IDLE then
                 (
                     set mymac=MAC_to_str netMac 0 1;
-                    setleds RGB_AMBER;
+                    leds_set_all RGB_AMBER;
                     if _wifi_master then
                     (
                         _wifi_dump_scan set _wifi_scans=sort netScan nil #_wifi_scan_cmp_ssid;
@@ -223,7 +229,7 @@ fun wifi_run=
             )
         |(gomasterW -> if state==RT2501_S_MASTER then
                 (
-                    setleds RGB_BLUE;
+                    leds_set_all RGB_BLUE;
                     _wifi_debug "-------------master";
                     dhcp_start_srv;
                     masterW)
@@ -235,7 +241,7 @@ fun wifi_run=
                         netSetmode IEEE80211_M_MANAGED nil 11;
                         nil)
             )
-        |(gostationW x-> if state==RT2501_S_CONNECTED then
+        |(gostationW x-> if wifi_connected then
                 (
                     _wifi_debug "-------------dhcp";
                     if config_get_dhcp then dhcp_start_client;

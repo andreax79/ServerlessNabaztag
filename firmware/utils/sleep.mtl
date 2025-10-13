@@ -2,7 +2,7 @@ var _sleep_status = 1;;       // sleeping
 
 fun _sleep_go_sleep_now=
     // oreilles arrivées en haut : eteindre tout + oreille basses
-    setleds RGB_BLACK;
+    leds_set_all RGB_BLACK;
     ears_go 0 10 0; // sur le v2 c'est la position 10 qui est en bas
     ears_go 1 10 0;
     run_set_state sleepRun
@@ -28,7 +28,7 @@ fun sleep_start =
             // Starts to sleep
             Secholn "going asleep";
             if sleeping == 0 then (
-                setleds RGB_VIOLET;
+                leds_set_all RGB_VIOLET;
                 ears_start_reset // oreilles en haut
             );
             run_set_state earResetWaitRun #_sleep_go_sleep_now; // attente de fin oreille
@@ -45,7 +45,7 @@ fun sleep_end =
         set gStreamingState = 0; // just to be sure
         set gProcessingState = 0; // just to be sure
         let XmppSessionRequestResource "idle" -> result in (
-            setleds RGB_VIOLET; // violet
+            leds_set_all RGB_VIOLET; // violet
             ears_start_reset; // reset oreilles
             run_set_state earResetWaitRun #_sleep_wake_up_now; // attente de fin oreille
             result
@@ -54,7 +54,7 @@ fun sleep_end =
         // was not asleep (after a reconnect for example)
         let (
             if (gStreamingState) then XmppSessionRequestResource "streaming"
-            else if (gItState) then XmppSessionRequestResource "itmode"
+            else if (interactive_status) then XmppSessionRequestResource "itmode"
             else XmppSessionRequestResource "idle") -> result in (
             run_set_state idleRun;
             result

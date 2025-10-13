@@ -12,7 +12,7 @@ fun forth_colon_colon f=
     let forth_pop f -> wstack in forth_push f [wstack:(x :: wstack.wstack)];;
 
 /**
- * HD Get the head of a list ( wstack -- wstack x )
+ * HD ( wstack -- wstack x ) Get the head of a list
  */
 fun forth_hd f=
     let forth_pop f -> wstack in
@@ -23,9 +23,18 @@ fun forth_hd f=
     );;
 
 /**
- * TL Get the tail of a list ( wstack -- wstack' )
+ * TL ( wstack -- wstack' ) Get the tail of a list
  */
 fun forth_tl f=
     let forth_pop f -> wstack in
     if wstack.wstack == nil then forth_nil f
     else forth_push f [wstack:tl wstack.wstack];;
+
+/**
+ * STR-JOIN ( wstack -- str ) Join a list of strings into a single string
+ */
+fun forth_str_join f=
+    let forth_pop f -> wstack in
+    let forth_stack_to_str wstack.wstack "" -> val in
+    forth_push f [str:val];
+    nil;;

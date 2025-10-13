@@ -1,2 +1,2 @@
-proto updatevol 0 ;;
-proto audiolib_start_http 2 ;;
+proto audiolib_start_http 2;;
+proto audiolib_update_vol 0;;

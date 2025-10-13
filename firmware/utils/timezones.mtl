@@ -2,71 +2,88 @@
 // Timezones
 //--------------------------------------------------------------------------------------------------
 
+const TIMEZONES = {
+    ["UTC"  "UTC"                       0]
+    ["LIS"  "Lisbon"                    0]
+    ["LON"  "London"                    0]
+    ["MAD"  "Madrid"                   60]   // +1
+    ["PAR"  "Paris"                    60]
+    ["ROM"  "Rome"                     60]
+    ["BER"  "Berlin"                   60]
+    ["STO"  "Stockholm"                60]
+    ["ATH"  "Athens"                  120]   // +2
+    ["CAI"  "Cairo"                   120]
+    ["JRS"  "Jerusalem"               120]
+    ["MOW"  "Moscow"                  180]   // +3
+    ["JED"  "Jeddah"                  180]
+    ["THR"  "Tehran"                  210]   // +3.5
+    ["DXB"  "Dubai"                   240]   // +4
+    ["KBL"  "Kabul"                   270]   // +4.5
+    ["KHI"  "Karachi"                 300]   // +5
+    ["DEL"  "Delhi"                   330]   // +5.5
+    ["KTM"  "Kathmandu"               345]   // +5.75
+    ["DAC"  "Dhaka"                   360]   // +6
+    ["RNG"  "Rangoon"                 390]   // +6.5
+    ["BKK"  "Bangkok"                 420]   // +7
+    ["SIN"  "Singapore"               480]   // +8
+    ["HKG"  "Hong Kong"               480]
+    ["BJS"  "Beijing"                 480]
+    ["TPE"  "Taipei"                  480]
+    ["EUC"  "Eucla"                   525]   // +8.75
+    ["SEL"  "Seoul"                   540]   // +9
+    ["TYO"  "Tokyo"                   540]
+    ["ADL"  "Adelaide"                570]   // +9.5
+    ["GUM"  "Guam"                    600]   // +10
+    ["SYD"  "Sydney"                  600]
+    ["LHI"  "Lord Howe Island"        630]   // +10.5
+    ["NOU"  "Nouméa"                  660]   // +11
+    ["NSW"  "Norfolk Island"          690]   // +11.5
+    ["WLG"  "Wellington"              720]   // +12
+    ["CHA"  "Chatham Islands"         765]   // +12.75
+    ["TBU"  "Nuku'alofa"              780]   // +13
+    ["CXI"  "Kiritimati"              840]   // +14
+    ["BAR"  "Baker Island"         (-720)]   // -12
+    ["PPG"  "Pago Pago"            (-660)]   // -11
+    ["HNL"  "Honolulu"             (-600)]   // -10
+    ["MAR"  "Marquesas Islands"    (-570)]   // -9.5
+    ["ANC"  "Anchorage"            (-540)]   // -9
+    ["YVR"  "Vancouver"            (-480)]   // -8
+    ["LAX"  "Los Angeles"          (-480)]
+    ["YEA"  "Edmonton"             (-420)]   // -7
+    ["DEN"  "Denver"               (-420)]
+    ["MEX"  "Mexico City"          (-360)]   // -6
+    ["CHI"  "Chicago"              (-360)]
+    ["NYC"  "New York"             (-300)]   // -5
+    ["CCS"  "Caracas"              (-270)]   // -4.5
+    ["SCL"  "Santiago"             (-240)]   // -4
+    ["YHZ"  "Halifax"              (-240)]
+    ["SIF"  "St. John's"           (-210)]   // -3.5
+    ["RIO"  "Rio de Janeiro"       (-180)]   // -3
+    ["FEN"  "Fernando de Noronha"  (-120)]   // -2
+    ["RAI"  "Praia"                 (-60)]   // -1
+};;
+
+// Cache the last lookup
+var _timezone_last_city_code=nil;;
+var _timezone_last_offset=0;;
+
+/**
+ * Get the time offset (in minutes) from a city code
+ * If the city code is not found, return 0 (UTC)
+ */
 fun get_offset_from_city_code city_code=
-    if      !strcmp city_code "UTC" then    0
-    else if !strcmp city_code "LIS" then    0
-    else if !strcmp city_code "LON" then    0
-    else if !strcmp city_code "MAD" then   60   // +1
-    else if !strcmp city_code "PAR" then   60
-    else if !strcmp city_code "ROM" then   60
-    else if !strcmp city_code "BER" then   60
-    else if !strcmp city_code "STO" then   60
-    else if !strcmp city_code "ATH" then  120   // +2
-    else if !strcmp city_code "CAI" then  120
-    else if !strcmp city_code "JRS" then  120
-    else if !strcmp city_code "MOW" then  180   // +3
-    else if !strcmp city_code "JED" then  180
-    else if !strcmp city_code "THR" then  210   // +3.5
-    else if !strcmp city_code "DXB" then  240   // +4
-    else if !strcmp city_code "KBL" then  270   // +4.5
-    else if !strcmp city_code "KHI" then  300   // +5
-    else if !strcmp city_code "DEL" then  330   // +5.5
-    else if !strcmp city_code "KTM" then  345   // +5.75
-    else if !strcmp city_code "DAC" then  360   // +6
-    else if !strcmp city_code "RNG" then  390   // +6.5
-    else if !strcmp city_code "BKK" then  420   // +7
-    else if !strcmp city_code "SIN" then  480   // +8
-    else if !strcmp city_code "HKG" then  480
-    else if !strcmp city_code "BJS" then  480
-    else if !strcmp city_code "TPE" then  480
-    else if !strcmp city_code "EUC" then  525   // +8.75
-    else if !strcmp city_code "SEL" then  540   // +9
-    else if !strcmp city_code "TYO" then  540
-    else if !strcmp city_code "ADL" then  570   // +9.5
-    else if !strcmp city_code "GUM" then  600   // +10
-    else if !strcmp city_code "SYD" then  600
-    else if !strcmp city_code "LHI" then  630   // +10.5
-    else if !strcmp city_code "NOU" then  660   // +11
-    else if !strcmp city_code "NSW" then  690   // +11.5
-    else if !strcmp city_code "WLG" then  720   // +12
-    else if !strcmp city_code "CHA" then  765   // +12.75
-    else if !strcmp city_code "TBU" then  780   // +13
-    else if !strcmp city_code "CXI" then  840   // +14
-    else if !strcmp city_code "BAR" then -720   // -12
-    else if !strcmp city_code "PPG" then -660   // -11
-    else if !strcmp city_code "HNL" then -600   // -10
-    else if !strcmp city_code "MAR" then -570   // -9.5
-    else if !strcmp city_code "ANC" then -540   // -9
-    else if !strcmp city_code "YVR" then -480   // -8
-    else if !strcmp city_code "LAX" then -480
-    else if !strcmp city_code "YEA" then -420   // -7
-    else if !strcmp city_code "DEN" then -420
-    else if !strcmp city_code "MEX" then -360   // -6
-    else if !strcmp city_code "CHI" then -360
-    else if !strcmp city_code "NYC" then -300   // -5
-    else if !strcmp city_code "CCS" then -270   // -4.5
-    else if !strcmp city_code "SCL" then -240   // -4
-    else if !strcmp city_code "YHZ" then -240
-    else if !strcmp city_code "SIF" then -210   // -3.5
-    else if !strcmp city_code "RIO" then -180   // -3
-    else if !strcmp city_code "FEN" then -120   // -2
-    else if !strcmp city_code "RAI" then  -60   // -1
-    else 0;;
-
-
-
-
-
-
-
-
+    // Check cache
+    if !strcmp city_code _timezone_last_city_code then
+        _timezone_last_offset
+    else
+        // Search in the table
+        let tablen TIMEZONES -> length in
+        let nil -> offset in (
+            for i=0; (i<length && offset==nil); set i=i+1 do
+                let TIMEZONES.i -> [t_city_code _ t_offset] in (
+                    if !strcmp city_code t_city_code then set offset=t_offset
+            );
+            set _timezone_last_city_code = city_code;
+            set _timezone_last_offset = offset;
+            if offset!=nil then offset else 0
+        );;

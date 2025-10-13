@@ -18,6 +18,7 @@ proto forth_get_word 1;;
 proto forth_word_list_to_array 1;;
 proto forth_execute_word_code 2;;
 proto forth_interpreter 2;;
+proto forth_stack_to_str 2;;
 
 proto http_post_forth 3;;
 

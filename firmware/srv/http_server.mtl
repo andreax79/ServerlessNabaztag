@@ -150,17 +150,14 @@ fun http_get_json_status cnx sock args=
             (json_str "longitude" config_get_longitude) :: ",\n" ::
             (json_int "wake_up" config_get_wake_up) :: ",\n" ::
             (json_int "go_to_bed" config_get_go_to_bed) :: ",\n" ::
-            (json_int "left" ears_left) :: ",\n" ::
-            (json_int "right" ears_right) :: ",\n" ::
-            (json_int "earsmode" earsmode) :: ",\n" ::
-            (json_int "ear_detecting" ears_detecting) :: ",\n" ::
             (json_int "sleep_state" sleep_status) :: ",\n" ::
             (json_int "streaming_state" gStreamingState) :: ",\n" ::
             (json_int "processing_state" gProcessingState) :: ",\n" ::
             (json_int "busy_state" gBusyState) :: ",\n" ::
-            (json_int "it_state" gItState) :: ",\n" ::
+            (json_int "it_state" interactive_status) :: ",\n" ::
             (json_str "it_app" gItApp) :: ",\n" ::
             (json_int "meteo_weather_code" _meteo_weather_code) :: ",\n" ::
+            (json_obj "ears" ears_json) :: ",\n" ::
             (json_obj "info" info_json) :: ",\n" ::
             (json_obj "network" net_json) :: ",\n" ::
             (json_obj "wifi" wifi_json) :: ",\n" ::
@@ -212,7 +209,6 @@ fun openapi_yaml=
 proto taichistart 0;;
 proto stopEverythingAndResetToIdle 0;;
 proto get_time_from_timeserver 0;;
-proto audiolib_start_http 2;;
 proto surprise 0;;
 
 //--------------------------------------------------------------------------------------------------
@@ -357,13 +353,13 @@ fun http_get_wakeup cnx sock args=
 
 fun http_get_left cnx sock args=
     if !sleep_status then (
-        ears_go 0 _http_arg_int args 'p' _http_arg_int args 'd'
+        ears_go EARS_LEFT _http_arg_int args 'p' _http_arg_int args 'd'
     );
     http_send_header_and_close HTTP_204 nil cnx sock;;
 
 fun http_get_right cnx sock args=
     if !sleep_status then (
-        ears_go 1 _http_arg_int args 'p' _http_arg_int args 'd'
+        ears_go EARS_RIGHT _http_arg_int args 'p' _http_arg_int args 'd'
     );
     http_send_header_and_close HTTP_204 nil cnx sock;;
 

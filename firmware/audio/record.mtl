@@ -4,6 +4,8 @@
 // Record
 // **********************
 
+const RECORD_MAX_RECORDING_TIME = 8000;;
+
 proto _record_interactive_send_upload 0;;
 
 var _record_time_start;;
@@ -16,24 +18,24 @@ var record_last_wav_bytes = 0;;
 
 fun record_uploading = recordreq!=nil;;
 
-fun runrecordstart =
+fun record_start_run =
     // wait for the end of the starting sound
-    if !wavrunning then
+    if !audiolib_wav_running then
     (
-    led LED_NOSE RGB_RED;//if time_ms&64 then RGB_RED else 0;
-//      setleds RGB_BLACK;
-        unforcevol;
-        recstart;
+        led LED_NOSE RGB_RED;
+        audiolib_unforce_vol;
+        reclib_rec_start;
         set _record_time_start=time_ms;
         run_set_state recordRun
-    );;
+    );
+    0;;
 
 fun record_control mode=
-    setleds RGB_BLACK;
-    wavstop;
+    leds_set_all RGB_BLACK;
+    audiolib_wav_stop;
     motorset 0 0;
     motorset 1 0;
-    forcevol 64;
+    audiolib_force_vol 64;
     audiolib_wav_start_local_ex mp3_startrecord::nil 100;
     set _record_mode=mode;
     run_set_state recordStartRun;
@@ -44,7 +46,7 @@ fun _record_cb_http http res=
     set recorddata=nil;
     set recordreq=nil;
     Secholn res;
-    setleds RGB_BLACK;
+    leds_set_all RGB_BLACK;
     if _record_play_end!=nil then
     (
         set _record_play_end=nil;
@@ -70,7 +72,7 @@ fun record_upload_timeout=
             (
                 // retry
                 set _record_retry=_record_retry-1;
-                if (!gItState) then (
+                if (!interactive_status) then (
                     set recordreq=httprequest "POST" Secholn url_record _record_mode recorddata #_record_cb_http HTTP_NORMAL;0
                 ) else (
                     _record_interactive_send_upload
@@ -81,7 +83,7 @@ fun record_upload_timeout=
             (
                 // abort
                 set recorddata=nil;
-                if (!gItState) then (
+                if (!interactive_status) then (
                     run_set_state idleRun;
                     0
                 ) else (
@@ -92,20 +94,18 @@ fun record_upload_timeout=
     );
     JobRun;;
 
-const AskR = 0;; // v18
-const RecordingTime = 8000;; // v18
 
-fun runrecord=
-    if !button2 || ((time_ms-_record_time_start)>8000)then
+fun record_run=
+    if !button2 || ((time_ms-_record_time_start)>RECORD_MAX_RECORDING_TIME)then
     (
-        recstop;
-        setleds RGB_BLACK;
-        let recriff -> wavfile in
+        reclib_rec_stop;
+        leds_set_all RGB_BLACK;
+        let reclib_recriff -> wavfile in
         (
             set recorddata=strcatlist wavfile;
             set _record_retry=3;
             set _record_play_end=time_ms+400;
-            if (!gItState) then (
+            if (!interactive_status) then (
                 set recordreq=httprequest "POST" Secholn url_record _record_mode recorddata #_record_cb_http HTTP_NORMAL;
                 run_set_state idleRun;
                 0
@@ -113,7 +113,8 @@ fun runrecord=
                 _record_interactive_send_upload
             )
         )
-    );;
+    );
+    0;;
 
 fun _record_interactive_send_upload =
     set recordreq = httprequest "POST" (interactive_url_reco gItApp record_last_wav_bytes gCurAudioCmdIndex) recorddata #interactive_req_cb_http HTTP_NORMAL;

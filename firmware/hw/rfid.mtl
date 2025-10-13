@@ -65,7 +65,6 @@ fun rfid_control=
 
 			// lancer l'animation (v19)
 			msgchorstart chor_RFIDok::nil #_rfid_end_chor nil;
-			//set chortimescale=10; // recopié d'avant, mas pourquoi ? Nécessaire ? [AS 24oct07]
 
 			hook_rfid rfid
 		)

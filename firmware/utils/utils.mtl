@@ -32,7 +32,24 @@ fun listtostr l=
 	s
 	);;
 
-fun atoibin2 val=itobin2 atoi val;;
+fun liststrlen l r=
+    if l==nil then
+        r
+    else
+        liststrlen tl l r+strlen hd l;;
+
+fun itobin4 i=
+	let strnew 4 -> s in
+	(
+		strset s 0 i;
+		strset s 1 i>>8;
+		strset s 2 i>>16;
+		strset s 3 i>>24;
+		s
+	);;
+
+fun atoibin2 val=
+    itobin2 atoi val;;
 
 fun countpattern s p i=
 	let strstr s p i -> j in
@@ -204,6 +221,14 @@ fun strputchk s i w=
 	strset s i ~(w>>8);
 	strset s i+1 ~w;
 	0;;
+
+fun sqrt_ i i0 i1=
+	let (i0+i1)>>1 -> m in
+	if m==i0 then i0
+	else if m*m>i then sqrt_ i i0 m else sqrt_ i m i1;;
+
+fun sqrt i=
+    sqrt_ i 0 256;;
 
 fun dump s=
 	for i0=0;i0<strlen s;i0+16 do

@@ -27,7 +27,6 @@ proto main 0;;
 // recording
 var recording = 0;;
 
-#define AUDIOLIB
 #define EARSLIB
 #define INFOLIB
 #define RECLIB
@@ -45,7 +44,6 @@ const HARDWARE=4;;
 
 //
 // Etats generaux
-var gItState = 0;;          // interactif
 var gStreamingState = 0;;   // streaming
 var gProcessingState = 0;;  // processing a program
 var gProcessingWaitState = 0;;  // executing a "wait" command in a program. when checking this var, check gProcessingState first, as it is not always reseted to 0
@@ -65,6 +63,7 @@ const BYTECODE_REVISION_STR = "$Rev: __DATE__ $";;
 #include protos/url_protos.mtl
 #include protos/sleep_protos.mtl
 #include protos/info_protos.mtl
+#include protos/audiolib_protos.mtl
 #include protos/forth_protos.mtl
 
 #include hw/leds.mtl
@@ -96,16 +95,12 @@ var currentTrameID=0;;
 #endif
 
 #ifdef RECLIB
-#include utils/reclib.mtl
+#include audio/reclib.mtl
 #endif
 
-#ifdef AUDIOLIB
-#include utils/audiolib.mtl
-#endif
-
-#ifdef EARSLIB
+#include audio/audiolib.mtl
+#include audio/midi.mtl
 #include hw/ears.mtl
-#endif
 
 #ifdef INFOLIB
 #include srv/info.mtl
@@ -131,7 +126,6 @@ var g_record_enabled = 1;;
 var gCurAudioCmdIndex=-1;;
 
 #include utils/palette.mtl
-#include utils/midi.mtl
 #include hw/button.mtl
 
 #include srv/meteo.mtl
@@ -148,7 +142,7 @@ var gCurAudioCmdIndex=-1;;
 #endif
 
 #ifdef RECLIB
-#include utils/record.mtl
+#include audio/record.mtl
 #endif
 
 #include utils/choreographic.mtl
@@ -187,7 +181,7 @@ fun jobs_init=
     job_start "ear_process_touched" #interactiveEarProcessTouched;
     job_start "update_time_internal" #update_time_internal;
     job_start "audiolib_wav_time" #audiolib_wav_time;
-    job_start "updatevol" #updatevol;
+    job_start "audiolib_update_vol" #audiolib_update_vol;
     0;;
 
 fun main=
@@ -205,7 +199,7 @@ fun main=
     dhcp_start_client;
 #endif
     srand time_ms;
-    updatevol;
+    audiolib_update_vol;
 #ifdef WEBSERVER
     http_server_start_srv PORT_HTTP;
 #endif

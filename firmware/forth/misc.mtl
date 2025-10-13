@@ -47,9 +47,22 @@ fun _forth_print_words f forth_dictionary=
     );;
 
 /**
- * WORDS List the words in the dictionary ( -- )
+ * WORDS ( -- ) List the words in the dictionary
  */
 fun forth_words f=
     _forth_print_words f forth_dictionary;
     set f.output = "\n" :: f.output;
+    nil;;
+
+/**
+ * TIME&DATE ( -- sec min hour day month year)
+ * Push the current time and date onto the stack
+ */
+fun forth_time_and_date f=
+    forth_push f [int:local_time_second];
+    forth_push f [int:local_time_minute];
+    forth_push f [int:local_time_hour];
+    forth_push f [int:local_time_day];
+    forth_push f [int:local_time_month];
+    forth_push f [int:local_time_year];
     nil;;

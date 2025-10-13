@@ -1,0 +1,237 @@
+// wav playback
+
+const WAV_IDLE=0;;
+const WAV_RUN=1;;
+const WAV_EOF=2;;
+
+const WAV_BUFFER_STARTSIZE=80000;;
+const WAV_BUFFER_MAXSIZE=400000;;
+
+const WAV_END_TIMEOUT=500;;
+const WAV_NET_TIMEOUT=15000;;
+
+var audiolib_wav_buffering=0;;
+var audiolib_volume;;
+var audiolib_wav_cur_played_bytes=0;;
+
+var _audiolib_wav_end_timeout;;
+var _audiolib_wav_http_cb=nil;;
+var _audiolib_wav_state=0;;
+var _audiolib_wav_http;;
+var _audiolib_wav_fifo;;
+var _audiolib_wav_buffering_since=0;;
+var _audiolib_wav_index;;
+var _audiolib_wav_lasttime;;
+var _audiolib_wav_lastnet;;
+var _audiolib_wav_zeros;;
+var _audiolib_force_vol=0;;
+
+// debug
+#ifdef AUDIOLIB_DEBUG
+fun Audiowln str = Secholn strcatlist "[audio] " :: str :: nil; nil ;;
+fun Audiow str = Secho str; nil ;;
+#else
+fun Audiowln str= nil;;
+fun Audiow str= nil;;
+#endif
+
+fun _audiolib_vol_from_button v=
+    let 255-v -> v in
+        255-((v*v)>>8);;
+
+/**
+ * Force the volume to a specific value (0-255)
+ * while recording or playing a wav, the volume is not changed
+ * if v=255, the volume is not forced anymore
+ */
+fun audiolib_force_vol v=
+    sndVol _audiolib_vol_from_button (button3*v)>>8;
+    set _audiolib_force_vol=1;
+    0;;
+
+/**
+ * Unforce the volume, it will be controlled by button3 again
+ */
+fun audiolib_unforce_vol=
+    set _audiolib_force_vol=0;
+    set audiolib_volume=nil;
+    0;;
+
+fun _audiolib_wav_get_zeros=
+    if _audiolib_wav_zeros==nil then
+    (
+        set _audiolib_wav_zeros=strnew 2048;
+        for i=0;i<2048 do strset _audiolib_wav_zeros i 0
+    );
+    _audiolib_wav_zeros;;
+
+fun audiolib_wav_stop =
+    Audiowln "/audiolib_wav_stop/";
+
+    if _audiolib_wav_state!=WAV_IDLE then
+    (
+        playStop;
+        if _audiolib_wav_http!=nil then httpabort _audiolib_wav_http;
+        set _audiolib_wav_http=nil;
+        set audiolib_wav_buffering = 0;
+        set _audiolib_wav_state=WAV_IDLE
+    );;
+
+fun audiolib_wav_running =
+    if _audiolib_wav_state==WAV_IDLE then 0
+    else if _audiolib_wav_fifo==nil && _audiolib_wav_state==WAV_EOF && (time_ms-_audiolib_wav_lasttime>_audiolib_wav_end_timeout) then
+    (
+        Audiowln "###wav detected end";
+        audiolib_wav_stop;
+        0
+    )
+    else if _audiolib_wav_lasttime==nil then -1 else 1;;
+
+// The main wav playback callback
+// reads from _audiolib_wav_fifo and feeds playFeed
+fun _audiolib_wav_play_cb i =
+    set _audiolib_wav_lasttime=time_ms;
+    if _audiolib_wav_fifo==nil then
+    (
+        // nothing in fifo
+        if _audiolib_wav_state==WAV_EOF then playFeed nil nil nil
+        else if !audiolib_wav_buffering then (
+            Audiowln ">>>>buffering";
+            set audiolib_wav_buffering=1;
+            set _audiolib_wav_buffering_since = time_ms
+        )
+    )
+    else
+    (
+        // was buffering ?
+        if audiolib_wav_buffering && (_audiolib_wav_state==WAV_EOF || (slistlen _audiolib_wav_fifo)>=WAV_BUFFER_STARTSIZE) then
+        (
+            Audiowln "<<<<end_buffering";
+            set audiolib_wav_buffering=0
+        );
+        if !audiolib_wav_buffering then
+        let hd _audiolib_wav_fifo -> sample in
+        let strlen sample -> len in
+        (
+            // push sample data
+            // _audiolib_wav_index is the index within the current sample.
+            if _audiolib_wav_index<len then (
+                // send some bytes to the VM buffer.
+                let (playFeed sample /*Iecho*/ _audiolib_wav_index nil) -> pushedbytes in (
+                    // this is how many bytes we sent.
+                    set _audiolib_wav_index=_audiolib_wav_index+pushedbytes;
+                    // compute audiolib_wav_cur_played_bytes
+                    set audiolib_wav_cur_played_bytes = audiolib_wav_cur_played_bytes + pushedbytes
+                )
+            );
+            if _audiolib_wav_index>=len then
+            (
+                // we sent the whole first sample.
+                // (in fact, _audiolib_wav_index cannot be bigger than len).
+                // reset the counter on the sample and transition to the next sample.
+                set _audiolib_wav_index=0;
+                set _audiolib_wav_fifo=tl _audiolib_wav_fifo;
+                // Secho "[b-:" ; Iecho (slistlen _audiolib_wav_fifo); Secho "]";
+                if _audiolib_wav_http!=nil then if (slistlen _audiolib_wav_fifo)<WAV_BUFFER_MAXSIZE then if !(httpenabledP _audiolib_wav_http) then
+                (
+                    Audiowln "##httpenable 1##";
+                    httpenable _audiolib_wav_http 1
+                )
+            )
+        )
+    );
+    0;;
+
+fun _audiolib_wav_start_now =
+    set _audiolib_wav_index=0;
+    set audiolib_wav_buffering=1;
+    set _audiolib_wav_buffering_since = time_ms;
+    set audiolib_wav_cur_played_bytes=0;
+    playStart 1024 #_audiolib_wav_play_cb;;
+
+fun audiolib_wav_start_local_ex l timeout=
+    audiolib_wav_stop;
+    set _audiolib_wav_end_timeout=timeout;
+    set _audiolib_wav_fifo=conc l (_audiolib_wav_get_zeros)::nil;
+    set _audiolib_wav_state=WAV_EOF;
+    set _audiolib_wav_lasttime=time_ms;
+    set _audiolib_wav_http=nil;
+    _audiolib_wav_start_now
+    ;;
+
+fun audiolib_wav_start_local l =
+    audiolib_wav_start_local_ex l WAV_END_TIMEOUT;;
+
+fun _wavcbhttp httpreq req=
+    Audiow "w";
+    set _audiolib_wav_lastnet=time_ms;
+    if req==nil then
+    (
+        Audiowln ">>>>>>>>>>>>>>>>>>>>>>>>>>>>><end of file";
+        set _audiolib_wav_state=WAV_EOF;
+        if _audiolib_wav_fifo!=nil then set _audiolib_wav_fifo=conc _audiolib_wav_fifo (_audiolib_wav_get_zeros)::nil;
+        if _audiolib_wav_index==nil then
+        (
+            // had never started wav playback
+            // check if something in fifo. If yes, play it, if not stop wav
+            set _audiolib_wav_fifo=tl _audiolib_wav_fifo;
+            if _audiolib_wav_fifo==nil then audiolib_wav_stop
+            else _audiolib_wav_start_now
+        );
+        0
+    )
+    else
+    (
+//      dump req;
+        set _audiolib_wav_fifo=conc _audiolib_wav_fifo req::nil;
+        let (slistlen _audiolib_wav_fifo) -> n in
+        (
+        // Secho "[b+:"; Iecho n ; Secho "]";
+        if _audiolib_wav_index==nil && n>WAV_BUFFER_STARTSIZE then
+        (
+            // had never started wav playback : start it
+            set _audiolib_wav_fifo=tl _audiolib_wav_fifo;
+            _audiolib_wav_start_now
+        ) else if n>WAV_BUFFER_MAXSIZE then (
+            Audiowln "##httpenable 0##";
+            httpenable httpreq 0
+        );
+        nil
+        )
+    );
+    audiolib_update_vol;
+    0;;
+
+fun audiolib_start_http url cb=
+    audiolib_wav_stop;
+    set _audiolib_wav_http_cb = cb;
+    set _audiolib_wav_end_timeout=WAV_END_TIMEOUT;
+    set _audiolib_wav_fifo=nil;
+    set _audiolib_wav_state=WAV_RUN;
+    set _audiolib_wav_index=nil;
+    set audiolib_wav_buffering=1;
+    set _audiolib_wav_buffering_since = time_ms;
+    set _audiolib_wav_lasttime=nil;
+    set _audiolib_wav_lastnet=time_ms;
+    set _audiolib_wav_http=httprequest "GET" url nil #_wavcbhttp HTTP_STREAM;;
+
+fun audiolib_wav_time=
+    // Check timeout against _audiolib_wav_buffering_since
+    if (_audiolib_wav_http!=nil && _audiolib_wav_state==WAV_RUN && audiolib_wav_buffering && (time_ms - _audiolib_wav_buffering_since > WAV_NET_TIMEOUT)) then (
+        Audiowln "wavhttp timeout";
+        audiolib_wav_stop;
+        if (_audiolib_wav_http_cb != nil) then call _audiolib_wav_http_cb []
+    );
+    JobRun;;
+
+/**
+ * Update the volume according to button3
+ */
+fun audiolib_update_vol=
+    let button3 -> v in
+    if !_audiolib_force_vol && v!=audiolib_volume && (!recording) && (audiolib_volume!=255 || v<250) then
+    (
+        set audiolib_volume=v;
+        sndVol _audiolib_vol_from_button v
+    );
+    JobRun;;

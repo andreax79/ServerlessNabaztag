@@ -1,3 +1,5 @@
+var interactive_status = 0;;
+
 proto interactive_error 0;;
 proto interactive_eval_IC_msg 1;;
 proto interactive_init 0;;

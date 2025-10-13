@@ -92,7 +92,7 @@ fun endOfProgram doNotNotify =
     set gProcessingState = 0;
     set gProcessingWaitState = 0; // just in case
     set streaming_current_program = nil;
-    if (gItState && !doNotNotify) then (
+    if (interactive_status && !doNotNotify) then (
         // notifier fini
         interactive_program_done
     ) else (
@@ -197,7 +197,7 @@ fun dochorstream=
         let strget chorst_pasdedanse chorst_index -> cmd in
             // avance l'index de...
             set chorst_index=chorst_index+2+
-                if (cmd == CH_set_led_palette) then
+                if (cmd == CH_SET_LED_PALETTE) then
                 (
                     // palette index
                     let strget chorst_pasdedanse chorst_index+1 -> iled in
@@ -209,7 +209,7 @@ fun dochorstream=
                     // 2 bytes : led, color
                     2
                 )
-                else if (cmd == CH_set_led_off) then
+                else if (cmd == CH_SET_LED_OFF) then
                 (
                     // off
                     let strget chorst_pasdedanse chorst_index+1 -> iled in
@@ -218,7 +218,7 @@ fun dochorstream=
                     // 1 byte : led
                     1
                 )
-                else if (cmd == CH_set_led_color) then
+                else if (cmd == CH_SET_LED_COLOR) then
                 (
                     led strget chorst_pasdedanse chorst_index+1
                         ((strget chorst_pasdedanse chorst_index+2)<<16) +
@@ -228,7 +228,7 @@ fun dochorstream=
                         // 6 bytes : 2 qui ne servent à rien
                         6
                 )
-                else if (cmd==CH_frame_duration) then
+                else if (cmd==CH_FRAME_DURATION) then
                 (
                     // on ne le prend pas en compte : c'est chorst_tempo qui gère le tempo
                     // 1 byte : duree
@@ -277,14 +277,14 @@ fun streaming_stop=
     set gStreamingState = 0;
     // which resource now ? Can only be interactive or idle
     if (!gBusyState) then ( // don't get a resource if we're busy
-        if (gItState) then XmppSessionRequestResource "itmode"
+        if (interactive_status) then XmppSessionRequestResource "itmode"
         else XmppSessionRequestResource "idle"
     )
 
     ;;
 
 fun streaming_run_cmd i0=
-    if wavrunning==0 then (
+    if audiolib_wav_running==0 then (
         // Fin du stream
         streaming_stop;
         // next command
@@ -293,7 +293,7 @@ fun streaming_run_cmd i0=
         nil
     ) else (
         // execute streaming choreography
-        if !wav_buffering then dochorstream;
+        if !audiolib_wav_buffering then dochorstream;
 
         0
     );;
@@ -304,7 +304,7 @@ fun _streaming_go_next_cmd i0=
     0;;
 
 fun streaming_wav_error=
-    if (gItState) then interactive_error;
+    if (interactive_status) then interactive_error;
     0;;
 
 var _chor_wait_end_time = 0;;
@@ -359,7 +359,7 @@ fun runEvalOneCommand i0=
         //IPecho netdns 0 1;
         //dns_start_client;
         set gStreamingState = 1;
-        setleds 0;
+        leds_set_all RGB_BLACK;
         if !gBusyState then XmppSessionRequestResource "streaming";
         set gCurAudioCmdIndex=gCurAudioCmdIndex+1;
         set _streaming_current= nil;
@@ -374,7 +374,7 @@ fun runEvalOneCommand i0=
         //IPecho netdns 0 1;
         //dns_start_client;
         set gStreamingState = 1;
-        setleds 0;
+        leds_set_all RGB_BLACK;
         if !gBusyState then XmppSessionRequestResource "streaming";
         set gCurAudioCmdIndex=gCurAudioCmdIndex+1;
         set _streaming_current= nil;
@@ -405,7 +405,7 @@ fun runEvalOneCommand i0=
         Secho "exec SE : "; Secholn val;
         // stoppe le stream courant s'il est nommé comme ca
         if gStreamingState && (!strcmp _streaming_current val) then (
-            wavstop;
+            audiolib_wav_stop;
             ears_stop 0;
             streaming_stop
         );
@@ -428,7 +428,7 @@ fun runEvalOneCommand i0=
     else if !strcmp key "MW" then
     (
         // wait for the end of music
-        if wavrunning==0 then run_set_state cmdEvalOne i0+1;
+        if audiolib_wav_running==0 then run_set_state cmdEvalOne i0+1;
         0
     )
     else if !strcmp key "CH" then

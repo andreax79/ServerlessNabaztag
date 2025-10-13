@@ -4,50 +4,59 @@
  * This code is licensed under the MIT License
  */
 
-proto forth_wstack_to_str 1 ;;
-
+/**
+ * Write a string to the output
+ */
 fun forth_write f s=
     set f.output = s :: f.output;
     nil;;
 
+/**
+ * Format a word as string
+ */
 fun forth_word_fmt word=
     if word.int != nil then itoa word.int
     else if word.str != nil then word.str
-    else if word.wstack != nil then forth_wstack_to_str word.wstack
+    else if word.wstack != nil then (forth_stack_to_str word.wstack " ")
     else "?";;
 
-fun forth_wstack_to_str wstack=
+/**
+ * Format a stack of words to a string
+ */
+fun forth_stack_to_str wstack separator=
     let nil -> t in (
-        for l=wstack; l!=nil; tl l do
-            set t = (forth_word_fmt (hd l)) :: (if (l != nil) then " " else "") :: t;
+        for l=wstack; l!=nil; tl l do (
+            set t = (forth_word_fmt (hd l)) :: t;
+            if (nil != tl l) then set t = separator :: t
+        );
         strcatlist t
     );;
 
 /**
- * . Display n ( n -- )
+ * . ( n -- ) Display n
  */
 fun forth_d f=
     let forth_pop f -> a in
     forth_write f
         if a.int != nil then (itoa a.int)
         else if a.str != nil then a.str
-        else if a.wstack != nil then forth_wstack_to_str a.wstack
+        else if a.wstack != nil then (forth_stack_to_str a.wstack " ")
         else "?";;
 
 /**
- * CR Display CR ( -- )
+ * CR ( -- ) Display CR
  */
 fun forth_cr f=
     forth_write f "\n";;
 
 /**
- * SPACE Display space ( -- )
+ * SPACE ( -- ) Display space
  */
 fun forth_space f=
     forth_write f " ";;
 
 /**
- * EMIT Emit character ( char -- )
+ * EMIT ( char -- ) Emit character
  */
 fun forth_emit f=
     let forth_pop f -> a in
@@ -55,7 +64,15 @@ fun forth_emit f=
     forth_write f (strset s 0 a.int);;
 
 /**
- * BL Character value for a space ( -- char )
+ * BL ( -- char ) Character value for a space
  */
 fun forth_bl f=
     forth_push f [int:32];;
+
+/**
+ * .S ( -- ) Copy and display the values currently on the data stac
+ */
+fun forth_dot_s f=
+    let forth_stack_to_str f.stack " " -> val in
+    forth_write f val;
+    forth_write f "\n";;

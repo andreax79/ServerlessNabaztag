@@ -57,34 +57,54 @@ fun forth_init_dictionary=
         [ name:"false"  func:#forth_false ] ::
         // Output
         [ name:"."      func:#forth_d ] ::
+        [ name:".s"     func:#forth_dot_s ] ::
         [ name:"emit"   func:#forth_emit ] ::
         [ name:"cr"     func:#forth_cr ] ::
         [ name:"space"  func:#forth_space ] ::
         [ name:"bl"     func:#forth_bl ] ::
         // List
-        [ name:"nil"    func:#forth_nil ] ::
-        [ name:"::"     func:#forth_colon_colon] ::
-        [ name:"hd"     func:#forth_hd ] ::
-        [ name:"tl"     func:#forth_tl ] ::
+        [ name:"nil"                func:#forth_nil ] ::
+        [ name:"::"                 func:#forth_colon_colon] ::
+        [ name:"hd"                 func:#forth_hd ] ::
+        [ name:"tl"                 func:#forth_tl ] ::
+        [ name:"str-join"           func:#forth_str_join ] ::
         // Control
-        [ name:"begin"  func:#forth_begin immediate:FORTH_TRUE] ::
-        [ name:"until"  func:#forth_until immediate:FORTH_TRUE] ::
-        [ name:"if"     func:#forth_if immediate:FORTH_TRUE ] ::
-        [ name:"else"   func:#forth_else immediate:FORTH_TRUE ] ::
-        [ name:"then"   func:#forth_then immediate:FORTH_TRUE ] ::
-        [ name:"jmp"    func:#forth_jmp ] ::
-        [ name:"?jmp"   func:#forth_qjmp ] ::
-        [ name:"abort"  func:#forth_abort ] ::
-        [ name:"exit"   func:#forth_exit ] ::
+        [ name:"begin"              func:#forth_begin immediate:FORTH_TRUE] ::
+        [ name:"until"              func:#forth_until immediate:FORTH_TRUE] ::
+        [ name:"if"                 func:#forth_if immediate:FORTH_TRUE ] ::
+        [ name:"else"               func:#forth_else immediate:FORTH_TRUE ] ::
+        [ name:"then"               func:#forth_then immediate:FORTH_TRUE ] ::
+        [ name:"jmp"                func:#forth_jmp ] ::
+        [ name:"?jmp"               func:#forth_qjmp ] ::
+        [ name:"abort"              func:#forth_abort ] ::
+        [ name:"exit"               func:#forth_exit ] ::
         // Misc
-        [ name:":"      func:#forth_colon] ::
-        [ name:";"      func:#forth_semi immediate:FORTH_TRUE] ::
-        [ name:"("      func:#forth_p] ::
-        [ name:"words"  func:#forth_words] ::
+        [ name:":"                  func:#forth_colon] ::
+        [ name:";"                  func:#forth_semi immediate:FORTH_TRUE] ::
+        [ name:"("                  func:#forth_p] ::
+        [ name:"words"              func:#forth_words] ::
+        [ name:"time&date"          func:#forth_time_and_date ] ::
         // Nabaztag
-        [ name:"sleeping"   func:#forth_sleeping ] ::
-        [ name:"sleep"      func:#forth_sleep ] ::
-        [ name:"wakeup"     func:#forth_wakeup ] ::
+        [ name:"sleeping"           func:#forth_sleeping ] ::
+        [ name:"sleep"              func:#forth_sleep ] ::
+        [ name:"wakeup"             func:#forth_wakeup ] ::
+        [ name:"left-ear-position"  func:#forth_left_ear_position ] ::
+        [ name:"move-left-ear"      func:#forth_move_left_ear ] ::
+        [ name:"right-ear-position" func:#forth_right_ear_position ] ::
+        [ name:"move-right-ear"     func:#forth_move_right_ear ] ::
+        [ name:"random"             func:#forth_random ] ::
+        [ name:"server-url"         func:#forth_server_url ] ::
+        [ name:"language"           func:#forth_language ] ::
+        [ name:"city-code"          func:#forth_city_code ] ::
+        [ name:"dst"                func:#forth_dst ] ::
+        [ name:"volume"             func:#forth_volume ] ::
+        [ name:"set-info-weather"   func:#forth_set_info_weather ] ::
+        [ name:"set-info-stock"     func:#forth_set_info_stock ] ::
+        [ name:"set-info-traffic"   func:#forth_set_info_traffic ] ::
+        [ name:"set-info-mail"      func:#forth_set_info_mail ] ::
+        [ name:"set-info-pollution" func:#forth_set_info_pollution ] ::
+        [ name:"clear-info"         func:#forth_clear_info ] ::
+        [ name:"play-url"           func:#forth_play_url ] ::
         nil
     ;;
 

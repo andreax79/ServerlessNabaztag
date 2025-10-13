@@ -18,6 +18,7 @@ proto _interactive_continue_error_cb 1;;
 proto _interactive_continue_start_cb 1;;
 proto _interactive_continue_stop_cb 1;;
 
+var interactive_status = 0;;
 var _interactive_sounds;;
 var _interactive_chors;;
 var _interactive_btn_1_snd = "clonk";;
@@ -74,8 +75,7 @@ fun interactive_init =
 
 // Starts interactivity : sets run mode, remember application and request commands
 fun interactive_start application=
-
-    set gItState = 1;
+    set interactive_status = 1;
     set gItApp = application;
     if !gBusyState then XmppSessionRequestResource "itmode";
 
@@ -132,7 +132,7 @@ fun interactive_stop=
 fun _interactive_continue_stop_cb unused=
     // finalise stopping itMode
     set gItApp = nil;
-    set gItState = 0;
+    set interactive_status = 0;
     set gProcessingState = 0; // skips all remaining commands anyway, so : not processing
     // DEBUG
     XmppSessionRequestResource "idle"; // Obligation de revenir en IDLE
@@ -141,9 +141,9 @@ fun _interactive_continue_stop_cb unused=
     0;;
 
 fun interactive_send_btn btn=
-    wavstop;
+    audiolib_wav_stop;
     ears_stop 0;
-    let wav_curplayedbytes -> readBytes in ( // midi_play resets wav_curplayedbytes so we cache it
+    let audiolib_wav_cur_played_bytes -> readBytes in ( // midi_play resets audiolib_wav_cur_played_bytes so we cache it
         // sound
         if (btn == BUTTON_CLIC) then (
             if (!strcmp _interactive_btn_1_snd "clonk") then midi_play midi_abort
@@ -230,9 +230,9 @@ fun touchedP i=
 
 fun interactiveSendEarTouched lefttouch righttouch=
     // right = 0, left = 1
-    wavstop;
+    audiolib_wav_stop;
     ears_stop 0;
-    let wav_curplayedbytes -> readBytes in  // midi_play resets wav_curplayedbytes so we cache it
+    let audiolib_wav_cur_played_bytes -> readBytes in  // midi_play resets audiolib_wav_cur_played_bytes so we cache it
     (
         if (lefttouch) then midi_play midi_precedent;
         if (righttouch) then midi_play midi_suivant;
@@ -241,7 +241,7 @@ fun interactiveSendEarTouched lefttouch righttouch=
     0;;
 
 fun interactiveEarProcessTouched=
-    if (gItState) then
+    if (interactive_status) then
     let touchedP 0 -> lefttouch in
     let touchedP 1 -> righttouch in
     if (lefttouch || righttouch) then (
@@ -260,7 +260,7 @@ fun interactive_req_cb_http http res=
         set recorddata=nil;
         set recordreq=nil;
         _interactive_debug res;
-        setleds RGB_BLACK
+        leds_set_all RGB_BLACK
     );
 #endif
 

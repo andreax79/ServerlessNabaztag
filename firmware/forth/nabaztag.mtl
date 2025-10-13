@@ -1,30 +1,151 @@
-
 /**
- * True ( -- true )
+ * Nabaztag words for Forth interpreter
+ * Copyright (c) 2025 Andrea Bonomi
+ * This code is licensed under the MIT License
  */
-// fun forth_nabaztag_gc f=
-//     forth_push f [int:gc];;
-//
-// var ears_left;;
-// var ears_right;;
-//
 
 /**
- * SLEEPING Return true if the Nabaztag is in sleep mode ( -- flag )
+ * SLEEPING ( -- flag) Return true if the Nabaztag is in sleep mode
  */
 fun forth_sleeping f=
     forth_push f [int:if sleep_status then FORTH_TRUE else FORTH_FALSE];;
 
 /**
- * SLEEP Put the Nabaztag into sleep mode ( -- )
+ * SLEEP ( -- ) Put the Nabaztag into sleep mode
  */
 fun forth_sleep f=
     sleep_start;
     nil;;
 
 /**
- * WAKEUP Wake up the Nabaztag from sleep mode ( -- )
+ * WAKEUP ( -- ) Wake up the Nabaztag from sleep mode
  */
 fun forth_wakeup f=
     sleep_end;
+    nil;;
+
+/**
+ * LEFT-EAR-POSITION ( -- pos ) Return the current position of the left ear
+ */
+fun forth_left_ear_position f=
+    forth_push f [int:ears_left];;
+
+/**
+ * MOVE-LEFT-EAR ( dir pos -- ) Move the left ear in direction dir (0=left, 1=right) to position pos (0..16)
+ */
+fun forth_move_left_ear f=
+    let forth_pop f -> pos in
+    let forth_pop f -> dir in
+    ears_go EARS_LEFT dir.int pos.int;
+    nil;;
+
+/**
+ * RIGHT-EAR-POSITION ( -- pos ) Return the current position of the right ear
+ */
+fun forth_right_ear_position f=
+    forth_push f [int:ears_right];;
+
+/**
+ * MOVE-RIGHT-EAR ( dir pos -- ) Move the left ear in direction dir (0=left, 1=right) to position pos (0..16)
+ */
+fun forth_move_right_ear f=
+    let forth_pop f -> pos in
+    let forth_pop f -> dir in
+    ears_go EARS_RIGHT dir.int pos.int;
+    nil;;
+
+/**
+ * RANDOM ( max -- n ) Return a pseudo-random number n between 0 and max-1
+ */
+fun forth_random f=
+    let forth_pop f -> max in
+    let random (if max.int > 0 then max.int else 0) -> n in
+    forth_push f [int:n];;
+
+/**
+ * SERVER-URL ( -- url ) Get the server URL from the configuration
+ */
+fun forth_server_url f=
+    forth_push f [str:config_get_server_url];;
+
+/**
+ * LANGUAGE ( -- lang ) Get the language from the configuration
+ */
+fun forth_language f=
+    forth_push f [str:config_get_lang];;
+
+/**
+ * CITY-CODE ( -- code ) Get the city code from the configuration
+ */
+fun forth_city_code f=
+    forth_push f [str:config_get_city_code];;
+
+/**
+ * DST ( -- flag ) Get the Daylight Saving Time flag from the configuration
+ */
+fun forth_dst f=
+    forth_push f [int:config_get_dst];;
+
+/**
+ * VOLUME ( -- vol ) Get the audio volume
+ */
+fun forth_volume f=
+    forth_push f [int:audiolib_volume];;
+
+/**
+ * SET-INFO-WEATHER ( weather -- ) Set the weather information
+ */
+fun forth_set_info_weather f=
+    let forth_pop f -> v in
+    info_src_update INFO_WEATHER v.int;
+    nil;;
+
+/**
+ * SET-INFO-STOCK ( stock -- ) Set the stock information
+ */
+fun forth_set_info_stock f=
+    let forth_pop f -> v in
+    info_src_update INFO_STOCK v.int;
+    nil;;
+
+/**
+ * SET-INFO-TRAFFIC ( traffic -- ) Set the traffic information
+ */
+fun forth_set_info_traffic f=
+    let forth_pop f -> v in
+    info_src_update INFO_TRAFFIC v.int;
+    nil;;
+
+/**
+ * SET-INFO-MAIL ( mail -- ) Set the mail information
+ */
+fun forth_set_info_mail f=
+    let forth_pop f -> v in
+    info_src_update INFO_MAIL v.int;
+    nil;;
+
+/**
+ * SET-INFO-POLLUTION ( pollution -- ) Set the pollution information
+ */
+fun forth_set_info_pollution f=
+    let forth_pop f -> v in
+    info_src_update INFO_POLLUTION v.int;
+    nil;;
+
+/**
+ * CLEAR-INFO ( -- ) Clear all information
+ */
+fun forth_clear_info f=
+    for i=1;i<=8 do (
+        info_src_update 0 i
+    );
+    nil;;
+
+/**
+ * PLAY-URL ( url -- ) Play a WAV file from an HTTP URL
+ * HTTPS is not supported
+ */
+fun forth_play_url f=
+    let forth_pop f -> url in
+    audiolib_start_http url.str #streaming_wav_error;
     nil;;
