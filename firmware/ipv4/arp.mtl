@@ -115,7 +115,7 @@ fun resetarp=
     0;;
 
 
-fun periodic_send_gratuitous_arp=
+fun arp_periodic_send_gratuitous_arp_job=
     // Periodic sending of gratuitous ARP
     if last_gratuitous_arp_time + GRATUITOUS_ARP_DELAY < time then (
         set last_gratuitous_arp_time = time;

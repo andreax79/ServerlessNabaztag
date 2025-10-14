@@ -16,6 +16,18 @@ fun url_interactive application=
 fun url_surprise n=
 	strcatlist "http://"::config_get_server_url::"/config/surprise/"::config_get_lang::"/"::(itoa n)::".mp3"::nil;;
 
+fun url_hook_rfid=
+	strcatlist "http://"::config_get_server_url::"/hooks/rfid.php"::nil;;
+
+fun url_hook_ears=
+	strcatlist "http://"::config_get_server_url::"/hooks/ears.php"::nil;;
+
+fun url_hook_click=
+	strcatlist "http://"::config_get_server_url::"/hooks/click.php"::nil;;
+
+fun url_hook_dbl_click=
+	strcatlist "http://"::config_get_server_url::"/hooks/dblclick.php"::nil;;
+
 #ifdef PING
 fun url_ping senddata=
     strcatlist url_ping_server::"/vl/p4.jsp?sn="::(webmac netMac)::"&v="::(getBytecodeRevision)::"&st=1&sd="::(itoh senddata)::"&h="::(itoa HARDWARE)::nil;;

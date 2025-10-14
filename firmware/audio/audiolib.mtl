@@ -215,7 +215,7 @@ fun audiolib_start_http url cb=
     set _audiolib_wav_lastnet=time_ms;
     set _audiolib_wav_http=httprequest "GET" url nil #_wavcbhttp HTTP_STREAM;;
 
-fun audiolib_wav_time=
+fun audiolib_wav_time_job=
     // Check timeout against _audiolib_wav_buffering_since
     if (_audiolib_wav_http!=nil && _audiolib_wav_state==WAV_RUN && audiolib_wav_buffering && (time_ms - _audiolib_wav_buffering_since > WAV_NET_TIMEOUT)) then (
         Audiowln "wavhttp timeout";
@@ -229,9 +229,12 @@ fun audiolib_wav_time=
  */
 fun audiolib_update_vol=
     let button3 -> v in
-    if !_audiolib_force_vol && v!=audiolib_volume && (!recording) && (audiolib_volume!=255 || v<250) then
+    if !_audiolib_force_vol && v!=audiolib_volume && (!record_recording) && (audiolib_volume!=255 || v<250) then
     (
         set audiolib_volume=v;
         sndVol _audiolib_vol_from_button v
-    );
+    );;
+
+fun audiolib_update_vol_job=
+    audiolib_update_vol;
     JobRun;;

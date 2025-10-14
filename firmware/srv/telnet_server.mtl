@@ -1,0 +1,86 @@
+#include protos/forth_protos.mtl
+
+//--------------------------------------------------------------------------------------------------
+// Telnet Server
+//--------------------------------------------------------------------------------------------------
+
+const TELNET_IAC      = 255;;
+const TELNET_DO       = 253;;
+const TELNET_WILL     = 251;;
+const TELNET_LINEMODE = 34;;
+const TELNET_PROMPT   = "$ ";;
+
+fun _telnet_prompt f=
+    strcatlist "[" :: (itoa (listlen f.stack)) :: "] " :: TELNET_PROMPT :: nil;;
+
+/**
+ * Callback function to send the output of the Forth interpreter back to the Telnet client.
+ * f: Forth interpreter state
+ * cb_args: additional arguments passed to the callback (should include cnx and sock)
+ */
+fun _telnet_cb f cb_args=
+    let cb_args -> [cnx sock] in (
+        sock_send cnx sock strcatlist (strcatlist (rev f.output nil)) :: "\n" :: (_telnet_prompt f) :: nil;
+        set f.output = nil; // Clear previous output
+        0
+    );;
+
+/**
+ * Main data handling function for a Telnet connection.
+ * cnx: TCP connection
+ * input: new chunk of data received
+ * sock: socket object for this connection
+ * f: Forth interpreter state for this connection
+ */
+fun _telnet_sock_read cnx input sock f=
+    // If the input is nil or empty, the client has closed the connection
+    if input==nil ||0==strlen input then (
+        closetcp cnx;
+        nil
+    ) else (
+        let strsub input 0 ((strlen input) - 2) -> line in (
+            if !strcmp (to_lower line) "quit" then (
+                closetcp cnx
+            ) else (
+                forth_interpreter line f (fixarg2 #_telnet_cb [cnx sock])
+            )
+        )
+    );
+    0;;
+
+/**
+ * Event handler for a connection being used for Telnet.
+ * This function is registered as the callback for the TCP connection.
+ * cnx: TCP connection
+ * val: event type (e.g., TCPWRITE, TCPCLOSE)
+ * msg: dataa associated with the event (e.g., incoming data)
+ * sock: socket object for this connection
+ */
+fun _telnet_sock_event cnx val msg args=
+    let args -> [sock f] in (
+        if val==TCPWRITE then sock_write cnx sock
+        else if val==TCPCLOSE then _telnet_sock_read cnx nil sock f
+        else _telnet_sock_read cnx msg sock f
+    );;
+
+/**
+ * Callback function for the main Telnet listening socket.
+ * This is called by the TCP stack whenever a new client connects.
+ * cnx: TCP connection
+ */
+fun telnet_server_cb cnx _ _=
+    let [stack:nil rstack:nil pc:0 ] -> f in
+    let [sockCallback:nil] -> sock in (
+        tcpcb cnx fixarg4 #_telnet_sock_event [sock f];
+        sock_send cnx sock "NabazForth\n";
+        sock_send cnx sock _telnet_prompt f
+    );
+    0;;
+
+/**
+ * Start the Telnet server on the specified port.
+ * port: TCP port number to listen on
+ */
+fun telnet_server_start_srv port =
+    listentcp port #telnet_server_cb;
+    0;;

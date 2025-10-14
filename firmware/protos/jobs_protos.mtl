@@ -1,2 +1,10 @@
 type JobStatus = JobRun | JobSuspend;;
 type Job=[n name f status];;
+
+proto job_status 1;;
+proto job_start 2;;
+proto job_suspend 1;;
+proto job_resume 1;;
+proto job_loop 0;;
+proto job_format_json 1;;
+proto job_json 0;;

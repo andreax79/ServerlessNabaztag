@@ -1,14 +1,13 @@
-// ************************
-// Palettes
-// ************************
+#include protos/palette_protos.mtl
 
-var current_palette = {0 0 0 0 0 0 0 0};;
-var current_palette_is_random = 1;; // random par défaut (pour pallier au fait que les podcasts ne précisent pas de palette)
+//--------------------------------------------------------------------------------------------------
+// Palettes
+//--------------------------------------------------------------------------------------------------
 
 // 7 palettes
 // de 7 couleurs chacune plus une.
 // La 8eme couleur est utilisee dans les choregraphies pour eteindre toutes les lumieres.
-const all_palettes=
+const palette_all=
 {
 	{255 12 0 0 255 31 255 242 0 0 3 255 255 242 0 0 255 31 255 12 0 0 0 0} // acidulée
 	{95 0 255 127 0 255 146 0 255 191 0 255 223 0 255 255 0 223 255 0 146 0 0 0} // violet
@@ -21,25 +20,25 @@ const all_palettes=
 };;
 
 // change vraiment la palette
-fun set_current_palette p=
-	Secho "set_current_palette ";Iecholn p&7;
-	let all_palettes.(p&7) -> p in
-	for i=0;i<8 do let i*3 -> j in set current_palette.i=((p.(j))<<16)+((p.(j+1))<<8)+p.(j+2);;
+fun palette_set_current p=
+	Secho "palette_set_current ";Iecholn p&7;
+	let palette_all.(p&7) -> p in
+	for i=0;i<8 do let i*3 -> j in set palette_current.i=((p.(j))<<16)+((p.(j+1))<<8)+p.(j+2);;
 
 // is mode >= 8 : palette aleatoire. Sinon fixée à m
-fun set_current_palette_mode m=
+fun palette_set_current_mode m=
 	if (m >= 8) then
 	(
-		set current_palette_is_random = 1;
-		set_current_palette 0
+		set palette_current_is_random = 1;
+		palette_set_current 0
 	)
 	else
 	(
-		set current_palette_is_random = 0;
-		set_current_palette m
+		set palette_current_is_random = 0;
+		palette_set_current m
 	);;
 
-fun set_current_palette_color i val=
-	Secho "set_current_palette_color ";Iecho i; Secho " = $";Secholn itoh val;
-	set current_palette.i=val;;
+fun palette_set_current_color i val=
+	Secho "palette_set_current_color ";Iecho i; Secho " = $";Secholn itoh val;
+	set palette_current.i=val;;
 

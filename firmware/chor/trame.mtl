@@ -1,4 +1,12 @@
-const SIGNCUTSIZE=40000;; // taille max du fichier audio de signature
+#include protos/trame_protos.mtl
+#include protos/palette_protos.mtl
+#ifdef XMPP
+#include protos/xmpp_protos.mtl
+#endif
+
+//--------------------------------------------------------------------------------------------------
+// Trame
+//--------------------------------------------------------------------------------------------------
 
 // debug
 #ifdef TRAME_DEBUG
@@ -54,7 +62,7 @@ fun _trame_pingextract s=
 fun _trame_rsc_from_program l=
     if l!=nil then let hd l->[key val] in
     if (!strcmp key "MU") || (!strcmp key "CH") then [val /*nil*/300000]::_trame_rsc_from_program tl l
-    else if (!strcmp key "MC") then [val SIGNCUTSIZE]::_trame_rsc_from_program tl l
+    else if (!strcmp key "MC") then [val TRAME_SIGN_CUT_SIZE]::_trame_rsc_from_program tl l
     else _trame_rsc_from_program tl l;;
 
 
@@ -70,7 +78,7 @@ fun _trame_check_for_palette_before l=
     (
         if (!strcmp key "PL") && (_trame_palette_selected==0) then
         (
-            set_current_palette_mode atoi val;
+            palette_set_current_mode atoi val;
             set _trame_palette_selected = 1
         )
     );;
@@ -81,11 +89,11 @@ fun trame_program_start=
 
     // Si la palette est definie pour ce programme, alors on ne met pas l'aleatoire
     if(_trame_palette_selected==0) then (
-        set current_palette=tabnew 0 8; // v17 : c'était inversé
-        set_current_palette_mode 8 // random palette par défaut
+        set palette_current=tabnew 0 8; // v17 : c'était inversé
+        palette_set_current_mode 8 // random palette par défaut
     );
     // start evaluating first command
-    set gCurAudioCmdIndex = -1;
+    set streaming_audio_cmd_index = -1;
     run_set_state cmdEvalOne 0;
     0;;
 
@@ -200,15 +208,13 @@ fun trame_eval ping_trame=
 
 //*******************
 // Trames queue
-var gTramesQueue = nil;;
-const TRAME_QUEUE_MAXLEN = 10;;
 
 fun trame_is_resource_valid rsrcName=
     // les règles d'adéquation entre resource et etats
     if (!strcmp rsrcName "urgent") then 1 // tjrs
     else if (!strcmp rsrcName "sources") then 1 // tjrs
     else if (!strcmp rsrcName "boot") then 1 // tjrs
-    else if (gStreamingState) then (if (!strcmp rsrcName "streaming") then 1 else 0)
+    else if (streaming_status) then (if (!strcmp rsrcName "streaming") then 1 else 0)
     else if (interactive_status) then (if (!strcmp rsrcName "itmode") then 1 else 0)
     else if (sleep_status) then (if (!strcmp rsrcName "asleep") then 1 else 0)
     else if (gProcessingState) then 0
@@ -216,23 +222,25 @@ fun trame_is_resource_valid rsrcName=
 
 fun _trame_queue_remove_entry binome=
     // dépile
-    set gTramesQueue = remfromlist gTramesQueue binome;
+    set trame_queue = remfromlist trame_queue binome;
 
     // was full ?
-    let listlen gTramesQueue -> queueLen in
+    let listlen trame_queue -> queueLen in
     if queueLen == TRAME_QUEUE_MAXLEN-1 then (
         Secholn "trame queue not full anymore, warning server";
-        set gBusyState = 0;
+#ifdef XMPP
+        set xmpp_busy_status = 0;
+#endif
         // which resource now ? Can be in this order asleep, streaming, itmode or idle
         if (sleep_status) then XmppSessionRequestResource "asleep"
-        else if (gStreamingState) then XmppSessionRequestResource "streaming"
+        else if (streaming_status) then XmppSessionRequestResource "streaming"
         else if (interactive_status) then XmppSessionRequestResource "itmode"
         else XmppSessionRequestResource "idle"
     );
     0;;
 
 fun trame_get_next_pending=
-    let gTramesQueue -> ptr in
+    let trame_queue -> ptr in
     let nil -> theTrame in (
         while ((theTrame == nil) && ((hd ptr) != nil)) do (
             let hd ptr -> binome in

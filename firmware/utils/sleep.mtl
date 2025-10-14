@@ -1,3 +1,5 @@
+#include protos/streaming_protos.mtl
+
 var _sleep_status = 1;;       // sleeping
 
 fun _sleep_go_sleep_now=
@@ -21,7 +23,7 @@ fun sleep_start =
     Secholn "sleep_start";
     let sleep_status -> sleeping in (
         set _sleep_status = 1;
-        set gStreamingState = 0; // just to be sure
+        set streaming_status = 0; // just to be sure
         set gProcessingState = 0; // just to be sure
         // server resource
         let XmppSessionRequestResource "asleep" -> result in (
@@ -42,7 +44,7 @@ fun sleep_end =
     if sleep_status then (
         // was asleep or initial booting (_sleep_status = 1 at start)
         set _sleep_status = 0;
-        set gStreamingState = 0; // just to be sure
+        set streaming_status = 0; // just to be sure
         set gProcessingState = 0; // just to be sure
         let XmppSessionRequestResource "idle" -> result in (
             leds_set_all RGB_VIOLET; // violet
@@ -53,7 +55,7 @@ fun sleep_end =
     ) else (
         // was not asleep (after a reconnect for example)
         let (
-            if (gStreamingState) then XmppSessionRequestResource "streaming"
+            if (streaming_status) then XmppSessionRequestResource "streaming"
             else if (interactive_status) then XmppSessionRequestResource "itmode"
             else XmppSessionRequestResource "idle") -> result in (
             run_set_state idleRun;

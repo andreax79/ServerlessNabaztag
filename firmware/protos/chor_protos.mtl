@@ -1,0 +1,20 @@
+proto chor_do_taichi_now 0;;
+proto chor_end_msg 1;;
+proto chor_run_cmd 1;;
+proto chor_start_msg 3;;
+proto chor_taichi_start 0;;
+
+//const CH_NOP=0;;
+const CH_FRAME_DURATION=1;;
+//const CH_SET_COLOR=6;;
+const CH_SET_LED_COLOR=7;;
+const CH_SET_MOTOR=8;;
+const CH_SET_LEDS_COLOR=9;; // v16
+const CH_SET_LED_OFF=10;; // v17
+const CH_SET_LED_PALETTE=14;;
+//const CH_SET_PALETTE=15;;
+const CH_RAND_MIDI=16;;
+const CH_AVANCE=17;;
+const CH_IFNE=18;;
+const CH_ATTEND=19;;
+const CH_SET_MOTOR_DIR=20;; // v16

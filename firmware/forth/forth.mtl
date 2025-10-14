@@ -8,17 +8,6 @@
 // https://www.forth.org/Ting/Forth-for-the-Complete-Idiot/Forth-79-Handy-Reference.pdf
 // https://win32forth.sourceforge.net/doc/Guide/primer.htm
 
-type Forth=[
-    stack               // data stack
-    rstack              // return stack
-    cstack              // control stack
-    pc                  // program counter
-    state               // normal (0) or compilation state (-1)
-    output              // list of collected output strings
-    new_word_name       // name of the word being defined if in compilation state
-    new_word_definition // list of Words being defined if in compilation state
-];;
-
 type Word=[
     name                // name of the defined word
     code                // array of Words if a colon
@@ -38,6 +27,7 @@ type Interpreter=[
     text_len            // length of the input text
     token               // current token
     quoted              // true if the token is a quoted string
+    inter_cb            // interpreter callback
 ];;
 
 // The dictionary is a list of Words
@@ -111,32 +101,49 @@ fun forth_execute_word_code f code=
  * Extract the next token from the input text.
  * Tokens are separated by spaces or newlines.
  */
-fun forth_get_token i=
-    set i.end = strstr i.input " " i.start;
-    set i.end_ln = strstr i.input "\n" i.start;
-    if (i.end_ln != nil) && ((i.end == nil) || (i.end_ln < i.end)) then set i.end = i.end_ln;
-    if i.end == nil then set i.end = i.text_len;
-    // Skip leading spaces
-    while (i.start < i.end) && ((strget i.input i.start) == FORTH_SPACE) do set i.start = i.start + 1;
-    // Handle quoted strings
-    if (strget i.input i.start) == FORTH_DOUBLE_QUOTE then (
-        set i.start = i.start + 1; // skip opening quote
-        set i.end = strstr i.input "\"" (i.start) + 1;
-        set i.token = strsub i.input i.start (i.end-i.start);
-        set i.start = i.end + 2; // skip closing quote and following space
-        set i.quoted = 1
-    ) else (
-        set i.token = strsub i.input i.start (i.end-i.start);
-        set i.start = i.end + 1;
-        set i.quoted = 0
-    );
-    0;;
+fun forth_get_token f=
+    let f.inter -> i in (
+        set i.end = strstr i.input " " i.start;
+        set i.end_ln = strstr i.input "\n" i.start;
+        if (i.end_ln != nil) && ((i.end == nil) || (i.end_ln < i.end)) then set i.end = i.end_ln;
+        if i.end == nil then set i.end = i.text_len;
+        // Skip leading spaces
+        while (i.start < i.end) && ((strget i.input i.start) == FORTH_SPACE) do set i.start = i.start + 1;
+        // Handle quoted strings
+        if (strget i.input i.start) == FORTH_DOUBLE_QUOTE then (
+            set i.start = i.start + 1; // skip opening quote
+            set i.end = strstr i.input "\"" (i.start) + 1;
+            set i.token = strsub i.input i.start (i.end-i.start);
+            set i.start = i.end + 2; // skip closing quote and following space
+            set i.quoted = 1
+        ) else (
+            set i.token = strsub i.input i.start (i.end-i.start);
+            set i.start = i.end + 1;
+            set i.quoted = 0
+        );
+        0
+    );;
 
 fun forth_new_word token=
     if is_numeric token then
         [int:(atoi token)]
     else
         [str:token];;
+
+fun _forth_interpreter_setup text f cb=
+    if forth_dictionary==nil then forth_init_dictionary;
+    let [start:0 end:0 end_ln:0 parentheses:0 input:text text_len:(strlen text) token:nil inter_cb:cb] -> i in
+    if f == nil then (
+        [
+            stack:nil // data stack
+            rstack:nil // return stack
+            pc:0 // program counter
+            inter:i // interpreter state
+        ]
+    ) else (
+        set f.inter = i;
+        f
+    );;
 
 // const FORTH_TEST = "5 2 + 10 * dup 1 + >";;
 // const FORTH_TEST = ": bla 1 + exit 10 + ; 5 2 + bla exit 100 +";;
@@ -162,25 +169,24 @@ nil 10 :: 20 :: 30 :: dup dup . space tl . space . cr
 // const FORTH_TEST = ": bla begin dup . 1 - dup 0 = until ; 5 bla \"ciao\" emit";;
 // const FORTH_TEST = "\"ciao ciao\" emit";;
 
-fun forth_interpreter text cb=
+fun forth_interpreter text f cb=
     if forth_dictionary==nil then forth_init_dictionary;
 
-    let [start:0 end:0 end_ln:0 parentheses:0 input:text text_len:(strlen text) token:nil] -> i in
-    let [stack:nil rstack:nil pc:0] -> f in (
-        while (f.pc != nil) && (i.end != i.text_len) do (
-            forth_get_token i;
-            let if i.quoted then nil else forth_get_word i.token -> word in (
-                if word == nil then set word = forth_new_word i.token;
+    let _forth_interpreter_setup text f cb -> f in (
+        while (f.pc != nil) && (f.inter.end != f.inter.text_len) do (
+            forth_get_token f;
+            let if f.inter.quoted then nil else forth_get_word f.inter.token -> word in (
+                if word == nil then set word = forth_new_word f.inter.token;
                 // TODO \ comment to end of line
 
                 if word.func == #forth_p then ( // open parentheses
-                    set i.parentheses = i.parentheses + 1
+                    set f.inter.parentheses = f.inter.parentheses + 1
                 );
 
-                if i.parentheses > 0 then ( // inside parentheses - ignore tokens until closing parenthesis
-                    if !strcmp i.token ")" then set i.parentheses = i.parentheses - 1;
+                if f.inter.parentheses > 0 then ( // inside parentheses - ignore tokens until closing parenthesis
+                    if !strcmp f.inter.token ")" then set f.inter.parentheses = f.inter.parentheses - 1;
                     0
-                ) else if (strlen i.token) == 0 then ( // empty token, skip
+                ) else if (strlen f.inter.token) == 0 then ( // empty token, skip
                     0
                 ) else if word.func == #forth_colon then ( // start of new word definition
                     if f.state == FORTH_STATE_COMPILATION then (
@@ -215,10 +221,10 @@ fun forth_interpreter text cb=
                         forth_execute_word f word
 
                     ) else (
-                        // Secho "--> compiling "; Secho i.token; Secholn "";
+                        // Secho "--> compiling "; Secho f.inter.token; Secholn "";
                         if f.new_word_name == nil then (
                             // first word after ":" is the new word's name
-                            set f.new_word_name = i.token;
+                            set f.new_word_name = f.inter.token;
                             0
                         ) else (
                             // add word to the latest defined word's code
@@ -232,12 +238,12 @@ fun forth_interpreter text cb=
                 )
             )
         );
-        call cb [f]
+        call f.inter.inter_cb [f]
     );;
 
 /**
-  * Handle HTTP callback for Forth interpreter. Teturn the output as JSON.
-  */
+ * Handle HTTP callback for Forth interpreter. Return the output as JSON.
+ */
 fun _forth_http_cb f cb_args=
     Secholn "_forth_http_cb";
     let cb_args -> [cnx sock] in
@@ -248,10 +254,15 @@ fun _forth_http_cb f cb_args=
         "\n}" ::
         nil;;
 
-fun http_post_forth cnx sock args=
-    Secholn "http_post_forth";
+/**
+ * Handle an HTTP POST request to execute Forth code.
+ * cnx: TCP connection
+ * sock: socket object for this connection
+ * args: HTTP request arguments
+ */
+fun forth_http_post cnx sock args=
     let _http_arg_str args 'c' -> code in
-    forth_interpreter code (fixarg2 #_forth_http_cb [cnx sock]);;
+    forth_interpreter code nil (fixarg2 #_forth_http_cb [cnx sock]);;
 
 fun _forth_test_cb f cb_args=
     Secholn "_forth_test_cb";
@@ -264,5 +275,5 @@ fun _forth_test_cb f cb_args=
     let cb_args -> [cnx sock] in 0;;
 
 fun forth_test=
-    forth_interpreter FORTH_TEST (fixarg2 #_forth_test_cb [nil nil]);
+    forth_interpreter FORTH_TEST nil (fixarg2 #_forth_test_cb [nil nil]);
     reboot 0x0407FE58 0x13fb6754;;

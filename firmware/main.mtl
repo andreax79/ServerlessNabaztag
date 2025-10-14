@@ -11,6 +11,7 @@ proto main 0;;
 #define SERVERLESS
 
 #define WEBSERVER
+#define TELNETSERVER
 #define DAYTIMESERVER
 #define FORTH
 
@@ -24,31 +25,23 @@ proto main 0;;
 // #define AUDIOLIB_DEBUG
 // #define INTERACTIVE_DEBUG
 
-// recording
-var recording = 0;;
-
-#define EARSLIB
-#define INFOLIB
-#define RECLIB
 #define WIFI_REBOOT_ON_LOST
 
 #ifdef SIMU
 const PORT_DAYTIME = 8013;;
+const PORT_TELNET = 8021;;
 const PORT_HTTP = 8080;;
 #else
 const PORT_DAYTIME = 13;;
+const PORT_TELNET = 21;;
 const PORT_HTTP = 80;;
 #endif
 
 const HARDWARE=4;;
 
-//
 // Etats generaux
-var gStreamingState = 0;;   // streaming
 var gProcessingState = 0;;  // processing a program
 var gProcessingWaitState = 0;;  // executing a "wait" command in a program. when checking this var, check gProcessingState first, as it is not always reseted to 0
-var gBusyState = 0;;        // busy (incoming message queue full)
-var gItApp = nil;;          // the name of the interactive application
 
 const BYTECODE_REVISION_STR = "$Rev: __DATE__ $";;
 
@@ -64,6 +57,7 @@ const BYTECODE_REVISION_STR = "$Rev: __DATE__ $";;
 #include protos/sleep_protos.mtl
 #include protos/info_protos.mtl
 #include protos/audiolib_protos.mtl
+#include protos/record_protos.mtl
 #include protos/forth_protos.mtl
 
 #include hw/leds.mtl
@@ -91,22 +85,14 @@ proto XmppSessionRequestResource 1;;
 #else
 fun XmppSessionRequestResource newRes = 0 ;;
 fun XmppSessionSendButtonMsg btn withEvent eventValue = 0 ;;
-var currentTrameID=0;;
 #endif
 
-#ifdef RECLIB
 #include audio/reclib.mtl
-#endif
-
 #include audio/audiolib.mtl
 #include audio/midi.mtl
 #include hw/ears.mtl
 
-#ifdef INFOLIB
 #include srv/info.mtl
-#endif
-
-#include srv/surprise.mtl
 #include srv/crontab.mtl
 #include utils/hooks.mtl
 #include net/wifi.mtl
@@ -121,11 +107,8 @@ const LED_TIMEOUT=600;; // 10 minutes
 var rsctoget;; // list of remaining resources to get for the execution of the current trame
 var g_streaming_chor_enabled=1;;  // settings, command="IC", managed in eval_IC_msg
 var g_cookie="";;
-var g_int_mask=0;;
 var g_record_enabled = 1;;
-var gCurAudioCmdIndex=-1;;
 
-#include utils/palette.mtl
 #include hw/button.mtl
 
 #include srv/meteo.mtl
@@ -137,20 +120,24 @@ var gCurAudioCmdIndex=-1;;
 #ifdef WEBSERVER
 #include srv/http_server.mtl
 #endif
+#ifdef TELNETSERVER
+#include srv/telnet_server.mtl
+#endif
 #ifdef DAYTIMESERVER
 #include srv/daytime_server.mtl
 #endif
 
-#ifdef RECLIB
 #include audio/record.mtl
-#endif
-
-#include utils/choreographic.mtl
-#include utils/interactive.mtl
-#include utils/streaming.mtl
 #include utils/sleep.mtl
-#include utils/trame.mtl
 #include hw/rfid.mtl
+
+#include chor/choreographic.mtl
+#include chor/interactive.mtl
+#include chor/palette.mtl
+#include chor/streaming.mtl
+#include chor/surprise.mtl
+#include chor/trame.mtl
+
 #include srv/run.mtl
 
 #ifdef FORTH
@@ -161,27 +148,25 @@ var gCurAudioCmdIndex=-1;;
  * Initialize the jobs
  */
 fun jobs_init=
-    job_start "wifi_run" #wifi_run;
-    job_start "button_loop" #button_loop;
-    job_start "run_step" #run_step;
+    job_start "wifi" #wifi_job;
+    job_start "button" #button_job;
+    job_start "run" #run_job;
 #ifdef XMPP
     job_start "XmppSessionRun" #XmppSessionRun;
     job_start "XmppSessionIdle" #XmppSessionIdle;
 #endif
-#ifdef RECLIB
-    job_start "record_upload_timeout" #record_upload_timeout;
-#endif
+    job_start "record_upload_timeout" #record_upload_timeout_job;
 #ifdef SERVERLESS
-    job_start "run_icmp_ping" #run_icmp_ping;
-    job_start "periodic_send_gratuitous_arp" #periodic_send_gratuitous_arp;
+    job_start "icmp_ping" #icmp_ping_job;
+    job_start "arp_periodic_send_gratuitous_arp" #arp_periodic_send_gratuitous_arp_job;
 #endif
 #ifndef SIMU
-    job_start "dhcp_check" #dhcp_check;
+    job_start "dhcp_check" #dhcp_check_job;
 #endif
-    job_start "ear_process_touched" #interactiveEarProcessTouched;
-    job_start "update_time_internal" #update_time_internal;
-    job_start "audiolib_wav_time" #audiolib_wav_time;
-    job_start "audiolib_update_vol" #audiolib_update_vol;
+    job_start "ear_process_touched" #interactive_ear_process_touched_job;
+    job_start "time_update_job" #time_update_job;
+    job_start "audiolib_wav_time" #audiolib_wav_time_job;
+    job_start "audiolib_update_vol" #audiolib_update_vol_job;
     0;;
 
 fun main=
@@ -202,6 +187,9 @@ fun main=
     audiolib_update_vol;
 #ifdef WEBSERVER
     http_server_start_srv PORT_HTTP;
+#endif
+#ifdef TELNETSERVER
+    telnet_server_start_srv PORT_TELNET;
 #endif
 #ifdef DAYTIMESERVER
     daytime_start_srv PORT_DAYTIME;

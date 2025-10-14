@@ -11,7 +11,7 @@ const BUTTON_T_DCLIC=500;;
 const BUTTON_T_LCLIC=1500;;
 
 
-fun button_loop=
+fun button_job=
     let button2 -> b in
     if b!=_button_last then
     (

@@ -1,9 +1,12 @@
 #include protos/trame_protos.mtl
 #include protos/interactive_protos.mtl
+#ifdef XMPP
+#include protos/xmpp_protos.mtl
+#endif
 
-// **********************
+//--------------------------------------------------------------------------------------------------
 // Interactivity
-// **********************
+//--------------------------------------------------------------------------------------------------
 
 #ifdef INTERACTIVE_DEBUG
 fun _interactive_debug str= Secholn strcatlist "[interactive] " :: str :: nil; nil;;
@@ -18,7 +21,6 @@ proto _interactive_continue_error_cb 1;;
 proto _interactive_continue_start_cb 1;;
 proto _interactive_continue_stop_cb 1;;
 
-var interactive_status = 0;;
 var _interactive_sounds;;
 var _interactive_chors;;
 var _interactive_btn_1_snd = "clonk";;
@@ -60,8 +62,8 @@ fun _interactive_control_sound Type =
 // Play a start or stop chor
 fun _interactive_control_chor Type =
     match Type with
-    (intchorDefaultStart ->     msgchorstart chordef_startInteractive::nil #_interactive_continue_start_cb nil )       // On joue le chor par defaut
-    | (intchorDefaultStop ->    msgchorstart chordef_startInteractive::nil #_interactive_continue_stop_cb nil )        // On joue le chor par defaut
+    (intchorDefaultStart ->     chor_start_msg chordef_startInteractive::nil #_interactive_continue_start_cb nil )       // On joue le chor par defaut
+    | (intchorDefaultStop ->    chor_start_msg chordef_startInteractive::nil #_interactive_continue_stop_cb nil )        // On joue le chor par defaut
     | (intchorStartNone ->      _interactive_continue_start_cb nil )                                                   // On ne joue pas de chor
     | (intchorStopNone ->       _interactive_continue_stop_cb nil )                                                    // On ne joue pas de chor
     | (_ -> _interactive_debug "No Chor to Play!!"; nil );                                                             // Si on a indique un mauvais chor, on ne joue rien
@@ -76,8 +78,10 @@ fun interactive_init =
 // Starts interactivity : sets run mode, remember application and request commands
 fun interactive_start application=
     set interactive_status = 1;
-    set gItApp = application;
-    if !gBusyState then XmppSessionRequestResource "itmode";
+    set interactive_app = application;
+#ifdef XMPP
+    if !xmpp_busy_status then XmppSessionRequestResource "itmode";
+#endif
 
     interactive_state_enter;
 
@@ -96,13 +100,13 @@ fun interactive_start application=
 
 fun _interactive_continue_start_cb unused=
     // ask for instructions
-    run_set_state interactiveReqWaitRun (httprequest "GET" (interactive_url_start gItApp) nil #interactive_req_cb_http HTTP_NORMAL);
+    run_set_state interactiveReqWaitRun (httprequest "GET" (interactive_url_start interactive_app) nil #interactive_req_cb_http HTTP_NORMAL);
     0;;
 
 fun interactive_error=
     // jingle error
     _interactive_debug "interactive_error";
-    msgchorstart chordef_interactiveerror::nil #_interactive_continue_error_cb nil;
+    chor_start_msg chordef_interactiveerror::nil #_interactive_continue_error_cb nil;
     0;;
 
 fun _interactive_continue_error_cb unused=
@@ -131,12 +135,14 @@ fun interactive_stop=
 
 fun _interactive_continue_stop_cb unused=
     // finalise stopping itMode
-    set gItApp = nil;
+    set interactive_app = nil;
     set interactive_status = 0;
     set gProcessingState = 0; // skips all remaining commands anyway, so : not processing
     // DEBUG
+#ifdef XMPP
     XmppSessionRequestResource "idle"; // Obligation de revenir en IDLE
-    set gStreamingState = 0; // On ne stream plus rien!
+#endif
+    set streaming_status = 0; // On ne stream plus rien!
     run_set_state idleRun;
     0;;
 
@@ -157,12 +163,12 @@ fun interactive_send_btn btn=
             0
         );
         // request instructions
-        run_set_state interactiveReqWaitRun (httprequest "GET" (interactive_url_btn gItApp readBytes gCurAudioCmdIndex btn) nil #interactive_req_cb_http HTTP_NORMAL)
+        run_set_state interactiveReqWaitRun (httprequest "GET" (interactive_url_btn interactive_app readBytes streaming_audio_cmd_index btn) nil #interactive_req_cb_http HTTP_NORMAL)
     );
     0;;
 
 fun interactive_program_done=
-    run_set_state interactiveReqWaitRun (httprequest "GET" (interactive_url_done gItApp) nil #interactive_req_cb_http HTTP_NORMAL);
+    run_set_state interactiveReqWaitRun (httprequest "GET" (interactive_url_done interactive_app) nil #interactive_req_cb_http HTTP_NORMAL);
     0;;
 
 
@@ -195,7 +201,7 @@ fun _interactive_ear_delta_pos_normalized deltaPos=
 
 fun interactive_note_ear_touched eari curPos deltaPos=
     // right = 0, left = 1
-    if (eari == 0 && (g_int_mask & MASK_EAR_RIGHT == 0)) || (eari == 1 && (g_int_mask & MASK_EAR_LEFT == 0)) then // active
+    if (eari == 0 && (interactive_int_mask & MASK_EAR_RIGHT == 0)) || (eari == 1 && (interactive_int_mask & MASK_EAR_LEFT == 0)) then // active
     let _interactive_ears_touch.eari -> et in
     (
         set et.lastMoveTime_ET = time_ms;
@@ -228,7 +234,7 @@ fun touchedP i=
     let _interactive_ears_touch.i -> et in (et.turned_ET || ((et.lastMoveTime_ET != -1) && ((/*Secho "DLAST="; Iecho */(time_ms - et.lastMoveTime_ET))> EAR_TOUCH_TIMEOUT)))
 ;;
 
-fun interactiveSendEarTouched lefttouch righttouch=
+fun interactive_send_ear_touched lefttouch righttouch=
     // right = 0, left = 1
     audiolib_wav_stop;
     ears_stop 0;
@@ -236,16 +242,16 @@ fun interactiveSendEarTouched lefttouch righttouch=
     (
         if (lefttouch) then midi_play midi_precedent;
         if (righttouch) then midi_play midi_suivant;
-        run_set_state interactiveReqWaitRun (httprequest "GET" (interactive_url_ear gItApp readBytes gCurAudioCmdIndex righttouch lefttouch) nil #interactive_req_cb_http HTTP_NORMAL)
+        run_set_state interactiveReqWaitRun (httprequest "GET" (interactive_url_ear interactive_app readBytes streaming_audio_cmd_index righttouch lefttouch) nil #interactive_req_cb_http HTTP_NORMAL)
     );
     0;;
 
-fun interactiveEarProcessTouched=
+fun interactive_ear_process_touched_job=
     if (interactive_status) then
     let touchedP 0 -> lefttouch in
     let touchedP 1 -> righttouch in
     if (lefttouch || righttouch) then (
-        interactiveSendEarTouched lefttouch righttouch;
+        interactive_send_ear_touched lefttouch righttouch;
         interactive_reset_ears_touched
     );
     JobRun;;
@@ -254,7 +260,6 @@ fun interactiveEarProcessTouched=
 fun interactive_req_cb_http http res=
     _interactive_debug "interactive_req_cb_http=";
 
-#ifdef RECLIB
     if (record_uploading) then (
         // mode upload / record
         set recorddata=nil;
@@ -262,9 +267,8 @@ fun interactive_req_cb_http http res=
         _interactive_debug res;
         leds_set_all RGB_BLACK
     );
-#endif
 
-    if !recording then
+    if !record_recording then
     let httpgetcontent res -> ping_trame in
         trame_eval ping_trame;
 
@@ -274,18 +278,15 @@ fun interactive_req_cb_http http res=
 fun runInteractiveReqWait http=
     // Waiting for interactive request
     // check timeout
-#ifdef RECLIB
-    if (!record_uploading) then // upload record mode : timeout managed by record_upload_timeout
-#endif
-    if (httpinactive http)>STD_NET_TIMEOUT then
-    (
-        _interactive_debug "##timeout on runInteractiveReqWait";
-        httpabort http;
+    if (!record_uploading) then // upload record mode : timeout managed by record_upload_timeout_job
+        if (httpinactive http)>STD_NET_TIMEOUT then
+        (
+            _interactive_debug "##timeout on runInteractiveReqWait";
+            httpabort http;
 
-        // error
-        interactive_error
-    );
-
+            // error
+            interactive_error
+        );
     0;;
 
 
@@ -298,7 +299,7 @@ fun runInteractiveReqWait http=
 */
 fun interactive_state_enter=
     set g_streaming_chor_enabled=1;
-    set g_int_mask=0;
+    set interactive_int_mask=0;
     set _interactive_btn_1_snd = "clonk";
     set _interactive_btn_2_snd = "chord";
     set g_record_enabled = 1;
@@ -343,7 +344,7 @@ fun interactive_eval_IC_msg val=
 
             ) else if !strcmp ickey "int.mask" then (
                 // int.mask -> masque d'interruption pour le mode interactif
-                set g_int_mask = (atoi icval);
+                set interactive_int_mask = (atoi icval);
                 0
 
             ) else if !strcmp ickey "cookie" then (
@@ -354,3 +355,15 @@ fun interactive_eval_IC_msg val=
                 0
             )
         );;
+
+/**
+ * Return interactive status as JSON
+ */
+fun interactive_json=
+    strcatlist
+        "{\n"::
+            (json_int "state" interactive_status) :: ",\n" ::
+            (json_str "app" interactive_app) :: "\n" ::
+        "}" :: nil
+;;
+

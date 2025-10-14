@@ -67,7 +67,7 @@ fun icmp_handler src mac=
 		0
 	);;
 
-fun run_icmp_ping=
+fun icmp_ping_job=
 	if last_ping_time + ICMP_PING_DELAY < time then (
 		let netgateway -> ipdst in
 		let "\0\1\0\1" -> quench in

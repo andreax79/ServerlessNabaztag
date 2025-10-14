@@ -1,0 +1,20 @@
+var xmpp_busy_status = 0;;  // busy (incoming message queue full)
+
+const XmppSessionReadTimeout = 60;; // temps maximum toléré au bout duquel on n'entend plus parler du serveur.
+
+proto XmppSessionStart 2;;  // Open a session (call one time)
+proto XmppSessionStop 1;;
+proto XmppSessionIdle 0;;   // Always called
+proto XmppSessionRun 0;;    // Always called
+proto XmppSessionSend 2;;
+proto XmppSessionResponseSend 2;;
+proto XmppSessionResponseSendErrorFeatureNotImplemented 3;; // to answear some unhandled requests
+proto XmppSessionRead 2;;
+proto XmppSessionSendButtonMsg 3;;
+proto XmppSessionSendEarMsg 2;;
+proto XmppSessionRequestResource 1;;
+proto XmppSessionUnreachable 1;;    // Can't open a session (example after trying in bosh)
+proto XmppSessionIsDisconnected 1;; // We don't know where we are but we seem to be disconnected
+proto XmppSessionProcess 2;;        // Process for the CTED!!! RESTART? WE ARE connexion, deals with all type of messages
+proto XmppSessionProcessR 3;;       // Process for the CTED!!! RESTART? WE ARE connexion, deals with all type of messages
+proto XmppSessionUpdate 1;;         // When the status is changed

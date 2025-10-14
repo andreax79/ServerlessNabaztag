@@ -1,0 +1,6 @@
+var palette_current = {0 0 0 0 0 0 0 0};;
+var palette_current_is_random = 1;; // random par défaut (pour pallier au fait que les podcasts ne précisent pas de palette)
+
+proto palette_set_current 1;;
+proto palette_set_current_mode 1;;
+proto palette_set_current_color 2;;

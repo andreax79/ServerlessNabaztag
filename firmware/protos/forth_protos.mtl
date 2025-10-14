@@ -6,6 +6,18 @@
 
 #ifdef FORTH
 
+type Forth=[
+    stack               // data stack
+    rstack              // return stack
+    cstack              // control stack
+    pc                  // program counter
+    state               // normal (0) or compilation state (-1)
+    output              // list of collected output strings
+    new_word_name       // name of the word being defined if in compilation state
+    new_word_definition // list of Words being defined if in compilation state
+    inter               // interpreter state
+];;
+
 const FORTH_TRUE = -1;;
 const FORTH_FALSE = 0;;
 
@@ -17,9 +29,8 @@ const FORTH_DOUBLE_QUOTE = 34;; // ASCII " (double quote)
 proto forth_get_word 1;;
 proto forth_word_list_to_array 1;;
 proto forth_execute_word_code 2;;
-proto forth_interpreter 2;;
+proto forth_interpreter 3;;
 proto forth_stack_to_str 2;;
-
-proto http_post_forth 3;;
+proto forth_http_post 3;;
 
 #endif

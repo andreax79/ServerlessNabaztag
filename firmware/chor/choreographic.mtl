@@ -1,4 +1,10 @@
-// ************************* Choregraphies (TaiChi, .chor) ************
+#include protos/chor_protos.mtl
+#include protos/palette_protos.mtl
+
+//--------------------------------------------------------------------------------------------------
+// Choregraphies
+//--------------------------------------------------------------------------------------------------
+
 var chor_data;;
 var chor_index;;
 var chor_timescale;;
@@ -17,23 +23,7 @@ var chor_paused_since;;
 // donc si x=255, (x*R)>>7 => 127 à 390 mn, soit 2 à 6,5h
 var chor_next_taichi;;
 
-//const CH_NOP=0;;
-const CH_FRAME_DURATION=1;;
-//const CH_SET_COLOR=6;;
-const CH_SET_LED_COLOR=7;;
-const CH_SET_MOTOR=8;;
-const CH_SET_LEDS_COLOR=9;; // v16
-const CH_SET_LED_OFF=10;; // v17
-const CH_SET_LED_PALETTE=14;;
-//const CH_SET_PALETTE=15;;
-const CH_RAND_MIDI=16;;
-const CH_AVANCE=17;;
-const CH_IFNE=18;;
-const CH_ATTEND=19;;
-const CH_SET_MOTOR_DIR=20;; // v16
-
-
-fun msgchorstart chor cb i0=
+fun chor_start_msg chor cb i0=
     set chor_end_cb = cb;
     set chor_data=strcatlist chor;
     set chor_index=4+1;  // on saute le header et la première attente
@@ -46,14 +36,14 @@ fun msgchorstart chor cb i0=
     run_set_state chorCmdRun i0;
     0;;
 
-fun msgendchor i0=
+fun chor_end_msg i0=
     set chor_next_time=nil;
     // call the callback
     if (chor_end_cb != nil) then call chor_end_cb [i0];
     0;;
 
-fun runChorCmd i0=
-    //  Secho "runChorCmd i:";Iecho chor_index; Secho " t:";Iecholn chor_next_time;
+fun chor_run_cmd i0=
+    //  Secho "chor_run_cmd i:";Iecho chor_index; Secho " t:";Iecholn chor_next_time;
     // Manage buffering and pauses
 
     if (!chor_paused && audiolib_wav_buffering) then (
@@ -70,7 +60,7 @@ fun runChorCmd i0=
     if (!chor_paused) then
     if time_ms-chor_paused_dur >= chor_next_time then
     (
-        if chor_index>=strlen chor_data then msgendchor i0
+        if chor_index>=strlen chor_data then chor_end_msg i0
         else let strget chor_data chor_index -> code in
         set chor_index=chor_index+2+
         if code==CH_FRAME_DURATION then
@@ -113,7 +103,7 @@ fun runChorCmd i0=
         else if code==CH_SET_LED_PALETTE then
         (
 //          Secholn "set_led_palette ";
-            led 4-strget chor_data chor_index+1 current_palette.(7&strget chor_data chor_index+2);
+            led 4-strget chor_data chor_index+1 palette_current.(7&strget chor_data chor_index+2);
             2
         )
         // v17
@@ -169,13 +159,13 @@ fun runChorCmd i0=
         )
         else
         (
-            msgendchor i0;
+            chor_end_msg i0;
             0
         );
         if chor_next_time!=nil then
         (
             set chor_next_time=chor_next_time+(strget chor_data chor_index-1)*chor_timescale;
-            runChorCmd i0
+            chor_run_cmd i0
         )
     );;
 
@@ -188,15 +178,18 @@ fun chor_taichi_end_cb unused=
     run_set_state idleRun;
     0;;
 
-fun taichistart=
+/**
+ * Start a TaiChi choreography
+ */
+fun chor_taichi_start=
     set chor_random=((rand & 255) * 30) >> 8;
     set chor_motor_dir={0 0};
     ears_set_wait_only_mode;
     set gProcessingState = 1; // block all trames during taichi
-    msgchorstart chordef_taichi::nil #chor_taichi_end_cb nil;
+    chor_start_msg chordef_taichi::nil #chor_taichi_end_cb nil;
     0;;
 
-fun dotaichinow=
+fun chor_do_taichi_now=
     if info_taichi && (info_taichi != nil) && (!sleep_status) then let (if chor_next_taichi!=nil then (time>chor_next_taichi) else 0) -> now in (
         if now || chor_next_taichi==nil then // compute chor_next_taichi
         let if (info_taichi == 40) then 255 else if (info_taichi == 255) then 40 else 80 -> correctedTaichi in // etait inversé

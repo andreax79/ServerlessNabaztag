@@ -124,10 +124,6 @@ fun _webmac key i=
 	if i<strlen key then (ctoh strget key i)::_webmac key i+1;;
 fun webmac key=strcatlist _webmac key 0;;
 
-/* Si une chaine commence par un '\0', la remplace par une chaine vide */
-fun makestremptyifzero s =
-	if 0 == strget s 0 then "" else s ;;
-
 
 fun AsciiToInt asccode =
 	if asccode <= 57 then // '9' /

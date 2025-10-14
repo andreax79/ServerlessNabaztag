@@ -1,8 +1,11 @@
+<!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8" />
   <title>Nabaztag</title>
   <link rel="stylesheet" href="milligram.css" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/x-icon" href="http://{SERVER_URL}/favicon.ico" />
   <style type="text/css">
 body {
   background: #2c2f34;
@@ -341,7 +344,7 @@ async function load() {
     const response = await fetch('/status');
     const status = await response.json();
     console.log(status);
-    document.getElementById("macAddress").innerHTML = status.mac;
+    document.getElementById("macAddress").innerHTML = status.wifi.mac;
     document.getElementById("revision").innerHTML = status.rev;
 
     let langOption = document.querySelector('#langField option[value="' + status.language + '"]');

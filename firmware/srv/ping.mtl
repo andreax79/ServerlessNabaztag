@@ -1,5 +1,6 @@
 #include protos/trame_protos.mtl
 #include protos/ears_protos.mtl
+#include protos/ping_protos.mtl
 
 // ******************
 // The Ping
@@ -9,7 +10,7 @@ var _ping_send_data=0;;
 // ping processing
 fun _pingcbhttp http res=
 	Secholn "ping=";
-	if !recording then
+	if !record_recording then
 		trame_eval httpgetcontent res;
 	0;;
 

@@ -2,6 +2,9 @@
 #include protos/sleep_protos.mtl
 #include protos/audiolib_protos.mtl
 #include protos/streaming_protos.mtl
+#include protos/chor_protos.mtl
+#include protos/jobs_protos.mtl
+#include protos/forth_protos.mtl
 
 //--------------------------------------------------------------------------------------------------
 // HTTP Server
@@ -151,12 +154,10 @@ fun http_get_json_status cnx sock args=
             (json_int "wake_up" config_get_wake_up) :: ",\n" ::
             (json_int "go_to_bed" config_get_go_to_bed) :: ",\n" ::
             (json_int "sleep_state" sleep_status) :: ",\n" ::
-            (json_int "streaming_state" gStreamingState) :: ",\n" ::
+            (json_int "streaming_state" streaming_status) :: ",\n" ::
             (json_int "processing_state" gProcessingState) :: ",\n" ::
-            (json_int "busy_state" gBusyState) :: ",\n" ::
-            (json_int "it_state" interactive_status) :: ",\n" ::
-            (json_str "it_app" gItApp) :: ",\n" ::
             (json_int "meteo_weather_code" _meteo_weather_code) :: ",\n" ::
+            (json_obj "interactive" interactive_json) :: ",\n" ::
             (json_obj "ears" ears_json) :: ",\n" ::
             (json_obj "info" info_json) :: ",\n" ::
             (json_obj "network" net_json) :: ",\n" ::
@@ -165,31 +166,15 @@ fun http_get_json_status cnx sock args=
         "}" :: nil
 ;;
 
-fun job_format_json job =
-    strcatlist
-        "{ "::
-            (json_str "name" job.name) :: ", " ::
-            (json_str "status" job_status job) ::
-        " }" :: nil
-;;
-
 fun http_get_json_jobs cnx sock args =
-    let "[\n" -> result in
-    let listlen _jobs -> n in (
-        for l=_jobs;l!=nil; tl l do
-            let hd l -> job in
-            let if nil!=tl l then ",\n" else "\n]" -> sep in
-            set result = strcatlist result::(job_format_json job)::sep::nil;
-        http_send_content_and_close cnx sock "application/json" result
-    )
-;;
+    http_send_content_and_close cnx sock "application/json" job_json;;
 
 //--------------------------------------------------------------------------------------------------
 
 fun httpindex=
-        "
+        strreplace "
 #include srv/www/index.html
-        "
+        " "{SERVER_URL}" config_get_server_url
 ;;
 
 fun milligram_css=
@@ -206,7 +191,6 @@ fun openapi_yaml=
 
 //--------------------------------------------------------------------------------------------------
 
-proto taichistart 0;;
 proto stopEverythingAndResetToIdle 0;;
 proto get_time_from_timeserver 0;;
 proto surprise 0;;
@@ -334,7 +318,7 @@ fun http_get_say cnx sock args=
 fun http_get_taichi cnx sock args=
     let _http_arg_int args 'v' -> v in
         if v == 1000 && !sleep_status then
-            taichistart
+            chor_taichi_start
         else
             set info_taichi = v;
     http_send_header_and_close HTTP_204 nil cnx sock;;
@@ -428,14 +412,6 @@ fun http_get_setup cnx sock args=
     meteo_get;
     http_send_header_and_close HTTP_204 nil cnx sock;;
 
-
-// fun http_post_forth cnx sock args=
-//     Secholn "http_post_forth";
-//     let _http_arg_str args 'c' -> code in
-//     let forth_interpreter code -> f in (
-//         http_send_header_and_close HTTP_204 nil cnx sock
-//     );;
-
 /**
  * Process an HTTP request and generate the response
  */
@@ -472,7 +448,7 @@ fun http_process_request req cnx sock=
         else if !strcmp path "/clear" then http_get_clear cnx sock args // clear all infosrc
         else if !strcmp path "/dns" then http_get_dns cnx sock args // d=domain name
         else if !strcmp path "/setup" then http_get_setup cnx sock args // setup parameters
-        else if !strcmp path "/forth" then http_post_forth cnx sock args // forth command
+        else if !strcmp path "/forth" then forth_http_post cnx sock args // forth command
         else if !strcmp path "/milligram.css" then (
             let http_header HTTP_200 "text/css" -> header in
             let strcat header milligram_css -> res in
@@ -497,7 +473,10 @@ fun http_process_request req cnx sock=
         0
     );;
 
-
+/**
+ * Start the HTTP server on the given port.
+ * port: TCP port number to listen on
+ */
 fun http_server_start_srv port =
     listentcp port #http_server_cb;
     0;;

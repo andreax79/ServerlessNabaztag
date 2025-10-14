@@ -1,1 +1,8 @@
+proto streaming_run_eval_one_cmd 1;;
+proto streaming_run_rsc_load_next_cmd 0;;
+proto streaming_run_rsc_load_wait_cmd 1;;
+proto streaming_run_wait_cmd 1;;
 proto streaming_wav_error 0;;
+
+var streaming_status = 0;;
+var streaming_audio_cmd_index = -1;;

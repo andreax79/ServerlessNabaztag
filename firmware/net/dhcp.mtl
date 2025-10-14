@@ -197,7 +197,7 @@ fun dhcp_check_force =
  * Checks if the dhcp lease is about to expire and checks if the rabbit
  * should ask for a renewal
  */
-fun dhcp_check =
+fun dhcp_check_job =
 #ifndef SIMU
     if ((dhcp_client_started && dhcp_lease_t1 != 0 && time > dhcp_lease_t1 && !dhcp_infinite_lease)) then
         dhcp_check_force;

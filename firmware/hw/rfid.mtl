@@ -1,5 +1,6 @@
 #include protos/trame_protos.mtl
 #include protos/hooks_protos.mtl
+#include protos/chor_protos.mtl
 
 // ********** RFID **********************
 // v19 Amélioration de la lecteure RFID
@@ -64,7 +65,7 @@ fun rfid_control=
 			midi_play midi_RFIDok;
 
 			// lancer l'animation (v19)
-			msgchorstart chor_RFIDok::nil #_rfid_end_chor nil;
+			chor_start_msg chor_RFIDok::nil #_rfid_end_chor nil;
 
 			hook_rfid rfid
 		)

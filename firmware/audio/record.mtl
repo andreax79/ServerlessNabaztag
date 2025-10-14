@@ -1,12 +1,9 @@
 #include protos/interactive_protos.mtl
+#include protos/record_protos.mtl
 
 // **********************
 // Record
 // **********************
-
-const RECORD_MAX_RECORDING_TIME = 8000;;
-
-proto _record_interactive_send_upload 0;;
 
 var _record_time_start;;
 var _record_mode;;
@@ -55,7 +52,7 @@ fun _record_cb_http http res=
     run_set_state idleRun;
     0;;
 
-fun record_upload_timeout=
+fun record_upload_timeout_job=
     if record_uploading then
     (
         if _record_play_end!=nil && ((_record_play_end-time_ms)<0) then
@@ -117,7 +114,7 @@ fun record_run=
     0;;
 
 fun _record_interactive_send_upload =
-    set recordreq = httprequest "POST" (interactive_url_reco gItApp record_last_wav_bytes gCurAudioCmdIndex) recorddata #interactive_req_cb_http HTTP_NORMAL;
+    set recordreq = httprequest "POST" (interactive_url_reco interactive_app record_last_wav_bytes streaming_audio_cmd_index) recorddata #interactive_req_cb_http HTTP_NORMAL;
     run_set_state interactiveReqWaitRun recordreq;
     0;;
 

@@ -1,8 +1,13 @@
-proto url_config 0 ;;
-proto url_record 1 ;;
-proto url_rfid 1 ;;
-proto url_interactive 1 ;;
-proto url_surprise 1 ;;
+proto url_config 0;;
+proto url_record 1;;
+proto url_rfid 1;;
+proto url_interactive 1;;
+proto url_surprise 1;;
+proto url_hook_rfid 0;;
+proto url_hook_ears 0;;
+proto url_hook_click 0;;
+proto url_hook_dbl_click 0;;
+
 #ifdef PING
 proto url_ping 1 ;;
 #endif

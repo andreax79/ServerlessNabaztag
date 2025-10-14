@@ -189,7 +189,7 @@ fun wifi_check =
     )
     ;;
 
-fun wifi_run=
+fun wifi_job=
     let netState -> state in
     (
         if state!=_wifi_last_state then (

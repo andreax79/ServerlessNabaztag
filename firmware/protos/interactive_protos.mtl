@@ -1,12 +1,17 @@
 var interactive_status = 0;;
+var interactive_app = nil;;  // the name of the interactive application
+var interactive_int_mask = 0;;
 
+proto interactive_ear_process_touched_job 0;;
 proto interactive_error 0;;
 proto interactive_eval_IC_msg 1;;
 proto interactive_init 0;;
+proto interactive_json 0;;
 proto interactive_note_ear_touched 3;;
 proto interactive_program_done 0;;
 proto interactive_req_cb_http 2;;
 proto interactive_reset_ears_touched 0;;
+proto interactive_send_ear_touched 2;;
 proto interactive_start 1;;
 proto interactive_state_enter 0;;
 proto interactive_stop 0;;

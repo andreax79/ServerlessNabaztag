@@ -1,15 +1,25 @@
 #include protos/hooks_protos.mtl
+#include protos/chor_protos.mtl
+#include protos/streaming_protos.mtl
+#include protos/surprise_protos.mtl
+#ifdef PING
+#include protos/ping_protos.mtl
+#endif
+#ifdef XMPP
+#include protos/xmpp_protos.mtl
+#endif
 
+const CONTROL_NONE=0;;
 const CONTROL_WAIT=1;;
 const CONTROL_PLAY=2;;
 const CONTROL_INTERACTIF=3;;
-const CONTROL_PROGRAMWAIT=4;;
+const CONTROL_PROGRAM_WAIT=4;;
 
 const CONTROL_MSG_IDLE=0x7fffffff;;
 const CONTROL_MSG_ASLEEP=0x7ffffffe;;
 
 // Main loop state
-var run;;
+var run;; // type Run
 
 var _run_net_activity = 0;;
 
@@ -36,10 +46,8 @@ fun _run_control_wait =
         ears_stop 0;
         if ev==BUTTON_CLIC then (hook_click time_ms;0) // click
         else if ev==BUTTON_DCLIC then (midi_play midi_ack; hook_dbl_click time_ms;0) //ackall
-#ifdef RECLIB
         else if ev==BUTTON_LCLIC then record_control 0  //  //back ou record
         else if ev==BUTTON_DLCLIC then record_control 1 // //back ou record
-#endif
         else if ev&0x8000 then (
             // oreilles
             midi_play midi_acquired;
@@ -62,19 +70,17 @@ fun _run_control_inter =
     if ev!=nil then
     (
         if ev==BUTTON_CLIC || ev==BUTTON_DCLIC then (
-            if (g_int_mask&MASK_BUTTON == 0) then interactive_send_btn ev
+            if (interactive_int_mask & MASK_BUTTON == 0) then interactive_send_btn ev
         ) else if ev==BUTTON_LCLIC then (
             if (g_record_enabled) then (
                 // remember wav position and start record
-#ifdef RECLIB
                 set record_last_wav_bytes = audiolib_wav_cur_played_bytes;
                 record_control 0;
-#endif
                 0
             ) else (
                 // like BUTTON_CLIC
                 set ev = BUTTON_CLIC;
-                if (g_int_mask&MASK_BUTTON == 0) then interactive_send_btn ev
+                if (interactive_int_mask & MASK_BUTTON == 0) then interactive_send_btn ev
             )
         )
     );
@@ -90,9 +96,9 @@ fun stopEverythingAndResetToIdle =
     ears_start_reset;
     set interactive_status = 0;
     set g_cookie = "";
-    set gItApp = nil;
+    set interactive_app = nil;
     set gProcessingState = 0;
-    set gStreamingState = 0;
+    set streaming_status = 0;
     set streaming_current_program = nil;
     run_set_state if !sleep_status then idleRun else sleepRun;
     0
@@ -106,15 +112,23 @@ fun _run_control_play =
         let atoi listswitchstr streaming_current_program "ID" -> id in
             if ev==BUTTON_CLIC then (
                 midi_play midi_abort;
-                if (gStreamingState) then streaming_stop;
+                if (streaming_status) then streaming_stop;
                 endOfProgram 0;
+#ifdef XMPP
                 XmppSessionSendButtonMsg ev 1 id
+#else
+                0
+#endif
             ) //pause
             else if ev==BUTTON_DCLIC then (
                 midi_play midi_ack;
-                if (gStreamingState) then streaming_stop;
+                if (streaming_status) then streaming_stop;
                 endOfProgram 0;
+#ifdef XMPP
                 XmppSessionSendButtonMsg ev 1 id
+#else
+                0
+#endif
             ) //ackall
             else if ev==BUTTON_LCLIC then nil //pause ou record ? callPingRequest 5
     )
@@ -158,11 +172,7 @@ fun _run_bottom_led=
 fun _run_nose_led=
     if !ears_detecting then
     // led tete clignote if netactivity or audiolib_wav_buffering //
-#ifdef RECLIB
     let record_uploading || (match run with (rscLoadWaitRun _-> 1)|(interactiveReqWaitRun _->1)|(_->0)) -> netactivity in
-#else
-    let (match run with (rscLoadWaitRun _-> 1)|(interactiveReqWaitRun _->1)|(_->0)) -> netactivity in
-#endif
     if (netactivity) then (
         led LED_NOSE (if time_ms&256 then RGB_BLUE else RGB_BLACK);
         set _run_net_activity = 1
@@ -175,12 +185,6 @@ fun _run_nose_led=
         set _run_net_activity = 0
     );
     0;;
-
-
-fun _run_ear_reset cb =
-    if (!ears_resetting) then
-        call cb []
-    ;;
 
 fun _run_idle =
     // if trame waiting, execute it
@@ -197,8 +201,8 @@ fun _run_idle =
         )
         else
 #endif
-        if dotaichinow then (
-            taichistart
+        if chor_do_taichi_now then (
+            chor_taichi_start
         ) else (
 #ifdef PING
             ping_run_start
@@ -267,9 +271,8 @@ fun _run_config_wait http=
     );
     0;;
 
-
-fun run_step=
-    let match run with
+fun _run_step_match=
+    match run with
     ( configstartRun ->
         ears_run;
         _run_config_start )|
@@ -279,73 +282,124 @@ fun run_step=
 #ifdef PING
     ( pingstartRun ->
         ears_run;
-        if currentTrameID!=CONTROL_MSG_ASLEEP then _run_bottom_led;
+        if ping_current_trame_id!=CONTROL_MSG_ASLEEP then _run_bottom_led;
         ping_run_start )|
     ( pingwaitRun http ->
         ears_run;
-        if currentTrameID!=CONTROL_MSG_ASLEEP then (
+        if ping_current_trame_id!=CONTROL_MSG_ASLEEP then (
             info_run;
             _run_bottom_led;
             _run_nose_led
         );
         runpingwait http;
-        if currentTrameID!=CONTROL_MSG_ASLEEP then CONTROL_WAIT)|
+        if ping_current_trame_id!=CONTROL_MSG_ASLEEP then CONTROL_WAIT)|
     ( pingRequestWaitRun http->
         _run_bottom_led;
         _run_nose_led;
         runPingRequestWait http;
-        0)|
-    ( stdWaitRun t -> ears_run;if currentTrameID!=CONTROL_MSG_ASLEEP then (info_run;_run_bottom_led;_run_nose_led);runStdWait t; CONTROL_WAIT) |
+        CONTROL_NONE )|
+    ( stdWaitRun t ->
+        ears_run;
+        if ping_current_trame_id != CONTROL_MSG_ASLEEP then (
+            info_run;
+            _run_bottom_led;
+            _run_nose_led
+        );
+        runStdWait t;
+        CONTROL_WAIT )|
 #endif
 #ifdef XMPP
     ( xmppLoginRun ->
-    if (ears_resetting && ears_is_initialized) then ears_run else ears_stop 1;
-    xmpp_run_login;
-    CONTROL_WAIT) |
+        if (ears_resetting && ears_is_initialized) then ears_run else ears_stop 1;
+        xmpp_run_login;
+        CONTROL_WAIT )|
     ( xmppReconnectRun params ->
-    if (ears_resetting && ears_is_initialized) then ears_run else ears_stop 1;
-    if !sleep_status then (
-        // Affichage des sources.
+        if (ears_resetting && ears_is_initialized) then ears_run else ears_stop 1;
+        if !sleep_status then (
+            // Affichage des sources.
+            info_run;
+            // On fige la base en violet
+            led LED_BASE RGB_VIOLET
+        );
+        let params -> [waitTime xSession oldRun] in
+            match xSession.sStatus with
+                (sOpened -> run_set_state oldRun; 0)|
+                (sClosed -> if time_ms > waitTime then XmppGateReconnect xSession 0; 0)|
+                (_ -> 0);
+        CONTROL_WAIT )|
+#endif
+    ( idleRun ->
+        ears_run;
         info_run;
-        // On fige la base en violet
-        led LED_BASE RGB_VIOLET
+        _run_bottom_led;
+        _run_nose_led;
+        _run_idle;
+        CONTROL_WAIT ) |
+    ( sleepRun ->
+        ears_run;
+        _run_idle;
+        CONTROL_NONE )|
+    ( rscLoadNextRun ->
+        ears_run;
+        info_run;
+        _run_bottom_led;
+        _run_nose_led;
+        streaming_run_rsc_load_next_cmd;
+        CONTROL_WAIT ) |
+    ( rscLoadWaitRun http->
+        ears_run;
+        info_run;
+        _run_bottom_led;
+        _run_nose_led;
+        streaming_run_rsc_load_wait_cmd http;
+        CONTROL_WAIT )|
+    ( cmdEvalOne i->
+        ears_run;
+        streaming_run_eval_one_cmd i;
+        CONTROL_PLAY )|
+    ( chorCmdRun i->
+        ears_run;
+        _run_nose_led;
+        chor_run_cmd i;
+        CONTROL_PLAY )|
+    ( streamCmdRun i0->
+        ears_run;
+        _run_nose_led;
+        streaming_run_cmd i0;
+        CONTROL_PLAY )|
+    ( waitCmdRun i ->
+        ears_run;
+        _run_nose_led;
+        streaming_run_wait_cmd i;
+        CONTROL_PROGRAM_WAIT )|
+    ( earResetWaitRun cb ->
+        ears_run;
+        if (!ears_resetting) then call cb [];
+        CONTROL_NONE) |
+    ( recordRun ->
+        record_run )|
+    ( recordStartRun ->
+        record_start_run )|
+    ( interactiveReqWaitRun http ->
+        ears_run;
+        info_run;
+        _run_bottom_led;
+        _run_nose_led;
+        runInteractiveReqWait http;
+        CONTROL_WAIT );;
+
+fun run_job=
+    let _run_step_match -> keymanager in (
+        if keymanager == CONTROL_WAIT then
+            _run_control_wait
+        else if keymanager == CONTROL_PLAY then
+            if !interactive_status then
+                _run_control_play
+            else
+                _run_control_inter
+        else if keymanager == CONTROL_PROGRAM_WAIT then
+            _run_control_program_wait
+        else
+            button_get_event
     );
-    let params -> [waitTime xSession oldRun] in
-        match xSession.sStatus with
-            (sOpened -> run_set_state oldRun; 0)
-            |(sClosed ->
-                if time_ms > waitTime then (
-                    XmppGateReconnect xSession 0
-                );
-                0)
-            |(_ -> 0);
-    CONTROL_WAIT)|
-#endif
-    ( idleRun -> ears_run;info_run;_run_bottom_led;_run_nose_led;_run_idle;CONTROL_WAIT) |
-    ( sleepRun -> ears_run;_run_idle;0) |
-
-    ( rscLoadNextRun -> ears_run;info_run;_run_bottom_led;_run_nose_led;runRscLoadNext; CONTROL_WAIT)|
-    ( rscLoadWaitRun http-> ears_run;info_run;_run_bottom_led;_run_nose_led;runRscLoadWait http;CONTROL_WAIT)|
-    ( cmdEvalOne i-> ears_run;runEvalOneCommand i;CONTROL_PLAY)|
-    ( chorCmdRun i-> ears_run;_run_nose_led;runChorCmd i;CONTROL_PLAY)|
-    ( streamCmdRun i0-> ears_run;_run_nose_led;streaming_run_cmd i0;CONTROL_PLAY)|
-    ( waitCmdRun i -> ears_run;_run_nose_led;runWaitCmd i;CONTROL_PROGRAMWAIT)|
-
-    ( earResetWaitRun cb -> ears_run; _run_ear_reset cb; 0) |
-
-#ifdef RECLIB
-    ( recordRun -> record_run)|
-    ( recordStartRun -> record_start_run) |
-#endif
-
-    ( interactiveReqWaitRun http-> ears_run;info_run;_run_bottom_led;_run_nose_led;runInteractiveReqWait http;CONTROL_WAIT)
-     -> keymanager in
-    if keymanager==CONTROL_WAIT then
-        _run_control_wait
-    else if keymanager==CONTROL_PLAY then
-        (if (!interactive_status) then _run_control_play else _run_control_inter)
-    else if keymanager==CONTROL_PROGRAMWAIT then
-        _run_control_program_wait
-    else
-        button_get_event;
     JobRun;;

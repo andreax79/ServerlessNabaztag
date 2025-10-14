@@ -1,8 +1,8 @@
 #include protos/trame_protos.mtl
 #include protos/dns_protos.mtl
 #include protos/jobs_protos.mtl
-
-var gTramesQueue= nil;;
+#include protos/streaming_protos.mtl
+#include protos/xmpp_protos.mtl
 
 #ifdef XMPP_DEBUG
 fun _xmpp_debug str = Secholn str; nil ;;
@@ -85,10 +85,8 @@ fun runToStr run =
     | (cmdEvalOne _ -> "cmdEvalOne" )
     | (idleRun -> "idleRun" )
     | (sleepRun -> "sleepRun" )
-#ifdef RECLIB
     | (recordRun -> "recordRun" )
     | (recordStartRun -> "recordStartRun" )
-#endif
     | (earResetWaitRun _ -> "earResetWaitRun" )
     | (xmppLoginRun -> "xmppLoginRun" )
     | (xmppReconnectRun _ -> "xmppReconnectRun" )
@@ -109,13 +107,13 @@ fun _xmpp_process_incoming_trame ping_trame rsrc ttl=
     ) else (
         Secholn "enqueueing trame";
         let if (ttl == nil) then nil else (time + (atoi ttl)) -> expiration_time in
-            set gTramesQueue = conc gTramesQueue [rsrc expiration_time ping_trame]::nil;
+            set trame_queue = conc trame_queue [rsrc expiration_time ping_trame]::nil;
 
         // full ?
-        let listlen gTramesQueue -> queueLen in
+        let listlen trame_queue -> queueLen in
         if queueLen >= TRAME_QUEUE_MAXLEN then (
             Secholn "trame queue full, warning server";
-            set gBusyState = 1;
+            set xmpp_busy_status = 1;
             (XmppSessionRequestResource "busy")::nil
         ) else (
             nil
@@ -169,32 +167,9 @@ const XmppBoshReOpenStream4 = "' xml:lang='en' xmpp:restart='true' xmlns='http:/
 // Variables diverses
 var SendTry = 0;;   // Permet de compter le nombre de tentative d'envoie d'une requete defectueuse
 
-
-
 // ---------------------------------------------------------
 // XMPP SESSION
 // ---------------------------------------------------------
-
-const XmppSessionReadTimeout = 60;; // temps maximum toléré au bout duquel on n'entend plus parler du serveur.
-
-proto XmppSessionStart 2;;  // Open a session (call one time)
-proto XmppSessionStop 1;;
-proto XmppSessionIdle 0;;   // Always called
-proto XmppSessionRun 0;;    // Always called
-proto XmppSessionSend 2;;
-proto XmppSessionResponseSend 2;;
-proto XmppSessionResponseSendErrorFeatureNotImplemented 3;; // to answear some unhandled requests
-proto XmppSessionRead 2;;
-proto XmppSessionSendButtonMsg 3;;
-proto XmppSessionSendEarMsg 2;;
-proto XmppSessionRequestResource 1;;
-proto XmppSessionUnreachable 1;;    // Can't open a session (example after trying in bosh)
-proto XmppSessionIsDisconnected 1;; // We don't know where we are but we seem to be disconnected
-proto XmppSessionProcess 2;;        // Process for the CTED!!! RESTART? WE ARE connexion, deals with all type of messages
-proto XmppSessionProcessR 3;;       // Process for the CTED!!! RESTART? WE ARE connexion, deals with all type of messages
-proto XmppSessionUpdate 1;;         // When the status is changed
-
-
 
 type tXmppSessionStreamState = ssRegister1 | ssRegister2 | ssBind | ssUnBind | ssStartSession | ssGetSource | ssFree | ssLogging | ssPresence ;;
 // ss >> Stream State
@@ -875,7 +850,7 @@ fun XmppGateInfo xSession =
     _xmpp_debug strcatlist "Ressource : "::xSession.sResource::nil;
     _xmpp_debug strcatlist "Next Resource : "::xSession.sNextResource::nil;
     _xmpp_debug strcatlist "Stream State : ":: (xmppStateToStr xSession.sState ) :: nil;
-    _xmpp_debug strcatlist "gBusy : "::(itoa gBusyState)::nil;
+    _xmpp_debug strcatlist "gBusy : "::(itoa xmpp_busy_status)::nil;
     _xmpp_debug "***************************************";
     _xmpp_debug " ";_xmpp_debug " "
 ;;
@@ -2734,11 +2709,11 @@ fun XmppSessionProcessHandleStanzaIqSet xSession xmlStanza =
                     :: "<field var='sResource'><value>" :: xSession.sResource :: "</value></field>"
                     :: "<field var='gItState'><value>" :: (itoa interactive_status) :: "</value></field>"
                     :: "<field var='gSleepState'><value>" :: (itoa sleep_status) :: "</value></field>"
-                    :: "<field var='gStreamingState'><value>" :: (itoa gStreamingState) :: "</value></field>"
+                    :: "<field var='gStreamingState'><value>" :: (itoa streaming_status) :: "</value></field>"
                     :: "<field var='gProcessingState'><value>" :: (itoa gProcessingState) :: "</value></field>"
                     :: "<field var='gProcessingWaitState'><value>" :: (itoa gProcessingWaitState) :: "</value></field>"
-                    :: "<field var='gBusyState'><value>" :: (itoa gBusyState) :: "</value></field>"
-                    :: "<field var='gItApp'><value>" :: gItApp :: "</value></field>"
+                    :: "<field var='gBusyState'><value>" :: (itoa xmpp_busy_status) :: "</value></field>"
+                    :: "<field var='gItApp'><value>" :: interactive_app :: "</value></field>"
                     :: "<field var='run'><value>" :: (runToStr run_get_state) :: "</value></field>"
                     :: "</item></x>"
                     :: "</command>"
