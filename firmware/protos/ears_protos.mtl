@@ -1,3 +1,18 @@
+proto ears_complete 0 ;;
+proto ears_detecting 0 ;;
+proto ears_detecting 0 ;;
+proto ears_finished_moving 0 ;;
+proto ears_get_event 0 ;;
+proto ears_go 3 ;;
+proto ears_go_to_ref_pos 0 ;;
+proto ears_init 0 ;;
+proto ears_is_initialized 0;;
+proto ears_json 0 ;;
+proto ears_ready 0 ;;
+proto ears_resetting 0 ;;
+proto ears_set_wait_and_detect_mode 0 ;;
+proto ears_start_reset 0 ;;
+
 const EARSMODE_RESET=0;; // ears go to ref pos
 const EARSMODE_WAIT=1;;
 const EARSMODE_WAITANDDETECT=2;;
@@ -10,18 +25,3 @@ const EARS_LEFT=0;; // left ear
 const EARS_RIGHT=1;; // right ear
 const EARS_DIR_LEFT=0;; // left ear direction when going forward
 const EARS_DIR_RIGHT=1;; // right ear direction when going forward
-
-proto ears_complete 0 ;;
-proto ears_detecting 0 ;;
-proto ears_detecting 0 ;;
-proto ears_finished_moving 0 ;;
-proto ears_get_event 0 ;;
-proto ears_go 3 ;;
-proto ears_go_to_ref_pos 0 ;;
-proto ears_init 0 ;;
-proto ears_is_initialized 0;;
-proto ears_ready 0 ;;
-proto ears_resetting 0 ;;
-proto ears_set_wait_and_detect_mode 0 ;;
-proto ears_start_reset 0 ;;
-proto ears_json 0 ;;

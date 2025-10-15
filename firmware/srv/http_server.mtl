@@ -5,6 +5,8 @@
 #include protos/chor_protos.mtl
 #include protos/jobs_protos.mtl
 #include protos/forth_protos.mtl
+#include protos/json_protos.mtl
+#include protos/info_protos.mtl
 
 //--------------------------------------------------------------------------------------------------
 // HTTP Server
@@ -155,7 +157,7 @@ fun http_get_json_status cnx sock args=
             (json_int "go_to_bed" config_get_go_to_bed) :: ",\n" ::
             (json_int "sleep_state" sleep_status) :: ",\n" ::
             (json_int "streaming_state" streaming_status) :: ",\n" ::
-            (json_int "processing_state" gProcessingState) :: ",\n" ::
+            (json_int "processing_state" chor_processing_status) :: ",\n" ::
             (json_int "meteo_weather_code" _meteo_weather_code) :: ",\n" ::
             (json_obj "interactive" interactive_json) :: ",\n" ::
             (json_obj "ears" ears_json) :: ",\n" ::

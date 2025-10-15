@@ -1,0 +1,11 @@
+const BUTTON_CLIC = 1;;
+const BUTTON_DCLIC = 2;;
+const BUTTON_LCLIC = 3;;
+const BUTTON_DLCLIC= 4;;
+const BUTTON_T_DCLIC = 500;;
+const BUTTON_T_LCLIC = 1500;;
+
+const MASK_BUTTON = 1;;
+const MASK_EAR_LEFT = 2;;
+const MASK_EAR_RIGHT = 4;;
+const MASK_RFID = 8;;

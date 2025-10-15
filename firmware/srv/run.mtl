@@ -1,3 +1,4 @@
+#include protos/button_protos.mtl
 #include protos/hooks_protos.mtl
 #include protos/chor_protos.mtl
 #include protos/streaming_protos.mtl
@@ -72,7 +73,7 @@ fun _run_control_inter =
         if ev==BUTTON_CLIC || ev==BUTTON_DCLIC then (
             if (interactive_int_mask & MASK_BUTTON == 0) then interactive_send_btn ev
         ) else if ev==BUTTON_LCLIC then (
-            if (g_record_enabled) then (
+            if (record_enabled) then (
                 // remember wav position and start record
                 set record_last_wav_bytes = audiolib_wav_cur_played_bytes;
                 record_control 0;
@@ -95,9 +96,9 @@ fun stopEverythingAndResetToIdle =
     streaming_stop;
     ears_start_reset;
     set interactive_status = 0;
-    set g_cookie = "";
+    set interactive_cookie = "";
     set interactive_app = nil;
-    set gProcessingState = 0;
+    set chor_processing_status = 0;
     set streaming_status = 0;
     set streaming_current_program = nil;
     run_set_state if !sleep_status then idleRun else sleepRun;
@@ -193,7 +194,7 @@ fun _run_idle =
         trame_eval trame;
         0
     ) else (
-        set gProcessingState = 0;
+        set chor_processing_status = 0;
 #ifdef SERVERLESS
         if surprise_check then (
             surprise;

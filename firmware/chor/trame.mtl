@@ -181,20 +181,20 @@ fun trame_eval ping_trame=
                 // Initialize Program
                 set _trame_palette_selected = 0;
                 set streaming_current_program = program;
-                set gProcessingState = 1;
-                set gProcessingWaitState = 0;
+                set chor_processing_status = 1;
+                set chor_processing_wait_status = 0;
                 _trame_check_for_palette_before program; // Permet de mettre la palette correspondante au programme, v17 (add romain)
                 // resources
-                set rsctoget=_trame_rsc_from_program program;
+                set trame_remaining_resources=_trame_rsc_from_program program;
                 // empties the rsc cache
                 set streaming_rsc_loaded=nil;
-                let hd rsctoget -> [url _] in
+                let hd trame_remaining_resources -> [url _] in
                 if url==nil then (
                     // no resources to load : start the program now
                     trame_program_start;
                     0
                 ) else (
-                    // will load rsctoget and then start the program 'streaming_current_program'
+                    // will load trame_remaining_resources and then start the program 'streaming_current_program'
                     Secho "loading rsrcs...";
                     run_set_state rscLoadNextRun;
                     0
@@ -217,7 +217,7 @@ fun trame_is_resource_valid rsrcName=
     else if (streaming_status) then (if (!strcmp rsrcName "streaming") then 1 else 0)
     else if (interactive_status) then (if (!strcmp rsrcName "itmode") then 1 else 0)
     else if (sleep_status) then (if (!strcmp rsrcName "asleep") then 1 else 0)
-    else if (gProcessingState) then 0
+    else if (chor_processing_status) then 0
     else 1;;
 
 fun _trame_queue_remove_entry binome=

@@ -39,6 +39,7 @@ var _wifi_last_state;;
 #include protos/net_protos.mtl
 #include protos/leds_protos.mtl
 #include protos/config_protos.mtl
+#include protos/json_protos.mtl
 
 /**
  * Return true if the wifi is connected

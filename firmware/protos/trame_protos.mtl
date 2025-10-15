@@ -1,10 +1,11 @@
-var trame_queue = nil;;
-
 proto trame_eval 1;;
+proto trame_filter_config 2;;
 proto trame_get_next_pending 0;;
 proto trame_is_resource_valid 1;;
 proto trame_program_start 0;;
-proto trame_filter_config 2;;
+
+var trame_queue = nil;;
+var trame_remaining_resources;; // list of remaining resources to get for the execution of the current trame
 
 const TRAME_QUEUE_MAXLEN = 10;;
-const TRAME_SIGN_CUT_SIZE=40000;; // taille max du fichier audio de signature
+const TRAME_SIGN_CUT_SIZE = 40000;; // taille max du fichier audio de signature

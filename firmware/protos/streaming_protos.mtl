@@ -6,3 +6,4 @@ proto streaming_wav_error 0;;
 
 var streaming_status = 0;;
 var streaming_audio_cmd_index = -1;;
+var streaming_chor_enabled = 1;;  // settings, command="IC", managed in eval_IC_msg

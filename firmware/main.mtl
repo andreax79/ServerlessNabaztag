@@ -37,13 +37,10 @@ const PORT_TELNET = 21;;
 const PORT_HTTP = 80;;
 #endif
 
-const HARDWARE=4;;
-
-// Etats generaux
-var gProcessingState = 0;;  // processing a program
-var gProcessingWaitState = 0;;  // executing a "wait" command in a program. when checking this var, check gProcessingState first, as it is not always reseted to 0
-
+const HARDWARE = 4;;
 const BYTECODE_REVISION_STR = "$Rev: __DATE__ $";;
+const STD_NET_TIMEOUT = 10000;;
+const LED_TIMEOUT = 600;; // 10 minutes
 
 #include protos/net_protos.mtl
 #include protos/run_protos.mtl
@@ -61,57 +58,52 @@ const BYTECODE_REVISION_STR = "$Rev: __DATE__ $";;
 #include protos/forth_protos.mtl
 
 #include hw/leds.mtl
+#include hw/ears.mtl
+#include hw/button.mtl
+
 #include utils/utils.mtl
 #include utils/json.mtl
 #include utils/jobs.mtl
 #include utils/md5.mtl
 #include utils/config.mtl
-#include utils/const_data.mtl
 #include utils/url.mtl
+#include utils/b64.mtl
+#include utils/xmlparser.mtl
 
 #include net/net.mtl
 #include net/dhcp.mtl
 #include net/dns.mtl
 #include net/http.mtl
 #include net/sock.mtl
-#include srv/time.mtl
+#include net/wifi.mtl
+
+#include audio/const_data.mtl
+#include audio/reclib.mtl
+#include audio/audiolib.mtl
+#include audio/midi.mtl
+#include audio/record.mtl
 
 proto XmppSessionRequestResource 1;;
 
-#include utils/b64.mtl
-#include utils/xmlparser.mtl
+#include chor/choreographic.mtl
+#include chor/interactive.mtl
+#include chor/palette.mtl
+#include chor/streaming.mtl
+#include chor/surprise.mtl
+#include chor/trame.mtl
+
+#include srv/time.mtl
+#include srv/info.mtl
+#include srv/crontab.mtl
+#include utils/hooks.mtl
+#include srv/meteo.mtl
+
 #ifdef XMPP
 #include srv/xmpp.mtl
 #else
 fun XmppSessionRequestResource newRes = 0 ;;
 fun XmppSessionSendButtonMsg btn withEvent eventValue = 0 ;;
 #endif
-
-#include audio/reclib.mtl
-#include audio/audiolib.mtl
-#include audio/midi.mtl
-#include hw/ears.mtl
-
-#include srv/info.mtl
-#include srv/crontab.mtl
-#include utils/hooks.mtl
-#include net/wifi.mtl
-
-const MASK_BUTTON = 1;;
-const MASK_EAR_LEFT = 2;;
-const MASK_EAR_RIGHT = 4;;
-const MASK_RFID = 8;;
-const STD_NET_TIMEOUT=10000;;
-const LED_TIMEOUT=600;; // 10 minutes
-
-var rsctoget;; // list of remaining resources to get for the execution of the current trame
-var g_streaming_chor_enabled=1;;  // settings, command="IC", managed in eval_IC_msg
-var g_cookie="";;
-var g_record_enabled = 1;;
-
-#include hw/button.mtl
-
-#include srv/meteo.mtl
 
 #ifdef PING
 #include srv/ping.mtl
@@ -127,16 +119,8 @@ var g_record_enabled = 1;;
 #include srv/daytime_server.mtl
 #endif
 
-#include audio/record.mtl
 #include utils/sleep.mtl
 #include hw/rfid.mtl
-
-#include chor/choreographic.mtl
-#include chor/interactive.mtl
-#include chor/palette.mtl
-#include chor/streaming.mtl
-#include chor/surprise.mtl
-#include chor/trame.mtl
 
 #include srv/run.mtl
 

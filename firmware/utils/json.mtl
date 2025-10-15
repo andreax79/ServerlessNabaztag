@@ -1,9 +1,4 @@
-const JSON_TAB=9;; // ASCII code for tab
-const JSON_NEWLINE=10;; // ASCII code for newline
-const JSON_DOUBLE_QUOTE=34;; // ASCII code for double quote
-const JSON_SLASH=47;; // ASCII code for slash
-const JSON_BACK_SLASH=92;; // ASCII code for backslash
-const JSON_AMPERSAND=38;; // ASCII code for ampersand
+#include protos/json_protos.mtl
 
 /**
  * Check if a character is a special character that needs to be escaped in JSON.

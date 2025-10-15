@@ -1,15 +1,10 @@
+#include protos/button_protos.mtl
+#include protos/jobs_protos.mtl
+
 var _button_last;;
 var _button_time;;
 var _button_event;;
 var _button_clic;;
-
-const BUTTON_CLIC=1;;
-const BUTTON_DCLIC=2;;
-const BUTTON_LCLIC=3;;
-const BUTTON_DLCLIC=4;;
-const BUTTON_T_DCLIC=500;;
-const BUTTON_T_LCLIC=1500;;
-
 
 fun button_job=
     let button2 -> b in

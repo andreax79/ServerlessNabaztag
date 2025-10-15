@@ -1,5 +1,7 @@
+#include protos/button_protos.mtl
 #include protos/trame_protos.mtl
 #include protos/interactive_protos.mtl
+#include protos/json_protos.mtl
 #ifdef XMPP
 #include protos/xmpp_protos.mtl
 #endif
@@ -29,23 +31,23 @@ var _interactive_btn_2_snd = "chord";;
 
 // Construction des urls d'interactivité
 fun interactive_url_start application =
-    strcatlist (url_interactive application)::"&st=start"::g_cookie::nil
+    strcatlist (url_interactive application)::"&st=start"::interactive_cookie::nil
     ;;
 
 fun interactive_url_btn application position cmdindex btn =
-    strcatlist (url_interactive application)::"&st=btn&pos="::(itoa position)::"&idx="::(itoa cmdindex)::"&btn="::(itoa btn)::g_cookie::nil
+    strcatlist (url_interactive application)::"&st=btn&pos="::(itoa position)::"&idx="::(itoa cmdindex)::"&btn="::(itoa btn)::interactive_cookie::nil
     ;;
 
 fun interactive_url_done application =
-    strcatlist (url_interactive application)::"&st=done"::g_cookie::nil
+    strcatlist (url_interactive application)::"&st=done"::interactive_cookie::nil
     ;;
 
 fun interactive_url_ear application position cmdindex earg eard =
-    strcatlist (url_interactive application)::"&st=ear&pos="::(itoa position)::"&idx="::(itoa cmdindex)::"&el="::(itoa earg)::"&er="::(itoa eard)::g_cookie::nil
+    strcatlist (url_interactive application)::"&st=ear&pos="::(itoa position)::"&idx="::(itoa cmdindex)::"&el="::(itoa earg)::"&er="::(itoa eard)::interactive_cookie::nil
     ;;
 
 fun interactive_url_reco application position cmdindex =
-    strcatlist (url_interactive application)::"&st=reco&pos="::(itoa position)::"&idx="::(itoa cmdindex)::g_cookie::nil
+    strcatlist (url_interactive application)::"&st=reco&pos="::(itoa position)::"&idx="::(itoa cmdindex)::interactive_cookie::nil
     ;;
 
 
@@ -62,8 +64,8 @@ fun _interactive_control_sound Type =
 // Play a start or stop chor
 fun _interactive_control_chor Type =
     match Type with
-    (intchorDefaultStart ->     chor_start_msg chordef_startInteractive::nil #_interactive_continue_start_cb nil )       // On joue le chor par defaut
-    | (intchorDefaultStop ->    chor_start_msg chordef_startInteractive::nil #_interactive_continue_stop_cb nil )        // On joue le chor par defaut
+    (intchorDefaultStart ->     chor_start_msg CHOR_START_INTERACTIVE::nil #_interactive_continue_start_cb nil )       // On joue le chor par defaut
+    | (intchorDefaultStop ->    chor_start_msg CHOR_START_INTERACTIVE::nil #_interactive_continue_stop_cb nil )        // On joue le chor par defaut
     | (intchorStartNone ->      _interactive_continue_start_cb nil )                                                   // On ne joue pas de chor
     | (intchorStopNone ->       _interactive_continue_stop_cb nil )                                                    // On ne joue pas de chor
     | (_ -> _interactive_debug "No Chor to Play!!"; nil );                                                             // Si on a indique un mauvais chor, on ne joue rien
@@ -106,7 +108,7 @@ fun _interactive_continue_start_cb unused=
 fun interactive_error=
     // jingle error
     _interactive_debug "interactive_error";
-    chor_start_msg chordef_interactiveerror::nil #_interactive_continue_error_cb nil;
+    chor_start_msg CHOR_INTERACTIVE_ERROR::nil #_interactive_continue_error_cb nil;
     0;;
 
 fun _interactive_continue_error_cb unused=
@@ -130,14 +132,14 @@ fun interactive_stop=
     ears_go_to_ref_pos;
 
     // clean
-    set g_cookie="";
+    set interactive_cookie="";
     0;;
 
 fun _interactive_continue_stop_cb unused=
     // finalise stopping itMode
     set interactive_app = nil;
     set interactive_status = 0;
-    set gProcessingState = 0; // skips all remaining commands anyway, so : not processing
+    set chor_processing_status = 0; // skips all remaining commands anyway, so : not processing
     // DEBUG
 #ifdef XMPP
     XmppSessionRequestResource "idle"; // Obligation de revenir en IDLE
@@ -298,11 +300,11 @@ fun runInteractiveReqWait http=
     Called when entering interactive state (command "IC" in a program)
 */
 fun interactive_state_enter=
-    set g_streaming_chor_enabled=1;
+    set streaming_chor_enabled=1;
     set interactive_int_mask=0;
     set _interactive_btn_1_snd = "clonk";
     set _interactive_btn_2_snd = "chord";
-    set g_record_enabled = 1;
+    set record_enabled = 1;
     0;;
 
 fun interactive_eval_IC_msg val=
@@ -333,13 +335,13 @@ fun interactive_eval_IC_msg val=
                 0
             ) else if !strcmp ickey "record.enabled" then (
                 // record.enabled   -> activation de l'enregistrement
-                if (!strcmp icval "true") then set g_record_enabled = 1
-                else set g_record_enabled = 0;
+                if (!strcmp icval "true") then set record_enabled = 1
+                else set record_enabled = 0;
                 0
             ) else if !strcmp ickey "streaming.chor.enabled" then (
                 // streaming.chor.enabled   -> chorégraphie de streaming (oreilles)
-                if (!strcmp icval "true") then set g_streaming_chor_enabled = 1
-                else set g_streaming_chor_enabled = 0;
+                if (!strcmp icval "true") then set streaming_chor_enabled = 1
+                else set streaming_chor_enabled = 0;
                 0
 
             ) else if !strcmp ickey "int.mask" then (
@@ -349,7 +351,7 @@ fun interactive_eval_IC_msg val=
 
             ) else if !strcmp ickey "cookie" then (
                 // cookie -> cookie envoyé au serveur
-                set g_cookie = strcatlist "&c="::icval::nil;
+                set interactive_cookie = strcatlist "&c="::icval::nil;
                 0
             ) else (
                 0

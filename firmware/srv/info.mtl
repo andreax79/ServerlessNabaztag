@@ -1,3 +1,6 @@
+#include protos/json_protos.mtl
+#include protos/info_protos.mtl
+
 // gestion des services
 
 // _info_data : les definitions des animations visuelles des services (meteo, traffic, etc..)
@@ -12,12 +15,6 @@ var _info_data;;
 // Un tableau de 16 valeurs, pour les services courants. 2 valeurs par service donc 8 services max.
 // 2 valeurs par service : la première valeur vaut 1+infoType (ex : 1 pour meteo), la deuxième vaut infoVal, la valeur du service (ex : 0 pour soleil)
 var info_src;;
-
-// nombre de messages utilisateur en attente (0, 1, 2 et +)
-var info_messages=0;;
-
-// valeur de frequence du taichi (40: peu fréquent, 80: normal, 255: très fréquent)
-var info_taichi=0;;
 
 fun info_init=
     set info_src=tabnew 0 16;

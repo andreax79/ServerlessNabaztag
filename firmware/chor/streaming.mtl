@@ -42,19 +42,19 @@ fun _streaming_load_cb http res maxsize=
     )
     else
     (
-        let hd rsctoget ->[url _] in
+        let hd trame_remaining_resources ->[url _] in
         // remember rsc loaded
         set streaming_rsc_loaded=[url tl rev _streaming_rsc_tmp nil]::streaming_rsc_loaded;
 
         // load next rsc
-        set rsctoget=tl rsctoget;
+        set trame_remaining_resources=tl trame_remaining_resources;
         run_set_state rscLoadNextRun;
         0
     );;
 
-// Recursive : loads all needed resources of the list 'rsctoget' and then starts current program
+// Recursive : loads all needed resources of the list 'trame_remaining_resources' and then starts current program
 fun streaming_run_rsc_load_next_cmd=
-    let hd rsctoget -> [url maxsize] in
+    let hd trame_remaining_resources -> [url maxsize] in
     if url==nil then
     (
         // nothing (else) to load : start execute msgs now
@@ -65,7 +65,7 @@ fun streaming_run_rsc_load_next_cmd=
     else if nil!=listswitchstr streaming_rsc_loaded url then
     (
         // already loaded : load next
-        set rsctoget=tl rsctoget;
+        set trame_remaining_resources=tl trame_remaining_resources;
         streaming_run_rsc_load_next_cmd
     )
     else
@@ -84,7 +84,7 @@ fun streaming_run_rsc_load_wait_cmd http=
         Secholn "##timeout in streaming_run_rsc_load_wait_cmd";
         httpabort http;
         // skip, load next
-        set rsctoget=tl rsctoget;
+        set trame_remaining_resources=tl trame_remaining_resources;
         run_set_state rscLoadNextRun
     );
     0;;
@@ -95,8 +95,8 @@ fun streaming_run_rsc_load_wait_cmd http=
 */
 fun endOfProgram doNotNotify =
     Secholn "endOfProgram";
-    set gProcessingState = 0;
-    set gProcessingWaitState = 0; // just in case
+    set chor_processing_status = 0;
+    set chor_processing_wait_status = 0; // just in case
     set streaming_current_program = nil;
     if (interactive_status && !doNotNotify) then (
         // notifier fini
@@ -148,7 +148,7 @@ fun _streaming_do_chor_stream=
         // Secho "Sequence suivante ";
 
         // ears enabled ?
-        if (g_streaming_chor_enabled) then
+        if (streaming_chor_enabled) then
         (
         // movements moteur
         // toutes les _streaming_oreille_chance fois en moyenne
@@ -176,7 +176,7 @@ fun _streaming_do_chor_stream=
         );
 
         // choix d'une séquence = pas de danse (_streaming_pasdedanse), tempo et nb de boucles
-        set _streaming_pasdedanse = listnth chorstream_chorslist Iecholn rand&3;
+        set _streaming_pasdedanse = listnth CHORS_LIST rand&3;
 
         set _streaming_index=4+1; // on saute le header (4 bytes)
         set _streaming_tempo=160+random 90; // entre 16 et 25 (soit entre 160 ms et 250 ms par frame)
@@ -330,7 +330,7 @@ fun _streaming_set_wait_end_time_ms t =
 fun streaming_run_wait_cmd i0 =
     if (time_ms > _streaming_wait_end_time_ms) then
     (
-        set gProcessingWaitState = 1;
+        set chor_processing_wait_status = 1;
         run_set_state cmdEvalOne i0+1
     )
 ;;
@@ -468,7 +468,7 @@ fun streaming_run_eval_one_cmd i0=
         // need to wait for val miliseconds, staying in interactive mode. at the end, program continues.
         // if button pressed, program stops.
         // if rfid detected, send info.
-        set gProcessingWaitState = 1;
+        set chor_processing_wait_status = 1;
 
         _streaming_set_wait_end_time_ms time_ms + (atoi val);
         run_set_state waitCmdRun i0+1;

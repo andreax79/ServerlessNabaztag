@@ -4,6 +4,9 @@ proto chor_run_cmd 1;;
 proto chor_start_msg 3;;
 proto chor_taichi_start 0;;
 
+var chor_processing_status = 0;;  // processing a program
+var chor_processing_wait_status = 0;;  // executing a "wait" command in a program. when checking this var, check chor_processing_status first, as it is not always reseted to 0
+
 //const CH_NOP=0;;
 const CH_FRAME_DURATION=1;;
 //const CH_SET_COLOR=6;;

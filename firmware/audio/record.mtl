@@ -1,4 +1,5 @@
 #include protos/interactive_protos.mtl
+#include protos/streaming_protos.mtl
 #include protos/record_protos.mtl
 
 // **********************
@@ -33,7 +34,7 @@ fun record_control mode=
     motorset 0 0;
     motorset 1 0;
     audiolib_force_vol 64;
-    audiolib_wav_start_local_ex mp3_startrecord::nil 100;
+    audiolib_wav_start_local_ex MP3_START_RECORD::nil 100;
     set _record_mode=mode;
     run_set_state recordStartRun;
     0;;

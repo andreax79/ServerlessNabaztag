@@ -3,3 +3,4 @@ proto _record_interactive_send_upload 0;;
 const RECORD_MAX_RECORDING_TIME = 8000;;
 
 var record_recording = 0;;
+var record_enabled = 1;;

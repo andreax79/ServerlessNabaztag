@@ -1,6 +1,7 @@
 #include protos/interactive_protos.mtl
 #include protos/leds_protos.mtl
 #include protos/ears_protos.mtl
+#include protos/json_protos.mtl
 
 /*
  Ears management.

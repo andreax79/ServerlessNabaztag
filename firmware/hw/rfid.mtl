@@ -13,7 +13,7 @@ var _rfid_last_time = 0;; // v19
 
 fun _cbrfidhttp http res=
 	Secholn "Recv rfid:"; Secho res;
-	set gProcessingState = 0;
+	set chor_processing_status = 0;
 	let httpgetcontent res -> ping_trame in
 		trame_eval ping_trame;
 	0;;
@@ -65,7 +65,7 @@ fun rfid_control=
 			midi_play midi_RFIDok;
 
 			// lancer l'animation (v19)
-			chor_start_msg chor_RFIDok::nil #_rfid_end_chor nil;
+			chor_start_msg CHOR_RFID_OK::nil #_rfid_end_chor nil;
 
 			hook_rfid rfid
 		)

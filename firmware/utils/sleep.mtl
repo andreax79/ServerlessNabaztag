@@ -24,7 +24,7 @@ fun sleep_start =
     let sleep_status -> sleeping in (
         set _sleep_status = 1;
         set streaming_status = 0; // just to be sure
-        set gProcessingState = 0; // just to be sure
+        set chor_processing_status = 0; // just to be sure
         // server resource
         let XmppSessionRequestResource "asleep" -> result in (
             // Starts to sleep
@@ -45,7 +45,7 @@ fun sleep_end =
         // was asleep or initial booting (_sleep_status = 1 at start)
         set _sleep_status = 0;
         set streaming_status = 0; // just to be sure
-        set gProcessingState = 0; // just to be sure
+        set chor_processing_status = 0; // just to be sure
         let XmppSessionRequestResource "idle" -> result in (
             leds_set_all RGB_VIOLET; // violet
             ears_start_reset; // reset oreilles
