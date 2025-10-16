@@ -1,5 +1,6 @@
 #include protos/json_protos.mtl
 #include protos/info_protos.mtl
+#include protos/sleep_protos.mtl
 
 // gestion des services
 

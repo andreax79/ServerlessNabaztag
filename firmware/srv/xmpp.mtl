@@ -2,6 +2,7 @@
 #include protos/dns_protos.mtl
 #include protos/jobs_protos.mtl
 #include protos/streaming_protos.mtl
+#include protos/http_protos.mtl
 #include protos/xmpp_protos.mtl
 
 #ifdef XMPP_DEBUG
@@ -562,7 +563,7 @@ fun XmppBoshSend xSession xData =
         set xSession.sLastIOTime = time;                    // Mise à jour
         let xSession.sGate.pBoshV.yServerIp -> ip in    // récupère l'ip
         let xSession.sGate.pBoshV.yMsgId -> id in       // récupère l'id du message
-        let httprequest "POST" (boshurl ip) (strcatlist XmppBoshEncapsulation1::(itoa id)::XmppBoshEncapsulation2::xSession.sGate.pSId::XmppBoshEncapsulation3::xData::XmppBoshEncapsulation4::nil) fixarg3 #XmppBoshRead xSession HTTP_NORMAL -> lasthttp in
+        let http_request "POST" (boshurl ip) (strcatlist XmppBoshEncapsulation1::(itoa id)::XmppBoshEncapsulation2::xSession.sGate.pSId::XmppBoshEncapsulation3::xData::XmppBoshEncapsulation4::nil) fixarg3 #XmppBoshRead xSession HTTP_NORMAL -> lasthttp in
             set xSession.sGate.pBoshV.yHttpList = [lasthttp time xData id]::xSession.sGate.pBoshV.yHttpList; // On ajoute la requete à la liste de requete
         set xSession.sGate.pBoshV.yMsgId = xSession.sGate.pBoshV.yMsgId + 1         // On incremente l'id du message
     );
@@ -603,7 +604,7 @@ fun XmppBoshRead httpreq res xSession =
         set xSession.sLastReadTime = time;
         if Process == 1 then (  // Si on a bien reçu les données
 
-            if (strlen httpgetcontent res) <= 0 then (
+            if (strlen http_get_content res) <= 0 then (
                 // Ici on a un resultat vide... pas normal!
                 if DataSent != nil then (
                     if (!strcmp DataSent " ") then (
@@ -631,11 +632,11 @@ fun XmppBoshRead httpreq res xSession =
 
                 set xSession.sLastIOTime = time;    // Mise à jour
 
-                let strstr httpgetcontent res "</stream:stream>" 0 -> stream_end in     // Si on a une fermeture du stream
+                let strstr http_get_content res "</stream:stream>" 0 -> stream_end in     // Si on a une fermeture du stream
                     if stream_end != nil then
                         XmppGateStreamClosed xSession pBosh;
 
-                let ParseXMLPacket httpgetcontent res -> xmlStanza in // On a le paquet dans le <body
+                let ParseXMLPacket http_get_content res -> xmlStanza in // On a le paquet dans le <body
                     if (xmlStanza.inXml == nil) then (
                         nil;
                     0) else (
@@ -657,7 +658,7 @@ fun XmppBoshRead httpreq res xSession =
                                             if !strcmp tete.valueS "terminate" then
                                             (
                                                 _xmpp_debug "Stream TERMINATE! Restart! : ";
-                                                _xmpp_debug httpgetcontent res;
+                                                _xmpp_debug http_get_content res;
                                                 XmppSessionIsDisconnected xSession // la session a ete terminee, on redemarre
                                             )
                                         );
@@ -689,8 +690,8 @@ fun XmppBoshRead httpreq res xSession =
                     0)
             )
         ) else (
-            _xmpp_debug httpgetcontent res;
-            if(httpgetcontent res) == nil then (
+            _xmpp_debug http_get_content res;
+            if(http_get_content res) == nil then (
                 set xSession.sNextRestart = time + 22;
                 // TODO FIGER EN VERT
                 _xmpp_debug "Send Presence to see if we are connected... (reconnect in 22 sec)";
@@ -720,7 +721,7 @@ fun XmppBoshOpenStream xSession =
         set xSession.sLastIOTime = time;        // Mise à jour
         let xSession.sGate.pBoshV.yServerIp -> ip in
         let xSession.sGate.pBoshV.yMsgId -> id in
-        let httprequest "POST" (boshurl ip) (strcatlist XmppBoshOpenStream1::(itoa id)::XmppBoshOpenStream2::(xSession.sDomain)::XmppBoshOpenStream3::(boshurl ip)::XmppBoshOpenStream4::nil) fixarg3 #XmppBoshRead xSession HTTP_NORMAL -> lasthttp in
+        let http_request "POST" (boshurl ip) (strcatlist XmppBoshOpenStream1::(itoa id)::XmppBoshOpenStream2::(xSession.sDomain)::XmppBoshOpenStream3::(boshurl ip)::XmppBoshOpenStream4::nil) fixarg3 #XmppBoshRead xSession HTTP_NORMAL -> lasthttp in
             set xSession.sGate.pBoshV.yHttpList = [lasthttp time nil id]::xSession.sGate.pBoshV.yHttpList; // On ajoute la requete à la liste de requete
         set xSession.sGate.pBoshV.yMsgId = xSession.sGate.pBoshV.yMsgId + 1
     );
@@ -736,7 +737,7 @@ fun XmppBoshReOpenStream xSession =
         set xSession.sGate.pStatus = pOpening;
         let xSession.sGate.pBoshV.yServerIp -> ip in
         let xSession.sGate.pBoshV.yMsgId -> id in
-        let httprequest "POST" (boshurl ip) (strcatlist XmppBoshReOpenStream1::(itoa id)::XmppBoshReOpenStream2::(xSession.sGate.pSId)::XmppBoshReOpenStream3::xSession.sDomain::XmppBoshReOpenStream4::nil) fixarg3 #XmppBoshRead xSession HTTP_NORMAL -> lasthttp in
+        let http_request "POST" (boshurl ip) (strcatlist XmppBoshReOpenStream1::(itoa id)::XmppBoshReOpenStream2::(xSession.sGate.pSId)::XmppBoshReOpenStream3::xSession.sDomain::XmppBoshReOpenStream4::nil) fixarg3 #XmppBoshRead xSession HTTP_NORMAL -> lasthttp in
             set xSession.sGate.pBoshV.yHttpList = [lasthttp time nil id]::xSession.sGate.pBoshV.yHttpList; // On ajoute la requete à la liste de requete
         set xSession.sGate.pBoshV.yMsgId = xSession.sGate.pBoshV.yMsgId + 1
     );
@@ -763,7 +764,7 @@ fun XmppBoshIdle xSession =
             let hdhttp -> [Req Time xData Id] in
             (
                 if time - Time > XmppBoshHttpTimeOut then // Requete trop longue, on a supprime
-                    (httpabort Req; 0)
+                    (http_abort Req; 0)
                 else
                     (set UpdatedList = hdhttp::UpdatedList; 0)
             );
@@ -1143,7 +1144,7 @@ fun XmppGateClear xSession =
             while hdhttp != nil do (
                 let hdhttp -> [Req Time xData Id] in
                 (
-                    httpabort Req
+                    http_abort Req
                 );
                 set hdhttp = hd tlhttp;
                 set tlhttp = tl tlhttp
@@ -2077,7 +2078,7 @@ fun XmppSessionProcess xSession PaquetXml =
                         )else if (!strcmp type "error") then (
 
                             _xmpp_debug "Error registering phase1";
-                            httprequest "GET" (sendmailxmppurl xSession.sDomain "FailureRegister1") nil nil HTTP_NORMAL;
+                            http_request "GET" (sendmailxmppurl xSession.sDomain "FailureRegister1") nil nil HTTP_NORMAL;
 
                             // TODO : Gestion de l'erreur
                             XmppSessionSetStatus xSession sRegistrationError;
@@ -2125,7 +2126,7 @@ fun XmppSessionProcess xSession PaquetXml =
                             _xmpp_debug "XML in=["; XMLPrintContent PaquetXml 0; _xmpp_debug "]";
                             _xmpp_debug "error registering phase2";
 
-                            httprequest "GET" (sendmailxmppurl xSession.sDomain "FailureRegister2") nil nil HTTP_NORMAL;
+                            http_request "GET" (sendmailxmppurl xSession.sDomain "FailureRegister2") nil nil HTTP_NORMAL;
 
                             XmppSessionSetStatus xSession sRegistrationError;
                             /* ERREUR, ON LIBERE */
@@ -2456,7 +2457,7 @@ fun XmppSessionProcess xSession PaquetXml =
                     if (!strcmp xmlns "urn:ietf:params:xml:ns:xmpp-sasl") then (
 
                         _xmpp_debug "Failure to login. Warn server and re-register";
-                        httprequest "GET" (sendmailxmppurl xSession.sDomain "FailureLogin") nil nil HTTP_NORMAL;
+                        http_request "GET" (sendmailxmppurl xSession.sDomain "FailureLogin") nil nil HTTP_NORMAL;
                         // first reset all values set by login
                         set xSession.sNonce = nil;
                         set xSession.sCnonce = nil;

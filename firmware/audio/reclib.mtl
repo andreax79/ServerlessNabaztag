@@ -1,3 +1,5 @@
+#include protos/record_protos.mtl
+
 var _reclib_lrec;;
 
 fun _reclib_rec_cb s=

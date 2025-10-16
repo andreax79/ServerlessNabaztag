@@ -142,10 +142,34 @@ fun forth_clear_info f=
     nil;;
 
 /**
+ * TAICHI ( script -- ) Start a TaiChi choreography
+ */
+fun forth_taichi f=
+    chor_taichi_start (fixarg1 #forth_interpreter_resume f);
+    nil;;
+
+/**
  * PLAY-URL ( url -- ) Play a WAV file from an HTTP URL
  * HTTPS is not supported
  */
 fun forth_play_url f=
     let forth_pop f -> url in
     audiolib_start_http url.str #streaming_wav_error;
+    nil;;
+
+fun _forth_http_get_cb http res f=
+	Secholn ">>> _forth_http_get_cb";
+    forth_push f [str:res];
+    forth_interpreter_resume f;  // resume the interpreter
+    0;;
+
+/**
+ * HTTP-GET ( url -- content ) Perform an HTTP GET request and return the content as a string
+ * HTTPS is not supported
+ */
+fun forth_http_get f=
+    let forth_pop f -> url in (
+        Secho ">>> forth_http_get "; Secholn url.str;
+	    http_request "GET" url.str nil (fixarg3 #_forth_http_get_cb f) HTTP_NORMAL
+    );
     nil;;

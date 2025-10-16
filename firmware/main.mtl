@@ -29,11 +29,11 @@ proto main 0;;
 
 #ifdef SIMU
 const PORT_DAYTIME = 8013;;
-const PORT_TELNET = 8021;;
+const PORT_TELNET = 8023;;
 const PORT_HTTP = 8080;;
 #else
 const PORT_DAYTIME = 13;;
-const PORT_TELNET = 21;;
+const PORT_TELNET = 23;;
 const PORT_HTTP = 80;;
 #endif
 
@@ -42,20 +42,7 @@ const BYTECODE_REVISION_STR = "$Rev: __DATE__ $";;
 const STD_NET_TIMEOUT = 10000;;
 const LED_TIMEOUT = 600;; // 10 minutes
 
-#include protos/net_protos.mtl
-#include protos/run_protos.mtl
-#include protos/dns_protos.mtl
-#include protos/sock_protos.mtl
-#include protos/ears_protos.mtl
-#include protos/midi_protos.mtl
-#include protos/interactive_protos.mtl
-#include protos/trame_protos.mtl
-#include protos/url_protos.mtl
-#include protos/sleep_protos.mtl
-#include protos/info_protos.mtl
-#include protos/audiolib_protos.mtl
-#include protos/record_protos.mtl
-#include protos/forth_protos.mtl
+proto XmppSessionRequestResource 1;;
 
 #include hw/leds.mtl
 #include hw/ears.mtl
@@ -67,8 +54,12 @@ const LED_TIMEOUT = 600;; // 10 minutes
 #include utils/md5.mtl
 #include utils/config.mtl
 #include utils/url.mtl
+#include utils/hooks.mtl
+#include utils/sleep.mtl
+#ifdef XMPP
 #include utils/b64.mtl
 #include utils/xmlparser.mtl
+#endif
 
 #include net/net.mtl
 #include net/dhcp.mtl
@@ -83,8 +74,6 @@ const LED_TIMEOUT = 600;; // 10 minutes
 #include audio/midi.mtl
 #include audio/record.mtl
 
-proto XmppSessionRequestResource 1;;
-
 #include chor/choreographic.mtl
 #include chor/interactive.mtl
 #include chor/palette.mtl
@@ -95,8 +84,8 @@ proto XmppSessionRequestResource 1;;
 #include srv/time.mtl
 #include srv/info.mtl
 #include srv/crontab.mtl
-#include utils/hooks.mtl
 #include srv/meteo.mtl
+#include hw/rfid.mtl
 
 #ifdef XMPP
 #include srv/xmpp.mtl
@@ -118,9 +107,6 @@ fun XmppSessionSendButtonMsg btn withEvent eventValue = 0 ;;
 #ifdef DAYTIMESERVER
 #include srv/daytime_server.mtl
 #endif
-
-#include utils/sleep.mtl
-#include hw/rfid.mtl
 
 #include srv/run.mtl
 
@@ -155,7 +141,6 @@ fun jobs_init=
 
 fun main=
     // forth_test;
-
     interactive_init;
     leds_set_state LEDS_STATE_START;
     config_init;
@@ -180,4 +165,15 @@ fun main=
 #endif
     run_init;
     jobs_init;
+
+#ifdef XXX
+    // forth_interpreter "nil server-url :: \"/init.forth\" :: str-join http-get . 10 10 + ." nil (fixarg2 #_forth_test_cb [nil nil]);
+    forth_interpreter "
+: download nil server-url :: \"/init.forth\" :: str-join http-get . ;
+: t1 1 . download 1 . cr ;
+: t2 2 . download 2 . cr ;
+t1 t2 cr
+" nil (fixarg2 #_forth_test_cb [nil nil]);
+#endif
+
     0;;

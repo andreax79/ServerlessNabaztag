@@ -28,8 +28,35 @@ var _run_net_activity = 0;;
 fun run_get_state =
     run;;
 
+fun _run_to_str run=
+    match run with
+    ( configstartRun -> "configstartRun" )|
+    ( configwaitRun _ -> "configwaitRun" )|
+#ifdef PING
+    ( pingstartRun -> "pingstartRun" )|
+    ( pingwaitRun _ -> "pingwaitRun" )|
+    ( pingRequestWaitRun _ -> "pingRequestWaitRun" )|
+    ( stdWaitRun _ -> "stdWaitRun" )|
+#endif
+#ifdef XMPP
+    ( xmppLoginRun -> "xmppLoginRun" )|
+    ( xmppReconnectRun _ -> "xmppReconnectRun" )|
+#endif
+    ( idleRun -> "idleRun" )|
+    ( sleepRun -> "sleepRun" )|
+    ( rscLoadNextRun -> "rscLoadNextRun" )|
+    ( rscLoadWaitRun http-> "rscLoadWaitRun" )|
+    ( cmdEvalOne _-> "cmdEvalOne" )|
+    ( chorCmdRun _-> "chorCmdRun" )|
+    ( streamCmdRun _-> "streamCmdRun" )|
+    ( waitCmdRun _ -> "waitCmdRun" )|
+    ( recordRun -> "recordRun" )|
+    ( recordStartRun -> "recordStartRun" )|
+    ( interactiveReqWaitRun _ -> "interactiveReqWaitRun" );;
+
 // Set main loop state
 fun run_set_state r =
+    // Secho "run_set_state "; Secholn _run_to_str r;
     let run -> old_run in (
         set run = r;
         old_run
@@ -203,7 +230,7 @@ fun _run_idle =
         else
 #endif
         if chor_do_taichi_now then (
-            chor_taichi_start
+            chor_taichi_start nil
         ) else (
 #ifdef PING
             ping_run_start
@@ -219,7 +246,7 @@ fun _run_get_config_cb http res=
     if (nil != res) then
     (
         Secholn "config=";
-        let trame_filter_config Secholn httpgetcontent res 0-> conf in
+        let trame_filter_config Secholn http_get_content res 0-> conf in
         (
             // http urls
             set url_ping_server=listswitchstr conf "ping";
@@ -257,17 +284,17 @@ fun _run_config_start =
 #else
         Secho "config_get_server_url: "; Secholn config_get_server_url;
         Secho "url_config: "; Secholn url_config;
-        run_set_state configwaitRun httprequest "GET" url_config nil #_run_get_config_cb HTTP_NORMAL
+        run_set_state configwaitRun http_request "GET" url_config nil #_run_get_config_cb HTTP_NORMAL
 #endif
     );
     0;;
 
 fun _run_config_wait http=
     // check timeout and retry : cligne + ou - la led middle body toutes les secondes en bleu
-    if ((httpinactive http) > STD_NET_TIMEOUT) then
+    if ((http_inactive http) > STD_NET_TIMEOUT) then
     (
         Secholn "##timeout on configwait";
-        httpabort http;
+        http_abort http;
         run_init
     );
     0;;

@@ -2,6 +2,7 @@
 #include protos/trame_protos.mtl
 #include protos/interactive_protos.mtl
 #include protos/json_protos.mtl
+#include protos/http_protos.mtl
 #ifdef XMPP
 #include protos/xmpp_protos.mtl
 #endif
@@ -102,7 +103,7 @@ fun interactive_start application=
 
 fun _interactive_continue_start_cb unused=
     // ask for instructions
-    run_set_state interactiveReqWaitRun (httprequest "GET" (interactive_url_start interactive_app) nil #interactive_req_cb_http HTTP_NORMAL);
+    run_set_state interactiveReqWaitRun (http_request "GET" (interactive_url_start interactive_app) nil #interactive_req_cb_http HTTP_NORMAL);
     0;;
 
 fun interactive_error=
@@ -165,12 +166,12 @@ fun interactive_send_btn btn=
             0
         );
         // request instructions
-        run_set_state interactiveReqWaitRun (httprequest "GET" (interactive_url_btn interactive_app readBytes streaming_audio_cmd_index btn) nil #interactive_req_cb_http HTTP_NORMAL)
+        run_set_state interactiveReqWaitRun (http_request "GET" (interactive_url_btn interactive_app readBytes streaming_audio_cmd_index btn) nil #interactive_req_cb_http HTTP_NORMAL)
     );
     0;;
 
 fun interactive_program_done=
-    run_set_state interactiveReqWaitRun (httprequest "GET" (interactive_url_done interactive_app) nil #interactive_req_cb_http HTTP_NORMAL);
+    run_set_state interactiveReqWaitRun (http_request "GET" (interactive_url_done interactive_app) nil #interactive_req_cb_http HTTP_NORMAL);
     0;;
 
 
@@ -244,7 +245,7 @@ fun interactive_send_ear_touched lefttouch righttouch=
     (
         if (lefttouch) then midi_play midi_precedent;
         if (righttouch) then midi_play midi_suivant;
-        run_set_state interactiveReqWaitRun (httprequest "GET" (interactive_url_ear interactive_app readBytes streaming_audio_cmd_index righttouch lefttouch) nil #interactive_req_cb_http HTTP_NORMAL)
+        run_set_state interactiveReqWaitRun (http_request "GET" (interactive_url_ear interactive_app readBytes streaming_audio_cmd_index righttouch lefttouch) nil #interactive_req_cb_http HTTP_NORMAL)
     );
     0;;
 
@@ -271,7 +272,7 @@ fun interactive_req_cb_http http res=
     );
 
     if !record_recording then
-    let httpgetcontent res -> ping_trame in
+    let http_get_content res -> ping_trame in
         trame_eval ping_trame;
 
     0;;
@@ -281,10 +282,10 @@ fun runInteractiveReqWait http=
     // Waiting for interactive request
     // check timeout
     if (!record_uploading) then // upload record mode : timeout managed by record_upload_timeout_job
-        if (httpinactive http)>STD_NET_TIMEOUT then
+        if (http_inactive http)>STD_NET_TIMEOUT then
         (
             _interactive_debug "##timeout on runInteractiveReqWait";
-            httpabort http;
+            http_abort http;
 
             // error
             interactive_error

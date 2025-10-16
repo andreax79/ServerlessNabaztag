@@ -65,7 +65,7 @@ fun _weather_code_to_info_code weather_code =
  * Get weather callback - parse the JSON, the the weather code and set the led status
  */
 fun _meteo_get_cb httpreq res=
-    let httpgetcontent res -> content in
+    let http_get_content res -> content in
     let _meteo_get_weathercode content -> weather_code in
     let _weather_code_to_info_code weather_code -> info_code in (
         set _meteo_weather_code = weather_code;
@@ -79,5 +79,5 @@ fun _meteo_get_cb httpreq res=
 fun meteo_get =
     // Iecholn _meteo_get_weathercode METEO_TEST;
     let _meteo_prepare_url config_get_latitude config_get_longitude -> url in
-    httprequest "GET" url nil #_meteo_get_cb HTTP_NORMAL;
+    http_request "GET" url nil #_meteo_get_cb HTTP_NORMAL;
     0;;

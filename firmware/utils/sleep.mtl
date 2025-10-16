@@ -1,4 +1,7 @@
 #include protos/streaming_protos.mtl
+#include protos/run_protos.mtl
+#include protos/chor_protos.mtl
+#include protos/sleep_protos.mtl
 
 var _sleep_status = 1;;       // sleeping
 

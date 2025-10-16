@@ -1,6 +1,10 @@
 #include protos/trame_protos.mtl
 #include protos/hooks_protos.mtl
+#include protos/http_protos.mtl
 #include protos/chor_protos.mtl
+#include protos/run_protos.mtl
+#include protos/midi_protos.mtl
+#include protos/midi_protos.mtl
 
 // ********** RFID **********************
 // v19 Amélioration de la lecteure RFID
@@ -11,16 +15,11 @@ var _rfid_char = 2;; // v19
 var _rid_int = 6;;  // v19
 var _rfid_last_time = 0;; // v19
 
-fun _cbrfidhttp http res=
-	Secholn "Recv rfid:"; Secho res;
+fun _rfid_http_cb http res=
 	set chor_processing_status = 0;
-	let httpgetcontent res -> ping_trame in
+	let http_get_content res -> ping_trame in
 		trame_eval ping_trame;
 	0;;
-
-fun _rfid_dump l0=
-	for l=l0;l!=nil;tl l do let hd l->x in Secholn webmac x;
-	l0;;
 
 fun _rfid_parse_char id index= // v19
 	set _rfid_char = strget id index;
@@ -34,8 +33,7 @@ fun _rfid_parse id = // v19
 fun _rfid_end_chor unused=
 	// continue idle
 	run_set_state idleRun;
-	0
-	;;
+	0;;
 
 /**
  * Controls if a stamp is shown to the rabbit.
@@ -47,8 +45,7 @@ fun _rfid_check_presence=
 	if (strcmp rfid _rfid_last) && (time_ms - _rfid_last_time > 750) then
 		rfid
 	else
-		nil
-;;
+		nil;;
 
 fun rfid_control=
 	if ((time_ms - _rfid_last_time) > 1000) then
@@ -67,7 +64,7 @@ fun rfid_control=
 			// lancer l'animation (v19)
 			chor_start_msg CHOR_RFID_OK::nil #_rfid_end_chor nil;
 
-			hook_rfid rfid
+			hook_rfid rfid #_rfid_http_cb
 		)
 	);
 	0;;

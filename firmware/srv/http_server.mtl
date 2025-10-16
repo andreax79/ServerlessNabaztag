@@ -320,7 +320,7 @@ fun http_get_say cnx sock args=
 fun http_get_taichi cnx sock args=
     let _http_arg_int args 'v' -> v in
         if v == 1000 && !sleep_status then
-            chor_taichi_start
+            chor_taichi_start nil
         else
             set info_taichi = v;
     http_send_header_and_close HTTP_204 nil cnx sock;;

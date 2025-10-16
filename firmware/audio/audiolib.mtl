@@ -1,3 +1,6 @@
+#include protos/audiolib_protos.mtl
+#include protos/http_protos.mtl
+
 // wav playback
 
 const WAV_IDLE=0;;
@@ -71,7 +74,7 @@ fun audiolib_wav_stop =
     if _audiolib_wav_state!=WAV_IDLE then
     (
         playStop;
-        if _audiolib_wav_http!=nil then httpabort _audiolib_wav_http;
+        if _audiolib_wav_http!=nil then http_abort _audiolib_wav_http;
         set _audiolib_wav_http=nil;
         set audiolib_wav_buffering = 0;
         set _audiolib_wav_state=WAV_IDLE
@@ -132,10 +135,10 @@ fun _audiolib_wav_play_cb i =
                 set _audiolib_wav_index=0;
                 set _audiolib_wav_fifo=tl _audiolib_wav_fifo;
                 // Secho "[b-:" ; Iecho (slistlen _audiolib_wav_fifo); Secho "]";
-                if _audiolib_wav_http!=nil then if (slistlen _audiolib_wav_fifo)<WAV_BUFFER_MAXSIZE then if !(httpenabledP _audiolib_wav_http) then
+                if _audiolib_wav_http!=nil then if (slistlen _audiolib_wav_fifo)<WAV_BUFFER_MAXSIZE then if !(http_enabledP _audiolib_wav_http) then
                 (
-                    Audiowln "##httpenable 1##";
-                    httpenable _audiolib_wav_http 1
+                    Audiowln "##http_enable 1##";
+                    http_enable _audiolib_wav_http 1
                 )
             )
         )
@@ -193,8 +196,8 @@ fun _wavcbhttp httpreq req=
             set _audiolib_wav_fifo=tl _audiolib_wav_fifo;
             _audiolib_wav_start_now
         ) else if n>WAV_BUFFER_MAXSIZE then (
-            Audiowln "##httpenable 0##";
-            httpenable httpreq 0
+            Audiowln "##http_enable 0##";
+            http_enable httpreq 0
         );
         nil
         )
@@ -213,7 +216,7 @@ fun audiolib_start_http url cb=
     set _audiolib_wav_buffering_since = time_ms;
     set _audiolib_wav_lasttime=nil;
     set _audiolib_wav_lastnet=time_ms;
-    set _audiolib_wav_http=httprequest "GET" url nil #_wavcbhttp HTTP_STREAM;;
+    set _audiolib_wav_http=http_request "GET" url nil #_wavcbhttp HTTP_STREAM;;
 
 fun audiolib_wav_time_job=
     // Check timeout against _audiolib_wav_buffering_since

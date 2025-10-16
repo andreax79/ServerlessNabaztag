@@ -23,7 +23,7 @@ fun _streaming_prepare_url url=
 fun _streaming_load_cb http res maxsize=
     if record_recording then
     (
-        httpabort http;
+        http_abort http;
         nil
     )
     else if res!=nil then
@@ -35,7 +35,7 @@ fun _streaming_load_cb http res maxsize=
         if maxsize!=nil && (slistlen _streaming_rsc_tmp)>maxsize then
         (
             // too big ? (?)
-            httpabort http;
+            http_abort http;
             _streaming_load_cb http nil nil
         );
         0
@@ -73,16 +73,16 @@ fun streaming_run_rsc_load_next_cmd=
         // load resource
         set _streaming_rsc_tmp=nil;
         Secho "loading ";
-        run_set_state rscLoadWaitRun httprequest "GET" Secholn (_streaming_prepare_url url) nil (fixarg3 #_streaming_load_cb maxsize) HTTP_STREAM;
+        run_set_state rscLoadWaitRun http_request "GET" Secholn (_streaming_prepare_url url) nil (fixarg3 #_streaming_load_cb maxsize) HTTP_STREAM;
         0
     );;
 
 fun streaming_run_rsc_load_wait_cmd http=
     // wait for loading resource
-    if (httpinactive http)>STD_NET_TIMEOUT then
+    if (http_inactive http)>STD_NET_TIMEOUT then
     (
         Secholn "##timeout in streaming_run_rsc_load_wait_cmd";
-        httpabort http;
+        http_abort http;
         // skip, load next
         set trame_remaining_resources=tl trame_remaining_resources;
         run_set_state rscLoadNextRun

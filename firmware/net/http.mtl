@@ -1,12 +1,4 @@
-const HTTP_NORMAL=0;;
-const HTTP_STREAM=1;;
-const HTTP_DIRECT=2;;
-
-const HTTP_SOLVE=0;;
-const HTTP_REACH=1;;
-const HTTP_CONNECTED=2;;
-
-var lasthttpevent;;
+#include protos/http_protos.mtl
 
 // debug
 #ifdef HTTP_DEBUG
@@ -19,12 +11,9 @@ fun _http_debug str= nil;;
 //  - sonH : requête fille s'il y a (cas des 302 où on a fait une redirection via une nouvelle requête)
 type Httpreq=[cnxH inputH outputH indexH cbH typeH stateH aliveH sonH redirLevelH];;
 
-proto httprequest 5;;
-proto httpabort 1;;
-
 //## retourne le code réponse HTTP d'une réponse
 //  - s est une chaine, le début de la réponse http
-fun httpgetcode s =
+fun _http_get_code s =
 	// le code est sur la première ligne, de type "HTTP/1.? XXX etc..." où XXX est le code
 	let strstr s " " 0 -> i in
 		let strstr s " " i -> j in
@@ -32,11 +21,11 @@ fun httpgetcode s =
 
 
 //## gère le cas où on a reçu une 302 ("moved temporarly") en réponse
-//  - cnx la socket de connection de httptcpread
+//  - cnx la socket de connection de _http_tcp_read
 //  - httpreq la request qui nous dit qu'il faut forwarder
 // On cherche la nouvelle Location, et on crée un fils à la requête courante.
-fun httphandletmpredirect cnx httpreq =
-	httpabort httpreq;
+fun _http_handle_tmp_redirect cnx httpreq =
+	http_abort httpreq;
 	_http_debug "HTTP - redirection temporaire";
 	if (httpreq.redirLevelH > 2) then // on arrive à la 3eme redirection, c'est trop
 		( _http_debug "HTTP - trop de niveaux de redirection : stop"; call httpreq.cbH [httpreq nil] ; nil )
@@ -58,7 +47,7 @@ fun httphandletmpredirect cnx httpreq =
 					// ici on a l'url vers laquelle on veut rediriger dans newurl.
 					(
 						_http_debug "HTTP - Following redirection. new url [" ; _http_debug newurl; _http_debug "]";
-						let httprequest "GET" newurl nil httpreq.cbH httpreq.typeH -> newReq in
+						let http_request "GET" newurl nil httpreq.cbH httpreq.typeH -> newReq in
 						(
 							set newReq.redirLevelH = httpreq.redirLevelH + 1;
 							set httpreq.sonH = newReq;
@@ -72,18 +61,18 @@ nil;;
 
 
 // callback de lecture sur la socket d'une requête
-fun httptcpread cnx input httpreq=
+fun _http_tcp_read cnx input httpreq=
 	if input==nil ||0==strlen input then	// erreur ou fin
 	(	closetcp cnx;	// on ferme la socket
 		if httpreq.typeH==HTTP_NORMAL then
 		(
 			let rev httpreq.inputH nil -> l in
 			let strcatlist l -> s in
-			let httpgetcode s -> code in
+			let _http_get_code s -> code in
 				if code == 200 then
 					call httpreq.cbH [httpreq strcatlist rev httpreq.inputH nil]	// on retourne ce qui a été reçu
 				else if code == 302 then
-					httphandletmpredirect nil httpreq
+					_http_handle_tmp_redirect nil httpreq
 				else // 404 ? autre ?
 					call httpreq.cbH [httpreq nil]
 		)
@@ -93,7 +82,6 @@ fun httptcpread cnx input httpreq=
 	else
 	(
 //		dump input;
-		set lasthttpevent=time;
 		set httpreq.aliveH=time_ms;
 		if httpreq.typeH==HTTP_NORMAL then
 			set httpreq.inputH=input::httpreq.inputH	// on bufferise ce qui a été reçu
@@ -110,7 +98,7 @@ fun httptcpread cnx input httpreq=
 				set httpreq.inputH=s::nil
 			else
 			(
-				let httpgetcode s -> code in
+				let _http_get_code s -> code in
 				if code == 200 then
 				(
 					set httpreq.inputH=nil;
@@ -122,7 +110,7 @@ fun httptcpread cnx input httpreq=
 				else if code == 302 then
 				(
 					set httpreq.inputH = s::nil;
-					httphandletmpredirect cnx httpreq;
+					_http_handle_tmp_redirect cnx httpreq;
 					nil
 				)
 				else // 404 ? autre ?
@@ -133,13 +121,14 @@ fun httptcpread cnx input httpreq=
 		nil
 	);;
 
+
 // callback d'écriture sur la socket d'une requête
-fun httptcpwrite cnx httpreq=
-	set httpreq.stateH=HTTP_CONNECTED;
+fun _http_tcp_write cnx httpreq=
+	set httpreq.stateH=HTTP_STATE_CONNECTED;
 	set httpreq.aliveH=time_ms;
 	if httpreq.outputH!=nil then	// s'il y a des choses à envoyer (notamment la première fois)
 	(
-		_http_debug "httptcpwrite";
+		_http_debug "_http_tcp_write";
 		set httpreq.indexH=writetcp cnx httpreq.outputH httpreq.indexH;	// envoyer ce qui peut l'être
 		if httpreq.indexH==nil then	// si erreur lors de l'envoi
 		(	closetcp cnx;	// on ferme la socket
@@ -151,14 +140,13 @@ fun httptcpwrite cnx httpreq=
 		)
 	);;
 
-const http_prefurl="http://";;	// en-tête normal (mais ici facultatif) d'une requête http
-
 
 // découper une url en [host port path].
 // host est de la forme ip:port
 // path ne commence pas par /
-fun cuturl url =
-	if !strcmp (strsub url 0 strlen http_prefurl) http_prefurl then cuturl strsub url strlen http_prefurl strlen url
+fun _http_split_url url =
+	if !strcmp (strsub url 0 strlen HTTP_DEF_PROTO) HTTP_DEF_PROTO then
+        _http_split_url strsub url strlen HTTP_DEF_PROTO strlen url
 	else let strstr url "/" 0 -> i in
 		let if i==nil then url else strsub url 0 i -> addr in
 		let strstr addr ":" 0 -> j in
@@ -167,31 +155,37 @@ fun cuturl url =
 		let if i==nil then "/" else strsub url i strlen url -> path in
 		[host port path];;
 
-fun _httptcpevent t val msg sock=
-	if val==TCPWRITE then httptcpwrite t sock
-	else if val==TCPCLOSE then httptcpread t nil sock
-	else httptcpread t msg sock;
+
+fun _http_tcp_event t val msg sock=
+	if val==TCPWRITE then _http_tcp_write t sock
+	else if val==TCPCLOSE then _http_tcp_read t nil sock
+	else _http_tcp_read t msg sock;
 	0;;
 
 
-fun httpsendreq ip x=
+fun _http_send_req ip x=
 	_http_debug strcatlist "found ip=" :: ip :: nil;
 	let x->[port httpreq] in
 	if ip==nil then (call httpreq.cbH [httpreq nil]; nil)
 	else
 	(
-		set httpreq.cnxH=opentcp netip nil useparamip ip port fixarg4 #_httptcpevent httpreq;
-		set httpreq.stateH=HTTP_REACH;
+		set httpreq.cnxH=opentcp netip nil useparamip ip port fixarg4 #_http_tcp_event httpreq;
+		set httpreq.stateH=HTTP_STATE_REACH;
 		nil
 	);
 	0;;
 
-
-//##> création d'une requête http
-// paramètres : verb=verbe de la requête url=url de la requête postdata=données supplémentaires (nil si aucune) cb=callback de retour
-fun httprequest verb url postdata cb type=
+/**
+ * Create and send an HTTP request
+ * verb: the HTTP verb to use (GET, POST, HEAD, etc.)
+ * url: the URL to request (only http:// is supported)
+ * postdata: additional data to send (nil if none)
+ * cb: callback function to call when the request is done
+ * type: type of request (HTTP_NORMAL, HTTP_STREAM, HTTP_DIRECT)
+ */
+fun http_request verb url postdata cb type=
 	_http_debug strcatlist "HTTPREQUEST url=" :: url :: nil;
-	let cuturl url ->[host port path] in	// décodage de l'url de la requête
+	let _http_split_url url ->[host port path] in	// décodage de l'url de la requête
 	let if config_get_proxy then strcatlist "http://"::host::":"::(itoa port)::path::nil else path -> path in //Icy-MetaData:1\13\n
 	let strcatlist verb::" "::path::" HTTP/1.0\13\nUser-Agent: Mozilla/5.0\13\nAccept: */*\13\nHost: "::host::"\13\n"::
 			if postdata==nil then "\13\n"::nil
@@ -199,12 +193,12 @@ fun httprequest verb url postdata cb type=
 		-> request in	// création de la chaîne requête
 	let if config_get_proxy then webip config_get_proxy_ip else host -> host in
 	let if config_get_proxy then config_get_proxy_port else port -> port in
-	let [outputH:request indexH:0 cbH:cb typeH:type stateH:HTTP_SOLVE aliveH:time_ms sonH:nil redirLevelH:0] -> httpreq in	// création de la structure requête
+	let [outputH:request indexH:0 cbH:cb typeH:type stateH:HTTP_STATE_SOLVE aliveH:time_ms sonH:nil redirLevelH:0] -> httpreq in	// création de la structure requête
 	(
-		if isip host 0 then httpsendreq host [port httpreq]
+		if isip host 0 then _http_send_req host [port httpreq]
 		else
 		(
-			dnsreq host fixarg2 #httpsendreq [port httpreq];
+			dnsreq host fixarg2 #_http_send_req [port httpreq];
 			nil
 		);
 		httpreq	// on retourne la structure requête pour pouvoir éventuellement l'interrompre en cours de route
@@ -212,33 +206,37 @@ fun httprequest verb url postdata cb type=
 
 //##> interruption d'une requête en cours
 // on interromp la requête et son fils (si elle en a un)
-fun httpabort httpreq=
-	if (nil != httpreq.sonH) then httpabort httpreq.sonH;
+fun http_abort httpreq=
+	if (nil != httpreq.sonH) then http_abort httpreq.sonH;
 	closetcp httpreq.cnxH;;	// on ferme la socket de la requête
 
-fun httpenable httpreq v=
+fun http_enable httpreq v=
 	enabletcp httpreq.cnxH v;;
-fun httpenabledP httpreq=
+
+fun http_enabledP httpreq=
 	enabledtcpP httpreq.cnxH;;
 
-fun httpstate httpreq = httpreq.stateH;;
+fun http_state httpreq=
+    httpreq.stateH;;
 
-fun httpinactive httpreq = time_ms-httpreq.aliveH;;
+fun http_inactive httpreq=
+    time_ms-httpreq.aliveH;;
 
-
-const http_sep="\13\n\13\n";;	// séparateur entre l'en-tête et le corps de la réponse à une requête
-
-
-
-//##> retourne le header d'une réponse à une requête
-fun httpgetheader res =
-	let strstr res http_sep 0 -> i in
+/**
+ * Return the header of a HTTP response
+ * res: the full HTTP response
+ */
+fun http_get_header res=
+	let strstr res HTTP_SEP 0 -> i in
 	if i==nil then res
-	else strsub res 0 i+strlen http_sep;;
+	else strsub res 0 i+strlen HTTP_SEP;;
 
-//##> retourne le contenu d'une réponse à une requête (sans header)
-fun httpgetcontent res =
-	let strstr res http_sep 0 -> i in
+/**
+ * Return the content of a HTTP response (after the header)
+ * res: the full HTTP response
+ */
+fun http_get_content res=
+	let strstr res HTTP_SEP 0 -> i in
 	if i==nil then nil
-	else strsub res i+strlen http_sep strlen res;;
+	else strsub res i+strlen HTTP_SEP strlen res;;
 

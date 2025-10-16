@@ -55,10 +55,12 @@ fun calculate_local_time=
 
 // Update the time, day, local time and exec the crontab functions
 fun time_update_job=
-    let time -> now in
+    let time_ms -> now_ms in
+    let now_ms / 1000 -> now in
     if now != _last_update_time_internal_time then
         let (_last_read_time + (now - _last_read_internal_time)) % 86400 -> new_time_of_the_day in
         (
+            // Iecho now_ms; Secho " ";
             // Secho "update_time_internal now "; Iecho now; Secho " _last_update_time_internal_time: "; Iecholn _last_update_time_internal_time;
             // Set last update
             set _last_update_time_internal_time = now;

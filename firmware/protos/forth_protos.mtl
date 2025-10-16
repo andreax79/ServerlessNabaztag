@@ -18,10 +18,12 @@ type Forth=[
     inter               // interpreter state
 ];;
 
-proto forth_execute_word_code 2;;
+proto forth_execute_code 2;;
 proto forth_get_word 1;;
 proto forth_http_post 3;;
 proto forth_interpreter 3;;
+proto forth_interpreter_loop 1;;
+proto forth_interpreter_resume 1;;
 proto forth_stack_to_str 2;;
 proto forth_word_list_to_array 1;;
 
@@ -32,5 +34,8 @@ const FORTH_STATE_NORMAL = 0;;
 const FORTH_STATE_COMPILATION = -1;;
 const FORTH_SPACE = 32;; // ASCII space
 const FORTH_DOUBLE_QUOTE = 34;; // ASCII " (double quote)
+
+const FORTH_IMMEDIATE = 1;;
+const FORTH_ASYNC = 2;;
 
 #endif

@@ -1,0 +1,18 @@
+proto http_abort 1;;
+proto http_enable 2;;
+proto http_enabledP 1;;
+proto http_get_content 1;;
+proto http_get_header 1;;
+proto http_inactive 1;;
+proto http_request 5;;
+
+const HTTP_NORMAL=0;;
+const HTTP_STREAM=1;;
+const HTTP_DIRECT=2;;
+
+const HTTP_STATE_SOLVE=0;;
+const HTTP_STATE_REACH=1;;
+const HTTP_STATE_CONNECTED=2;;
+
+const HTTP_SEP="\13\n\13\n";;	// séparateur entre l'en-tête et le corps de la réponse à une requête
+const HTTP_DEF_PROTO="http://";;	// en-tête normal (mais ici facultatif) d'une requête http

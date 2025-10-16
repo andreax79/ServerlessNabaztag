@@ -15,7 +15,7 @@ type Word=[
     int                 // data field - integer value for variables/constants
     str                 // data field - string value
     wstack              // data field - stack of Words
-    immediate           // true if immediate word
+    flag                // immediate, async
 ];;
 
 type Interpreter=[
@@ -67,35 +67,56 @@ fun forth_print_word w=
     Secholn "]"; 0
     );;
 
-/**
- * Execute a single word.
- * Update the program counter and state as needed.
- */
-fun forth_execute_word f word=
-    Secho "pc: "; Iecho f.pc; Secho " word: "; forth_print_word word;
-    set f.pc = f.pc + 1;
-    // Execute primitive function
-    if word.func != nil then call word.func [f]
-    // Execute a colon-defined word
-    else if word.code != nil then forth_execute_word_code f word.code
-    // Push the word onto the stack
-    else forth_push f word
-    ;;
+fun forth_new_word token=
+    if is_numeric token then
+        [int:(atoi token)]
+    else
+        [str:token];;
+
+
 
 // TODO recursive words
 
 /**
  * Run a sequence of Words as code, managing the return stack for nested calls.
+ * Return the word flag (FORTH_IMMEDIATE, FORTH_ASYNC) if set
  */
-fun forth_execute_word_code f code=
-    forth_rpush f [int:f.pc];
-    set f.pc = 0;
-    while (f.pc != nil) && (f.pc < (tablen code)) do
-        let code.(f.pc) -> word in
-            forth_execute_word f word;
-    let forth_rpop f -> ret_addr in
-        set f.pc = ret_addr.int;
-    0;;
+fun forth_execute_code f code=
+    let 0 -> flag in (
+        while (code != nil) && (f.pc != nil) && (f.pc < (tablen code)) && (flag != FORTH_ASYNC) do
+            let code.(f.pc) -> word in (
+                Secho "pc: "; Iecho f.pc; Secho " word: "; forth_print_word word;
+                set f.pc = f.pc + 1;
+                set flag = word.flag;
+                if word.flag == FORTH_ASYNC then (
+                    // If asynchronous word, push current pc and code onto return stack
+                    // and return after word execution
+                    forth_rpush f [int:f.pc code:code]
+                );
+
+                if word.code != nil then ( // Colon-defined word
+                    // Push current pc and code onto return stack
+                    forth_rpush f [int:f.pc code:code];
+                    set f.pc = 0;
+                    set code = word.code;
+                    nil
+                )
+                // Execute primitive function
+                else if word.func != nil then call word.func [f]
+                // Push the word onto the stack
+                else forth_push f word;
+
+                // Check if we need to return from the current word
+                if (f.pc == nil) || (f.pc >= (tablen code)) then
+                    // Pop return address from return stack
+                    let forth_rpop f -> ret_addr in (
+                        set code = ret_addr.code;
+                        set f.pc = ret_addr.int
+                    )
+
+            );
+        flag
+    );;
 
 /**
  * Extract the next token from the input text.
@@ -124,12 +145,34 @@ fun forth_get_token f=
         0
     );;
 
-fun forth_new_word token=
-    if is_numeric token then
-        [int:(atoi token)]
-    else
-        [str:token];;
+/**
+ * Resume execution of a the Forth interpreter after an asynchronous word.
+ * f: existing Forth interpreter state
+ */
+fun forth_interpreter_resume f=
+    let 0 -> flag in (
+        Secholn "forth_interpreter_resume";
+        // First, check the return stack
+        if f.rstack != nil then (
+            Secholn "forth_interpreter_resume stack not empty";
+            let forth_rpop f -> ret_addr in (
+                set f.pc = ret_addr.int;
+                set flag = forth_execute_code f ret_addr.code
+            )
+        );
+        Secho "forth_interpreter_resume flag: "; Iecholn flag;
+        if flag != FORTH_ASYNC then (
+            // Then continue the main interpreter loop
+            forth_interpreter_loop f
+        )
+    );;
 
+/**
+ * Initialize a new Forth interpreter state or reuse an existing one.
+ * text: input Forth code as a string
+ * f: existing Forth interpreter state or nil to create a new one
+ * cb: callback function to call when execution completes
+ */
 fun _forth_interpreter_setup text f cb=
     if forth_dictionary==nil then forth_init_dictionary;
     let [start:0 end:0 end_ln:0 parentheses:0 input:text text_len:(strlen text) token:nil inter_cb:cb] -> i in
@@ -150,30 +193,65 @@ fun _forth_interpreter_setup text f cb=
 // const FORTH_TEST = "1 2 3 4 dup";;
 // const FORTH_TEST = "9 8 7 1 2 over";;
 // const FORTH_TEST = "9 8 7 1 2 1 pick";;
-// const FORTH_TEST = ": test dup >r 10 + r> * ; 10 test";;
-// const FORTH_TEST = "' bla";;
-const FORTH_TEST = "
-: bla 1 + exit 10 + ;
-5 2 + bla . space
-1 . space 2 . space 3 . space 4 . ( test aa bb ) space 65 emit cr
-Spaghetti . cr
-nil 10 :: 20 :: 30 :: dup dup . space tl . space . cr
-\"ciao mondo\" . cr
-: test2 \"v: \" . dup . space if \"true\" . else \"false\" . then cr ;
-0 test2
-1 test2
-: test3 \"v: \" . dup . space if \"true\" . then cr ;
-0 test3
-1 test3
-";;
+//const FORTH_TEST = "0 . cr : test dup >r 10 + r> * ; 10 test . cr";;
+// const FORTH_TEST = "
+// 0 . cr
+// : sqrt dup * ;
+// : test 1 + sqrt \"test: \" . ;
+// 10 test . cr
+// ";;
+// const FORTH_TEST = "10 10 + .";;
+// const FORTH_TEST = "
+// : bla 1 + exit 10 + ;
+// 5 2 + bla . space
+// 1 . space 2 . space 3 . space 4 . ( test aa bb ) space 65 emit cr
+// Spaghetti . cr
+// nil 10 :: 20 :: 30 :: dup dup . space tl . space . cr
+// \"ciao mondo\" . cr
+// : test2 \"v: \" . dup . space if \"true\" . else \"false\" . then cr ;
+// 0 test2
+// 1 test2
+// : test3 \"v: \" . dup . space if \"true\" . then cr ;
+// 0 test3
+// 1 test3
+// ";;
 // const FORTH_TEST = ": bla begin dup . 1 - dup 0 = until ; 5 bla \"ciao\" emit";;
-// const FORTH_TEST = "\"ciao ciao\" emit";;
+const FORTH_TEST = "server-url :: \"/init.forth\" str-join http-get .";;
 
-fun forth_interpreter text f cb=
-    if forth_dictionary==nil then forth_init_dictionary;
+/**
+ * Execute a single word.
+ * Update the program counter and state as needed.
+ * f: Forth interpreter state
+ * word: Word to execute
+ * Return the word flag (FORTH_IMMEDIATE, FORTH_ASYNC) if set
+ */
+fun forth_interpreter_execute_word f word=
+    Secho "pc: "; Iecho f.pc; Secho " word: "; forth_print_word word;
+    set f.pc = f.pc + 1;
+    // Execute a colon-defined word
+    if word.code != nil then (
+        // Push current pc and code onto return stack
+        forth_rpush f [int:f.pc];
+        set f.pc = 0;
+        forth_execute_code f word.code
+    )
+    // Execute primitive function
+    else if word.func != nil then (
+        call word.func [f];
+        word.flag
+    )
+    // Push the word onto the stack
+    else (
+        forth_push f word;
+        word.flag
+    );;
 
-    let _forth_interpreter_setup text f cb -> f in (
-        while (f.pc != nil) && (f.inter.end != f.inter.text_len) do (
+/**
+ * Forth interpreter loop
+ */
+fun forth_interpreter_loop f=
+    let 0 -> flags in (
+        while (f.pc != nil) && (f.inter.end != f.inter.text_len) && (flags != FORTH_ASYNC) do (
             forth_get_token f;
             let if f.inter.quoted then nil else forth_get_word f.inter.token -> word in (
                 if word == nil then set word = forth_new_word f.inter.token;
@@ -190,8 +268,7 @@ fun forth_interpreter text f cb=
                     0
                 ) else if word.func == #forth_colon then ( // start of new word definition
                     if f.state == FORTH_STATE_COMPILATION then (
-                        set f.output = "\nError: Nested ':' not allowed\n" :: f.output;
-                        forth_exit f
+                        forth_abort_msg f "Error: Nested ':' not allowed"
                     ) else (
                         set f.state = FORTH_STATE_COMPILATION;
                         set f.new_word_name = nil;
@@ -200,11 +277,9 @@ fun forth_interpreter text f cb=
                     )
                 ) else if word.func == #forth_semi then ( // end of new word definition
                     if f.state != FORTH_STATE_COMPILATION then (
-                        set f.output = "\nError: ';' without matching ':'\n" :: f.output;
-                        forth_exit f
+                        forth_abort_msg f "Error: ';' without matching ':'"
                     ) else if f.new_word_name == nil then (
-                        set f.output = "\nError: ';' without word name\n" :: f.output;
-                        forth_exit f
+                        forth_abort_msg f "Error: ';' without word name"
                     ) else (
                         // Finish the new word definition
                         let forth_word_list_to_array (rev f.new_word_definition nil) -> code in
@@ -216,9 +291,9 @@ fun forth_interpreter text f cb=
                     )
 
                 ) else if f.state == FORTH_STATE_COMPILATION then (  // compilation state
-                    if word.immediate == FORTH_TRUE then (
+                    if word.flag == FORTH_IMMEDIATE then (
                         // immediate word, execute now
-                        forth_execute_word f word
+                        set flags = forth_interpreter_execute_word f word
 
                     ) else (
                         // Secho "--> compiling "; Secho f.inter.token; Secholn "";
@@ -234,12 +309,24 @@ fun forth_interpreter text f cb=
                     )
 
                 ) else ( // normal state
-                    forth_execute_word f word
+                    set flags = forth_interpreter_execute_word f word
                 )
             )
         );
-        call f.inter.inter_cb [f]
+        if (flags != FORTH_ASYNC) then
+            call f.inter.inter_cb [f]
     );;
+
+/**
+ * Main entry point for the Forth interpreter.
+ * text: input Forth code as a string
+ * f: existing interpreter state or nil to create a new one
+ * cb: callback function to call when execution completes
+ */
+fun forth_interpreter text f cb=
+    if forth_dictionary == nil then forth_init_dictionary;
+    let _forth_interpreter_setup text f cb -> f in
+        forth_interpreter_loop f;;
 
 /**
  * Handle HTTP callback for Forth interpreter. Return the output as JSON.

@@ -1,9 +1,9 @@
 #include protos/net_protos.mtl
-
 #include protos/icmp_protos.mtl
 #include protos/tcp_protos.mtl
 #include protos/udp_protos.mtl
 #include protos/arp_protos.mtl
+#include protos/dns_protos.mtl
 
 #include ipv4/arp.mtl
 #include ipv4/udp.mtl

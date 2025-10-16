@@ -1,6 +1,7 @@
 #include protos/chor_protos.mtl
 #include protos/palette_protos.mtl
 #include protos/info_protos.mtl
+#include protos/sleep_protos.mtl
 
 //--------------------------------------------------------------------------------------------------
 // Choregraphies
@@ -172,22 +173,25 @@ fun chor_run_cmd i0=
 
 /**
  * Callback called at the end of a TaiChi choreography
+ * cb: the callback to call at the end of the choreography (can be nil)
  */
-fun chor_taichi_end_cb unused=
+fun chor_taichi_end_cb unused cb=
     set chor_processing_status = 0;
     ears_set_wait_and_detect_mode;
     run_set_state idleRun;
+    Secholn "taichi end";
+    if cb != nil then call cb [];
     0;;
 
 /**
  * Start a TaiChi choreography
  */
-fun chor_taichi_start=
+fun chor_taichi_start cb=
     set chor_random=((rand & 255) * 30) >> 8;
     set chor_motor_dir={0 0};
     ears_set_wait_only_mode;
     set chor_processing_status = 1; // block all trames during taichi
-    chor_start_msg CHOR_TAICHI::nil #chor_taichi_end_cb nil;
+    chor_start_msg CHOR_TAICHI::nil (fixarg2 #chor_taichi_end_cb cb) nil;
     0;;
 
 fun chor_do_taichi_now=

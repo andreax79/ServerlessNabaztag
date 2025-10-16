@@ -1,15 +1,17 @@
+#include protos/http_protos.mtl
+
 //--------------------------------------------------------------------------------------------------
 // Hooks
 //--------------------------------------------------------------------------------------------------
 
-fun hook_rfid tag=
-	httprequest "POST" url_hook_rfid (strcatlist "tag="::(webmac tag)::nil) nil HTTP_NORMAL;;
+fun hook_rfid tag cb=
+	http_request "POST" url_hook_rfid (strcatlist "tag="::(webmac tag)::nil) cb HTTP_NORMAL;;
 
 fun hook_ears left right=
-	httprequest "POST" url_hook_ears (strcatlist "left="::(itoa left)::"&right="::(itoa right)::nil) nil HTTP_NORMAL;;
+	http_request "POST" url_hook_ears (strcatlist "left="::(itoa left)::"&right="::(itoa right)::nil) nil HTTP_NORMAL;;
 
 fun hook_click timestamp=
-	httprequest "POST" url_hook_click (strcatlist "time="::(itoa timestamp)::nil) nil HTTP_NORMAL;;
+	http_request "POST" url_hook_click (strcatlist "time="::(itoa timestamp)::nil) nil HTTP_NORMAL;;
 
 fun hook_dbl_click timestamp=
-	httprequest "POST" url_hook_dbl_click (strcatlist "time="::(itoa timestamp)::nil) nil HTTP_NORMAL;;
+	http_request "POST" url_hook_dbl_click (strcatlist "time="::(itoa timestamp)::nil) nil HTTP_NORMAL;;

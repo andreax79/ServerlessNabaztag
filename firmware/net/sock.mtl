@@ -1,3 +1,5 @@
+#include protos/sock_protos.mtl
+
 /**
  * Writes the pending output data from a Sock object to a TCP connection.
  * This function supports partial writes, sending data in chunks as the network buffer becomes available.
