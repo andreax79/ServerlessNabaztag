@@ -332,5 +332,13 @@ fun count_char s c =
         count
     );;
 
+/**
+ * Zero pad a string to length l
+ */
+fun zero_pad s l=
+    if ((strlen s) < l) then
+        strcat "0" (zero_pad s l-1)
+        else s;;
+
 fun getBytecodeRevision =
     strsub BYTECODE_REVISION_STR 6 ((strlen BYTECODE_REVISION_STR) - 8);;

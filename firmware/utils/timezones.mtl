@@ -1,3 +1,5 @@
+#include protos/json_protos.mtl
+
 //--------------------------------------------------------------------------------------------------
 // Timezones
 //--------------------------------------------------------------------------------------------------
@@ -87,3 +89,26 @@ fun get_offset_from_city_code city_code=
             set _timezone_last_offset = offset;
             if offset!=nil then offset else 0
         );;
+
+/**
+ * Format a timezone entry in JSON format
+ */
+fun timezone_format_timezone timezone=
+    let timezone -> [code name offset] in
+        strcatlist
+            "{ "::
+                (json_str "code" code) :: ", " ::
+                (json_str "name" name) :: ", " ::
+                (json_int "offset" offset) ::
+            " }" :: nil;;
+
+/**
+ * Return the timezones list in JSON format
+ */
+fun timezones_json=
+    let "[\n" -> result in
+    let tablen TIMEZONES -> length in
+        for i=0; i<length; set i=i+1 do
+            let TIMEZONES.i -> timezone in
+            let if i < (length-1) then ",\n" else "\n]" -> sep in
+            set result = strcatlist result::(timezone_format_timezone timezone)::sep::nil;;

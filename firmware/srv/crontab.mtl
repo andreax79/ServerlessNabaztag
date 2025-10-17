@@ -24,6 +24,7 @@ fun _crontab_time h m=
     h * 100 + m;;
 
 fun crontab_check =
+    let time_local -> [_ _ _ local_time_hour local_time_minute local_time_second _] in
     let _crontab_time local_time_hour local_time_minute -> crontab_check in
     if crontab_check != _crontab_last_check then (
         set _crontab_last_check = crontab_check;

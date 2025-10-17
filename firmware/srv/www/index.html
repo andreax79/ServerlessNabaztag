@@ -7,6 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" type="image/x-icon" href="http://{SERVER_URL}/favicon.ico" />
   <style type="text/css">
+/*
 body {
   background: #2c2f34;
   color: #f2f2f2;
@@ -14,6 +15,7 @@ body {
 input, select, textarea {
   color: #f2f2f2;
 }
+*/
   </style>
 </head>
 <body>
@@ -241,66 +243,7 @@ input, select, textarea {
       <div class="row">
         <div class="column">
             <label for="cityCodeField">City (Timezone)</label>
-            <select name="c" id="cityCodeField">
-            <option value="UTC">UTC</option>
-            <option value="LIS">Lisbon</option>
-            <option value="LON">London</option>
-            <option value="MAD">Madrid</option>
-            <option value="PAR">Paris</option>
-            <option value="ROM">Rome</option>
-            <option value="BER">Berlin</option>
-            <option value="STO">Stockholm</option>
-            <option value="ATH">Athens</option>
-            <option value="CAI">Cairo</option>
-            <option value="JRS">Jerusalem</option>
-            <option value="MOW">Moscow</option>
-            <option value="JED">Jeddah</option>
-            <option value="THR">Tehran</option>
-            <option value="DXB">Dubai</option>
-            <option value="KBL">Kabul </option>
-            <option value="KHI">Karachi</option>
-            <option value="DEL">Delhi </option>
-            <option value="KTM">Kathmandu</option>
-            <option value="DAC">Dhaka</option>
-            <option value="RNG">Yangon</option>
-            <option value="BKK">Bangkok</option>
-            <option value="SIN">Singapore</option>
-            <option value="HKG">Hong Kong</option>
-            <option value="BJS">Beijing</option>
-            <option value="TPE">Taipei</option>
-            <option value="EUC">Eucla</option>
-            <option value="SEL">Seoul</option>
-            <option value="TYO">Tokyo</option>
-            <option value="ADL">Adelaide</option>
-            <option value="GUM">Guam</option>
-            <option value="SYD">Sydney</option>
-            <option value="LHI">Lord Howe Island</option>
-            <option value="NOU">Noumea</option>
-            <option value="NSW">Norfolk Island</option>
-            <option value="WLG">Wellington</option>
-            <option value="CHA">Chatham Islands</option>
-            <option value="TBU">Nuku’alofa</option>
-            <option value="CXI">Kiritimati</option>
-            <option value="BAR">Baker Island</option>
-            <option value="PPG">Pago Pago</option>
-            <option value="HNL">Honolulu</option>
-            <option value="MAR">Marquesas Islands</option>
-            <option value="ANC">Anchorage</option>
-            <option value="YVR">Vancouver</option>
-            <option value="LAX">Los Angeles</option>
-            <option value="JEA">Edmonton</option>
-            <option value="DEN">Denver</option>
-            <option value="MEX">Mexico City</option>
-            <option value="CHI">Chicago</option>
-            <option value="NYC">New York</option>
-            <option value="CCS">Caracas</option>
-            <option value="SCL">Santiago</option>
-            <option value="YHZ">Halifax/option>
-            <option value="SIF">St. John's</option>
-            <option value="RIO">Rio de Janeiro</option>
-            <option value="FEN">Fernando de Noronha</option>
-            <option value="RAI">Praia</option>
-          </select>
+            <select name="c" id="cityCodeField"></select>
             <input class="button-primary" type="submit" value="Set">
         </div>
         <div class="column">
@@ -341,7 +284,27 @@ input, select, textarea {
   </footer>
 </div>
 <script>
-async function load() {
+async function loadTimezones(city_code) {
+    const response = await fetch('/timezones');
+    const timezones = await response.json();
+    const select = document.getElementById('cityCodeField');
+    select.innerHTML = '';
+
+    // Populate the select
+    timezones.forEach(tz => {
+        const option = document.createElement('option');
+        option.value = tz.code;
+        option.textContent = tz.name;
+        select.appendChild(option);
+    });
+
+    let cityCodeOption = document.querySelector('#cityCodeField option[value="' + city_code + '"]');
+    if (cityCodeOption){
+        cityCodeOption.setAttribute('selected', 'selected');
+    }
+}
+
+async function onLoad() {
     const response = await fetch('/status');
     const status = await response.json();
     console.log(status);
@@ -353,12 +316,7 @@ async function load() {
         langOption.setAttribute('selected', 'selected');
     }
 
-    let cityCodeOption = document.querySelector('#cityCodeField option[value="' + status.city_code + '"]');
-    if (cityCodeOption){
-        cityCodeOption.setAttribute('selected', 'selected');
-    }
-
-    let dstOption = document.querySelector('#dstField option[value="' + status.dst + '"]');
+    let dstOption = document.querySelector('#dstField option[value="' + status.time.dst + '"]');
     if (dstOption){
         dstOption.setAttribute('selected', 'selected');
     }
@@ -369,9 +327,10 @@ async function load() {
     document.getElementById("goToBedField").value = status.go_to_bed;
 
     document.getElementById("openAPI").href += "?openapi_url=http%3A%2F%2F" + window.location.host + "%2Fopenapi.yaml";
+    loadTimezones(status.time.city_code);
 }
 
-load();
+document.addEventListener('DOMContentLoaded', onLoad);
 </script>
 </body>
 </html>

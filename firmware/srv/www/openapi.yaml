@@ -315,7 +315,7 @@ paths:
           description: Language.
           schema:
             type: string
-            enum: [uk, it, fr, es]
+            enum: [uk, it, fr, es, de]
         - name: c
           in: query
           description: City code for timezone.
@@ -344,3 +344,15 @@ paths:
       responses:
         '204':
           description: Command sent successfully.
+  /jobs:
+    get:
+      summary: Get jobs status
+      tags: [System]
+      description: Retrieves the jobs list as a JSON object.
+      responses:
+        '200':
+          description: A JSON object with the jobs status.
+          content:
+            application/json:
+              schema:
+                type: object

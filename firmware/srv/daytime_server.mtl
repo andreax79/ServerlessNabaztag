@@ -18,7 +18,7 @@ fun daytime_sock_event cnx val msg sock=
 fun daytime_server_cb cnx code msg=
     Secholn "day time accept";
     let [sockCallback:nil]-> sock in
-    let strcatlist current_time_human::" "::config_get_city_code::"\13\10"::nil -> res in  // Generate the current time in a human-readable format
+    let strcatlist time_date_utc :: "\13\10" :: nil -> res in  // Generate the current time in a human-readable format
     (
         tcpcb cnx fixarg4 #daytime_sock_event sock;
         sock_send cnx sock res;

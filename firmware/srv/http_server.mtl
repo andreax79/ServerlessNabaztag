@@ -25,12 +25,17 @@ proto http_process_request 3 ;;
 /**
  * Generate the HTTP response header.
  */
-fun http_header http_status content_type=
+fun http_header http_status content_type content_length=
     strcatlist
-        "HTTP/1.0 "::http_status::
+        "HTTP/1.1 "::http_status::
         "\13\10Server: MTL HTTP server"::
         "\13\10Access-Control-Allow-Origin: *"::
         (if content_type!=nil then (strcat "\13\10Content-Type: " content_type) else "")::
+        (if content_length!=nil then (strcat "\13\10Content-Length: " (itoa content_length)) else "")::
+        "\13\10Date: " :: time_date_utc ::
+        "\13\10Cache-Control: max-age=0, no-cache, no-store" ::
+        "\13\10Pragma: no-cache" ::
+        "\13\10Connection: close"::
         "\13\10\13\10"::nil
 ;;
 
@@ -41,8 +46,7 @@ fun http_header http_status content_type=
  * jsonstatus: response string to send
  */
 fun http_send_header_and_close http_status content_type cnx sock=
-    let http_header http_status content_type -> res in
-        sock_send_and_close cnx sock res;;
+    sock_send_and_close cnx sock (http_header http_status content_type nil);;
 
 /**
  * Send a full HTTP response (header + content) and close the connection.
@@ -52,9 +56,8 @@ fun http_send_header_and_close http_status content_type cnx sock=
  * content: response string to send
  */
 fun http_send_content_and_close cnx sock content_type content=
-    let http_header HTTP_200 content_type -> header in
-    let strcat header content -> res in
-        sock_send_and_close cnx sock res;;
+    sock_send cnx sock (http_header HTTP_200 content_type (strlen content)); // header
+    sock_send_and_close cnx sock content;;
 
 /**
  * Extract the header of an HTTP message string.
@@ -135,21 +138,18 @@ fun http_sock_event cnx val msg sock=
  * cnx: TCP connection
  */
 fun http_server_cb cnx code msg=
-    Secholn "http server accept";
     tcpcb cnx fixarg4 #http_sock_event [sockCallback:#http_process_request];
     0;;
 
 //--------------------------------------------------------------------------------------------------
 
+/**
+ * Retrieve the system status as a JSON object.
+ */
 fun http_get_json_status cnx sock args=
     http_send_content_and_close cnx sock "application/json"
     strcatlist
         "{\n"::
-            (json_str "ts" current_time_human) :: ",\n" ::
-            (json_int "time" time) :: ",\n" ::
-            (json_str "city_code" config_get_city_code) :: ",\n" ::
-            (json_int "dst" config_get_dst) :: ",\n" ::
-            (json_int "time_offset" get_time_offset) :: ",\n" ::
             (json_str "language" config_get_lang) :: ",\n" ::
             (json_str "latitude" config_get_latitude) :: ",\n" ::
             (json_str "longitude" config_get_longitude) :: ",\n" ::
@@ -160,6 +160,7 @@ fun http_get_json_status cnx sock args=
             (json_int "processing_state" chor_processing_status) :: ",\n" ::
             (json_int "meteo_weather_code" _meteo_weather_code) :: ",\n" ::
             (json_obj "interactive" interactive_json) :: ",\n" ::
+            (json_obj "time" time_json) :: ",\n" ::
             (json_obj "ears" ears_json) :: ",\n" ::
             (json_obj "info" info_json) :: ",\n" ::
             (json_obj "network" net_json) :: ",\n" ::
@@ -168,12 +169,21 @@ fun http_get_json_status cnx sock args=
         "}" :: nil
 ;;
 
+/**
+ * Retrieve the jobs list as a JSON object.
+ */
 fun http_get_json_jobs cnx sock args =
     http_send_content_and_close cnx sock "application/json" job_json;;
 
+/**
+ * Retrieve the list of available timezones as a JSON object.
+ */
+fun http_get_timezones cnx sock args =
+    http_send_content_and_close cnx sock "application/json" timezones_json;;
+
 //--------------------------------------------------------------------------------------------------
 
-fun httpindex=
+fun http_index=
         strreplace "
 #include srv/www/index.html
         " "{SERVER_URL}" config_get_server_url
@@ -414,6 +424,27 @@ fun http_get_setup cnx sock args=
     meteo_get;
     http_send_header_and_close HTTP_204 nil cnx sock;;
 
+fun http_get_milligram_css cnx sock args=
+    sock_send cnx sock (http_header HTTP_200 "text/css" (strlen milligram_css)); // header
+    sock_send_and_close cnx sock milligram_css;;
+
+fun http_get_openapi_yaml cnx sock args=
+    let webip netip -> ip in
+    let strreplace openapi_yaml "192.168.1.100" ip -> res in (
+        sock_send cnx sock (http_header HTTP_200 "text/css" (strlen res)); // header
+        sock_send_and_close cnx sock res
+    );;
+
+fun http_get_index cnx sock args=
+    sock_send cnx sock (http_header HTTP_200 "text/html" (strlen http_index)); // header
+    sock_send_and_close cnx sock http_index;;
+
+fun http_not_found cnx sock args=
+    let "Not found" -> res in (
+        sock_send cnx sock (http_header HTTP_404 "text/plain" (strlen res)); // header
+        sock_send_and_close cnx sock res
+    );;
+
 /**
  * Process an HTTP request and generate the response
  */
@@ -429,6 +460,7 @@ fun http_process_request req cnx sock=
         else if !strcmp path "/surprise" then http_get_surprise cnx sock args // surprise
         else if !strcmp path "/status" then http_get_json_status cnx sock args // status
         else if !strcmp path "/jobs" then http_get_json_jobs cnx sock args // jobs
+        else if !strcmp path "/timezones" then http_get_timezones cnx sock args // timezones
         else if !strcmp path "/communication" then http_get_play_midi midi_communion cnx sock args // play communication sound
         else if !strcmp path "/ack" then http_get_play_midi midi_ack cnx sock args // play ack sound
         else if !strcmp path "/abort" then http_get_play_midi midi_abort cnx sock args // play abort sound
@@ -451,27 +483,10 @@ fun http_process_request req cnx sock=
         else if !strcmp path "/dns" then http_get_dns cnx sock args // d=domain name
         else if !strcmp path "/setup" then http_get_setup cnx sock args // setup parameters
         else if !strcmp path "/forth" then forth_http_post cnx sock args // forth command
-        else if !strcmp path "/milligram.css" then (
-            let http_header HTTP_200 "text/css" -> header in
-            let strcat header milligram_css -> res in
-            sock_send_and_close cnx sock res
-        )
-        else if !strcmp path "/openapi.yaml" then (
-            let webip netip -> ip in
-            let http_header HTTP_200 "application/yaml" -> header in
-            let strcat header (strreplace openapi_yaml "192.168.1.100" ip) -> res in
-            sock_send_and_close cnx sock res
-        )
-        else if !strcmp path "/" then (  // index page
-            let http_header HTTP_200 "text/html" -> header in
-            let strcat header httpindex -> res in
-            sock_send_and_close cnx sock res
-        )
-        else (
-            let http_header HTTP_404 "text/plain" -> header in
-            let strcat header "Not Found" -> res in
-            sock_send_and_close cnx sock res
-        );
+        else if !strcmp path "/milligram.css" then http_get_milligram_css cnx sock args // milligram.css
+        else if !strcmp path "/openapi.yaml" then http_get_openapi_yaml cnx sock args // openapi spec
+        else if !strcmp path "/" then http_get_index cnx sock args // index page
+        else http_not_found cnx sock args;
         0
     );;
 
