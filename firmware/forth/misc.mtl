@@ -42,16 +42,17 @@ fun forth_p f=
 fun _forth_print_words f forth_dictionary=
     if forth_dictionary==nil then nil
     else let hd forth_dictionary -> head in (
-        set f.output = " " :: head.name :: f.output;
+        forth_write f strcat " " head.name;
         _forth_print_words f (tl forth_dictionary)
     );;
 
 /**
- * WORDS ( -- ) List the words in the dictionary
+ * WORDS ( -- )
+ * List the words in the dictionary
  */
 fun forth_words f=
     _forth_print_words f forth_dictionary;
-    set f.output = "\n" :: f.output;
+    forth_write f " \n";
     nil;;
 
 /**
@@ -67,4 +68,26 @@ fun forth_time_and_date f=
         forth_push f [int:local_time_month];
         forth_push f [int:local_time_year];
         nil
+    );;
+
+/**
+ * Callback function to resume interpreter after EVALUATE
+ * Restore the previous interpreter state
+ */
+fun _forth_evaluate_cb f inter=
+    set f.inter = inter; // restore interpreter state
+    forth_interpreter_resume f;;
+
+/**
+ * EVALUATE ( str -- )
+ * Evaluate a string as Forth code
+ */
+fun forth_evaluate f=
+    let forth_pop f -> word in
+    if word.str == nil then (
+        forth_push f word;
+        forth_interpreter_resume f
+        // forth_abort_msg f "EVALUATE expects a string"
+    ) else (
+        forth_interpreter word.str f f.forth_sock (fixarg2 #_forth_evaluate_cb f.inter)
     );;

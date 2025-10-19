@@ -3,51 +3,47 @@
 /**
  * Writes the pending output data from a Sock object to a TCP connection.
  * This function supports partial writes, sending data in chunks as the network buffer becomes available.
- * cnx: TCP connection
  * sock: socket object
  */
-fun sock_write cnx sock=
+fun sock_write sock=
     // Check if there is any data in the output buffer to send
     if sock.sockOutput!=nil then
     (
         if sock.sockIndex==nil then set sock.sockIndex=0;
-        set sock.sockIndex=writetcp cnx sock.sockOutput sock.sockIndex;
+        set sock.sockIndex=writetcp sock.sockCnx sock.sockOutput sock.sockIndex;
         // Check if the entire output buffer has been sent
         if sock.sockIndex!=nil && sock.sockIndex>=strlen sock.sockOutput then
         (   set sock.sockIndex=nil;
             set sock.sockOutput=nil;
-            if sock.sockCloseAfter==1 then closetcp cnx
+            if sock.sockCloseAfter==1 then closetcp sock.sockCnx
         )
     );
     0;;
 
 /**
  * Appends a string 's' to the socket's output buffer and initiates a write.
- * cnx: TCP connection
  * sock: socket object
  * s: the content to send
  */
-fun sock_send cnx sock s =
+fun sock_send sock s =
     set sock.sockOutput=strcat sock.sockOutput s;
-    sock_write cnx sock;;
+    sock_write sock;;
 
 /**
  * Schedules the connection to be closed after the current write operation completes.
- * cnx: TCP connection
  * sock: socket object
  */
-fun sock_close_after cnx sock =
+fun sock_close_after sock =
     set sock.sockCloseAfter=1;
-    if sock.sockIndex>=strlen sock.sockOutput then closetcp cnx
+    if sock.sockIndex>=strlen sock.sockOutput then closetcp sock.sockCnx
     ;;
 
 /**
  * Sends data and then schedules the connection to be closed after the send completes.
- * cnx: TCP connection
  * sock: socket object
  * s: the content to send
  */
-fun sock_send_and_close cnx sock s =
-    sock_send cnx sock s;
-    sock_close_after cnx sock
+fun sock_send_and_close sock s =
+    sock_send sock s;
+    sock_close_after sock
     ;;

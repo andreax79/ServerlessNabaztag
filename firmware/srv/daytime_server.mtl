@@ -7,7 +7,7 @@
  * sock: socket object for this connection
  */
 fun daytime_sock_event cnx val msg sock=
-    if val==TCPWRITE then sock_write cnx sock
+    if val==TCPWRITE then sock_write sock
     else 0;;
 
 /**
@@ -17,12 +17,12 @@ fun daytime_sock_event cnx val msg sock=
  */
 fun daytime_server_cb cnx code msg=
     Secholn "day time accept";
-    let [sockCallback:nil]-> sock in
+    let [sockCnx:cnx sockCallback:nil]-> sock in
     let strcatlist time_date_utc :: "\13\10" :: nil -> res in  // Generate the current time in a human-readable format
     (
         tcpcb cnx fixarg4 #daytime_sock_event sock;
-        sock_send cnx sock res;
-        sock_close_after cnx sock;
+        sock_send sock res;
+        sock_close_after sock;
         0
     );;
 

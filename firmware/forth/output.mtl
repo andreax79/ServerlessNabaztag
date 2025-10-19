@@ -8,8 +8,15 @@
  * Write a string to the output
  */
 fun forth_write f s=
-    set f.output = s :: f.output;
-    nil;;
+    if f.forth_sock != nil then (
+        // send to socket
+        sock_send f.forth_sock s;
+        nil
+    ) else (
+        // append to output buffer
+        set f.output = s :: f.output;
+        nil
+    );;
 
 /**
  * Format a word as string
@@ -17,15 +24,15 @@ fun forth_write f s=
 fun forth_word_fmt word=
     if word.int != nil then itoa word.int
     else if word.str != nil then word.str
-    else if word.wstack != nil then (forth_stack_to_str word.wstack " ")
+    else if word.list != nil then (forth_list_to_str word.list " ")
     else "?";;
 
 /**
  * Format a stack of words to a string
  */
-fun forth_stack_to_str wstack separator=
+fun forth_list_to_str list separator=
     let nil -> t in (
-        for l=wstack; l!=nil; tl l do (
+        for l=list; l!=nil; tl l do (
             set t = (forth_word_fmt (hd l)) :: t;
             if (nil != tl l) then set t = separator :: t
         );
@@ -33,30 +40,34 @@ fun forth_stack_to_str wstack separator=
     );;
 
 /**
- * . ( n -- ) Display n
+ * . ( n -- )
+ * Display n
  */
 fun forth_d f=
     let forth_pop f -> a in
     forth_write f
         if a.int != nil then (itoa a.int)
         else if a.str != nil then a.str
-        else if a.wstack != nil then (forth_stack_to_str a.wstack " ")
+        else if a.list != nil then (forth_list_to_str a.list " ")
         else "?";;
 
 /**
- * CR ( -- ) Display CR
+ * CR ( -- )
+ * Display CR
  */
 fun forth_cr f=
     forth_write f "\n";;
 
 /**
- * SPACE ( -- ) Display space
+ * SPACE ( -- )
+ * Display space
  */
 fun forth_space f=
     forth_write f " ";;
 
 /**
- * EMIT ( char -- ) Emit character
+ * EMIT ( char -- )
+ * Emit character
  */
 fun forth_emit f=
     let forth_pop f -> a in
@@ -64,15 +75,44 @@ fun forth_emit f=
     forth_write f (strset s 0 a.int);;
 
 /**
- * BL ( -- char ) Character value for a space
+ * BL ( -- char )
+ * Character value for a space
  */
 fun forth_bl f=
     forth_push f [int:32];;
 
 /**
- * .S ( -- ) Copy and display the values currently on the data stac
+ * .S ( -- )
+ * Copy and display the values currently on the data stac
  */
 fun forth_dot_s f=
-    let forth_stack_to_str f.stack " " -> val in
+    let forth_list_to_str f.stack " " -> val in
     forth_write f val;
     forth_write f "\n";;
+
+/**
+ * Callback function to read a line from the socket
+ */
+fun _forth_readline_cb input sock f=
+    let strsub input 0 ((strlen input) - 2) -> line in // remove \r\n
+        forth_push f [str:line]; // push the line onto the stack
+    set f.forth_sock.sockCallback = nil;  // clear the callback
+    forth_interpreter_resume f;  // resume the interpreter
+    0;;
+
+/**
+ * READ-LINE ( -- line )
+ * Read a line from the current socket
+ */
+fun forth_read_line f=
+    if f.forth_sock == nil then (
+        // forth_abort_msg f "READ-LINE: no socket available"
+        forth_write f "\nREAD-LINE: no socket available\n";
+        set f.stack = nil;
+        set f.rstack = nil;
+        set f.pc = nil; // end execution
+        nil
+    ) else
+        // Set the socket callback
+        set f.forth_sock.sockCallback = fixarg3 #_forth_readline_cb f;
+    nil;;

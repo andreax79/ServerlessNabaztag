@@ -46,7 +46,8 @@ fun forth_rpop f=
     );;
 
 /**
- * DUP ( n -- n n ) Duplicate top of stack
+ * DUP ( n -- n n )
+ * Duplicate top of stack
  */
 fun forth_dup f=
     if f.stack==nil then nil
@@ -56,14 +57,16 @@ fun forth_dup f=
     nil;;
 
 /**
- * DROP ( n --  ) Discard top of stack
+ * DROP ( n --  )
+ * Discard top of stack
  */
 fun forth_drop f=
     let forth_pop f -> a in
     nil;;
 
 /**
- * SWAP ( n1 n2 -- n2 n1 ) Exchange top two stack items
+ * SWAP ( n1 n2 -- n2 n1 )
+ * Exchange top two stack items
  */
 fun forth_swap f=
     let forth_pop f -> a in
@@ -72,7 +75,8 @@ fun forth_swap f=
     nil;;
 
 /**
- * OVER ( n1 n2 -- n1 n2 n1 ) Make copy of second item on top
+ * OVER ( n1 n2 -- n1 n2 n1 )
+ * Make copy of second item on top
  */
 fun forth_over f=
     let forth_pop f -> a in
@@ -81,7 +85,8 @@ fun forth_over f=
     nil;;
 
 /**
- * ROT ( n1 n2 n3 -- n2 n3 n1 ) Rotate third item to top
+ * ROT ( n1 n2 n3 -- n2 n3 n1 )
+ * Rotate third item to top
  */
 fun forth_rot f=
     let forth_pop f -> a in
@@ -91,7 +96,8 @@ fun forth_rot f=
     nil;;
 
 /**
- * PICK ( n ... ni - n ... ni ni ) Copy nth item to top of stack
+ * PICK ( n ... ni - n ... ni ni )
+ * Copy nth item to top of stack
  */
 fun forth_pick f=
     let forth_pop f -> n in
@@ -101,7 +107,8 @@ fun forth_pick f=
 // fun forth_roll f= // TODO
 
 /**
- * NIP ( n1 n2 -- n2 ) Drop the first item below the top of stack
+ * NIP ( n1 n2 -- n2 )
+ * Drop the first item below the top of stack
  */
 fun forth_nip f=
     let forth_pop f -> a in
@@ -110,7 +117,8 @@ fun forth_nip f=
     nil;;
 
 /**
- * TUCK ( n1 n2 -- n1 n2 n1 ) Copy the first (top) stack item below the second stack item
+ * TUCK ( n1 n2 -- n1 n2 n1 )
+ * Copy the first (top) stack item below the second stack item
  */
 fun forth_tuck f=
     let forth_pop f -> a in
@@ -119,7 +127,8 @@ fun forth_tuck f=
     nil;;
 
 /**
- * ?DUP ( x -- 0 | x x ) Duplicate top of stack if not zero
+ * ?DUP ( x -- 0 | x x )
+ * Duplicate top of stack if not zero
  */
 fun forth_qdup f=
     if f.stack==nil then nil
@@ -128,21 +137,24 @@ fun forth_qdup f=
         if v.int!=0 then forth_push f v;;
 
 /**
- * >R ( x -- ) ( R: -- x ) Move top item to ‘return stack” for temporary storage
+ * >R ( x -- ) ( R: -- x )
+ * Move top item to ‘return stack” for temporary storage
  */
 fun forth_to_r f=
     if f.stack==nil then nil
     else forth_rpush f (forth_pop f);;
 
 /**
- * R> ( -- x ) ( R: x -- ) Retrieve item from return stack
+ * R> ( -- x ) ( R: x -- )
+ * Retrieve item from return stack
  */
 fun forth_r_from f=
     if f.rstack==nil then nil
     else forth_push f (forth_rpop f);;
 
 /**
- * R@ ( -- x ) ( R: x -- x ) Copy top of return stack onto data stack
+ * R@ ( -- x ) ( R: x -- x )
+ * Copy top of return stack onto data stack
  */
 fun forth_r_fetch f=
     if f.rstack==nil then nil
@@ -152,7 +164,8 @@ fun forth_r_fetch f=
     nil;;
 
 /**
- * DEPTH ( -- count ) Count number of items on stack
+ * DEPTH ( -- count )
+ * Count number of items on stack
  */
 fun forth_depth f=
     let listlen f.stack -> l in

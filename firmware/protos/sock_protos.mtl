@@ -8,9 +8,9 @@
  * sockCallback: user-defined function to call to process the complete request and generate a response
  */
 
-type Sock=[sockInput sockSize sockOutput sockIndex sockCloseAfter sockCallback];;
+type Sock=[sockCnx sockInput sockSize sockOutput sockIndex sockCloseAfter sockCallback];;
 
-proto sock_write 2 ;;
-proto sock_send 3 ;;
-proto sock_close_after 2 ;;
-proto sock_send_and_close 3 ;;
+proto sock_close_after 1;;
+proto sock_send 2;;
+proto sock_send_and_close 2;;
+proto sock_write 1;;

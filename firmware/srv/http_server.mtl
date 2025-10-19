@@ -19,7 +19,7 @@ const HTTP_HEADER_SEP = "\13\n\13\n";; // HTTP header separator
 const HTTP_CONTENT_LENGTH = "content-length: ";; // lowerrcase
 const HTTP_CONTENT_END = "\13\n";;
 
-proto http_process_request 3 ;;
+proto http_process_request 2;;
 
 /**
  * Generate the HTTP response header.
@@ -34,29 +34,27 @@ fun http_header http_status content_type content_length=
         "\13\10Date: " :: time_date_utc ::
         "\13\10Cache-Control: max-age=0, no-cache, no-store" ::
         "\13\10Pragma: no-cache" ::
-        "\13\10Connection: close" ::
+        "\13\10Connection: close"::
         "\13\10\13\10"::nil
 ;;
 
 /**
  * Send a HTTP response header and close the connection.
- * cnx: TCP connection
  * sock: socket object for this connection
  * jsonstatus: response string to send
  */
-fun http_send_header_and_close http_status content_type cnx sock=
-    sock_send_and_close cnx sock (http_header http_status content_type nil);;
+fun http_send_header_and_close http_status content_type sock=
+    sock_send_and_close sock (http_header http_status content_type nil);;
 
 /**
  * Send a full HTTP response (header + content) and close the connection.
- * cnx: TCP connection
  * sock: socket object for this connection
  * content_type: MIME type of the content
  * content: response string to send
  */
-fun http_send_content_and_close cnx sock content_type content=
-    sock_send cnx sock (http_header HTTP_200 content_type (strlen content)); // header
-    sock_send_and_close cnx sock content;;
+fun http_send_content_and_close sock content_type content=
+    sock_send sock (http_header HTTP_200 content_type (strlen content)); // header
+    sock_send_and_close sock content;;
 
 /**
  * Extract the header of an HTTP message string.
@@ -84,15 +82,14 @@ fun http_find_content_end s=
  * Main data handling function for an HTTP connection.
  * It buffers incoming data until a complete HTTP request is received,
  * then calls the user callback.
- * cnx: TCP connection
  * input: new chunk of data received
  * sock: socket object for this connection
  */
-fun http_sock_read cnx input sock=
+fun http_sock_read input sock=
     // If the input is nil or empty, the client has closed the connection
     if input==nil ||0==strlen input then
     (
-        closetcp cnx;
+        closetcp sock.sockCnx;
         nil
     )
     else
@@ -114,7 +111,7 @@ fun http_sock_read cnx input sock=
             // Clear the input buffer
             set sock.sockInput=nil;
             // Call the callback function with the full request
-            call sock.sockCallback [str cnx sock]
+            call sock.sockCallback [str sock]
         )
     );
     0;;
@@ -128,9 +125,9 @@ fun http_sock_read cnx input sock=
  * sock: socket object for this connection
  */
 fun http_sock_event cnx val msg sock=
-    if val==TCPWRITE then sock_write cnx sock
-    else if val==TCPCLOSE then http_sock_read cnx nil sock
-    else http_sock_read cnx msg sock;;
+    if val==TCPWRITE then sock_write sock
+    else if val==TCPCLOSE then http_sock_read nil sock
+    else http_sock_read msg sock;;
 
 /**
  * Callback function for the main HTTP listening socket.
@@ -138,7 +135,7 @@ fun http_sock_event cnx val msg sock=
  * cnx: TCP connection
  */
 fun http_server_cb cnx code msg=
-    tcpcb cnx fixarg4 #http_sock_event [sockCallback:#http_process_request];
+    tcpcb cnx fixarg4 #http_sock_event [sockCnx:cnx sockCallback:#http_process_request];
     0;;
 
 //--------------------------------------------------------------------------------------------------
@@ -146,8 +143,8 @@ fun http_server_cb cnx code msg=
 /**
  * Retrieve the system status as a JSON object.
  */
-fun http_get_json_status cnx sock args=
-    http_send_content_and_close cnx sock "application/json"
+fun http_get_json_status sock args=
+    http_send_content_and_close sock "application/json"
     strcatlist
         "{\n"::
             (json_str "language" config_get_lang) :: ",\n" ::
@@ -172,14 +169,14 @@ fun http_get_json_status cnx sock args=
 /**
  * Retrieve the jobs list as a JSON object.
  */
-fun http_get_json_jobs cnx sock args =
-    http_send_content_and_close cnx sock "application/json" job_json;;
+fun http_get_json_jobs sock args =
+    http_send_content_and_close sock "application/json" job_json;;
 
 /**
  * Retrieve the list of available timezones as a JSON object.
  */
-fun http_get_timezones cnx sock args =
-    http_send_content_and_close cnx sock "application/json" timezones_json;;
+fun http_get_timezones sock args =
+    http_send_content_and_close sock "application/json" timezones_json;;
 
 //--------------------------------------------------------------------------------------------------
 
@@ -273,146 +270,145 @@ fun _http_arg_int args key =
 /**
  * Get time from the time server
  */
-fun http_get_update_time cnx sock args=
+fun http_get_update_time sock args=
     get_time_from_timeserver;
-    http_send_header_and_close HTTP_204 nil cnx sock;;
+    http_send_header_and_close HTTP_204 nil sock;;
 
 /**
  * Get weather information from the weather server
  */
-fun http_get_update_weather cnx sock args=
+fun http_get_update_weather sock args=
     meteo_get;
-    http_send_header_and_close HTTP_204 nil cnx sock;;
+    http_send_header_and_close HTTP_204 nil sock;;
 
 /**
  * Stop everything we can be doing and resets to either idle or asleep
  */
-fun http_get_stop cnx sock args=
+fun http_get_stop sock args=
     stopEverythingAndResetToIdle;
-    http_send_header_and_close HTTP_204 nil cnx sock;;
+    http_send_header_and_close HTTP_204 nil sock;;
 
 /**
  * Reboot the system
  */
-fun http_get_reboot cnx sock args=
-    http_send_header_and_close HTTP_204 nil cnx sock;
+fun http_get_reboot sock args=
+    http_send_header_and_close HTTP_204 nil sock;
     reboot 0x0407FE58 0x13fb6754;
     nil;;
 
 /**
  * Surprise action
  */
-fun http_get_surprise cnx sock args=
+fun http_get_surprise sock args=
     surprise;
-    http_send_header_and_close HTTP_204 nil cnx sock;;
+    http_send_header_and_close HTTP_204 nil sock;;
 
 /**
  * Play a sound
  */
-fun http_get_play_midi midi cnx sock args=
+fun http_get_play_midi midi sock args=
     if !sleep_status then (
         midi_play midi
     );
-    http_send_header_and_close HTTP_204 nil cnx sock;;
+    http_send_header_and_close HTTP_204 nil sock;;
 
-fun http_get_play cnx sock args=
+fun http_get_play sock args=
     if !sleep_status then (
         audiolib_start_http _http_arg_str args 'u' #streaming_wav_error
     );
-    http_send_header_and_close HTTP_204 nil cnx sock;;
+    http_send_header_and_close HTTP_204 nil sock;;
 
-fun http_get_say cnx sock args=
+fun http_get_say sock args=
     if !sleep_status then (
         audiolib_start_http (strcatlist "http://translate.google.com/translate_tts?ie=UTF-8&total=1&idx=0&textlen=32&client=tw-ob&tl=En-gb&q="::(strreplace (_http_arg_str args 't') " " "+")::nil) #streaming_wav_error
     );
-    http_send_header_and_close HTTP_204 nil cnx sock;;
+    http_send_header_and_close HTTP_204 nil sock;;
 
-fun http_get_taichi cnx sock args=
+fun http_get_taichi sock args=
     let _http_arg_int args 'v' -> v in
         if v == 1000 && !sleep_status then
             chor_taichi_start nil
         else
             set info_taichi = v;
-    http_send_header_and_close HTTP_204 nil cnx sock;;
+    http_send_header_and_close HTTP_204 nil sock;;
 
-fun http_get_mp3 cnx sock args=
+fun http_get_mp3 sock args=
     audiolib_start_http _http_arg_str args 'v' #streaming_wav_error;
-    http_send_header_and_close HTTP_204 nil cnx sock;;
+    http_send_header_and_close HTTP_204 nil sock;;
 
-fun http_get_sleep cnx sock args=
+fun http_get_sleep sock args=
     sleep_start;
-    http_send_header_and_close HTTP_204 nil cnx sock;;
+    http_send_header_and_close HTTP_204 nil sock;;
 
-fun http_get_wakeup cnx sock args=
+fun http_get_wakeup sock args=
     sleep_end;
-    http_send_header_and_close HTTP_204 nil cnx sock;;
+    http_send_header_and_close HTTP_204 nil sock;;
 
-fun http_get_left cnx sock args=
+fun http_get_left sock args=
     if !sleep_status then (
         ears_go EARS_LEFT _http_arg_int args 'p' _http_arg_int args 'd'
     );
-    http_send_header_and_close HTTP_204 nil cnx sock;;
+    http_send_header_and_close HTTP_204 nil sock;;
 
-fun http_get_right cnx sock args=
+fun http_get_right sock args=
     if !sleep_status then (
         ears_go EARS_RIGHT _http_arg_int args 'p' _http_arg_int args 'd'
     );
-    http_send_header_and_close HTTP_204 nil cnx sock;;
+    http_send_header_and_close HTTP_204 nil sock;;
 
-fun http_get_nose cnx sock args=
+fun http_get_nose sock args=
     set info_messages = _http_arg_int args 'v';
-    http_send_header_and_close HTTP_204 nil cnx sock;;
+    http_send_header_and_close HTTP_204 nil sock;;
 
-fun http_get_weather cnx sock args=
+fun http_get_weather sock args=
     if !sleep_status then (
         info_src_update INFO_WEATHER _http_arg_int args 'v'
     );
-    http_send_header_and_close HTTP_204 nil cnx sock;;
+    http_send_header_and_close HTTP_204 nil sock;;
 
-fun http_get_stock cnx sock args=
+fun http_get_stock sock args=
     if !sleep_status then (
         info_src_update INFO_STOCK _http_arg_int args 'v'
     );
-    http_send_header_and_close HTTP_204 nil cnx sock;;
+    http_send_header_and_close HTTP_204 nil sock;;
 
-fun http_get_traffic cnx sock args=
+fun http_get_traffic sock args=
     if !sleep_status then (
         info_src_update INFO_TRAFFIC _http_arg_int args 'v'
     );
-    http_send_header_and_close HTTP_204 nil cnx sock;;
+    http_send_header_and_close HTTP_204 nil sock;;
 
-fun http_get_mail cnx sock args=
+fun http_get_mail sock args=
     if !sleep_status then (
         info_src_update INFO_MAIL _http_arg_int args 'v'
     );
-    http_send_header_and_close HTTP_204 nil cnx sock;;
+    http_send_header_and_close HTTP_204 nil sock;;
 
-fun http_get_pollution cnx sock args=
+fun http_get_pollution sock args=
     if !sleep_status then (
         info_src_update INFO_POLLUTION _http_arg_int args 'v'
     );
-    http_send_header_and_close HTTP_204 nil cnx sock;;
+    http_send_header_and_close HTTP_204 nil sock;;
 
-fun http_get_clear cnx sock args=
+fun http_get_clear sock args=
     for i=1;i<=8 do (
         info_src_update 0 i
     );
-    http_send_header_and_close HTTP_204 nil cnx sock;;
+    http_send_header_and_close HTTP_204 nil sock;;
 
-fun _http_get_dns_cb ip x=
-	let x->[cnx sock] in
+fun _http_get_dns_cb ip sock=
     let strcatlist "{ " :: (json_str "ip" ip) :: " }" :: nil -> res in
-    http_send_content_and_close cnx sock "application/json" res;;
+    http_send_content_and_close sock "application/json" res;;
 
 /**
  * Perform a DNS lookup for the given domain and return the result as JSON.
  * args: d=domain name
  */
-fun http_get_dns cnx sock args=
+fun http_get_dns sock args=
     let _http_arg_str args 'd' -> domain in
-        dnsreq domain fixarg2 #_http_get_dns_cb [cnx sock];;
+        dnsreq domain fixarg2 #_http_get_dns_cb sock;;
 
-fun http_get_setup cnx sock args=
+fun http_get_setup sock args=
     config_set_lang _http_arg_str args 'l';            // set language
     config_set_city _http_arg_str args 'c';            // set city code
     config_set_dst atoi _http_arg_str args 'd';        // set Daylight Saving Time
@@ -422,71 +418,71 @@ fun http_get_setup cnx sock args=
     config_set_go_to_bed atoi _http_arg_str args 'b';  // set go to bed time
     config_save;
     meteo_get;
-    http_send_header_and_close HTTP_204 nil cnx sock;;
+    http_send_header_and_close HTTP_204 nil sock;;
 
-fun http_get_milligram_css cnx sock args=
-    sock_send cnx sock (http_header HTTP_200 "text/css" (strlen milligram_css)); // header
-    sock_send_and_close cnx sock milligram_css;;
+fun http_get_milligram_css sock args=
+    sock_send sock (http_header HTTP_200 "text/css" (strlen milligram_css)); // header
+    sock_send_and_close sock milligram_css;;
 
-fun http_get_openapi_yaml cnx sock args=
+fun http_get_openapi_yaml sock args=
     let webip netip -> ip in
     let strreplace openapi_yaml "192.168.1.100" ip -> res in (
-        sock_send cnx sock (http_header HTTP_200 "text/css" (strlen res)); // header
-        sock_send_and_close cnx sock res
+        sock_send sock (http_header HTTP_200 "text/css" (strlen res)); // header
+        sock_send_and_close sock res
     );;
 
-fun http_get_index cnx sock args=
-    sock_send cnx sock (http_header HTTP_200 "text/html" (strlen http_index)); // header
-    sock_send_and_close cnx sock http_index;;
+fun http_get_index sock args=
+    sock_send sock (http_header HTTP_200 "text/html" (strlen http_index)); // header
+    sock_send_and_close sock http_index;;
 
-fun http_not_found cnx sock args=
+fun http_not_found sock args=
     let "Not found" -> res in (
-        sock_send cnx sock (http_header HTTP_404 "text/plain" (strlen res)); // header
-        sock_send_and_close cnx sock res
+        sock_send sock (http_header HTTP_404 "text/plain" (strlen res)); // header
+        sock_send_and_close sock res
     );;
 
 /**
  * Process an HTTP request and generate the response
  */
-fun http_process_request req cnx sock=
+fun http_process_request req sock=
     let _http_server_parse_req req -> [verb path args] in
     (
         Secho "verb: "; Secho verb; Secho " path: "; Secholn path;
 
-        if !strcmp path "/update-time" then http_get_update_time cnx sock args // get time from time server
-        else if !strcmp path "/update-weather" then http_get_update_weather cnx sock args  // get weather from weather server
-        else if !strcmp path "/stop" then http_get_stop cnx sock args // stop
-        else if !strcmp path "/reboot" then http_get_reboot cnx sock args // reboot
-        else if !strcmp path "/surprise" then http_get_surprise cnx sock args // surprise
-        else if !strcmp path "/status" then http_get_json_status cnx sock args // status
-        else if !strcmp path "/jobs" then http_get_json_jobs cnx sock args // jobs
-        else if !strcmp path "/timezones" then http_get_timezones cnx sock args // timezones
-        else if !strcmp path "/communication" then http_get_play_midi midi_communion cnx sock args // play communication sound
-        else if !strcmp path "/ack" then http_get_play_midi midi_ack cnx sock args // play ack sound
-        else if !strcmp path "/abort" then http_get_play_midi midi_abort cnx sock args // play abort sound
-        else if !strcmp path "/ministop" then http_get_play_midi midi_ministop cnx sock args // play ministop sound
-        else if !strcmp path "/play" then http_get_play cnx sock args // play a wav from url
-        else if !strcmp path "/say" then http_get_say cnx sock args // text to speech
-        else if !strcmp path "/taichi" then http_get_taichi cnx sock args // taichi
-        else if !strcmp path "/mp3" then http_get_mp3 cnx sock args // play an mp3 from url
-        else if !strcmp path "/sleep" then http_get_sleep cnx sock args // sleep
-        else if !strcmp path "/wakeup" then http_get_wakeup cnx sock args // wake up
-        else if !strcmp path "/left" then http_get_left cnx sock args // p=position d=direction
-        else if !strcmp path "/right" then http_get_right cnx sock args // p=position d=direction
-        else if !strcmp path "/nose" then http_get_nose cnx sock args // v=value
-        else if !strcmp path "/weather" then http_get_weather cnx sock args // v=value
-        else if !strcmp path "/stock" then http_get_stock cnx sock args // v=value
-        else if !strcmp path "/traffic" then http_get_traffic cnx sock args // v=value
-        else if !strcmp path "/mail" then http_get_mail cnx sock args // v=value
-        else if !strcmp path "/pollution" then http_get_pollution cnx sock args // v=value
-        else if !strcmp path "/clear" then http_get_clear cnx sock args // clear all infosrc
-        else if !strcmp path "/dns" then http_get_dns cnx sock args // d=domain name
-        else if !strcmp path "/setup" then http_get_setup cnx sock args // setup parameters
-        else if !strcmp path "/forth" then forth_http_post cnx sock args // forth command
-        else if !strcmp path "/milligram.css" then http_get_milligram_css cnx sock args // milligram.css
-        else if !strcmp path "/openapi.yaml" then http_get_openapi_yaml cnx sock args // openapi spec
-        else if !strcmp path "/" then http_get_index cnx sock args // index page
-        else http_not_found cnx sock args;
+        if !strcmp path "/update-time" then http_get_update_time sock args // get time from time server
+        else if !strcmp path "/update-weather" then http_get_update_weather sock args  // get weather from weather server
+        else if !strcmp path "/stop" then http_get_stop sock args // stop
+        else if !strcmp path "/reboot" then http_get_reboot sock args // reboot
+        else if !strcmp path "/surprise" then http_get_surprise sock args // surprise
+        else if !strcmp path "/status" then http_get_json_status sock args // status
+        else if !strcmp path "/jobs" then http_get_json_jobs sock args // jobs
+        else if !strcmp path "/timezones" then http_get_timezones sock args // timezones
+        else if !strcmp path "/communication" then http_get_play_midi midi_communion sock args // play communication sound
+        else if !strcmp path "/ack" then http_get_play_midi midi_ack sock args // play ack sound
+        else if !strcmp path "/abort" then http_get_play_midi midi_abort sock args // play abort sound
+        else if !strcmp path "/ministop" then http_get_play_midi midi_ministop sock args // play ministop sound
+        else if !strcmp path "/play" then http_get_play sock args // play a wav from url
+        else if !strcmp path "/say" then http_get_say sock args // text to speech
+        else if !strcmp path "/taichi" then http_get_taichi sock args // taichi
+        else if !strcmp path "/mp3" then http_get_mp3 sock args // play an mp3 from url
+        else if !strcmp path "/sleep" then http_get_sleep sock args // sleep
+        else if !strcmp path "/wakeup" then http_get_wakeup sock args // wake up
+        else if !strcmp path "/left" then http_get_left sock args // p=position d=direction
+        else if !strcmp path "/right" then http_get_right sock args // p=position d=direction
+        else if !strcmp path "/nose" then http_get_nose sock args // v=value
+        else if !strcmp path "/weather" then http_get_weather sock args // v=value
+        else if !strcmp path "/stock" then http_get_stock sock args // v=value
+        else if !strcmp path "/traffic" then http_get_traffic sock args // v=value
+        else if !strcmp path "/mail" then http_get_mail sock args // v=value
+        else if !strcmp path "/pollution" then http_get_pollution sock args // v=value
+        else if !strcmp path "/clear" then http_get_clear sock args // clear all infosrc
+        else if !strcmp path "/dns" then http_get_dns sock args // d=domain name
+        else if !strcmp path "/setup" then http_get_setup sock args // setup parameters
+        else if !strcmp path "/forth" then forth_http_post sock args // forth command
+        else if !strcmp path "/milligram.css" then http_get_milligram_css sock args // milligram.css
+        else if !strcmp path "/openapi.yaml" then http_get_openapi_yaml sock args // openapi spec
+        else if !strcmp path "/" then http_get_index sock args // index page
+        else http_not_found sock args;
         0
     );;
 

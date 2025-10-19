@@ -1,0 +1,51 @@
+/**
+ * List operations words for Forth interpreter
+ * Copyright (c) 2025 Andrea Bonomi
+ * This code is licensed under the MIT License
+ */
+
+/**
+ * NIL ( -- list )
+ * Push empty list onto the stack
+ */
+fun forth_nil f=
+    forth_push f [list:nil];;
+
+/**
+ * :: ( list x -- list' )
+ * Construct a new list by prepending an element
+ */
+fun forth_colon_colon f=
+    let forth_pop f -> x in
+    let forth_pop f -> list in forth_push f [list:(x :: list.list)];;
+
+/**
+ * HD ( list -- list x )
+ * Get the head of a list
+ */
+fun forth_hd f=
+    let forth_pop f -> list in
+    if list.list == nil then forth_nil f
+    else (
+        forth_push f list;
+        forth_push f (hd list.list)
+    );;
+
+/**
+ * TL ( list -- list' )
+ * Get the tail of a list
+ */
+fun forth_tl f=
+    let forth_pop f -> list in
+    if list.list == nil then forth_nil f
+    else forth_push f [list:tl list.list];;
+
+/**
+ * STR-JOIN ( list -- str )
+ * Join a list of strings into a single string
+ */
+fun forth_str_join f=
+    let forth_pop f -> list in
+    let forth_list_to_str list.list "" -> val in
+    forth_push f [str:val];
+    nil;;

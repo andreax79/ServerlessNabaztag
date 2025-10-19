@@ -56,12 +56,13 @@ fun forth_init_dictionary=
         [ name:"true"   func:#forth_true ] ::
         [ name:"false"  func:#forth_false ] ::
         // Output
-        [ name:"."      func:#forth_d ] ::
-        [ name:".s"     func:#forth_dot_s ] ::
-        [ name:"emit"   func:#forth_emit ] ::
-        [ name:"cr"     func:#forth_cr ] ::
-        [ name:"space"  func:#forth_space ] ::
-        [ name:"bl"     func:#forth_bl ] ::
+        [ name:"."                  func:#forth_d ] ::
+        [ name:".s"                 func:#forth_dot_s ] ::
+        [ name:"emit"               func:#forth_emit ] ::
+        [ name:"cr"                 func:#forth_cr ] ::
+        [ name:"space"              func:#forth_space ] ::
+        [ name:"bl"                 func:#forth_bl ] ::
+        [ name:"read-line"          func:#forth_read_line  flag:FORTH_ASYNC] ::
         // List
         [ name:"nil"                func:#forth_nil ] ::
         [ name:"::"                 func:#forth_colon_colon] ::
@@ -84,6 +85,7 @@ fun forth_init_dictionary=
         [ name:"("                  func:#forth_p] ::
         [ name:"words"              func:#forth_words] ::
         [ name:"time&date"          func:#forth_time_and_date ] ::
+        [ name:"evaluate"           func:#forth_evaluate  flag:FORTH_ASYNC] ::
         // Nabaztag
         [ name:"sleeping"           func:#forth_sleeping ] ::
         [ name:"sleep"              func:#forth_sleep ] ::
@@ -106,7 +108,9 @@ fun forth_init_dictionary=
         [ name:"clear-info"         func:#forth_clear_info ] ::
         [ name:"taichi"             func:#forth_taichi  flag:FORTH_ASYNC] ::
         [ name:"play-url"           func:#forth_play_url ] ::
+        [ name:"play-midi"          func:#forth_play_midi ] ::
         [ name:"http-get"           func:#forth_http_get  flag:FORTH_ASYNC] ::
+        [ name:"revision"           func:#forth_revision ] ::
         [ name:"md5"                func:#forth_md5 ] ::
         [ name:"set-md5-password"   func:#forth_set_md5_password ] ::
         [ name:"get-md5-password"   func:#forth_get_md5_password ] ::

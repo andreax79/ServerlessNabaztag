@@ -10,6 +10,4 @@ const RGB_CYAN   = 0x00ffff ;;
 const RGB_WHITE  = 0xffffff ;;
 const RGB_GRAY   = 0x808080 ;;
 const RGB_ROSE   = 0xff8080 ;;
-
 const RGB_AMBER  = 0xff8000 ;;
-

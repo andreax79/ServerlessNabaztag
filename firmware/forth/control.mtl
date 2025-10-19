@@ -5,7 +5,8 @@
  */
 
 /**
- * ABORT Empty the data stack and the return stack ( i * x -- ) ( R: j * x -- )
+ * ABORT ( i * x -- ) ( R: j * x -- )
+ * Empty the data stack and the return stack
  */
 fun forth_abort f=
     set f.stack = nil;
@@ -17,18 +18,20 @@ fun forth_abort f=
  * Write a message and abort
  */
 fun forth_abort_msg f msg=
-    set f.output = "\n" :: msg :: "\n" :: f.output;
+    forth_write f strcatlist "\n" :: msg :: "\n" :: nil;
     forth_abort f;;
 
 /**
- * EXIT Return control to the caller
+ * EXIT ( -- )
+ * Return control to the caller
  */
 fun forth_exit f=
     set f.pc = nil; // end execution
     nil;;
 
 /**
- * JMP Unconditional jump ( addr -- )
+ * JMP ( addr -- )
+ * Unconditional jump
  */
 fun forth_jmp f=
     let forth_pop f -> addr in
@@ -36,7 +39,8 @@ fun forth_jmp f=
     nil;;
 
 /**
- * ?JMP Jump if zero ( cond addr -- )
+ * ?JMP ( cond addr -- )
+ * Jump if zero
  */
 fun forth_qjmp f=
     let forth_pop f -> addr in
@@ -45,7 +49,8 @@ fun forth_qjmp f=
     nil;;
 
 /**
- * BEGIN Begin a loop (immediate)  ( -- )
+ * BEGIN (immediate)  ( -- )
+ * Begin a loop
  * Store the current position in the control stack
  */
 fun forth_begin f=
@@ -58,7 +63,8 @@ fun forth_begin f=
     );;
 
 /**
- * UNTIL End a loop (immediate)  ( x -- )
+ * UNTIL (immediate)  ( x -- )
+ * End a loop
  * Compile a conditional jump back to the matching BEGIN
  */
 fun forth_until f=
@@ -80,7 +86,8 @@ fun forth_until f=
     );;
 
 /**
- * IF Begin a conditional (immediate)  ( cond -- )
+ * IF (immediate)  ( cond -- )
+ * Begin a conditional
  * Compile a conditional jump to the matching ELSE or THEN
  */
 fun forth_if f=
@@ -97,7 +104,8 @@ fun forth_if f=
     );;
 
 /**
- * ELSE Begin the else part of a conditional (immediate)  ( -- )
+ * ELSE (immediate)  ( -- )
+ * Begin the else part of a conditional
  * Compile an unconditional jump to the matching THEN
  * Update the previous conditional jump to point to the instruction after the ELSE
  */
@@ -125,7 +133,8 @@ fun forth_else f=
     );;
 
 /**
- * THEN End a conditional (immediate)  ( -- )
+ * THEN (immediate)  ( -- )
+ * End a conditional
  * Update the previous conditional jump or unconditional jump to point to the instruction after THEN
  */
 fun forth_then f=

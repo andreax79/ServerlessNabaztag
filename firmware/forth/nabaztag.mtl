@@ -5,33 +5,38 @@
  */
 
 /**
- * SLEEPING ( -- flag) Return true if the Nabaztag is in sleep mode
+ * SLEEPING ( -- flag)
+ * Return true if the Nabaztag is in sleep mode
  */
 fun forth_sleeping f=
     forth_push f [int:if sleep_status then FORTH_TRUE else FORTH_FALSE];;
 
 /**
- * SLEEP ( -- ) Put the Nabaztag into sleep mode
+ * SLEEP ( -- )
+ * Put the Nabaztag into sleep mode
  */
 fun forth_sleep f=
     sleep_start;
     nil;;
 
 /**
- * WAKEUP ( -- ) Wake up the Nabaztag from sleep mode
+ * WAKEUP ( -- )
+ * Wake up the Nabaztag from sleep mode
  */
 fun forth_wakeup f=
     sleep_end;
     nil;;
 
 /**
- * LEFT-EAR-POSITION ( -- pos ) Return the current position of the left ear
+ * LEFT-EAR-POSITION ( -- pos )
+ * Return the current position of the left ear
  */
 fun forth_left_ear_position f=
     forth_push f [int:ears_left];;
 
 /**
- * MOVE-LEFT-EAR ( dir pos -- ) Move the left ear in direction dir (0=left, 1=right) to position pos (0..16)
+ * MOVE-LEFT-EAR ( dir pos -- )
+ * Move the left ear in direction dir (0=left, 1=right) to position pos (0..16)
  */
 fun forth_move_left_ear f=
     let forth_pop f -> pos in
@@ -40,13 +45,15 @@ fun forth_move_left_ear f=
     nil;;
 
 /**
- * RIGHT-EAR-POSITION ( -- pos ) Return the current position of the right ear
+ * RIGHT-EAR-POSITION ( -- pos )
+ * Return the current position of the right ear
  */
 fun forth_right_ear_position f=
     forth_push f [int:ears_right];;
 
 /**
- * MOVE-RIGHT-EAR ( dir pos -- ) Move the left ear in direction dir (0=left, 1=right) to position pos (0..16)
+ * MOVE-RIGHT-EAR ( dir pos -- )
+ * Move the left ear in direction dir (0=left, 1=right) to position pos (0..16)
  */
 fun forth_move_right_ear f=
     let forth_pop f -> pos in
@@ -55,7 +62,8 @@ fun forth_move_right_ear f=
     nil;;
 
 /**
- * RANDOM ( max -- n ) Return a pseudo-random number n between 0 and max-1
+ * RANDOM ( max -- n )
+ * Return a pseudo-random number n between 0 and max-1
  */
 fun forth_random f=
     let forth_pop f -> max in
@@ -63,37 +71,43 @@ fun forth_random f=
     forth_push f [int:n];;
 
 /**
- * SERVER-URL ( -- url ) Get the server URL from the configuration
+ * SERVER-URL ( -- url )
+ * Get the server URL from the configuration
  */
 fun forth_server_url f=
     forth_push f [str:config_get_server_url];;
 
 /**
- * LANGUAGE ( -- lang ) Get the language from the configuration
+ * LANGUAGE ( -- lang )
+ * Get the language from the configuration
  */
 fun forth_language f=
     forth_push f [str:config_get_lang];;
 
 /**
- * CITY-CODE ( -- code ) Get the city code from the configuration
+ * CITY-CODE ( -- code )
+ * Get the city code from the configuration
  */
 fun forth_city_code f=
     forth_push f [str:config_get_city_code];;
 
 /**
- * DST ( -- flag ) Get the Daylight Saving Time flag from the configuration
+ * DST ( -- flag )
+ * Get the Daylight Saving Time flag from the configuration
  */
 fun forth_dst f=
     forth_push f [int:config_get_dst];;
 
 /**
- * VOLUME ( -- vol ) Get the audio volume
+ * VOLUME ( -- vol )
+ * Get the audio volume
  */
 fun forth_volume f=
     forth_push f [int:audiolib_volume];;
 
 /**
- * SET-INFO-WEATHER ( weather -- ) Set the weather information
+ * SET-INFO-WEATHER ( weather -- )
+ * Set the weather information
  */
 fun forth_set_info_weather f=
     let forth_pop f -> v in
@@ -101,7 +115,8 @@ fun forth_set_info_weather f=
     nil;;
 
 /**
- * SET-INFO-STOCK ( stock -- ) Set the stock information
+ * SET-INFO-STOCK ( stock -- )
+ * Set the stock information
  */
 fun forth_set_info_stock f=
     let forth_pop f -> v in
@@ -109,7 +124,8 @@ fun forth_set_info_stock f=
     nil;;
 
 /**
- * SET-INFO-TRAFFIC ( traffic -- ) Set the traffic information
+ * SET-INFO-TRAFFIC ( traffic -- )
+ * Set the traffic information
  */
 fun forth_set_info_traffic f=
     let forth_pop f -> v in
@@ -117,7 +133,8 @@ fun forth_set_info_traffic f=
     nil;;
 
 /**
- * SET-INFO-MAIL ( mail -- ) Set the mail information
+ * SET-INFO-MAIL ( mail -- )
+ * Set the mail information
  */
 fun forth_set_info_mail f=
     let forth_pop f -> v in
@@ -125,7 +142,8 @@ fun forth_set_info_mail f=
     nil;;
 
 /**
- * SET-INFO-POLLUTION ( pollution -- ) Set the pollution information
+ * SET-INFO-POLLUTION ( pollution -- )
+ * Set the pollution information
  */
 fun forth_set_info_pollution f=
     let forth_pop f -> v in
@@ -133,7 +151,8 @@ fun forth_set_info_pollution f=
     nil;;
 
 /**
- * CLEAR-INFO ( -- ) Clear all information
+ * CLEAR-INFO ( -- )
+ * Clear all information
  */
 fun forth_clear_info f=
     for i=1;i<=8 do (
@@ -142,14 +161,16 @@ fun forth_clear_info f=
     nil;;
 
 /**
- * TAICHI ( script -- ) Start a TaiChi choreography
+ * TAICHI ( script -- )
+ * Start a TaiChi choreography
  */
 fun forth_taichi f=
     chor_taichi_start (fixarg1 #forth_interpreter_resume f);
     nil;;
 
 /**
- * PLAY-URL ( url -- ) Play a WAV file from an HTTP URL
+ * PLAY-URL ( url -- )
+ * Play a WAV file from an HTTP URL
  * HTTPS is not supported
  */
 fun forth_play_url f=
@@ -157,25 +178,41 @@ fun forth_play_url f=
     audiolib_start_http url.str #streaming_wav_error;
     nil;;
 
+/**
+ * PLAY-MIDI ( i -- )
+ * Play a MIDI sound/note
+ * If i>=100, play note (i-100)
+ * If 0<=i<100, play sound i
+ * If i<0, play a random note
+ */
+fun forth_play_midi f=
+    let forth_pop f -> i in
+    if i.int>=100 then
+        midi_play_note (i.int-100)
+    else if i.int>=0 then
+        midi_play i.int
+    else
+        midi_play_random_note;;
+
 fun _forth_http_get_cb http res f=
-	Secholn ">>> _forth_http_get_cb";
     forth_push f [str:res];
     forth_interpreter_resume f;  // resume the interpreter
     0;;
 
 /**
- * HTTP-GET ( url -- content ) Perform an HTTP GET request and return the content as a string
+ * HTTP-GET ( url -- content )
+ * Perform an HTTP GET request and return the content as a string
  * HTTPS is not supported
  */
 fun forth_http_get f=
     let forth_pop f -> url in (
-        Secho ">>> forth_http_get "; Secholn url.str;
 	    http_request "GET" url.str nil (fixarg3 #_forth_http_get_cb f) HTTP_NORMAL
     );
     nil;;
 
 /**
- * SET-MD5-PASSWORD ( pwd -- ) Set the MD5 password used for server authentication
+ * SET-MD5-PASSWORD ( pwd -- )
+ * Set the MD5 password used for server authentication
  */
 fun forth_set_md5_password f=
     let forth_pop f -> pwd in
@@ -183,15 +220,24 @@ fun forth_set_md5_password f=
     nil;;
 
 /**
- * GET-MD5-PASSWORD ( -- pwd ) Get the MD5 password used for server
+ * GET-MD5-PASSWORD ( -- pwd )
+ * Get the MD5 password used for server
  */
 fun forth_get_md5_password f=
     forth_push f [str:config_md5_password];;
 
 /**
- * MD5 ( str -- hash ) Compute the MD5 hash of a string
+ * MD5 ( str -- hash )
+ * Compute the MD5 hash of a string
  */
 fun forth_md5 f=
     let forth_pop f -> str in
     let md5 str.str -> hash in
     forth_push f [str:hash];;
+
+/**
+ * REVISION ( -- str )
+ * Push the revision string onto the stack
+ */
+fun forth_revision f=
+    forth_push f [str:BYTECODE_REVISION_STR];;

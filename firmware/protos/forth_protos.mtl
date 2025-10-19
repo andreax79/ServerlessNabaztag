@@ -15,17 +15,18 @@ type Forth=[
     output              // list of collected output strings
     new_word_name       // name of the word being defined if in compilation state
     new_word_definition // list of Words being defined if in compilation state
+    forth_sock          // socket
     inter               // interpreter state
 ];;
 
 proto forth_compare_words 2;;
 proto forth_execute_code 2;;
 proto forth_get_word 1;;
-proto forth_http_post 3;;
-proto forth_interpreter 3;;
+proto forth_http_post 2;;
+proto forth_interpreter 4;;
 proto forth_interpreter_loop 1;;
 proto forth_interpreter_resume 1;;
-proto forth_stack_to_str 2;;
+proto forth_list_to_str 2;;
 proto forth_word_list_to_array 1;;
 
 const FORTH_TRUE = -1;;
@@ -35,6 +36,7 @@ const FORTH_STATE_NORMAL = 0;;
 const FORTH_STATE_COMPILATION = -1;;
 const FORTH_SPACE = 32;; // ASCII space
 const FORTH_DOUBLE_QUOTE = 34;; // ASCII " (double quote)
+const FORTH_BACKSLASH = 92;; // ASCII \ (backslash)
 
 const FORTH_IMMEDIATE = 1;;
 const FORTH_ASYNC = 2;;
