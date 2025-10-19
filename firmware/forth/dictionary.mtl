@@ -107,6 +107,9 @@ fun forth_init_dictionary=
         [ name:"taichi"             func:#forth_taichi  flag:FORTH_ASYNC] ::
         [ name:"play-url"           func:#forth_play_url ] ::
         [ name:"http-get"           func:#forth_http_get  flag:FORTH_ASYNC] ::
+        [ name:"md5"                func:#forth_md5 ] ::
+        [ name:"set-md5-password"   func:#forth_set_md5_password ] ::
+        [ name:"get-md5-password"   func:#forth_get_md5_password ] ::
         nil
     ;;
 

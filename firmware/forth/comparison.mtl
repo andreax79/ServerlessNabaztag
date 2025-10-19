@@ -5,28 +5,31 @@
  */
 
 /**
- * < True if second number less than top number ( n1 n2 -- flag )
+ * < True if second word less than top word ( n1 n2 -- flag )
  */
 fun forth_less f=
     let forth_pop f -> a in
     let forth_pop f -> b in
-    if a.int<b.int then forth_true f else forth_false f;;
+    let forth_compare_words a b -> c in
+    if c < 0 then forth_true f else forth_false f;;
 
 /**
- * = True if top two numbers equal ( n1 n2 -- flag )
+ * = True if top two words equal ( n1 n2 -- flag )
  */
 fun forth_eq f=
     let forth_pop f -> a in
     let forth_pop f -> b in
-    if a.int==b.int then forth_true f else forth_false f;;
+    let forth_compare_words a b -> c in
+    if c == 0 then forth_true f else forth_false f;;
 
 /**
- * > True if second number greater than top number ( n1 n2 -- flag )
+ * > True if second word greater than top word ( n1 n2 -- flag )
  */
 fun forth_more f=
     let forth_pop f -> a in
     let forth_pop f -> b in
-    if a.int>b.int then forth_true f else forth_false f;;
+    let forth_compare_words a b -> c in
+    if c > 0 then forth_true f else forth_false f;;
 
 /**
  * <0 True if top number less than zero ( n -- flag )

@@ -28,6 +28,7 @@ const CONF_GO_TO_BED=225;;      //1     Go to bed time
 const CONF_LENGTH=226;;
 
 var _config_data;;
+var config_md5_password = nil;; // MD5 hash of the HTTP password
 
 // Store configuration
 fun config_save =

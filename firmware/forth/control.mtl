@@ -132,7 +132,6 @@ fun forth_then f=
     if f.state != FORTH_STATE_COMPILATION then (
         forth_abort_msg f "THEN Compile mode only"
     ) else (
-        Secho "\nTHEN\n";
         // Get the position of the ?JMP/JMP address from the control stack
         let hd f.cstack -> jmp_addr in
         let (listnth f.new_word_definition ((listlen f.new_word_definition) - jmp_addr)) -> jmp_addr_w in (

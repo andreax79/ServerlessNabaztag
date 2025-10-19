@@ -67,6 +67,21 @@ fun forth_print_word w=
     Secholn "]"; 0
     );;
 
+/**
+ * Compare two Words.
+ * Returns 0 if equal, -1 if w1 < w2, 1 if w1 > w2, nil if not comparable.
+ */
+fun forth_compare_words w1 w2=
+    // TODO compare other types
+    if w1.int != nil && w2.int != nil then
+        if w1.int == w2.int then 0 // equal
+        else if w1.int < w2.int then -1  // w1 less than w2
+        else 1 // w1 greater than w2
+    else if w1.str != nil && w2.str != nil then
+        str_compare w1.str w2.str
+    else
+        nil;;
+
 fun forth_new_word token=
     if is_numeric token then
         [int:(atoi token)]
@@ -332,7 +347,6 @@ fun forth_interpreter text f cb=
  * Handle HTTP callback for Forth interpreter. Return the output as JSON.
  */
 fun _forth_http_cb f cb_args=
-    Secholn "_forth_http_cb";
     let cb_args -> [cnx sock] in
     http_send_content_and_close cnx sock "application/json"
     strcatlist
@@ -350,6 +364,28 @@ fun _forth_http_cb f cb_args=
 fun forth_http_post cnx sock args=
     let _http_arg_str args 'c' -> code in
     forth_interpreter code nil (fixarg2 #_forth_http_cb [cnx sock]);;
+
+/**
+ * Handle HTTP callback for loading Forth code from URL.
+ */
+fun _forth_load_cb http res=
+    if res != nil then
+        forth_interpreter (http_get_content res) nil nil;;
+
+/**
+ * Load and execute a Forth code from a URL.
+ */
+fun forth_load url=
+    http_request "GET" url nil #_forth_load_cb HTTP_NORMAL;
+    nil;;
+
+/**
+ * Initialize the Forth interpreter by loading the init.forth script from the server.
+ */
+fun forth_init=
+    if forth_dictionary==nil then forth_init_dictionary;
+    forth_load strcat config_get_server_url "/init.forth";
+    0;;
 
 fun _forth_test_cb f cb_args=
     Secholn "_forth_test_cb";

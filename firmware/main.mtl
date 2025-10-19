@@ -138,6 +138,8 @@ fun jobs_init=
     job_start "time_update_job" #time_update_job;
     job_start "audiolib_wav_time" #audiolib_wav_time_job;
     job_start "audiolib_update_vol" #audiolib_update_vol_job;
+    // Set the loop callback
+    loopcb #job_loop;
     0;;
 
 fun main=
@@ -146,7 +148,6 @@ fun main=
     leds_set_state LEDS_STATE_START;
     config_init;
     wifi_init 0;
-    loopcb #job_loop;
     info_init;
     netstart;
     dns_start_client;
@@ -165,6 +166,7 @@ fun main=
     daytime_start_srv PORT_DAYTIME;
 #endif
     run_init;
+    forth_init;
     jobs_init;
 
 #ifdef XXX

@@ -173,3 +173,25 @@ fun forth_http_get f=
 	    http_request "GET" url.str nil (fixarg3 #_forth_http_get_cb f) HTTP_NORMAL
     );
     nil;;
+
+/**
+ * SET-MD5-PASSWORD ( pwd -- ) Set the MD5 password used for server authentication
+ */
+fun forth_set_md5_password f=
+    let forth_pop f -> pwd in
+    set config_md5_password = pwd.str;
+    nil;;
+
+/**
+ * GET-MD5-PASSWORD ( -- pwd ) Get the MD5 password used for server
+ */
+fun forth_get_md5_password f=
+    forth_push f [str:config_md5_password];;
+
+/**
+ * MD5 ( str -- hash ) Compute the MD5 hash of a string
+ */
+fun forth_md5 f=
+    let forth_pop f -> str in
+    let md5 str.str -> hash in
+    forth_push f [str:hash];;

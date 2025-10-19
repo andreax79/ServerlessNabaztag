@@ -187,7 +187,11 @@ fun http_request verb url postdata cb type=
 	_http_debug strcatlist "HTTPREQUEST url=" :: url :: nil;
 	let _http_split_url url ->[host port path] in	// décodage de l'url de la requête
 	let if config_get_proxy then strcatlist "http://"::host::":"::(itoa port)::path::nil else path -> path in //Icy-MetaData:1\13\n
-	let strcatlist verb::" "::path::" HTTP/1.0\13\nUser-Agent: Mozilla/5.0\13\nAccept: */*\13\nHost: "::host::"\13\n"::
+	let strcatlist verb :: " " :: path :: " HTTP/1.0\13\n" ::
+            "User-Agent: Mozilla/5.0\13\n" ::
+            "Accept: */*\13\n" ::
+            "Host: "::host::"\13\n"::
+            "Connection: close\13\n" ::
 			if postdata==nil then "\13\n"::nil
 			else "Content-length: "::(itoa strlen postdata)::"\13\n\13\n"::postdata::nil
 		-> request in	// création de la chaîne requête

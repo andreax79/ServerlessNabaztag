@@ -15,10 +15,9 @@
 const HTTP_200 = "200 OK";;
 const HTTP_204 = "204 No Content";;
 const HTTP_404 = "404 Not Found";;
-const http_header_sep="\13\n\13\n";; // HTTP header separator
-const http_content_start="ontent-Length: ";;
-const http_content_start2="ontent-length: ";;
-const http_content_end="\13\n";;
+const HTTP_HEADER_SEP = "\13\n\13\n";; // HTTP header separator
+const HTTP_CONTENT_LENGTH = "content-length: ";; // lowerrcase
+const HTTP_CONTENT_END = "\13\n";;
 
 proto http_process_request 3 ;;
 
@@ -35,7 +34,7 @@ fun http_header http_status content_type content_length=
         "\13\10Date: " :: time_date_utc ::
         "\13\10Cache-Control: max-age=0, no-cache, no-store" ::
         "\13\10Pragma: no-cache" ::
-        "\13\10Connection: close"::
+        "\13\10Connection: close" ::
         "\13\10\13\10"::nil
 ;;
 
@@ -65,7 +64,7 @@ fun http_send_content_and_close cnx sock content_type content=
  * res: HTTP request
  */
 fun http_get_header res =
-    let strstr res http_header_sep 0 -> i in
+    let strstr res HTTP_HEADER_SEP 0 -> i in
     if i!=nil then strsub res 0 i;;
 
 /**
@@ -74,13 +73,12 @@ fun http_get_header res =
  * s: HTTP request
  */
 fun http_find_content_end s=
-    let http_get_header s -> header in
+    let to_lower http_get_header s -> header in
     if header!=nil then
-    let strstr header http_content_start 0 -> i in
-    let if i!=nil then i else strstr header http_content_start2 0 -> i in
-    let if i!=nil then strstr header http_content_end i -> j in
-    (strlen header)+(strlen http_header_sep)+if i!=nil then
-        let i+strlen http_content_start -> i in atoi strsub header i if j!=nil then j-i;;
+    let strstr header HTTP_CONTENT_LENGTH 0 -> i in
+    let if i!=nil then strstr header HTTP_CONTENT_END i -> j in
+    (strlen header)+(strlen HTTP_HEADER_SEP)+if i!=nil then
+        let i+strlen HTTP_CONTENT_LENGTH -> i in atoi strsub header i if j!=nil then j-i;;
 
 /**
  * Main data handling function for an HTTP connection.
@@ -101,12 +99,14 @@ fun http_sock_read cnx input sock=
     (
         if sock.sockSize==nil then
         (
-            set sock.sockInput=(strcat hd sock.sockInput input)::nil;
-            Secho "size=";
-            Iecholn set sock.sockSize=http_find_content_end hd sock.sockInput;
+            set sock.sockInput = (strcat hd sock.sockInput input)::nil;
+            set sock.sockSize = http_find_content_end hd sock.sockInput;
             nil
         )
-        else set sock.sockInput=input::sock.sockInput;
+        else
+        (
+            set sock.sockInput = input::sock.sockInput
+        );
         // Check if the total received data length now equals or exceeds the expected size
         if sock.sockSize!=nil && (slistlen sock.sockInput)>=sock.sockSize then
         let strcatlist rev sock.sockInput nil -> str in
@@ -238,7 +238,7 @@ fun _http_server_parse_req req=
     let strsub req i+1 j-i-1 -> path in (
         if !strcmp verb "POST" then
             // For POST requests, extract arguments from the body
-            set args = extractargs req ((strstr req http_header_sep 0) + (strlen http_header_sep))
+            set args = extractargs req ((strstr req HTTP_HEADER_SEP 0) + (strlen HTTP_HEADER_SEP))
         else
             // For GET requests, extract arguments from the path
             let strstr path "?" 0 -> i in
