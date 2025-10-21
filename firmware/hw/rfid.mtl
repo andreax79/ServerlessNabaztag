@@ -59,7 +59,7 @@ fun rfid_control=
 		(
 			set _rfid_last=rfid;
 			set _rfid_last_time = time_ms;
-			midi_play midi_RFIDok;
+			midi_play MIDI_RFID_OK;
 
 			// lancer l'animation (v19)
 			chor_start_msg CHOR_RFID_OK::nil #_rfid_end_chor nil;

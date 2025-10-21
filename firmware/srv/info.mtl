@@ -1,6 +1,7 @@
 #include protos/json_protos.mtl
 #include protos/info_protos.mtl
 #include protos/sleep_protos.mtl
+#include protos/midi_protos.mtl
 
 // gestion des services
 
@@ -285,7 +286,7 @@ fun info_update data=
             set ears_left=newleft;
             set ears_right=newright;
             if ((!sleep_status) && (!ears_resetting)) then (
-                midi_play midi_communion;
+                midi_play MIDI_COMMUNION;
                 ears_go_to_ref_pos
             )
         )
@@ -324,7 +325,7 @@ fun info_update_v2 data=
             set ears_left=newleft;
             set ears_right=newright;
             if ((!sleep_status) && (!ears_resetting)) then (
-//              midi_play midi_communion;
+//              midi_play MIDI_COMMUNION;
                 ears_go_to_ref_pos
             )
         )

@@ -118,15 +118,7 @@ fun chor_run_cmd i0=
         else if code==CH_RAND_MIDI then
         (
             //Secholn "randmidi";
-            let midi_get_list -> t in
-            let tablen t -> n in
-            if n>0 then
-            let ((rand&255)*n)>>8 -> imusic in // v16 start
-            let t.(imusic) -> music in
-            (
-                Secho "randmidi="; Iecholn imusic;
-                audiolib_wav_start_local music::nil
-            ); // v16 end
+            midi_play_random_note;
             0
         )
         else if code==CH_AVANCE then

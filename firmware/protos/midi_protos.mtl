@@ -1,2 +1,17 @@
-proto midi_get_list 0;;
 proto midi_play 1;;
+proto midi_play_note 1;;
+proto midi_play_random_note 0;;
+
+const MIDI_ACQUIRED = 0;;
+const MIDI_MINI_STOP = 1;;
+const MIDI_ABORT = 2;;
+const MIDI_EARS = 3;;
+const MIDI_ACK = 4;;
+const MIDI_START_INTERACTIVE = 5;;
+const MIDI_END_INTERACTIVE = 6;;
+const MIDI_PRECEDENT = 7;;
+const MIDI_SUIVANT = 8;;
+const MIDI_COMMUNION = 9;;
+const MIDI_START_RECORD = 10;;
+const MIDI_END_RECORD = 11;;
+const MIDI_RFID_OK = 12;;

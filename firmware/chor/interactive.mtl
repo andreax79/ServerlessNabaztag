@@ -3,6 +3,7 @@
 #include protos/interactive_protos.mtl
 #include protos/json_protos.mtl
 #include protos/http_protos.mtl
+#include protos/midi_protos.mtl
 #ifdef XMPP
 #include protos/xmpp_protos.mtl
 #endif
@@ -55,8 +56,8 @@ fun interactive_url_reco application position cmdindex =
 // Play a start or stop sound
 fun _interactive_control_sound Type =
     match Type with
-    (intDefaultStart ->     midi_play midi_startInteractive )    // On joue le son par defaut
-    | (intDefaultStop ->    midi_play midi_endInteractive )      // On joue le son par defaut
+    (intDefaultStart ->     midi_play MIDI_START_INTERACTIVE )    // On joue le son par defaut
+    | (intDefaultStop ->    midi_play MIDI_END_INTERACTIVE )      // On joue le son par defaut
     | (intNone ->           nil)                                 // On ne joue pas de son
     | (_ -> _interactive_debug "No Sound to Play!!"; nil );      // Si on a indique un mauvais son, on ne joue rien
     0
@@ -155,14 +156,14 @@ fun interactive_send_btn btn=
     let audiolib_wav_cur_played_bytes -> readBytes in ( // midi_play resets audiolib_wav_cur_played_bytes so we cache it
         // sound
         if (btn == BUTTON_CLIC) then (
-            if (!strcmp _interactive_btn_1_snd "clonk") then midi_play midi_abort
-            else if (!strcmp _interactive_btn_1_snd"chord") then midi_play midi_ack
-            else if (!strcmp _interactive_btn_1_snd "neutral") then midi_play midi_ministop;
+            if (!strcmp _interactive_btn_1_snd "clonk") then midi_play MIDI_ABORT
+            else if (!strcmp _interactive_btn_1_snd"chord") then midi_play MIDI_ACK
+            else if (!strcmp _interactive_btn_1_snd "neutral") then midi_play MIDI_MINI_STOP;
             0
         ) else if (btn == BUTTON_DCLIC) then (
-            if (!strcmp _interactive_btn_2_snd "clonk") then midi_play midi_abort
-            else if (!strcmp _interactive_btn_2_snd "chord") then midi_play midi_ack
-            else if (!strcmp _interactive_btn_2_snd "neutral") then midi_play midi_ministop;
+            if (!strcmp _interactive_btn_2_snd "clonk") then midi_play MIDI_ABORT
+            else if (!strcmp _interactive_btn_2_snd "chord") then midi_play MIDI_ACK
+            else if (!strcmp _interactive_btn_2_snd "neutral") then midi_play MIDI_MINI_STOP;
             0
         );
         // request instructions
@@ -243,8 +244,8 @@ fun interactive_send_ear_touched lefttouch righttouch=
     ears_stop 0;
     let audiolib_wav_cur_played_bytes -> readBytes in  // midi_play resets audiolib_wav_cur_played_bytes so we cache it
     (
-        if (lefttouch) then midi_play midi_precedent;
-        if (righttouch) then midi_play midi_suivant;
+        if (lefttouch) then midi_play MIDI_PRECEDENT;
+        if (righttouch) then midi_play MIDI_SUIVANT;
         run_set_state interactiveReqWaitRun (http_request "GET" (interactive_url_ear interactive_app readBytes streaming_audio_cmd_index righttouch lefttouch) nil #interactive_req_cb_http HTTP_NORMAL)
     );
     0;;

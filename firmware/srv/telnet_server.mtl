@@ -125,7 +125,7 @@ fun telnet_server_cb cnx _ _=
     let [sockCnx:cnx sockCallback:nil] -> sock in
     let [stack:nil rstack:nil pc:0 forth_sock:sock] -> f in (
         tcpcb cnx fixarg4 #_telnet_sock_event f;
-        forth_interpreter "telnetd" f sock (fixarg2 #_telnet_forth_interpreter_cb sock)
+        forth_interpreter "interpreter" f sock (fixarg2 #_telnet_forth_interpreter_cb sock)
     );
     0;;
 

@@ -1,6 +1,7 @@
 #include protos/interactive_protos.mtl
 #include protos/streaming_protos.mtl
 #include protos/record_protos.mtl
+#include protos/midi_protos.mtl
 #include protos/run_protos.mtl
 
 // **********************
@@ -49,7 +50,7 @@ fun _record_cb_http http res=
     if _record_play_end!=nil then
     (
         set _record_play_end=nil;
-        audiolib_wav_start_local midi_endrecord::nil
+        midi_play MIDI_END_RECORD
     );
     run_set_state idleRun;
     0;;
@@ -60,7 +61,7 @@ fun record_upload_timeout_job=
         if _record_play_end!=nil && ((_record_play_end-time_ms)<0) then
         (
             set _record_play_end=nil;
-            audiolib_wav_start_local midi_endrecord::nil
+            midi_play MIDI_END_RECORD
         );
         if (http_inactive recordreq)>STD_NET_TIMEOUT then
         (

@@ -4,6 +4,7 @@
 #include protos/streaming_protos.mtl
 #include protos/chor_protos.mtl
 #include protos/jobs_protos.mtl
+#include protos/midi_protos.mtl
 #include protos/forth_protos.mtl
 #include protos/json_protos.mtl
 #include protos/info_protos.mtl
@@ -457,10 +458,10 @@ fun http_process_request req sock=
         else if !strcmp path "/status" then http_get_json_status sock args // status
         else if !strcmp path "/jobs" then http_get_json_jobs sock args // jobs
         else if !strcmp path "/timezones" then http_get_timezones sock args // timezones
-        else if !strcmp path "/communication" then http_get_play_midi midi_communion sock args // play communication sound
-        else if !strcmp path "/ack" then http_get_play_midi midi_ack sock args // play ack sound
-        else if !strcmp path "/abort" then http_get_play_midi midi_abort sock args // play abort sound
-        else if !strcmp path "/ministop" then http_get_play_midi midi_ministop sock args // play ministop sound
+        else if !strcmp path "/communication" then http_get_play_midi MIDI_COMMUNION sock args // play communication sound
+        else if !strcmp path "/ack" then http_get_play_midi MIDI_ACK sock args // play ack sound
+        else if !strcmp path "/abort" then http_get_play_midi MIDI_ABORT sock args // play abort sound
+        else if !strcmp path "/ministop" then http_get_play_midi MIDI_MINI_STOP sock args // play ministop sound
         else if !strcmp path "/play" then http_get_play sock args // play a wav from url
         else if !strcmp path "/say" then http_get_say sock args // text to speech
         else if !strcmp path "/taichi" then http_get_taichi sock args // taichi
