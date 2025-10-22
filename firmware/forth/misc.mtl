@@ -91,3 +91,12 @@ fun forth_evaluate f=
     ) else (
         forth_interpreter word.str f f.forth_sock (fixarg2 #_forth_evaluate_cb f.inter)
     );;
+
+/**
+ * TIME-MS ( -- ms )
+ * Push the current time in milliseconds onto the stack
+ */
+fun forth_time_ms f=
+    let time_ms -> ms in
+    forth_push f [int:ms];
+    nil;;

@@ -244,3 +244,11 @@ fun http_get_content res=
 	if i==nil then nil
 	else strsub res i+strlen HTTP_SEP strlen res;;
 
+/**
+ * Split a HTTP response into header and content
+ * res: [header content]
+ */
+fun http_split_header_content res=
+    let strstr res HTTP_SEP 0 -> i in
+    if i==nil then [res nil]
+    else [strsub res 0 i+strlen HTTP_SEP strsub res i+strlen HTTP_SEP strlen res];;

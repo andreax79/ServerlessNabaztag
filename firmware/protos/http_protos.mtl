@@ -5,6 +5,7 @@ proto http_get_content 1;;
 proto http_get_header 1;;
 proto http_inactive 1;;
 proto http_request 5;;
+proto http_split_header_content 1;;
 
 const HTTP_NORMAL=0;;
 const HTTP_STREAM=1;;

@@ -479,7 +479,7 @@ fun http_process_request req sock=
         else if !strcmp path "/clear" then http_get_clear sock args // clear all infosrc
         else if !strcmp path "/dns" then http_get_dns sock args // d=domain name
         else if !strcmp path "/setup" then http_get_setup sock args // setup parameters
-        else if !strcmp path "/forth" then forth_http_post sock args // forth command
+        else if !strcmp path "/forth" then forth_http_post_req sock args // forth command
         else if !strcmp path "/milligram.css" then http_get_milligram_css sock args // milligram.css
         else if !strcmp path "/openapi.yaml" then http_get_openapi_yaml sock args // openapi spec
         else if !strcmp path "/" then http_get_index sock args // index page

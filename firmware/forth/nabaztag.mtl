@@ -194,22 +194,6 @@ fun forth_play_midi f=
     else
         midi_play_random_note;;
 
-fun _forth_http_get_cb http res f=
-    forth_push f [str:res];
-    forth_interpreter_resume f;  // resume the interpreter
-    0;;
-
-/**
- * HTTP-GET ( url -- content )
- * Perform an HTTP GET request and return the content as a string
- * HTTPS is not supported
- */
-fun forth_http_get f=
-    let forth_pop f -> url in (
-	    http_request "GET" url.str nil (fixarg3 #_forth_http_get_cb f) HTTP_NORMAL
-    );
-    nil;;
-
 /**
  * SET-MD5-PASSWORD ( pwd -- )
  * Set the MD5 password used for server authentication

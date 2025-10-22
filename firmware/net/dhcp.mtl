@@ -46,14 +46,19 @@ fun updatedhcpleasetimes leaselen =
     if (leaselen == -1) then
     (
          set dhcp_infinite_lease = 1;
-         _dhcp_debug "Infinite DHCP lease !"
+#ifdef DHCP_DEBUG
+         _dhcp_debug "Infinite DHCP lease !";
+#endif
+        0
     )
     else
     (
         set dhcp_lease_t1 = dhcp_lease_start + leaselen/2;
-        _dhcp_debug strcatlist "Next dhcp renewal in " :: (itoa (dhcp_lease_t1 -time )) :: "seconds"::nil
-    );
-    0;;
+#ifdef DHCP_DEBUG
+        _dhcp_debug strcatlist "Next dhcp renewal in " :: (itoa (dhcp_lease_t1 -time )) :: "seconds"::nil;
+#endif
+        0
+    );;
 
 fun mkdhcp op netip hostip newip =
     let 236+16+14->n in
@@ -149,7 +154,10 @@ fun cbnetdhcp src macfrom hostip=
         else if type==DHCP_NACK then
         (
             // TODO
-            _dhcp_debug "DHCP_NACK"; nil
+#ifdef DHCP_DEBUG
+            _dhcp_debug "DHCP_NACK";
+#endif
+            nil
         )
     );;
 
@@ -213,10 +221,14 @@ fun dhcp_check_job =
  */
 fun dhcp_start_client=
 #ifndef SIMU
+#ifdef DHCP_DEBUG
     _dhcp_debug "dhcp_start_client";
+#endif
     if (config_get_dhcp && !dhcp_client_started) then
     (
+#ifdef DHCP_DEBUG
         _dhcp_debug "really do dhcp_start_client";
+#endif
         regudp 68 #cbnetdhcp;
         if (!strcmp netip netip_empty) then
             udpsend netip 68 ipbroadcast 67 (mkdhcp DHCP_DISCOVER netip nil nil) macbroadcast

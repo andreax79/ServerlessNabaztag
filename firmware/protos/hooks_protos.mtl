@@ -1,4 +1,6 @@
-proto hook_click 1 ;;
-proto hook_dbl_click 1 ;;
-proto hook_ears 2 ;;
-proto hook_rfid 2 ;;
+proto hook_click 0;;
+proto hook_dbl_click 0;;
+proto hook_ears 0;;
+proto hook_halftime_sound 0;;
+proto hook_rfid 2;;
+proto hook_time_sound 0;;

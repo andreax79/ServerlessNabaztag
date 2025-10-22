@@ -4,8 +4,6 @@
  * This code is licensed under the MIT License
  */
 
-#ifdef FORTH
-
 type Forth=[
     stack               // data stack
     rstack              // return stack
@@ -22,7 +20,7 @@ type Forth=[
 proto forth_compare_words 2;;
 proto forth_execute_code 2;;
 proto forth_get_word 1;;
-proto forth_http_post 2;;
+proto forth_http_post_req 2;;
 proto forth_interpreter 4;;
 proto forth_interpreter_loop 1;;
 proto forth_interpreter_resume 1;;
@@ -40,5 +38,3 @@ const FORTH_BACKSLASH = 92;; // ASCII \ (backslash)
 
 const FORTH_IMMEDIATE = 1;;
 const FORTH_ASYNC = 2;;
-
-#endif

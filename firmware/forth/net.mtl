@@ -1,0 +1,48 @@
+/**
+ * Network words for Forth interpreter
+ * Copyright (c) 2025 Andrea Bonomi
+ * This code is licensed under the MIT License
+ */
+
+fun _forth_http_req_cb http res f=
+    let http_split_header_content res -> [header content] in (
+        forth_push f [str:content];
+        forth_push f [str:header];
+        forth_interpreter_resume f;  // resume the interpreter
+        0
+    );;
+
+/**
+ * HTTP-GET ( url -- content header )
+ * Perform an HTTP GET request and return the content as a string
+ * HTTPS is not supported
+ */
+fun forth_http_get f=
+    let forth_pop f -> url in
+	http_request "GET" url.str nil (fixarg3 #_forth_http_req_cb f) HTTP_NORMAL;
+    nil;;
+
+/**
+ * HTTP-POST ( payload url -- content header )
+ * Perform an HTTP POST request and return the content as a string
+ * HTTPS is not supported
+ */
+fun forth_http_post f=
+    let forth_pop f -> url in
+    let forth_pop f -> payload in
+	http_request "POST" url.str payload.str (fixarg3 #_forth_http_req_cb f) HTTP_NORMAL;
+    nil;;
+
+/**
+ * MAC ( -- mac )
+ * Push the MAC address of the WIFI interface onto the stack
+ */
+fun forth_mac f=
+    forth_push f [str:wifi_mac_addr];;
+
+/**
+ * IP ( -- ip )
+ * Push the IP address of the WIFI interface onto the stack
+ */
+fun forth_ip f=
+    forth_push f [str:webip netip];;

@@ -86,6 +86,12 @@ fun forth_init_dictionary=
         [ name:"words"              func:#forth_words] ::
         [ name:"time&date"          func:#forth_time_and_date ] ::
         [ name:"evaluate"           func:#forth_evaluate  flag:FORTH_ASYNC] ::
+        [ name:"time-ms"            func:#forth_time_ms ] ::
+        // Net
+        [ name:"http-get"           func:#forth_http_get  flag:FORTH_ASYNC] ::
+        [ name:"http-post"          func:#forth_http_post  flag:FORTH_ASYNC] ::
+        [ name:"mac"                func:#forth_mac] ::
+        [ name:"ip"                 func:#forth_ip] ::
         // Nabaztag
         [ name:"sleeping"           func:#forth_sleeping ] ::
         [ name:"sleep"              func:#forth_sleep ] ::
@@ -109,7 +115,6 @@ fun forth_init_dictionary=
         [ name:"taichi"             func:#forth_taichi  flag:FORTH_ASYNC] ::
         [ name:"play-url"           func:#forth_play_url ] ::
         [ name:"play-midi"          func:#forth_play_midi ] ::
-        [ name:"http-get"           func:#forth_http_get  flag:FORTH_ASYNC] ::
         [ name:"revision"           func:#forth_revision ] ::
         [ name:"md5"                func:#forth_md5 ] ::
         [ name:"set-md5-password"   func:#forth_set_md5_password ] ::

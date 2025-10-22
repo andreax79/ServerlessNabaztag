@@ -10,9 +10,15 @@
 
 // debug
 #ifdef TRAME_DEBUG
-fun _trame_debug str= nil;;
-#else
 fun _trame_debug str= Secholn strcatlist "[program] " :: str :: nil; nil;;
+
+fun _trame_dump_prgm l=
+    _trame_debug "Program:";
+    for l=l;l!=nil;tl l do let hd l->[key val] in (
+        _trame_debug strcatlist ( key :: " " :: (if (val != nil) then val else "") :: nil)
+    );
+    _trame_debug "---";
+    l;;
 #endif
 
 fun _trame_filter_config_word s=
@@ -31,14 +37,6 @@ fun trame_filter_config s i0=
 ;;
 
 // ---------------------------------------------------------------------------
-
-fun _trame_dump_prgm l=
-    _trame_debug "Program:";
-    for l=l;l!=nil;tl l do let hd l->[key val] in (
-        _trame_debug strcatlist ( key :: " " :: (if (val != nil) then val else "") :: nil)
-    );
-    Secholn "---";
-    l;;
 
 // Cryptage des trames
 fun _trame_bintoi3 s x=((strget s x)<<16)+((strget s x+1)<<8)+(strget s x+2);;
@@ -113,9 +111,11 @@ fun trame_eval ping_trame=
     let _trame_pingextract dump ping_trame -> frame_list in
     if frame_list==nil then (
         // error, bad trame
-        Secholn "bad trame";
+#ifdef TRAME_DEBUG
+        _trame_debug "bad trame";
         dump ping_trame;
-        Secholn "dropping";
+        _trame_debug "dropping";
+#endif
         if (interactive_status) then (
             // display error
             interactive_error;
@@ -137,7 +137,9 @@ fun trame_eval ping_trame=
 #ifdef PING
                     set pingdelay = strget val 0;
 #else
-                    Secholn "dropping ping delay";
+#ifdef TRAME_DEBUG
+                    _trame_debug "dropping ping delay";
+#endif
 #endif
                     nil
                 ) else if code == 4 then (
@@ -159,17 +161,28 @@ fun trame_eval ping_trame=
                 ) else if code == 10 then (
                     // programs (or IDLE or SLEEP)
                     uncrypt val 1 nil 0x47 47;
+#ifdef TRAME_DEBUG
                     set program=_trame_dump_prgm trame_filter_config val 1;
+#else
+                    set program=trame_filter_config val 1;
+#endif
                     nil
                 ) else if code == 11 then (
                     // change mode
                     let strget val 0 -> mode in (
+#ifdef TRAME_DEBUG
                         Secho "changemode = "; Iecholn mode;
+#endif
                         if (mode == 0) then sleep_end
                         else if (mode == 1) then sleep_start
                         else nil
                     )
-                ) else (Secho "Unknown code "; Iecho code; Secholn ""; nil)) -> xmpp_packet_list in
+                ) else (
+#ifdef TRAME_DEBUG
+                        Secho "Unknown code "; Iecholn code;
+#endif
+                        nil
+                )) -> xmpp_packet_list in
                 if (xmpp_packet_list != nil) then
                     set xmpp_packets = xmpp_packet_list::xmpp_packets
                 else
@@ -195,7 +208,9 @@ fun trame_eval ping_trame=
                     0
                 ) else (
                     // will load trame_remaining_resources and then start the program 'streaming_current_program'
-                    Secho "loading rsrcs...";
+#ifdef TRAME_DEBUG
+                    _trame_debug "loading rsrcs...";
+#endif
                     run_set_state rscLoadNextRun;
                     0
                 )
@@ -227,7 +242,9 @@ fun _trame_queue_remove_entry binome=
     // was full ?
     let listlen trame_queue -> queueLen in
     if queueLen == TRAME_QUEUE_MAXLEN-1 then (
-        Secholn "trame queue not full anymore, warning server";
+#ifdef TRAME_DEBUG
+        _trame_debug "trame queue not full anymore, warning server";
+#endif
 #ifdef XMPP
         set xmpp_busy_status = 0;
 #endif
@@ -246,7 +263,9 @@ fun trame_get_next_pending=
             let hd ptr -> binome in
             let binome -> [rsrc expiration_time ping_trame] in
             if ((expiration_time != nil) && (time >= expiration_time)) then (
-                Secholn "trame expired, removing";
+#ifdef TRAME_DEBUG
+                _trame_debug "trame expired, removing";
+#endif
                 _trame_queue_remove_entry binome
 
             ) else if (trame_is_resource_valid rsrc) then (

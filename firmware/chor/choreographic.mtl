@@ -171,7 +171,9 @@ fun chor_taichi_end_cb unused cb=
     set chor_processing_status = 0;
     ears_set_wait_and_detect_mode;
     run_set_state idleRun;
+#ifdef CHOR_DEBUG
     Secholn "taichi end";
+#endif
     if cb != nil then call cb [];
     0;;
 
@@ -191,7 +193,9 @@ fun chor_do_taichi_now=
         if now || chor_next_taichi==nil then // compute chor_next_taichi
         let if (info_taichi == 40) then 255 else if (info_taichi == 255) then 40 else 80 -> correctedTaichi in // etait inversé
         let ((correctedTaichi*60*((rand&127)+64))>>7) -> delaye in (
+#ifdef CHOR_DEBUG
             Secho "taichi in "; Iecho delaye; Secholn "s";
+#endif
             set chor_next_taichi=time+delaye
         );
         now

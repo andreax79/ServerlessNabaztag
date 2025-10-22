@@ -32,6 +32,7 @@ const IEEE80211_AUTH_OPEN=0;; // Authentication type: open
 const IEEE80211_AUTH_SHARED=1;; // Authentication type: shared key
 
 var wifi;;
+var wifi_mac_addr;; // MAC address as human-readable string
 var _wifi_scans;;
 var _wifi_master=0;; // 1 = master mode (access point), 0 = client mode (station)
 var _wifi_retry_time;;
@@ -46,6 +47,22 @@ var _wifi_try;;
 #include protos/leds_protos.mtl
 #include protos/config_protos.mtl
 #include protos/json_protos.mtl
+
+/**
+ * Convert a MAC address to a string
+ */
+fun _wifi_mac_to_str src=
+    let strnew 17 -> s in
+    let 0->i in
+    (
+        for j=0;j<6 do
+        (
+            strcpy s i (ctoh strget src j) 0 2;
+            set i=i+2;
+            if j<5 then (strset s i ':'; set i=i+1)
+        );
+    s
+    );;
 
 /**
  * Return true if the wifi is connected
@@ -107,6 +124,7 @@ fun _wifi_scan_cmp_ssid a b=
  * rescan: if true, force a new scan
  */
 fun wifi_init rescan=
+    set wifi_mac_addr = _wifi_mac_to_str netMac;
 	set _wifi_try = nil;
     set _wifi_master = 0; // TODO
     let envget -> env in
@@ -307,7 +325,7 @@ fun wifi_job=
 fun wifi_json=
     strcatlist
         "{\n"::
-            (json_str "mac" webmac netMac) :: ",\n" ::
+            (json_str "mac" wifi_mac_addr) :: ",\n" ::
 #ifdef WIFI_MASTER_MODE
             (json_int "master" _wifi_master) :: ",\n" ::
 #endif

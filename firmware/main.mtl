@@ -13,7 +13,6 @@ proto main 0;;
 #define WEBSERVER
 #define TELNETSERVER
 #define DAYTIMESERVER
-#define FORTH
 
 // #define WIFI_DEBUG
 // #define DHCP_DEBUG
@@ -24,6 +23,7 @@ proto main 0;;
 // #define TRAME_DEBUG
 // #define AUDIOLIB_DEBUG
 // #define INTERACTIVE_DEBUG
+// #define CHOR_DEBUG
 
 // #define WIFI_MASTER_MODE;; // Enable master mode (access point)
 #define WIFI_REBOOT_ON_LOST
@@ -110,10 +110,7 @@ fun XmppSessionSendButtonMsg btn withEvent eventValue = 0 ;;
 #endif
 
 #include srv/run.mtl
-
-#ifdef FORTH
 #include forth/forth.mtl
-#endif
 
 /**
  * Initialize the jobs
@@ -168,15 +165,4 @@ fun main=
     run_init;
     forth_init;
     jobs_init;
-
-#ifdef XXX
-    // forth_interpreter "nil server-url :: \"/init.forth\" :: str-join http-get . 10 10 + ." nil (fixarg2 #_forth_test_cb [nil nil]);
-    forth_interpreter "
-: download nil server-url :: \"/init.forth\" :: str-join http-get . ;
-: t1 1 . download 1 . cr ;
-: t2 2 . download 2 . cr ;
-t1 t2 cr
-" nil (fixarg2 #_forth_test_cb [nil nil]);
-#endif
-
     0;;

@@ -8,6 +8,12 @@
 // https://www.forth.org/Ting/Forth-for-the-Complete-Idiot/Forth-79-Handy-Reference.pdf
 // https://win32forth.sourceforge.net/doc/Guide/primer.htm
 
+// #define FORTH_DEBUG
+
+#ifdef FORTH_DEBUG
+fun _forth_debug str= Secho strcatlist "[forth] " :: str :: nil; nil;;
+#endif
+
 type Word=[
     name                // name of the defined word
     code                // array of Words if a colon
@@ -42,6 +48,7 @@ var forth_dictionary;;
 #include forth/list.mtl
 #include forth/control.mtl
 #include forth/misc.mtl
+#include forth/net.mtl
 #include forth/nabaztag.mtl
 #include forth/dictionary.mtl
 
@@ -56,6 +63,7 @@ fun forth_word_list_to_array words =
         t
     );;
 
+#ifdef FORTH_DEBUG
 fun forth_print_word w=
     if w.int != nil then (Iecholn w.int; 0)
     else if w.str != nil then (Secho w.str; Secholn " [str]"; 0)
@@ -66,6 +74,7 @@ fun forth_print_word w=
     else (Secho "int "; Iecho w.int; 0);
     Secholn "]"; 0
     );;
+#endif
 
 /**
  * Compare two Words.
@@ -100,7 +109,9 @@ fun forth_execute_code f code=
     let 0 -> flag in (
         while (code != nil) && (f.pc != nil) && (f.pc < (tablen code)) && (flag != FORTH_ASYNC) do
             let code.(f.pc) -> word in (
-                Secho "pc: "; Iecho f.pc; Secho " word: "; forth_print_word word;
+#ifdef FORTH_DEBUG
+                _forth_debug "pc: "; Iecho f.pc; Secho " word: "; forth_print_word word;
+#endif
                 set f.pc = f.pc + 1;
                 set flag = word.flag;
                 if word.flag == FORTH_ASYNC then (
@@ -174,16 +185,16 @@ fun forth_get_token f=
  */
 fun forth_interpreter_resume f=
     let 0 -> flag in (
-        Secholn "forth_interpreter_resume";
+        // Secholn "forth_interpreter_resume";
         // First, check the return stack
         if f.rstack != nil then (
-            Secholn "forth_interpreter_resume stack not empty";
+            // Secholn "forth_interpreter_resume stack not empty";
             let forth_rpop f -> ret_addr in (
                 set f.pc = ret_addr.int;
                 set flag = forth_execute_code f ret_addr.code
             )
         );
-        Secho "forth_interpreter_resume flag: "; Iecholn flag;
+        // Secho "forth_interpreter_resume flag: "; Iecholn flag;
         if flag != FORTH_ASYNC then (
             // Then continue the main interpreter loop
             forth_interpreter_loop f
@@ -260,7 +271,9 @@ const FORTH_TEST = "server-url :: \"/init.forth\" str-join http-get .";;
  * Return the word flag (FORTH_IMMEDIATE, FORTH_ASYNC) if set
  */
 fun forth_interpreter_execute_word f word=
-    Secho "pc: "; Iecho f.pc; Secho " word: "; forth_print_word word;
+#ifdef FORTH_DEBUG
+    _forth_debug "pc: "; Iecho f.pc; Secho " word: "; forth_print_word word;
+#endif
     set f.pc = f.pc + 1;
     // Execute a colon-defined word
     if word.code != nil then (
@@ -378,7 +391,7 @@ fun _forth_http_cb f sock=
  * sock: http socket
  * args: HTTP request arguments
  */
-fun forth_http_post sock args=
+fun forth_http_post_req sock args=
     let _http_arg_str args 'c' -> code in
     forth_interpreter code nil nil (fixarg2 #_forth_http_cb sock);;
 

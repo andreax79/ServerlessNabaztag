@@ -14,8 +14,6 @@
 
 #ifdef INTERACTIVE_DEBUG
 fun _interactive_debug str= Secholn strcatlist "[interactive] " :: str :: nil; nil;;
-#else
-fun _interactive_debug str= nil;;
 #endif
 
 type InteractiveSoundsType = intDefaultStart | intDefaultStop | intNone;;
@@ -56,21 +54,29 @@ fun interactive_url_reco application position cmdindex =
 // Play a start or stop sound
 fun _interactive_control_sound Type =
     match Type with
-    (intDefaultStart ->     midi_play MIDI_START_INTERACTIVE )    // On joue le son par defaut
-    | (intDefaultStop ->    midi_play MIDI_END_INTERACTIVE )      // On joue le son par defaut
-    | (intNone ->           nil)                                 // On ne joue pas de son
-    | (_ -> _interactive_debug "No Sound to Play!!"; nil );      // Si on a indique un mauvais son, on ne joue rien
+    (intDefaultStart ->   midi_play MIDI_START_INTERACTIVE )|   // On joue le son par defaut
+    (intDefaultStop ->    midi_play MIDI_END_INTERACTIVE )|     // On joue le son par defaut
+    (intNone ->           nil)|                                 // On ne joue pas de son
+#ifdef INTERACTIVE_DEBUG
+    (_ ->                 _interactive_debug "No Sound to Play!!"; nil);
+#else
+    (_ ->                 nil);                                 // Si on a indique un mauvais son, on ne joue rien
+#endif
     0
 ;;
 
 // Play a start or stop chor
 fun _interactive_control_chor Type =
     match Type with
-    (intchorDefaultStart ->     chor_start_msg CHOR_START_INTERACTIVE::nil #_interactive_continue_start_cb nil )       // On joue le chor par defaut
-    | (intchorDefaultStop ->    chor_start_msg CHOR_START_INTERACTIVE::nil #_interactive_continue_stop_cb nil )        // On joue le chor par defaut
-    | (intchorStartNone ->      _interactive_continue_start_cb nil )                                                   // On ne joue pas de chor
-    | (intchorStopNone ->       _interactive_continue_stop_cb nil )                                                    // On ne joue pas de chor
-    | (_ -> _interactive_debug "No Chor to Play!!"; nil );                                                             // Si on a indique un mauvais chor, on ne joue rien
+    (intchorDefaultStart ->   chor_start_msg CHOR_START_INTERACTIVE::nil #_interactive_continue_start_cb nil )|  // On joue le chor par defaut
+    (intchorDefaultStop ->    chor_start_msg CHOR_START_INTERACTIVE::nil #_interactive_continue_stop_cb nil )|   // On joue le chor par defaut
+    (intchorStartNone ->      _interactive_continue_start_cb nil )|                                              // On ne joue pas de chor
+    (intchorStopNone ->       _interactive_continue_stop_cb nil )|                                               // On ne joue pas de chor
+#ifdef INTERACTIVE_DEBUG
+    (_ -> _interactive_debug "No Chor to Play!!"; nil );                                                         // Si on a indique un mauvais chor, on ne joue rien
+#else
+    (_ -> nil );
+#endif
     0
 ;;
 
@@ -109,7 +115,9 @@ fun _interactive_continue_start_cb unused=
 
 fun interactive_error=
     // jingle error
+#ifdef INTERACTIVE_DEBUG
     _interactive_debug "interactive_error";
+#endif
     chor_start_msg CHOR_INTERACTIVE_ERROR::nil #_interactive_continue_error_cb nil;
     0;;
 
@@ -118,7 +126,9 @@ fun _interactive_continue_error_cb unused=
     0;;
 
 fun interactive_stop=
+#ifdef INTERACTIVE_DEBUG
     _interactive_debug "interactive_stop";
+#endif
 
     // jingle de fin
     let _interactive_sounds -> [gSoundStart gSoundStop] in
@@ -262,13 +272,17 @@ fun interactive_ear_process_touched_job=
 
 // Interactive request answer
 fun interactive_req_cb_http http res=
+#ifdef INTERACTIVE_DEBUG
     _interactive_debug "interactive_req_cb_http=";
+#endif
 
     if (record_uploading) then (
         // mode upload / record
         set recorddata=nil;
         set recordreq=nil;
+#ifdef INTERACTIVE_DEBUG
         _interactive_debug res;
+#endif
         leds_set_all RGB_BLACK
     );
 
@@ -285,7 +299,9 @@ fun runInteractiveReqWait http=
     if (!record_uploading) then // upload record mode : timeout managed by record_upload_timeout_job
         if (http_inactive http)>STD_NET_TIMEOUT then
         (
+#ifdef INTERACTIVE_DEBUG
             _interactive_debug "##timeout on runInteractiveReqWait";
+#endif
             http_abort http;
 
             // error
