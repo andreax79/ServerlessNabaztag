@@ -8,7 +8,7 @@
 // https://www.forth.org/Ting/Forth-for-the-Complete-Idiot/Forth-79-Handy-Reference.pdf
 // https://win32forth.sourceforge.net/doc/Guide/primer.htm
 
-// #define FORTH_DEBUG
+#define FORTH_DEBUG
 
 #ifdef FORTH_DEBUG
 fun _forth_debug str= Secho strcatlist "[forth] " :: str :: nil; nil;;
@@ -312,46 +312,16 @@ fun forth_interpreter_loop f=
                     0
                 ) else if (strlen f.inter.token) == 0 then ( // empty token, skip
                     0
-                ) else if word.func == #forth_colon then ( // start of new word definition
-                    if f.state == FORTH_STATE_COMPILATION then (
-                        forth_abort_msg f "Error: Nested ':' not allowed"
-                    ) else (
-                        set f.state = FORTH_STATE_COMPILATION;
-                        set f.new_word_name = nil;
-                        set f.new_word_definition = nil;
-                        0
-                    )
-                ) else if word.func == #forth_semi then ( // end of new word definition
-                    if f.state != FORTH_STATE_COMPILATION then (
-                        forth_abort_msg f "Error: ';' without matching ':'"
-                    ) else if f.new_word_name == nil then (
-                        forth_abort_msg f "Error: ';' without word name"
-                    ) else (
-                        // Finish the new word definition
-                        let forth_word_list_to_array (rev f.new_word_definition nil) -> code in
-                            set forth_dictionary = [ name:f.new_word_name code:code ]::forth_dictionary;
-                            set f.new_word_name = nil;
-                            set f.new_word_definition = nil;
-                            set f.state = FORTH_STATE_NORMAL;
-                            0
-                    )
-
                 ) else if f.state == FORTH_STATE_COMPILATION then (  // compilation state
                     if word.flag == FORTH_IMMEDIATE then (
                         // immediate word, execute now
                         set flags = forth_interpreter_execute_word f word
 
                     ) else (
+                        // add word to the control stack
                         // Secho "--> compiling "; Secho f.inter.token; Secholn "";
-                        if f.new_word_name == nil then (
-                            // first word after ":" is the new word's name
-                            set f.new_word_name = f.inter.token;
-                            0
-                        ) else (
-                            // add word to the latest defined word's code
-                            set f.new_word_definition = word :: f.new_word_definition;
-                            0
-                        )
+                        set f.cstack = word :: f.cstack;
+                        0
                     )
 
                 ) else ( // normal state

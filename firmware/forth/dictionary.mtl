@@ -69,6 +69,10 @@ fun forth_init_dictionary=
         [ name:"hd"                 func:#forth_hd ] ::
         [ name:"tl"                 func:#forth_tl ] ::
         [ name:"str-join"           func:#forth_str_join ] ::
+        // count (list/string)
+        // lower
+        // upper
+        // replace
         // Control
         [ name:"begin"              func:#forth_begin flag:FORTH_IMMEDIATE] ::
         [ name:"until"              func:#forth_until flag:FORTH_IMMEDIATE] ::
@@ -83,6 +87,7 @@ fun forth_init_dictionary=
         [ name:":"                  func:#forth_colon] ::
         [ name:";"                  func:#forth_semi  flag:FORTH_IMMEDIATE] ::
         [ name:"("                  func:#forth_p] ::
+        [ name:"constant"           func:#forth_constant  flag:FORTH_IMMEDIATE] ::
         [ name:"words"              func:#forth_words] ::
         [ name:"time&date"          func:#forth_time_and_date ] ::
         [ name:"evaluate"           func:#forth_evaluate  flag:FORTH_ASYNC] ::

@@ -26,7 +26,6 @@ fun forth_pop f=
  */
 fun forth_stack_at f i=
     listnth f.stack i;;
-    // if !i then hd f.stack else if i>0 then forth_stack_at tl f (i-1);;
 
 /**
  * Push a value onto the return stack
@@ -61,7 +60,7 @@ fun forth_dup f=
  * Discard top of stack
  */
 fun forth_drop f=
-    let forth_pop f -> a in
+    set f.stack = tl f.stack;
     nil;;
 
 /**

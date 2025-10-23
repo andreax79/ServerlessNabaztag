@@ -7,18 +7,17 @@
 type Forth=[
     stack               // data stack
     rstack              // return stack
-    cstack              // control stack
+    cstack              // control stack (for compilation)
     pc                  // program counter
     state               // normal (0) or compilation state (-1)
     output              // list of collected output strings
-    new_word_name       // name of the word being defined if in compilation state
-    new_word_definition // list of Words being defined if in compilation state
     forth_sock          // socket
     inter               // interpreter state
 ];;
 
 proto forth_compare_words 2;;
 proto forth_execute_code 2;;
+proto forth_get_token 1;;
 proto forth_get_word 1;;
 proto forth_http_post_req 2;;
 proto forth_interpreter 4;;

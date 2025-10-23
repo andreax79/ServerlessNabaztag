@@ -234,7 +234,7 @@ fun wifi_job=
         (stationW -> nil)
         |(initW -> if state==RT2501_S_IDLE then
                 (
-                    set mymac=MAC_to_str netMac 0 1;
+                    set mymac=netMac;
                     leds_set_all RGB_AMBER;
 #ifdef WIFI_MASTER_MODE
                     if _wifi_master then

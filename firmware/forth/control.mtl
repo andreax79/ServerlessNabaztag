@@ -51,14 +51,15 @@ fun forth_qjmp f=
 /**
  * BEGIN (immediate)  ( -- )
  * Begin a loop
- * Store the current position in the control stack
+ * Store the current position in the return stack
  */
 fun forth_begin f=
     if f.state != FORTH_STATE_COMPILATION then (
         forth_abort_msg f "BEGIN Compile mode only"
     ) else (
-        // Push the current position onto the control stack
-        set f.cstack = (listlen f.new_word_definition) :: f.cstack;
+        // Push the current position onto the return stack
+        let listlen f.cstack -> current_pos in
+        set f.rstack = [int:current_pos] :: f.rstack;
         nil
     );;
 
@@ -71,15 +72,15 @@ fun forth_until f=
     if f.state != FORTH_STATE_COMPILATION then (
         forth_abort_msg f "UNTIL Compile mode only"
     ) else (
-        // Get the position of the matching BEGIN from the control stack
-        let hd f.cstack -> loop_start in (
+        // Get the position of the matching BEGIN from the return stack
+        let hd f.rstack -> loop_start in (
             if loop_start == nil then (
                 forth_abort_msg f "UNTIL without matching BEGIN"
             ) else (
-                // Remove the loop start from the control stack
-                set f.cstack = tl f.cstack;
+                // Remove the loop start from the return stack
+                set f.rstack = tl f.rstack;
                 // Compile a conditional jump back to the loop start
-                set f.new_word_definition = [ name:"?jmp" func:#forth_qjmp] :: [int:loop_start] :: f.new_word_definition;
+                set f.cstack = [ name:"?jmp" func:#forth_qjmp] :: loop_start :: f.cstack;
                 nil
             )
         )
@@ -96,10 +97,11 @@ fun forth_if f=
     if f.state != FORTH_STATE_COMPILATION then (
         forth_abort_msg f "IF Compile mode only"
     ) else (
-        // Push the current position onto the control stack
-        set f.cstack = ((listlen f.new_word_definition) + 1) :: f.cstack;
+        // Push the current position onto the return stack
+        let listlen f.cstack -> current_pos in
+            set f.rstack = [int:current_pos+1] :: f.rstack;
         // Compile a placeholder for the conditional jump
-        set f.new_word_definition = [ name:"?jmp" func:#forth_qjmp] :: [int:-1] :: f.new_word_definition;
+        set f.cstack = [ name:"?jmp" func:#forth_qjmp] :: [int:-1] :: f.cstack;
         0
     );;
 
@@ -113,20 +115,22 @@ fun forth_else f=
     if f.state != FORTH_STATE_COMPILATION then (
         forth_abort_msg f "ELSE Compile mode only"
     ) else (
-        // Get the position of the ?JMP/JMP address from the control stack
-        let hd f.cstack -> jmp_addr in
-        let (listnth f.new_word_definition ((listlen f.new_word_definition) - jmp_addr)) -> jmp_addr_w in (
+        // Get the position of the ?JMP/JMP address from the return stack
+        let hd f.rstack -> jmp_addr in
+        let listlen f.cstack -> current_pos in
+        let (listnth f.cstack (current_pos - jmp_addr.int)) -> jmp_addr_w in (
             // Check the else_pos of the else position
             if (jmp_addr == nil) || (jmp_addr_w.int != -1) then (
                 forth_abort_msg f "ELSE without matching IF"
             ) else (
-                // Pop the address from the control stack
-                set f.cstack = tl f.cstack;
-                // Push the jump address position onto the control stack
-                set f.cstack = 1 + (listlen f.new_word_definition) :: f.cstack;
-                set f.new_word_definition = [ name:"jmp" func:#forth_jmp] :: [int:-1] :: f.new_word_definition;
+                // Pop the address from the return stack
+                set f.rstack = tl f.rstack;
+                // Push the jump address position onto the return stack
+                set f.rstack = [int:current_pos+1] :: f.rstack;
+                // Compile an unconditional jump
+                set f.cstack = [ name:"jmp" func:#forth_jmp] :: [int:-1] :: f.cstack;
                 // Update the placeholder for the conditional jump to point to the instruction after the JMP
-                set jmp_addr_w.int = (listlen f.new_word_definition);
+                set jmp_addr_w.int = current_pos + 2;
                 0
             )
         )
@@ -141,17 +145,18 @@ fun forth_then f=
     if f.state != FORTH_STATE_COMPILATION then (
         forth_abort_msg f "THEN Compile mode only"
     ) else (
-        // Get the position of the ?JMP/JMP address from the control stack
-        let hd f.cstack -> jmp_addr in
-        let (listnth f.new_word_definition ((listlen f.new_word_definition) - jmp_addr)) -> jmp_addr_w in (
+        // Get the position of the ?JMP/JMP address from the return stack
+        let hd f.rstack -> jmp_addr in
+        let listlen f.cstack -> current_pos in
+        let (listnth f.cstack (current_pos - jmp_addr.int)) -> jmp_addr_w in (
             // Check the else_pos of the else position
             if (jmp_addr == nil) || (jmp_addr_w.int != -1) then (
                 forth_abort_msg f "THEN without matching IF"
             ) else (
-                // Pop the address from the control stack
-                set f.cstack = tl f.cstack;
+                // Pop the address from the return stack
+                set f.rstack = tl f.rstack;
                 // Update the placeholder for the conditional jump to point to the instruction after the JMP
-                set jmp_addr_w.int = (listlen f.new_word_definition);
+                set jmp_addr_w.int = current_pos;
                 0
             )
         )
