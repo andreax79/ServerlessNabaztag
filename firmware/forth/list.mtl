@@ -41,6 +41,33 @@ fun forth_tl f=
     else forth_push f [list:tl list.list];;
 
 /**
+ * NTH ( list/str n -- x )
+ * Get the n-th element of a list or the n-th character of a string
+ */
+fun forth_nth f=
+    let forth_pop f -> n in
+    let forth_pop f -> l in
+    let (
+        if l.str != nil then [int: strget l.str n.int]
+        else listnth l.list n.int
+    ) -> val in
+    forth_push f val;
+    nil;;
+
+/**
+ * COUNT ( list/str -- n )
+ * Get the length of a list or a string
+ */
+fun forth_count f=
+    let forth_pop f -> l in
+    let (
+       if l.str != nil then strlen l.str
+       else listlen l.list
+    ) -> n in
+    forth_push f [int:n];
+    nil;;
+
+/**
  * STR-JOIN ( list -- str )
  * Join a list of strings into a single string
  */

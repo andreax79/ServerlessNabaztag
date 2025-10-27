@@ -1,0 +1,9 @@
+#include ipv4/arp.mtl
+#include ipv4/udp.mtl
+#include ipv4/tcp.mtl
+#include ipv4/udp.mtl
+#include ipv4/icmp.mtl
+// make sure the tcpudp emulation stuff gets loaded after the "real" code to override it all
+#ifdef SIMU
+#include ipv4/tcpudp_emu.mtl
+#endif

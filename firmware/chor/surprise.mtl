@@ -10,7 +10,7 @@ var _surprise_delay = 120 ;; // average delay, in minutes  (delay= (_surprise_de
 var _surprise_next;;
 
 fun surprise=
-	audiolib_start_http (url_surprise (random 299)) #streaming_wav_error;;
+    forth_interpreter "surprise" nil nil nil;;
 
 fun surprise_check=
 	if _surprise_delay && (_surprise_delay != nil) && (!sleep_status) then

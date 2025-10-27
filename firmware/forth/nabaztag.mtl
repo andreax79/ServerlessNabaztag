@@ -85,6 +85,16 @@ fun forth_language f=
     forth_push f [str:config_get_lang];;
 
 /**
+ * SET-LANGUAGE ( lang -- )
+ * Set the language in the configuration
+ */
+fun forth_set_language f=
+    let forth_pop f -> lang in
+    config_set_lang lang.str;
+    config_save;
+    nil;;
+
+/**
  * CITY-CODE ( -- code )
  * Get the city code from the configuration
  */
@@ -92,11 +102,31 @@ fun forth_city_code f=
     forth_push f [str:config_get_city_code];;
 
 /**
+ * SET-CITY-CODE ( code -- )
+ * Set the city code in the configuration
+ */
+fun forth_set_city_code f=
+    let forth_pop f -> code in
+    config_set_city code.str;
+    config_save;
+    nil;;
+
+/**
  * DST ( -- flag )
  * Get the Daylight Saving Time flag from the configuration
  */
 fun forth_dst f=
-    forth_push f [int:config_get_dst];;
+    forth_push f [int:if config_get_dst then FORTH_TRUE else FORTH_FALSE];;
+
+/**
+ * SET-DST ( flag -- )
+ * Set the Daylight Saving Time flag in the configuration
+ */
+fun forth_set_dst f=
+    let forth_pop f -> flag in
+    config_set_dst if flag.int then 1 else 0;
+    config_save;
+    nil;;
 
 /**
  * VOLUME ( -- vol )
@@ -204,10 +234,10 @@ fun forth_set_md5_password f=
     nil;;
 
 /**
- * GET-MD5-PASSWORD ( -- pwd )
+ * MD5-PASSWORD ( -- pwd )
  * Get the MD5 password used for server
  */
-fun forth_get_md5_password f=
+fun forth_md5_password f=
     forth_push f [str:config_md5_password];;
 
 /**

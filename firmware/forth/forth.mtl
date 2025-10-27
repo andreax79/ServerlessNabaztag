@@ -8,7 +8,7 @@
 // https://www.forth.org/Ting/Forth-for-the-Complete-Idiot/Forth-79-Handy-Reference.pdf
 // https://win32forth.sourceforge.net/doc/Guide/primer.htm
 
-#define FORTH_DEBUG
+// #define FORTH_DEBUG
 
 #ifdef FORTH_DEBUG
 fun _forth_debug str= Secho strcatlist "[forth] " :: str :: nil; nil;;
@@ -348,6 +348,7 @@ fun forth_interpreter text f sock cb=
 /**
  * Handle HTTP callback for Forth interpreter. Return the output as JSON.
  */
+#ifdef WEBSERVER
 fun _forth_http_cb f sock=
     http_send_content_and_close sock "application/json"
     strcatlist
@@ -355,15 +356,18 @@ fun _forth_http_cb f sock=
             (json_str "output" (strcatlist (rev f.output nil))) ::
         "\n}" ::
         nil;;
+#endif
 
 /**
  * Handle an HTTP POST request to execute Forth code.
  * sock: http socket
  * args: HTTP request arguments
  */
+#ifdef WEBSERVER
 fun forth_http_post_req sock args=
     let _http_arg_str args 'c' -> code in
     forth_interpreter code nil nil (fixarg2 #_forth_http_cb sock);;
+#endif
 
 /**
  * Handle HTTP callback for loading Forth code from URL.

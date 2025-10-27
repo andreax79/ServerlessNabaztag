@@ -57,7 +57,7 @@ int StartMetal(const char *starter, const char* output, bool inSign)
 	STRPUSH(m, (char*) starter);
 	if (!(k=m->util->compiler->gocompile(COMPILE_FROMFILE)))
 	{
-		t->printf(LOG_RUNTIME,"\nCompiler : done !\n");
+		t->printf(LOG_RUNTIME,"\nCompiler : done (%d bytes) !\n", m->util->compiler->brelease->getsize());
 		File* f=new File(NULL);
 		f->openwrite((char*) output);
 		if (inSign) {

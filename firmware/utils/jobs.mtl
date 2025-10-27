@@ -6,8 +6,8 @@
 
 var _jobs = nil;; // list of Job
 
-fun job_status job=
-    match job.status with
+fun job_status_fmt job=
+    match job.job_status with
         (JobRun -> "run") |
         (JobSuspend -> "suspend") |
         (_ -> nil)
@@ -27,17 +27,44 @@ fun _job_add e l=
  * Execute a job
  */
 fun _job_execute job=
-    call job.f [];;
+    if job.job_period_ms != nil then
+        let time_ms -> now in (
+            // Initialize next run time
+            if job.job_next_run_ms == nil then
+                set job.job_next_run_ms = now + job.job_period_ms;
+            // Check if it's time to run the job
+            if (job.job_next_run_ms - now) <= 0 then (
+                set job.job_next_run_ms = now + job.job_period_ms;
+                call job.job_f []
+            )
+        )
+    else
+        call job.job_f [];;
 
 /**
  * Initialize a job
  */
-fun job_start name f=
+fun job_start_ex name period_ms f=
     let listlen _jobs -> n in
-    let [n:n name:name f:f status:JobRun] -> job in (
+    let [job_id:n job_name:name job_f:f job_status:JobRun job_period_ms:period_ms] -> job in (
         set _jobs = _job_add job _jobs
     )
     ;;
+
+fun job_start name f=
+    job_start_ex name nil f;;
+
+/**
+ * Get a job by name
+ */
+fun job_get name=
+    let nil -> result in (
+        for l=_jobs;l!=nil; tl l do
+            let hd l -> job in
+                if !strcmp name job.job_name then
+                    set result = job;
+        result
+    );;
 
 /**
  * Temporarily stop execution of a job
@@ -45,8 +72,8 @@ fun job_start name f=
 fun job_suspend name=
     for l=_jobs;l!=nil; tl l do
         let hd l -> job in
-            if !strcmp name job.name then
-                set job.status = JobSuspend;
+            if !strcmp name job.job_name then
+                set job.job_status = JobSuspend;
     0;;
 
 /**
@@ -55,8 +82,8 @@ fun job_suspend name=
 fun job_resume name=
     for l=_jobs;l!=nil; tl l do
         let hd l -> job in
-            if !strcmp name job.name then
-                set job.status = JobRun;
+            if !strcmp name job.job_name then
+                set job.job_status = JobRun;
     0;;
 
 /**
@@ -65,7 +92,7 @@ fun job_resume name=
 fun job_loop=
     for l=_jobs;l!=nil; tl l do
         let hd l -> job in (
-            match job.status with
+            match job.job_status with
                 (JobRun -> _job_execute job) |
                 (_ -> nil)
             );
@@ -77,8 +104,12 @@ fun job_loop=
 fun job_format_json job=
     strcatlist
         "{ "::
-            (json_str "name" job.name) :: ", " ::
-            (json_str "status" job_status job) ::
+            (json_str "name" job.job_name) :: ", " ::
+            (json_str "status" job_status_fmt job) ::
+            (
+                if job.job_period_ms != nil then
+                    (strcat ", " json_int "period_ms" job.job_period_ms)
+            ) ::
         " }" :: nil;;
 
 /**

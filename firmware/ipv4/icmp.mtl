@@ -1,3 +1,5 @@
+#include protos/jobs_protos.mtl
+
 // -------------------------------------------------------------------------------------------------
 // ICMP
 // -------------------------------------------------------------------------------------------------
@@ -27,8 +29,7 @@
 
 const ICMP_ECHOREPLY = 0 ;;   // Echo Reply
 const ICMP_ECHO = 8 ;;	      // Echo Request
-const ICMP_PING_DELAY = 60 ;; // Delay between pings
-var last_ping_time = 0 ;;
+const ICMP_PING_DELAY = 60 * 1000 ;; // Delay between pings (in ms)
 
 fun strputchk s i w=
 	strset s i ~(w>>8);
@@ -68,15 +69,15 @@ fun icmp_handler src mac=
 	);;
 
 fun icmp_ping_job=
-	if last_ping_time + ICMP_PING_DELAY < time then (
-		let netgateway -> ipdst in
-		let "\0\1\0\1" -> quench in
-		let "abcd" -> content in
-		let mkicmp netip ipdst ICMP_ECHO quench content -> response in
-		(
-			netSend response 0 nil netMac 0 1;
-			set last_ping_time = time
-		)
-	);
+    let netgateway -> ipdst in
+    let "\0\1\0\1" -> quench in
+    let "abcd" -> content in
+    let mkicmp netip ipdst ICMP_ECHO quench content -> response in
+        netSend response 0 nil netMac 0 1;
     JobRun;;
 
+/**
+ * Initialize periodic sending of ICMP ping
+ */
+fun icmp_ping_init=
+    job_start_ex "icmp_ping" ICMP_PING_DELAY #icmp_ping_job;;

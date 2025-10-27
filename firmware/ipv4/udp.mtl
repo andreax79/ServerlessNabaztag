@@ -20,14 +20,14 @@ fun mkudp ipsrc ipdst portsrc portdst content=
 		udp
 	);;
 
-fun udpSend2 mac udp=
+fun _udp_send2 mac udp=
 	netSend udp 0 nil mac 0 1;;
 
-fun udpsend local localp dst dstp content mac=
+fun udp_send local localp dst dstp content mac=
 	let mkudp local dst localp dstp content -> udp in
-	if mac!=nil then udpSend2 mac udp
+	if mac!=nil then _udp_send2 mac udp
 	else let dst -> ip in	//	ajouter le test de passerelle
-	arpreq ip fixarg2 #udpSend2 udp;;
+	arp_req ip fixarg2 #_udp_send2 udp;;
 
 var ludp;;
 
@@ -40,7 +40,8 @@ fun regudp port cb=
 fun unregudp port=
 	set ludp=remudp ludp port;;
 
-fun resetudp= set ludp=nil;;
+fun udp_reset=
+    set ludp=nil;;
 
 // UDP handler
 fun cbnetudp src mac=
@@ -48,3 +49,9 @@ fun cbnetudp src mac=
 	let Iecholn strgetword src 8+20+2 -> locp in
 	let listswitch ludp locp -> cb in
 	call cb [strsub src 8+20+8 nil mac strsub src 20 4];;
+
+/**
+ * Initialize UDP
+ */
+fun udp_init=
+    udp_reset;;

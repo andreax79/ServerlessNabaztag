@@ -1,7 +1,15 @@
 type JobStatus = JobRun | JobSuspend;;
-type Job=[n name f status];;
+type Job=[
+    job_id          // job identifier
+    job_name        // name
+    job_f           // function
+    job_status      // status (JobStatus)
+    job_period_ms   // how often to run
+    job_next_run_ms // system time (in ms) when it should next run
+];;
 
-proto job_status 1;;
+proto job_get 1;;
+proto job_status_fmt 1;;
 proto job_start 2;;
 proto job_suspend 1;;
 proto job_resume 1;;

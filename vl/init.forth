@@ -1,7 +1,5 @@
-"098f6bcd4621d373cade4e832627b4f6" set-md5-password
-
 : login ( logged line -- logged )
-md5 get-md5-password = if "logged" . else "Please login" . then cr
+md5 md5-password = if "logged" . else "Please login" . then cr
 ;
 
 : prompt ( -- )
@@ -75,16 +73,28 @@ drop drop
 time&date drop drop drop swap drop swap drop
 ;
 
-: hook-time-sound ( -- )
+: hook-time ( -- )
 sleeping invert if  \ if not sleeping
 nil server-url :: "/config/clock/" :: language :: "/" :: get-hour :: "/" :: 6 random 1 + :: ".mp3" :: str-join  \ url
 play-url
 then
 ;
 
-: hook-halftime-sound ( -- )
+: hook-halftime ( -- )
 sleeping invert if  \ if not sleeping
 nil server-url :: "/config/clockall/" :: language :: "/" :: 12 random 1 + :: ".mp3" :: str-join  \ url
 play-url
 then
 ;
+
+: surprise ( -- )
+sleeping invert if  \ if not sleeping
+nil server-url :: "/config/surprise/" :: language :: "/" :: 299 random 1 + :: ".mp3" :: str-join  \ url
+play-url
+then
+;
+
+\ load the configuration
+nil server-url :: "/config.forth" :: str-join http-get
+drop \ drop header
+evaluate \ evaluate the content

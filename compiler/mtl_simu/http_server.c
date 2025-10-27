@@ -30,6 +30,50 @@ void http_server_send_error_response(int ns, int status_code, const char *status
     write(ns, response, strlen(response));
 }
 
+static const char *TEXT_HTML = "text/html";
+static const char *TEXT_CSS = "text/css";
+static const char *APPLICATION_JAVASCRIPT = "application/javascript";
+static const char *AUDIO_MPEG = "audio/mpeg";
+static const char *AUDIO_WAV = "audio/wav";
+static const char *IMAGE_PNG = "image/png";
+static const char *IMAGE_JPEG = "image/jpeg";
+static const char *IMAGE_GIF = "image/gif";
+static const char *TEXT_PLAIN = "text/plain";
+static const char *APPLICATION_OCTET_STREAM = "application/octet-stream";
+
+/**
+ * Determines the MIME type based on the file extension
+ */
+const char *http_server_get_mime_type(const char *req_path) {
+    const char *file_extension = strrchr(req_path, '.');
+    if (file_extension) {
+        file_extension++; // Move past the dot
+    } else {
+        return APPLICATION_OCTET_STREAM; // No extension found
+    }
+    if (strcmp(file_extension, "html") == 0 || strcmp(file_extension, "htm") == 0) {
+        return TEXT_HTML;
+    } else if (strcmp(file_extension, "css") == 0) {
+        return TEXT_CSS;
+    } else if (strcmp(file_extension, "js") == 0) {
+        return APPLICATION_JAVASCRIPT;
+    } else if (strcmp(file_extension, "mp3") == 0) {
+        return AUDIO_MPEG;
+    } else if (strcmp(file_extension, "wav") == 0) {
+        return AUDIO_WAV;
+    } else if (strcmp(file_extension, "png") == 0) {
+        return IMAGE_PNG;
+    } else if (strcmp(file_extension, "jpg") == 0 || strcmp(file_extension, "jpeg") == 0) {
+        return IMAGE_JPEG;
+    } else if (strcmp(file_extension, "gif") == 0) {
+        return IMAGE_GIF;
+    } else if (strcmp(file_extension, "txt") == 0) {
+        return TEXT_PLAIN;
+    } else {
+        return APPLICATION_OCTET_STREAM;
+    };
+}
+
 /**
  * Simple HTTP server to handle GET requests and serve files from "vl" directory
  */
@@ -105,9 +149,13 @@ int http_server(int ns) {
         // Send the response headers
         snprintf(buffer, sizeof(buffer),
                  "HTTP/1.1 200 OK\r\n"
-                 "Content-Type: application/octet-stream\r\n"
+                 "Content-Type: %s\r\n"
                  "Content-Length: %ld\r\n"
-                 "\r\n", // The blank line is crucial!
+                 "Cache-Control: max-age=0, no-cache, no-store\r\n"
+                 "Pragma: no-cache\r\n"
+                 "Connection: close\r\n"
+                 "\r\n",
+                 http_server_get_mime_type(req_path),
                  file_size);
         write(ns, buffer, strlen(buffer));
 

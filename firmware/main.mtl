@@ -39,7 +39,7 @@ const PORT_HTTP = 80;;
 #endif
 
 const HARDWARE = 4;;
-const BYTECODE_REVISION_STR = "$Rev: __DATE__ $";;
+const BYTECODE_REVISION_STR = "$Rev: __DATE__$";;
 const STD_NET_TIMEOUT = 10000;;
 const LED_TIMEOUT = 600;; // 10 minutes
 
@@ -63,11 +63,6 @@ proto XmppSessionRequestResource 1;;
 #endif
 
 #include net/net.mtl
-#include net/dhcp.mtl
-#include net/dns.mtl
-#include net/http.mtl
-#include net/sock.mtl
-#include net/wifi.mtl
 
 #include audio/const_data.mtl
 #include audio/reclib.mtl
@@ -116,25 +111,15 @@ fun XmppSessionSendButtonMsg btn withEvent eventValue = 0 ;;
  * Initialize the jobs
  */
 fun jobs_init=
-    job_start "wifi" #wifi_job;
     job_start "button" #button_job;
-    job_start "run" #run_job;
 #ifdef XMPP
     job_start "XmppSessionRun" #XmppSessionRun;
     job_start "XmppSessionIdle" #XmppSessionIdle;
 #endif
     job_start "record_upload_timeout" #record_upload_timeout_job;
-#ifdef SERVERLESS
-    job_start "icmp_ping" #icmp_ping_job;
-    job_start "arp_periodic_send_gratuitous_arp" #arp_periodic_send_gratuitous_arp_job;
-#endif
-#ifndef SIMU
-    job_start "dhcp_check" #dhcp_check_job;
-#endif
     job_start "ear_process_touched" #interactive_ear_process_touched_job;
-    job_start "time_update_job" #time_update_job;
-    job_start "audiolib_wav_time" #audiolib_wav_time_job;
-    job_start "audiolib_update_vol" #audiolib_update_vol_job;
+    job_start_ex "time_update" 1 * 1000 #time_update_job; // every second
+    job_start_ex "crontab" 60 * 1000 #crontab_job; // every minute
     // Set the loop callback
     loopcb #job_loop;
     0;;
@@ -146,13 +131,9 @@ fun main=
     config_init;
     wifi_init 0;
     info_init;
-    netstart;
-    dns_start_client;
-#ifndef SIMU
-    dhcp_start_client;
-#endif
+    net_start;
     srand time_ms;
-    audiolib_update_vol;
+    audiolib_init;
 #ifdef WEBSERVER
     http_server_start_srv PORT_HTTP;
 #endif

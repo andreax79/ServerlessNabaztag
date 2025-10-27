@@ -4,18 +4,9 @@
 #include protos/udp_protos.mtl
 #include protos/arp_protos.mtl
 #include protos/dns_protos.mtl
+#include protos/dhcp_protos.mtl
 
-#include ipv4/arp.mtl
-#include ipv4/udp.mtl
-#include ipv4/tcp.mtl
-#include ipv4/udp.mtl
-
-// make sure the tcpudp emulation stuff gets loaded after the "real" code to override it all
-#ifdef SIMU
-#include ipv4/tcpudp_emu.mtl
-#endif
-
-proto cbnetarp 2 ;;
+#include ipv4/ipv4.mtl
 
 const IP_PROTO  = 0;;
 const ARP_PROTO = 6;;
@@ -28,7 +19,7 @@ const SOL_UDP   = 17;;
 fun net src mac=
 	let strget src 7 -> p in
 	(
-		if p==ARP_PROTO then cbnetarp src mac // ARP
+		if p==ARP_PROTO then arp_net_cb src mac // ARP
 		else if p==IP_PROTO then // IP
 			let strget src 17 -> ip in
 			if ip==SOL_TCP then cbnettcp src mac
@@ -38,26 +29,33 @@ fun net src mac=
 	);
 	0;;
 
-fun netstart=
+/**
+ * Initialize the network stack
+ */
+fun net_start=
 #ifdef SIMU
 	tcpCb #nettcp;
 	udpCb #netudp;
-	set ltcp=nil;
-	set ludp=nil;
 	dns_add_new_srv "\192\168\1\1" 1;
 	set netip="\127\0\0\1";
 #else
 	netCb #net;
-	resetarp;
-	resettcp;
-	resetudp;
 #endif
-	0;;
-
-fun nettime=
+    // ARP init
+    arp_init;
+    // TCP init
+    tcp_init;
+    // UDP init
+    udp_init;
+#ifdef SERVERLESS
+    // Initialize periodic sending of ICMP ping
+    icmp_ping_init;
+#endif
+    // Start DNS client
+    dns_client_init;
 #ifndef SIMU
-	arptime;
-	tcptime;
+    // Start DHCP client
+    dhcp_start_client;
 #endif
 	0;;
 
@@ -74,7 +72,8 @@ fun net_json=
         "}" :: nil
 ;;
 
-#include ipv4/icmp.mtl
-#include ipv4/tcp.mtl
-#include ipv4/udp.mtl
-#include ipv4/arp.mtl
+#include net/dhcp.mtl
+#include net/dns.mtl
+#include net/http.mtl
+#include net/sock.mtl
+#include net/wifi.mtl

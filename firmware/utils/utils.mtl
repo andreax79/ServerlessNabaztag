@@ -205,6 +205,15 @@ fun IPecho src i0 ln=
 
 fun itoh4 i = strcatlist (ctoh i>>24)::(ctoh i>>16)::(ctoh i>>8)::(ctoh i)::nil;;
 
+/**
+ * Checks if a string is an ip address
+ */
+fun isip s i=
+	if i>=strlen s then 1
+	else let strget s i -> c in
+	if (c<'0' || c>'9')&&c!='.' then 0
+	else isip s i+1;;
+
 fun strputchk s i w=
 	strset s i ~(w>>8);
 	strset s i+1 ~w;

@@ -1,5 +1,6 @@
 #include protos/trame_protos.mtl
 #include protos/palette_protos.mtl
+#include protos/ping_protos.mtl
 #ifdef XMPP
 #include protos/xmpp_protos.mtl
 #endif
@@ -135,7 +136,7 @@ fun trame_eval ping_trame=
                 let (if code == 3 then (
                     // ping delay
 #ifdef PING
-                    set pingdelay = strget val 0;
+                    set ping_delay = strget val 0;
 #else
 #ifdef TRAME_DEBUG
                     _trame_debug "dropping ping delay";

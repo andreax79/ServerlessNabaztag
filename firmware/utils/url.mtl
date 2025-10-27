@@ -13,9 +13,6 @@ fun url_rfid tag=
 fun url_interactive application=
     strcatlist url_ping_server::"/vl/itmode.jsp?sn="::(webmac netMac)::"&v="::(getBytecodeRevision)::"&h="::(itoa HARDWARE)::"&a="::application::nil;;
 
-fun url_surprise n=
-	strcatlist "http://"::config_get_server_url::"/config/surprise/"::config_get_lang::"/"::(itoa n)::".mp3"::nil;;
-
 fun url_hook_rfid=
 	strcatlist "http://"::config_get_server_url::"/hooks/rfid.php"::nil;;
 

@@ -68,11 +68,15 @@ fun forth_init_dictionary=
         [ name:"::"                 func:#forth_colon_colon] ::
         [ name:"hd"                 func:#forth_hd ] ::
         [ name:"tl"                 func:#forth_tl ] ::
+        [ name:"nth"                func:#forth_nth ] ::    // list or string
+        [ name:"count"              func:#forth_count ] ::  // list or string
         [ name:"str-join"           func:#forth_str_join ] ::
-        // count (list/string)
+        // String
         // lower
         // upper
         // replace
+        // zero-pad
+        // atoi, itoa ...
         // Control
         [ name:"begin"              func:#forth_begin flag:FORTH_IMMEDIATE] ::
         [ name:"until"              func:#forth_until flag:FORTH_IMMEDIATE] ::
@@ -108,8 +112,11 @@ fun forth_init_dictionary=
         [ name:"random"             func:#forth_random ] ::
         [ name:"server-url"         func:#forth_server_url ] ::
         [ name:"language"           func:#forth_language ] ::
+        [ name:"set-language"       func:#forth_set_language ] ::
         [ name:"city-code"          func:#forth_city_code ] ::
+        [ name:"set-city-code"      func:#forth_set_city_code ] ::
         [ name:"dst"                func:#forth_dst ] ::
+        [ name:"set-dst"            func:#forth_set_dst ] ::
         [ name:"volume"             func:#forth_volume ] ::
         [ name:"set-info-weather"   func:#forth_set_info_weather ] ::
         [ name:"set-info-stock"     func:#forth_set_info_stock ] ::
@@ -123,7 +130,7 @@ fun forth_init_dictionary=
         [ name:"revision"           func:#forth_revision ] ::
         [ name:"md5"                func:#forth_md5 ] ::
         [ name:"set-md5-password"   func:#forth_set_md5_password ] ::
-        [ name:"get-md5-password"   func:#forth_get_md5_password ] ::
+        [ name:"md5-password"       func:#forth_md5_password ] ::
         nil
     ;;
 

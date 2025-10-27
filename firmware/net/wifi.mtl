@@ -35,11 +35,11 @@ var wifi;;
 var wifi_mac_addr;; // MAC address as human-readable string
 var _wifi_scans;;
 var _wifi_master=0;; // 1 = master mode (access point), 0 = client mode (station)
-var _wifi_retry_time;;
 var _wifi_last_state;;
 var _wifi_try;;
 
 #include utils/utils.mtl
+#include protos/jobs_protos.mtl
 #include protos/dhcp_protos.mtl
 #include protos/udp_protos.mtl
 #include protos/dns_protos.mtl
@@ -119,6 +119,8 @@ fun _wifi_scan_cmp_ssid a b=
     let b->[sb _ _ _ _ _ _] in
     strcmp sa sb;;
 
+proto wifi_job 0;;
+
 /**
  * Initialize the WIFI.
  * rescan: if true, force a new scan
@@ -170,6 +172,8 @@ fun wifi_init rescan=
             0
         )
     );
+    if nil == job_get "wifi" then
+        job_start "wifi" #wifi_job;
     0;;
 
 
@@ -273,7 +277,7 @@ fun wifi_job=
         )
         |(masterW -> if !_wifi_master then (
             wifi_init 1;
-            resetudp;
+            udp_reset;
             netSetmode IEEE80211_M_MANAGED nil 11;
             nil)
         )
@@ -282,7 +286,7 @@ fun wifi_job=
                 (
                     _wifi_debug "-------------dhcp";
                     if config_get_dhcp then dhcp_start_client;
-                    dns_start_client;
+                    dns_client_init;
                     dhcpW time
                 )
             )
@@ -309,13 +313,6 @@ fun wifi_job=
         if nwifi!=nil then set wifi=nwifi;
         set _wifi_last_state=state
     );
-    if _wifi_retry_time!=time then
-    (
-        set _wifi_retry_time=time;
-        nettime;
-        dns_time;
-        0
-    );
     _wifi_check;
     JobRun;;
 
@@ -329,15 +326,7 @@ fun wifi_json=
 #ifdef WIFI_MASTER_MODE
             (json_int "master" _wifi_master) :: ",\n" ::
 #endif
-            (json_int "retry_time" _wifi_retry_time) :: ",\n" ::
             (json_int "last_state" _wifi_last_state) :: ",\n" ::
             (json_str "ssid" config_get_wifi_ssid) :: "\n" ::
         "}" :: nil
 ;;
-
-#include net/dhcp.mtl
-#include ipv4/udp.mtl
-#include net/dns.mtl
-#include net/net.mtl
-#include hw/leds.mtl
-#include utils/config.mtl

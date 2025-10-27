@@ -31,12 +31,7 @@ Configure the rabbit
 Install on your web server (HTTP only)
 --------------------------------------
 
-* Create a folder "vl" on your website (only HTTP is supported, HTTPS is not supported by the rabbit)
-* Copy all the contents from https://github.com/andreax79/ServerlessNabaztag/tree/main/vl to the "vl" folder on the web server
-* The resulting directroy structure is the following:
-
-![](/imgs/files.jpg "Directory structure")
-
+* Copy all the content from the "vl" folder on this repository to your web server in a folder named "vl"
 * Unplug the rabbit, press the button on its head and hold it while you replug your rabbit. When all the lights are blue, you can release the button
 * On your computer, connect to the wifi network created by your rabbit (the name should be Nabaztag\<XX\>)
 * Go to the configuration page at the following address: http://192.168.0.1

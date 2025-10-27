@@ -1,4 +1,5 @@
 #include protos/tcp_protos.mtl
+#include protos/jobs_protos.mtl
 #include protos/arp_protos.mtl
 
 const TFIN=0x01;;
@@ -23,6 +24,8 @@ const TCPCLOSE=-1;;
 const TCPSTART=2;;
 
 const TCPMAX=1024;;
+
+const TCP_TIME_DELAY = 1000;; // Delay between TCP periodic job (in ms)
 
 // debug
 fun Tcpw str = nil;; //Secholn strcatlist "[tcp] " :: str :: nil;;
@@ -141,7 +144,7 @@ fun opentcp local localp dst dstp cb=
 	let dst -> ip in	//	ajouter le test de passerelle
 	(
 		set ltcp=tcp::ltcp;
-		arpreq ip fixarg2 fixarg3 #tcpSend2 trame tcp;
+		arp_req ip fixarg2 fixarg3 #tcpSend2 trame tcp;
 		tcp
 	);;
 
@@ -321,7 +324,14 @@ fun enabletcp t v=
 fun enabledtcpP t=
     t.enableT;;
 
-fun tcptime =
+fun tcp_reset=
+	set ltcp=nil;
+	0;;
+
+/**
+ * Periodic TCP job
+ */
+fun tcp_periodic_job=
 	for l=ltcp;l!=nil;tl l do let hd l-> t in
 	if (nil != t.lastsentT) then
 	(
@@ -339,8 +349,11 @@ fun tcptime =
 		)
 		else set t.retryT=0
 	);
-	0;;
+    JobRun;;
 
-fun resettcp=
-	set ltcp=nil;
-	0;;
+/**
+ * Initialize the periodic TCP job
+ */
+fun tcp_init=
+    tcp_reset;
+    job_start_ex "tcp" TCP_TIME_DELAY #tcp_periodic_job;;

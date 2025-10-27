@@ -24,4 +24,4 @@ libvcomp.a : $(OBJS)
 	ranlib $@
 
 clean :
-	rm -f $(OBJS)
+	rm -f $(OBJS) libvcomp.a

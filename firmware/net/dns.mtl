@@ -1,3 +1,4 @@
+#include protos/jobs_protos.mtl
 #include protos/dns_protos.mtl
 
 /*
@@ -18,6 +19,7 @@ var SrvAnswerL = nil;;
 
 // port local pour le dns
 const DNSLOCAL=1597;;
+const DNS_TIME_DELAY = 1000;; // Delay between DNS periodic job (in ms)
 
 // debug
 #ifdef DNS_DEBUG
@@ -193,7 +195,7 @@ fun dnsreq domain cb=
 		if (nil!=ip) then // il y a une reponse dans le cache mais elle est périmée
 			dnsremoveipfromcache ip;
 		let listnth netdnslist 0 -> netdns in
-			udpsend netip DNSLOCAL netdns 53 tramedns nil;
+			udp_send netip DNSLOCAL netdns 53 tramedns nil;
 		set ldnsreq=[idD:dnsid domainD:domain reqD:tramedns timeoutD:time+5 cbD:cb idxDnsD:0]::ldnsreq;
 		nil
 	);
@@ -223,7 +225,7 @@ fun dnsAskNextServer x =
 	let (dnsChangeIdInTrame x.reqD (set dnsid=(dnsid+1))) -> newtrame in
 	(
 		_dns_debug strcatlist ("la nouvelle requete a le numero " :: (itoa dnsid) :: nil);
-		udpsend netip DNSLOCAL netdns 53 newtrame nil;
+		udp_send netip DNSLOCAL netdns 53 newtrame nil;
 		set ldnsreq=[idD:dnsid domainD:(x.domainD) reqD:newtrame timeoutD:(time+5) cbD:(x.cbD) idxDnsD:(x.idxDnsD+1)]::ldnsreq
 	);
 	nil
@@ -274,7 +276,7 @@ fun filterdnsdead l=if l!=nil then let hd l-> d in if d.timeoutD==nil then filte
  * request to the next dns server available or calls the callback with
  * a null answear.
  */
-fun dns_time=
+fun dns_periodic_job=
 	for l=ldnsreq;l!=nil;tl l do let hd l-> d in
 	if time-d.timeoutD>=0 then
 	(
@@ -287,76 +289,22 @@ fun dns_time=
 			(call d.cbD [nil] ; 0)
 	);
 	set ldnsreq=filterdnsdead ldnsreq;
-	0;;
+    JobRun;;
 
-
-// démarre le client dns. en particulier, sette le callback qui sera
-// appelé pour tous les paquets udp entrants sur le port DNSLOCAL
-fun dns_start_client=
-
+/**
+ * DNS client initialization
+ */
+fun dns_client_init=
 	// on ajoute les dns "de secours" s'ils ne sont pas déjà dans la liste
 	dns_add_new_srv config_get_net_dns 0;
-
+    // démarre le client dns. en particulier, sette le callback qui sera
+    // appelé pour tous les paquets udp entrants sur le port DNSLOCAL
 	regudp DNSLOCAL #cbnetdns;
 	set ldnsreq=nil;
 	set ldns=nil;
+    if nil == job_get "dns" then
+        job_start_ex "dns" DNS_TIME_DELAY #dns_periodic_job;
 	0;;
-
-fun isip s i=
-	if i>=strlen s then 1
-	else let strget s i -> c in
-	if (c<'0' || c>'9')&&c!='.' then 0
-	else isip s i+1;;
-
-fun DnsSrvCb2 ip Params=
-	let Params -> [Port cb] in
-	(
-		call cb [ip Port]
-	)
-;;
-
-// CALLBACK DU DnsSrv
-fun DnsSrvCb NotUse cb=
-	_dns_debug "DnsSrvCb";
-	if SrvAnswerL != nil then (			// Si le callback a ete appele et qu'il n'y a aucun parametre, on passe en BOSH
-		_dns_debug "Reponse pas nil";
-		let hd SrvAnswerL -> Actuel in	//  ON TENTE SUR LE PREMIER de la liste : REGLE SRV A FAIRE ICI
-		(
-			if isip Actuel.SrvTargetS 0 then				// Si on a une ip, on lance la connexion directement
-				call cb [Actuel.SrvTargetS Actuel.SrvPort]	// SI C'est une IP
-			else (
-				_dns_debug strcatlist ("On a recu " :: Actuel.SrvTargetS :: " et on enchaine donc sur une requete dns" :: nil);
-				dnsreq Actuel.SrvTargetS fixarg2 #DnsSrvCb2 [Actuel.SrvPort cb];
-
-			0); // Sinon on lance la resolution en donnant le callback
-			set SrvAnswerL = tl SrvAnswerL;	// On vide la liste petit à petit, il faudra vider cette chaine dans le callback (sinon on empilera les dns)
-			0
-		)
-	)else(
-		_dns_debug "SrvAnswerL nil";
-		call cb [nil nil];
-		0
-	)
-;;
-
-// REQUETE DNS SRV
-fun DnsSrv Request CallBack=
-	set dnsid=if dnsid==nil then time_ms%9999 else dnsid+1;	// ON MET l'ID pour identifier par la suite
-	_dns_debug strcatlist "requete DNS SRV. dnsid=" :: (itoa dnsid) :: nil;
-	_dns_debug dns_list_to_str;
-	let filterdns Request -> domain in
-	let strcatlist (itobin2 dnsid)::"\$01\$00\$00\$01\$00\$00\$00\$00\$00\$00"::domain::"\$00\$00\$21\$00\$01"::nil -> dnssrvquestion in
-	let dump dnssrvquestion -> tramedns in // Creation de la question
-	(
-		let listnth netdnslist 0 -> netdns in (
-		  _dns_debug webip netdns;
-			udpsend netip DNSLOCAL netdns 53 tramedns nil) ; // On lance la requete sur le DNS
-		set ldnsreq=[idD:dnsid domainD:Request reqD:tramedns timeoutD:time+7 cbD:fixarg2 #DnsSrvCb CallBack idxDnsD:0]::ldnsreq;
-		nil
-	);
-0;;
-
-
 
 /**
  * Helper func for _dns_add_new_srv_r.
@@ -448,3 +396,53 @@ fun dns_list_from_dhcp dnslist =
 	set netdnslist = dnslist;
 	dns_add_new_srv config_get_net_dns 0
 ;;
+
+#ifdef XMPP
+fun DnsSrvCb2 ip Params=
+	let Params -> [Port cb] in
+	(
+		call cb [ip Port]
+	)
+;;
+
+// CALLBACK DU DnsSrv
+fun DnsSrvCb NotUse cb=
+	_dns_debug "DnsSrvCb";
+	if SrvAnswerL != nil then (			// Si le callback a ete appele et qu'il n'y a aucun parametre, on passe en BOSH
+		_dns_debug "Reponse pas nil";
+		let hd SrvAnswerL -> Actuel in	//  ON TENTE SUR LE PREMIER de la liste : REGLE SRV A FAIRE ICI
+		(
+			if isip Actuel.SrvTargetS 0 then				// Si on a une ip, on lance la connexion directement
+				call cb [Actuel.SrvTargetS Actuel.SrvPort]	// SI C'est une IP
+			else (
+				_dns_debug strcatlist ("On a recu " :: Actuel.SrvTargetS :: " et on enchaine donc sur une requete dns" :: nil);
+				dnsreq Actuel.SrvTargetS fixarg2 #DnsSrvCb2 [Actuel.SrvPort cb];
+
+			0); // Sinon on lance la resolution en donnant le callback
+			set SrvAnswerL = tl SrvAnswerL;	// On vide la liste petit à petit, il faudra vider cette chaine dans le callback (sinon on empilera les dns)
+			0
+		)
+	)else(
+		_dns_debug "SrvAnswerL nil";
+		call cb [nil nil];
+		0
+	);;
+
+// REQUETE DNS SRV
+fun DnsSrv Request CallBack=
+	set dnsid=if dnsid==nil then time_ms%9999 else dnsid+1;	// ON MET l'ID pour identifier par la suite
+	_dns_debug strcatlist "requete DNS SRV. dnsid=" :: (itoa dnsid) :: nil;
+	_dns_debug dns_list_to_str;
+	let filterdns Request -> domain in
+	let strcatlist (itobin2 dnsid)::"\$01\$00\$00\$01\$00\$00\$00\$00\$00\$00"::domain::"\$00\$00\$21\$00\$01"::nil -> dnssrvquestion in
+	let dump dnssrvquestion -> tramedns in // Creation de la question
+	(
+		let listnth netdnslist 0 -> netdns in (
+		  _dns_debug webip netdns;
+			udp_send netip DNSLOCAL netdns 53 tramedns nil) ; // On lance la requete sur le DNS
+		set ldnsreq=[idD:dnsid domainD:Request reqD:tramedns timeoutD:time+7 cbD:fixarg2 #DnsSrvCb CallBack idxDnsD:0]::ldnsreq;
+		nil
+	);
+0;;
+
+#endif

@@ -1,2 +1,4 @@
 proto dhcp_start_client 0 ;;
+#ifdef WIFI_MASTER_MODE
 proto dhcp_start_srv 0 ;;
+#endif

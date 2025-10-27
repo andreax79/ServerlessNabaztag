@@ -2,7 +2,7 @@
 // UDP
 // -------------------------------------------------------------------------------------------------
 
-fun udpsend local localp dst dstp content mac=
+fun udp_send local localp dst dstp content mac=
 	udpSend localp dst dstp content 0 nil;;
 
 var ludp;;
@@ -10,7 +10,8 @@ var ludp;;
 fun regudp port cb=
 	set ludp=[udpStart port cb]::ludp;;
 
-fun resetudp=set ludp=nil;;
+fun udp_reset=
+    set ludp=nil;;
 
 fun netudp t src ip=
 	let listswitch ludp t -> cb in

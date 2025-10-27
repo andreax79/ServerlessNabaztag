@@ -15,7 +15,6 @@ var time_server_ip = "\128\138\140\44" ;;
 
 var _time_rfc868_low = nil ;;  // low part of the last value read from the time server
 var _time_rfc868_high = nil ;; // high part of the last value read from the time
-var _time_internal_last_update = 0 ;; // last time (since boot) of execution of update_time_internal
 
 var time_local = [0 0 0 0 0 0 0] ;; // [year, month, day, hour, minute, second, days_since_epoc]
 var time_utc = [0 0 0 0 0 0 0] ;; // [year, month, day, hour, minute, second, days_since_epoc]
@@ -72,18 +71,11 @@ fun _time_calculate=
 
 
 /**
- * Update the time, day, local time and exec the crontab functions
+ * Update the time, day, local time
  */
 fun time_update_job=
-    let time -> now in
-        if now != _time_internal_last_update then (
-            // Set last update
-            set _time_internal_last_update = now;
-            // Update time of the day
-            _time_calculate;
-            // only check when initialized
-            if (_time_rfc868_low !=nil) then crontab_check
-        );
+    // Update time of the day
+    _time_calculate;
     JobRun;;
 
 
@@ -149,9 +141,15 @@ fun _time_rfc868_cb msg mac ipfrom=
     0;;
 
 /**
+ * Check if time has been received from the time server
+ */
+fun time_rfc868_received=
+    _time_rfc868_low !=nil;;
+
+/**
  * Get the current time from the time server
  */
 fun get_time_from_timeserver=
-    udpsend netip TIME_PROTOCOL_EPHEMERAL_PORT time_server_ip TIME_PROTOCOL_PORT "" nil;
+    udp_send netip TIME_PROTOCOL_EPHEMERAL_PORT time_server_ip TIME_PROTOCOL_PORT "" nil;
     regudp TIME_PROTOCOL_EPHEMERAL_PORT #_time_rfc868_cb;
     0;;

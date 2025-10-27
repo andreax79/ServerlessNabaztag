@@ -64,7 +64,8 @@ fun run_set_state r =
     );;
 
 fun run_init =
-    run_set_state configstartRun;;
+    run_set_state configstartRun;
+    job_start "run" #run_job;;
 
 fun _run_control_wait =
     let button_get_event -> ev in
@@ -232,7 +233,7 @@ fun _run_idle =
     0;;
 
 
-fun _run_get_config_cb http res=
+fun _run_parse_config_cb _ res=
     if (nil != res) then
     (
         Secholn "config=";
@@ -274,7 +275,7 @@ fun _run_config_start =
 #else
         Secho "config_get_server_url: "; Secholn config_get_server_url;
         Secho "url_config: "; Secholn url_config;
-        run_set_state configwaitRun http_request "GET" url_config nil #_run_get_config_cb HTTP_NORMAL
+        run_set_state configwaitRun http_request "GET" url_config nil #_run_parse_config_cb HTTP_NORMAL
 #endif
     );
     0;;
@@ -285,7 +286,7 @@ fun _run_config_wait http=
     (
         Secholn "##timeout on configwait";
         http_abort http;
-        run_init
+        run_set_state configstartRun
     );
     0;;
 

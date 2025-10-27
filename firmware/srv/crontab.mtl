@@ -2,31 +2,23 @@
 #include protos/meteo_protos.mtl
 #include protos/sleep_protos.mtl
 #include protos/audiolib_protos.mtl
-#include protos/streaming_protos.mtl
 
 //--------------------------------------------------------------------------------------------------
 // Crontab
 //--------------------------------------------------------------------------------------------------
 
-var _crontab_last_check = -1 ;; // last time (hour*100+min) of execution of crontab
-
-fun _crontab_time h m=
-    h * 100 + m;;
-
-fun crontab_check =
+fun crontab_job =
     let time_local -> [_ _ _ local_time_hour local_time_minute local_time_second _] in
-    let _crontab_time local_time_hour local_time_minute -> crontab_check in
-    if crontab_check != _crontab_last_check then (
-        set _crontab_last_check = crontab_check;
+    if time_rfc868_received then (
 
         if (sleep_status && local_time_hour == config_get_wake_up) then sleep_end;
 
         if local_time_minute == 0 then (
-            hook_time_sound  // Play time sound
+            hook_time // Play time sound
         ) else if local_time_minute == 15 then (
             meteo_get // Update weather info
         ) else if local_time_minute == 30 then (
-            hook_halftime_sound // Play halftime sound
+            hook_halftime // Play halftime sound
         ) else if (local_time_hour == 23 && local_time_minute == 55) then (
             get_time_from_timeserver
         );
@@ -34,5 +26,5 @@ fun crontab_check =
         if (!sleep_status && local_time_hour == config_get_go_to_bed) then sleep_start;
 
         0
-    )
-    ;;
+    );
+    JobRun;;

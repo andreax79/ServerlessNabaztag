@@ -238,6 +238,17 @@ fun audiolib_update_vol=
         sndVol _audiolib_vol_from_button v
     );;
 
+/**
+ * Job to update the volume job
+ */
 fun audiolib_update_vol_job=
     audiolib_update_vol;
     JobRun;;
+
+/**
+ * Initialize the audiolib jobs
+ */
+fun audiolib_init=
+    audiolib_update_vol;
+    job_start "audiolib_wav_time" #audiolib_wav_time_job;
+    job_start "audiolib_update_vol" #audiolib_update_vol_job;;

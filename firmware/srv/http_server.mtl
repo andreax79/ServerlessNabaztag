@@ -187,12 +187,6 @@ fun http_index=
         " "{SERVER_URL}" config_get_server_url
 ;;
 
-fun milligram_css=
-        "
-#include srv/www/milligram.css
-        "
-;;
-
 fun openapi_yaml=
         "
 #include srv/www/openapi.yaml
@@ -421,14 +415,10 @@ fun http_get_setup sock args=
     meteo_get;
     http_send_header_and_close HTTP_204 nil sock;;
 
-fun http_get_milligram_css sock args=
-    sock_send sock (http_header HTTP_200 "text/css" (strlen milligram_css)); // header
-    sock_send_and_close sock milligram_css;;
-
 fun http_get_openapi_yaml sock args=
     let webip netip -> ip in
     let strreplace openapi_yaml "192.168.1.100" ip -> res in (
-        sock_send sock (http_header HTTP_200 "text/css" (strlen res)); // header
+        sock_send sock (http_header HTTP_200 "application/yaml" (strlen res)); // header
         sock_send_and_close sock res
     );;
 
@@ -480,7 +470,6 @@ fun http_process_request req sock=
         else if !strcmp path "/dns" then http_get_dns sock args // d=domain name
         else if !strcmp path "/setup" then http_get_setup sock args // setup parameters
         else if !strcmp path "/forth" then forth_http_post_req sock args // forth command
-        else if !strcmp path "/milligram.css" then http_get_milligram_css sock args // milligram.css
         else if !strcmp path "/openapi.yaml" then http_get_openapi_yaml sock args // openapi spec
         else if !strcmp path "/" then http_get_index sock args // index page
         else http_not_found sock args;

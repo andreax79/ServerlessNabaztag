@@ -20,10 +20,11 @@ fun hook_dbl_click=
     forth_interpreter "hook-dbl-click" nil nil nil;
     0;;
 
-fun hook_time_sound=
-    forth_interpreter "hook-time-sound" nil nil nil;
+fun hook_time=
+    forth_interpreter "hook-time" nil nil nil;
     0;;
 
-fun hook_halftime_sound=
-    forth_interpreter "hook-halftime-sound" nil nil nil;
+fun hook_halftime=
+    forth_interpreter "hook-halftime" nil nil nil;
     0;;
+
