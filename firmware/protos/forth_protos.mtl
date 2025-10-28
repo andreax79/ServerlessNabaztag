@@ -8,11 +8,11 @@ type Forth=[
     stack               // data stack
     rstack              // return stack
     cstack              // control stack (for compilation)
+    istack              // interpreter state stack
     pc                  // program counter
     state               // normal (0) or compilation state (-1)
     output              // list of collected output strings
     forth_sock          // socket
-    inter               // interpreter state
 ];;
 
 proto forth_compare_words 2;;

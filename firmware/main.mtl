@@ -146,4 +146,5 @@ fun main=
     run_init;
     forth_init;
     jobs_init;
+    job_stop "crontab";
     0;;

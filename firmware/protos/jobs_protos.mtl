@@ -1,4 +1,4 @@
-type JobStatus = JobRun | JobSuspend;;
+type JobStatus = JobRun | JobSuspend | JobStop;;
 type Job=[
     job_id          // job identifier
     job_name        // name

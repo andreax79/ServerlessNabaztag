@@ -31,11 +31,16 @@ until
 cr "Goodbye." . cr
 ;
 
-: reload-init ( -- )
-\ reload init.forth
-nil server-url :: "/init.forth" :: str-join http-get
+: load-srv ( filename -- )
+\ load a forth file from the server
+>r nil server-url :: "/" :: r> :: str-join http-get
 drop \ drop header
 evaluate \ evaluate the content
+;
+
+: reload-init ( -- )
+\ reload init.forth
+"init.forth" load-srv
 ;
 
 : play-midi-acquired 0 play-midi ;
@@ -95,6 +100,4 @@ then
 ;
 
 \ load the configuration
-nil server-url :: "/config.forth" :: str-join http-get
-drop \ drop header
-evaluate \ evaluate the content
+"config.forth" load-srv

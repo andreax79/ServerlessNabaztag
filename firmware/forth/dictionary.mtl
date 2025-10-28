@@ -62,7 +62,7 @@ fun forth_init_dictionary=
         [ name:"cr"                 func:#forth_cr ] ::
         [ name:"space"              func:#forth_space ] ::
         [ name:"bl"                 func:#forth_bl ] ::
-        [ name:"read-line"          func:#forth_read_line  flag:FORTH_ASYNC] ::
+        [ name:"read-line"          func:#forth_read_line   flag:FORTH_ASYNC] ::
         // List
         [ name:"nil"                func:#forth_nil ] ::
         [ name:"::"                 func:#forth_colon_colon] ::
@@ -78,27 +78,28 @@ fun forth_init_dictionary=
         // zero-pad
         // atoi, itoa ...
         // Control
-        [ name:"begin"              func:#forth_begin flag:FORTH_IMMEDIATE] ::
-        [ name:"until"              func:#forth_until flag:FORTH_IMMEDIATE] ::
-        [ name:"if"                 func:#forth_if    flag:FORTH_IMMEDIATE] ::
-        [ name:"else"               func:#forth_else  flag:FORTH_IMMEDIATE] ::
-        [ name:"then"               func:#forth_then  flag:FORTH_IMMEDIATE] ::
+        [ name:"begin"              func:#forth_begin       flag:FORTH_IMMEDIATE] ::
+        [ name:"until"              func:#forth_until       flag:FORTH_IMMEDIATE] ::
+        [ name:"if"                 func:#forth_if          flag:FORTH_IMMEDIATE] ::
+        [ name:"else"               func:#forth_else        flag:FORTH_IMMEDIATE] ::
+        [ name:"then"               func:#forth_then        flag:FORTH_IMMEDIATE] ::
         [ name:"jmp"                func:#forth_jmp ] ::
         [ name:"?jmp"               func:#forth_qjmp ] ::
         [ name:"abort"              func:#forth_abort ] ::
         [ name:"exit"               func:#forth_exit ] ::
         // Misc
         [ name:":"                  func:#forth_colon] ::
-        [ name:";"                  func:#forth_semi  flag:FORTH_IMMEDIATE] ::
+        [ name:";"                  func:#forth_semi        flag:FORTH_IMMEDIATE] ::
         [ name:"("                  func:#forth_p] ::
-        [ name:"constant"           func:#forth_constant  flag:FORTH_IMMEDIATE] ::
+        [ name:"constant"           func:#forth_constant    flag:FORTH_IMMEDIATE] ::
         [ name:"words"              func:#forth_words] ::
         [ name:"time&date"          func:#forth_time_and_date ] ::
-        [ name:"evaluate"           func:#forth_evaluate  flag:FORTH_ASYNC] ::
+        [ name:"evaluate"           func:#forth_evaluate    flag:FORTH_ASYNC] ::
         [ name:"time-ms"            func:#forth_time_ms ] ::
+        [ name:"ms"                 func:#forth_ms          flag:FORTH_ASYNC] ::
         // Net
-        [ name:"http-get"           func:#forth_http_get  flag:FORTH_ASYNC] ::
-        [ name:"http-post"          func:#forth_http_post  flag:FORTH_ASYNC] ::
+        [ name:"http-get"           func:#forth_http_get    flag:FORTH_ASYNC] ::
+        [ name:"http-post"          func:#forth_http_post   flag:FORTH_ASYNC] ::
         [ name:"mac"                func:#forth_mac] ::
         [ name:"ip"                 func:#forth_ip] ::
         // Nabaztag
@@ -124,7 +125,7 @@ fun forth_init_dictionary=
         [ name:"set-info-mail"      func:#forth_set_info_mail ] ::
         [ name:"set-info-pollution" func:#forth_set_info_pollution ] ::
         [ name:"clear-info"         func:#forth_clear_info ] ::
-        [ name:"taichi"             func:#forth_taichi  flag:FORTH_ASYNC] ::
+        [ name:"taichi"             func:#forth_taichi      flag:FORTH_ASYNC] ::
         [ name:"play-url"           func:#forth_play_url ] ::
         [ name:"play-midi"          func:#forth_play_midi ] ::
         [ name:"revision"           func:#forth_revision ] ::

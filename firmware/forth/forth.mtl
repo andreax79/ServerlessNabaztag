@@ -114,13 +114,9 @@ fun forth_execute_code f code=
 #endif
                 set f.pc = f.pc + 1;
                 set flag = word.flag;
-                if word.flag == FORTH_ASYNC then (
-                    // If asynchronous word, push current pc and code onto return stack
-                    // and return after word execution
-                    forth_rpush f [int:f.pc code:code]
-                );
 
-                if word.code != nil then ( // Colon-defined word
+                // Execute a colon-defined word
+                if word.code != nil then (
                     // Push current pc and code onto return stack
                     forth_rpush f [int:f.pc code:code];
                     set f.pc = 0;
@@ -128,9 +124,18 @@ fun forth_execute_code f code=
                     nil
                 )
                 // Execute primitive function
-                else if word.func != nil then call word.func [f]
+                else if word.func != nil then (
+                    if word.flag == FORTH_ASYNC then (
+                        // If asynchronous word, push current pc and code onto return stack
+                        // and return after word execution
+                        forth_rpush f [int:f.pc code:code]
+                    );
+                    call word.func [f]
+                )
                 // Push the word onto the stack
-                else forth_push f word;
+                else (
+                    forth_push f word
+                );
 
                 // Check if we need to return from the current word
                 if (f.pc == nil) || (f.pc >= (tablen code)) then
@@ -152,7 +157,7 @@ fun forth_execute_code f code=
  * Comments starting with backslash are ignored until end of line.
  */
 fun forth_get_token f=
-    let f.inter -> i in (
+    let hd f.istack -> i in (
         set i.end = strstr i.input " " i.start;
         set i.end_ln = strstr i.input "\n" i.start;
         if (i.end_ln != nil) && ((i.end == nil) || (i.end_ln < i.end)) then set i.end = i.end_ln;
@@ -162,7 +167,8 @@ fun forth_get_token f=
         let strget i.input i.start -> ch in
         if ch == FORTH_DOUBLE_QUOTE then ( // Handle quoted strings
             set i.start = i.start + 1; // skip opening quote
-            set i.end = strstr i.input "\"" (i.start) + 1;
+            set i.end = strstr i.input "\"" i.start; // find closing quote
+            if i.end == nil then set i.end = i.text_len; // if not found, go to end of text
             set i.token = strsub i.input i.start (i.end-i.start);
             set i.start = i.end + 2; // skip closing quote and following space
             set i.quoted = 1
@@ -185,13 +191,15 @@ fun forth_get_token f=
  */
 fun forth_interpreter_resume f=
     let 0 -> flag in (
-        // Secholn "forth_interpreter_resume";
         // First, check the return stack
         if f.rstack != nil then (
-            // Secholn "forth_interpreter_resume stack not empty";
             let forth_rpop f -> ret_addr in (
+                // Restore pc
                 set f.pc = ret_addr.int;
-                set flag = forth_execute_code f ret_addr.code
+                // Execute code at the return address
+                // code is nil if we are resuming to interpreted mode
+                if ret_addr.code != nil then
+                    set flag = forth_execute_code f ret_addr.code
             )
         );
         // Secho "forth_interpreter_resume flag: "; Iecholn flag;
@@ -217,7 +225,7 @@ fun _forth_interpreter_setup text f sock cb=
         input:text text_len:(strlen text)
         token:nil
         inter_cb:cb
-    ] -> i in
+    ] -> inter in
     if f == nil then (
         // Secho "Creating new Forth interpreter\n";
         // Secholn if sock != nil then "with socket" else "without socket";
@@ -226,10 +234,10 @@ fun _forth_interpreter_setup text f sock cb=
             rstack:nil // return stack
             pc:0 // program counter
             forth_sock: sock // socket
-            inter:i // interpreter state
+            istack: inter :: nil // interpreter state
         ]
     ) else (
-        set f.inter = i;
+        set f.istack = inter :: f.istack;
         f
     );;
 
@@ -264,7 +272,7 @@ fun _forth_interpreter_setup text f sock cb=
 const FORTH_TEST = "server-url :: \"/init.forth\" str-join http-get .";;
 
 /**
- * Execute a single word.
+ * Execute a single word during interpreted mode.
  * Update the program counter and state as needed.
  * f: Forth interpreter state
  * word: Word to execute
@@ -277,13 +285,19 @@ fun forth_interpreter_execute_word f word=
     set f.pc = f.pc + 1;
     // Execute a colon-defined word
     if word.code != nil then (
-        // Push current pc and code onto return stack
-        forth_rpush f [int:f.pc];
+        // Push current pc onto return stack.
+        // Code is nil because we are in interpreted mode.
+        forth_rpush f [int:f.pc code:nil];
         set f.pc = 0;
         forth_execute_code f word.code
     )
     // Execute primitive function
     else if word.func != nil then (
+        if word.flag == FORTH_ASYNC then (
+            // If asynchronous word, push current pc onto return stack
+            // and return after word execution
+            forth_rpush f [int:f.pc code:nil]
+        );
         call word.func [f];
         word.flag
     )
@@ -297,20 +311,25 @@ fun forth_interpreter_execute_word f word=
  * Forth interpreter loop
  */
 fun forth_interpreter_loop f=
-    let 0 -> flags in (
-        while (f.pc != nil) && (f.inter.end != f.inter.text_len) && (flags != FORTH_ASYNC) do (
+    let 0 -> flags in
+    let hd f.istack -> inter in (
+#ifdef FORTH_DEBUG
+        _forth_debug "Entering interpreter loop\n";
+#endif
+        while (f.pc != nil) && (inter.end != inter.text_len) && (flags != FORTH_ASYNC) do (
             forth_get_token f;
-            let if f.inter.quoted then nil else forth_get_word f.inter.token -> word in (
-                if word == nil then set word = forth_new_word f.inter.token;
+            if (strlen inter.token) > 0 || inter.quoted then // skip empty tokens unless quoted
+            let if inter.quoted then nil else forth_get_word inter.token -> word in ( // get the word from the dictionary if not quoted
+                // Secho "Token: '"; Secho inter.token; Secholn "'";
+                // Iecho inter.end; Secho " / "; Iecholn inter.text_len;
+                if word == nil then set word = forth_new_word inter.token;
 
                 if word.func == #forth_p then ( // open parentheses
-                    set f.inter.parentheses = f.inter.parentheses + 1
+                    set inter.parentheses = inter.parentheses + 1
                 );
 
-                if f.inter.parentheses > 0 then ( // inside parentheses - ignore tokens until closing parenthesis
-                    if !strcmp f.inter.token ")" then set f.inter.parentheses = f.inter.parentheses - 1;
-                    0
-                ) else if (strlen f.inter.token) == 0 then ( // empty token, skip
+                if inter.parentheses > 0 then ( // inside parentheses - ignore tokens until closing parenthesis
+                    if !strcmp inter.token ")" then set inter.parentheses = inter.parentheses - 1;
                     0
                 ) else if f.state == FORTH_STATE_COMPILATION then (  // compilation state
                     if word.flag == FORTH_IMMEDIATE then (
@@ -319,7 +338,7 @@ fun forth_interpreter_loop f=
 
                     ) else (
                         // add word to the control stack
-                        // Secho "--> compiling "; Secho f.inter.token; Secholn "";
+                        // Secho "--> compiling "; Secho inter.token; Secholn "";
                         set f.cstack = word :: f.cstack;
                         0
                     )
@@ -329,8 +348,12 @@ fun forth_interpreter_loop f=
                 )
             )
         );
-        if (flags != FORTH_ASYNC) then
-            call f.inter.inter_cb [f]
+#ifdef FORTH_DEBUG
+        _forth_debug "Exiting interpreter loop\n";
+#endif
+        if (flags != FORTH_ASYNC) then (
+            call inter.inter_cb [f]
+        )
     );;
 
 /**

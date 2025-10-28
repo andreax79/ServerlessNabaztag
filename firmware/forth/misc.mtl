@@ -10,24 +10,25 @@
 fun forth_colon f=
     if f.state == FORTH_STATE_COMPILATION then (
         forth_abort_msg f ": Nested definitions not allowed"
-    ) else (
-        // Enter compilation state
-        set f.state = FORTH_STATE_COMPILATION;
-        // Get the new word name
-        forth_get_token f;
-        if !strcmp f.inter.token ";" then
-            forth_abort_msg f "Error: ';' without word name"
-        else
-            let forth_get_word f.inter.token -> new_word in (
-                if new_word == nil then (
-                    // Secho "Creating new word "; Secholn f.inter.token;
-                    set new_word = [name:to_lower f.inter.token code:nil];
-                    set forth_dictionary = new_word :: forth_dictionary;
-                    forth_rpush f new_word
-                );
-                set f.cstack = nil;
-            nil
-        )
+    ) else
+        let hd f.istack -> inter in (
+            // Enter compilation state
+            set f.state = FORTH_STATE_COMPILATION;
+            // Get the new word name
+            forth_get_token f;
+            if !strcmp inter.token ";" then
+                forth_abort_msg f "Error: ';' without word name"
+            else
+                let forth_get_word inter.token -> new_word in (
+                    if new_word == nil then (
+                        // Secho "Creating new word "; Secholn inter.token;
+                        set new_word = [name:to_lower inter.token code:nil];
+                        set forth_dictionary = new_word :: forth_dictionary;
+                        forth_rpush f new_word
+                    );
+                    set f.cstack = nil;
+                nil
+            )
     );;
 
 /**
@@ -66,9 +67,10 @@ fun forth_constant f=
     // Get the new word name
     forth_get_token f;
     let forth_pop f -> x in
-    let forth_get_word f.inter.token -> new_word in
+    let hd f.istack -> inter in
+    let forth_get_word inter.token -> new_word in
         if new_word == nil then (
-            set new_word = [name:to_lower f.inter.token code:{x}];
+            set new_word = [name:to_lower inter.token code:{x}];
             set forth_dictionary = new_word :: forth_dictionary;
             nil
         )
@@ -106,8 +108,9 @@ fun forth_time_and_date f=
  * Callback function to resume interpreter after EVALUATE
  * Restore the previous interpreter state
  */
-fun _forth_evaluate_cb f inter=
-    set f.inter = inter; // restore interpreter state
+fun _forth_evaluate_cb f=
+    set f.istack = tl f.istack;
+    let forth_list_to_str f.stack " " -> val in
     forth_interpreter_resume f;;
 
 /**
@@ -117,11 +120,12 @@ fun _forth_evaluate_cb f inter=
 fun forth_evaluate f=
     let forth_pop f -> word in
     if word.str == nil then (
+        // Secholn "EVALUATE expects a string";
         forth_push f word;
         forth_interpreter_resume f
         // forth_abort_msg f "EVALUATE expects a string"
     ) else (
-        forth_interpreter word.str f f.forth_sock (fixarg2 #_forth_evaluate_cb f.inter)
+        forth_interpreter word.str f f.forth_sock #_forth_evaluate_cb
     );;
 
 /**
@@ -131,4 +135,23 @@ fun forth_evaluate f=
 fun forth_time_ms f=
     let time_ms -> ms in
     forth_push f [int:ms];
+    nil;;
+
+/**
+ * Callback function to resume interpreter after MS
+ * Restore the previous interpreter state
+ */
+fun _forth_ms_cb f=
+    forth_interpreter_resume f;
+    JobStop;;
+
+/**
+ * MS ( delay -- )
+ * Sleep for the specified number of milliseconds
+ */
+fun forth_ms f=
+    let forth_pop f -> delay in
+        // Add the job to the scheduler
+        // The interpreter will be resumed after the delay
+        job_start_ex "forth" delay.int (fixarg1 #_forth_ms_cb f);
     nil;;
