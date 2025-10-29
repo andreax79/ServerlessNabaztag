@@ -19,11 +19,11 @@ const SOL_UDP   = 17;;
 fun net src mac=
 	let strget src 7 -> p in
 	(
-		if p==ARP_PROTO then arp_net_cb src mac // ARP
+		if p==ARP_PROTO then arp_handler src mac // ARP
 		else if p==IP_PROTO then // IP
 			let strget src 17 -> ip in
-			if ip==SOL_TCP then cbnettcp src mac
-			else if ip==SOL_UDP then cbnetudp src mac // UDP
+			if ip==SOL_TCP then tcp_handler src mac // TCP
+			else if ip==SOL_UDP then udp_handler src mac // UDP
 			else if ip==SOL_ICMP then icmp_handler src mac;  // ICMP
 		0
 	);
@@ -65,9 +65,9 @@ fun net_start=
 fun net_json=
     strcatlist
         "{\n"::
-            (json_str "ip" webip netip) :: ",\n" ::
-            (json_str "mask" webip netmask) :: ",\n" ::
-            (json_str "gateway" webip netgateway) :: ",\n" ::
+            (json_str "ip" ip_to_str netip) :: ",\n" ::
+            (json_str "mask" ip_to_str netmask) :: ",\n" ::
+            (json_str "gateway" ip_to_str netgateway) :: ",\n" ::
             (json_obj "dns" dns_list_to_json) :: "\n" ::
         "}" :: nil
 ;;

@@ -7,11 +7,13 @@ const ARP_REPLY = 2;;
 const ARP_TIME_DELAY = 1000;; // Delay between ARP periodic job (in ms)
 const GRATUITOUS_ARP_DELAY = 60 * 1000;; // Delay between gratuitous arp (in ms)
 
-var larp;;
-var _arp_reqs;;
+var arp_table;; // list of [ip mac]
+var _arp_reqs;; // list of [ip time cb]
 
-
-fun mkarp op ipsrc macdst ipdst=
+/**
+ * Create an ARP packet
+ */
+fun _arp_create_pkg op ipsrc macdst ipdst=
     strcatlist
     // AAAA03000000 Source address
     // 0806 ARP
@@ -31,11 +33,11 @@ fun mkarp op ipsrc macdst ipdst=
 
 fun _arp_send_request ip=
     // Send ARP Request "ARP, Request who-has <ip> (Broadcast) tell <netip>, length 28"
-    netSend (mkarp ARP_REQUEST netip macbroadcast ip) 0 nil macbroadcast 0 1;;
+    netSend (_arp_create_pkg ARP_REQUEST netip macbroadcast ip) 0 nil macbroadcast 0 1;;
 
 fun _arp_send_reply ip=
     // Send ARP Reply "ARP, Reply <netip> is-at <mymac> (oui Unknown), length 28"
-    netSend (mkarp ARP_REPLY netip macbroadcast ip) 0 nil macbroadcast 0 1;;
+    netSend (_arp_create_pkg ARP_REPLY netip macbroadcast ip) 0 nil macbroadcast 0 1;;
 
 fun arp_send_gratuitous=
     // Send Gratuitous ARP Reply "ARP, Reply <netip> is-at <mymac> (oui Unknown), length 28"
@@ -52,20 +54,19 @@ fun _arp_check l src=
         let strsub src 8+8 6 -> mac in
         (
             Secho "found MAC target : "; MACecho mac 0 1;
-            set larp=[ip mac]::larp;
+            set arp_table=[ip mac]::arp_table;
             call cb [mac]
         );
         _arp_check tl l src
     );
-    nil
-;;
+    nil;;
 
-fun arp_net_cb src mac=
+fun arp_handler src mac=
     let strget src 8+7-> op in
     if op==ARP_REQUEST then
     (
         if !vstrcmp src 32 netip 0 4 then
-            netSend (mkarp ARP_REPLY netip strsub src 16 6 strsub src 22 4) 0 nil mac 0 1;
+            netSend (_arp_create_pkg ARP_REPLY netip strsub src 16 6 strsub src 22 4) 0 nil mac 0 1;
         nil
     )
     else if op==ARP_REPLY then
@@ -75,8 +76,7 @@ fun arp_net_cb src mac=
             _arp_check l src
         )
     ;
-    0
-;;
+    0;;
 
 fun _arp_subnet_ip ip i=
     if i<0 then 1
@@ -86,9 +86,14 @@ fun _arp_subnet_ip ip i=
 fun _arp_subnet ip=
     _arp_subnet_ip ip 3;;
 
+/**
+ * ARP request
+ * ip: target ip
+ * cb: callback function called with the found mac address as parameter
+ */
 fun arp_req ip cb=
-    let /* IPecho */ (if _arp_subnet ip then ip else netgateway) /* 0 1 */ -> ip in
-    let listswitchstr larp ip -> mac in
+    let (if _arp_subnet ip then ip else netgateway) /* 0 1 */ -> ip in
+    let listswitchstr arp_table ip -> mac in
     if mac!=nil then call cb [mac]
     else
     (
@@ -97,8 +102,11 @@ fun arp_req ip cb=
         0
     );;
 
+/**
+ * Reset ARP table and pending requests
+ */
 fun arp_reset=
-    set larp=nil;
+    set arp_table=nil;
     set _arp_reqs=nil;
     0;;
 
@@ -114,7 +122,7 @@ fun _arp_filter l dt=
 /**
  * Periodic ARP job
  */
-fun arp_periodic_job=
+fun arp_job=
     set _arp_reqs=_arp_filter _arp_reqs 10;
     JobRun;;
 
@@ -130,9 +138,35 @@ fun arp_periodic_send_gratuitous_arp_job=
  */
 fun arp_init=
 	arp_reset;
-    job_start_ex "arp" ARP_TIME_DELAY #arp_periodic_job;
+    job_start_ex "arp" ARP_TIME_DELAY #arp_job;
 #ifdef SERVERLESS
     // Initialize periodic sending of gratuitous ARP
     job_start_ex "send_gratuitous_arp" GRATUITOUS_ARP_DELAY #arp_periodic_send_gratuitous_arp_job;
 #endif
     0;;
+
+/**
+ * Format a ARP table item in JSON format
+ * ip: ip address
+ * mac: mac address
+ */
+fun arp_table_format_json ip mac=
+    strcatlist
+        "{ "::
+            (json_str "mac" mac_to_str mac) :: ", " ::
+            (json_str "ip" ip_to_str ip) :: "\n" ::
+        " }" :: nil;;
+
+/**
+ * Return the ARP table in JSON format
+ */
+fun arp_table_json=
+    let "[\n" -> result in
+    let listlen arp_table -> n in (
+        for l=arp_table;l!=nil; tl l do
+            let hd l -> [ip mac] in
+            let if nil!=tl l then ",\n" else "\n" -> sep in
+            set result = strcatlist result::(arp_table_format_json ip mac)::sep::nil;
+        set result = strcat result "]";
+        result
+    );;

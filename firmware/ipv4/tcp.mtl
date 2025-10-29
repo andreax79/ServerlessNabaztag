@@ -27,18 +27,28 @@ const TCPMAX=1024;;
 
 const TCP_TIME_DELAY = 1000;; // Delay between TCP periodic job (in ms)
 
-// debug
-fun Tcpw str = nil;; //Secholn strcatlist "[tcp] " :: str :: nil;;
+#ifdef IPV4_DEBUG
+fun _tcp_debug str= Secholn strcatlist "[tcp] " :: str :: nil; nil;;
+#endif
 
 type Tcp=[stateT locT dstT locpT dstpT seqT ackT cbT macT lastsentT retryT locksendT enableT];;
 
 // List of all current tcp connections
-var ltcp;;
+var tcp_connections;; // list of Tcp
+
+/**
+ * Debug function to print TCP sequence number from a packet frame
+ */
+fun _tcp_echo_seq src i0 ln=
+#ifdef IPV4_DEBUG
+	for i=0;i<4 do (Secho ctoh strget src i0+i; Secho ".");	if ln then Secholn "";
+#endif
+	src;;
 
 /**
  * Create the full tcp frame
  */
-fun mktcp t flag content=
+fun _tcp_create_pkg t flag content=
 	let strcatlist
 	"\$aa\$aa\$03\$00\$00\$00\$08\$00\$45\$00\$00\$00\$00\$00\$00\$00\100\6\0\0"::
 	(t.locT)::
@@ -74,7 +84,7 @@ fun mktcp t flag content=
  * Resends the last transmitted TCP packet for a given connection 't'.
  * This function is used for TCP retransmission when an ACK is not received in time.
  */
-fun resendtcp t=
+fun _tcp_resend t=
 	netSend t.lastsentT 0 nil t.macT 0 1;
 	0;;
 
@@ -82,7 +92,7 @@ fun resendtcp t=
  * Calculates the length of the TCP header in bytes from a packet frame.
  * The 'src' argument is the packet frame.
  */
-fun headerlen src=
+fun _tcp_header_len src=
     // Get the byte containing the Data Offset field (at offset 8+32).
     // The upper 4 bits of this byte represent the header length in 32-bit words.
     ((strget src 8+32)>>4)<<2;;
@@ -91,43 +101,46 @@ fun headerlen src=
  * Calculates the length of the TCP payload (data segment) in bytes.
  * The 'src' argument is the packet frame.
  */
-fun datalength src=(strgetword src 10)-20-headerlen src;;
+fun _tcp_data_length src=
+    (strgetword src 10)-20-_tcp_header_len src;;
 
 /**
  * Send a TCP packet and updating the sequence number.
  * 't' is the TCP connection object.
  * 'trame' is the packet frame to send.
  */
-fun sendtcp t trame=
-//	Secholn "tcpSend"; dump trame;
+fun _tcp_send t trame=
 	netSend trame 0 nil t.macT 0 1;
 	let strget trame 8+33 -> flag in
-	set t.seqT=netSeqAdd t.seqT (datalength trame)+(if flag&(TSYN|TFIN) then 1 else 0);
+	set t.seqT=netSeqAdd t.seqT (_tcp_data_length trame)+(if flag&(TSYN|TFIN) then 1 else 0);
 	0;;
 
 
-fun sendtcpforretry t trame=
-	set t.lastsentT=trame;
-	set t.retryT=nil;
-	sendtcp t trame;;
+fun _tcp_send_for_retry t trame=
+	set t.lastsentT = trame;
+	set t.retryT = nil;
+	_tcp_send t trame;;
 
-
-fun tcpSend2 mac tcp trame=
-	set tcp.macT=mac;
-	sendtcpforretry/*sendtcp*/ tcp trame;;
-
-
+/**
+ * Callback function for ARP request completion when opening a TCP connection.
+ * mac: resolved MAC address
+ * tcp: TCP connection object
+ * trame: TCP packet frame to send
+ */
+fun _tcp_open_arp_req_cb mac tcp trame=
+	set tcp.macT = mac;
+	_tcp_send_for_retry tcp trame;;
 
 /**
  * Remove a TCP connection. takes a TCP connection as an argument
  */
-fun remtcp t=
+fun _tcp_remove t=
     set t.stateT=STOFF;
-    set ltcp=remfromlist ltcp t;;
+    set tcp_connections=remfromlist tcp_connections t;;
 
 // Global variable used as a counter to generate unique, ephemeral local port numbers
 // for outgoing connections when a specific local port is not provided
-var counttcp;;
+var _tcp_count;;
 
 /**
  * Open a new client TCP connection
@@ -137,14 +150,14 @@ var counttcp;;
  * dstp: destination port
  * cb: callback function to handle connection events
  */
-fun opentcp local localp dst dstp cb=
-	let if localp==nil then 1024+set counttcp=((if counttcp==nil then time_ms else counttcp)+1)&16383 else localp -> localp in
+fun tcp_open local localp dst dstp cb=
+	let if localp==nil then 1024+set _tcp_count=((if _tcp_count==nil then time_ms else _tcp_count)+1)&16383 else localp -> localp in
 	let [stateT:STSYN locT:local dstT:dst locpT:localp dstpT:dstp seqT:CLIENT_SEQ_START ackT:CLIENT_SEQ_NULL cbT:cb enableT:1] -> tcp in
-	let mktcp tcp TSYN nil -> trame in
+	let _tcp_create_pkg tcp TSYN nil -> trame in
 	let dst -> ip in	//	ajouter le test de passerelle
 	(
-		set ltcp=tcp::ltcp;
-		arp_req ip fixarg2 fixarg3 #tcpSend2 trame tcp;
+		set tcp_connections=tcp::tcp_connections;
+		arp_req ip fixarg2 fixarg3 #_tcp_open_arp_req_cb trame tcp;
 		tcp
 	);;
 
@@ -153,20 +166,18 @@ fun opentcp local localp dst dstp cb=
  * localp: local port number to listen on
  * cb: callback function to be executed when a new client connects
  */
-fun listentcp localp cb=
+fun tcp_listen localp cb=
 	let [stateT:STLISTEN locpT:localp cbT:cb enableT:1] -> tcp in
-	(
-		set ltcp=tcp::ltcp
-	);;
+		set tcp_connections=tcp::tcp_connections;;
 
 /**
  * Function to find a TCP connection in a list 'l'
- * l: list of TCP connections to search through (typically 'ltcp')
+ * l: list of TCP connections to search through (typically 'tcp_connections')
  * localp: destination port from the incoming packet
  * dstp: source port from the incoming packet
  * src: incoming IP packet frame (a vector)
  */
-fun findtcp l localp dstp src=
+fun _tcp_find l localp dstp src=
 	if l!=nil then let hd l-> t in
 	// Look for a fully established connection
 	if t.locpT==localp && t.dstpT==dstp && (!vstrcmp src 8+16 t.locT 0 4)&& (!vstrcmp src 8+12 t.dstT 0 4)
@@ -174,40 +185,47 @@ fun findtcp l localp dstp src=
 	// If no established connection was found, look for a listening socket
 	else if t.stateT==STLISTEN && t.locpT==localp then t
 	// If no match was found, search the rest of the list
-	else findtcp tl l localp dstp src;;
+	else _tcp_find tl l localp dstp src;;
 
-fun sendclose t=
-	Tcpw "## sendclose";
-	sendtcp t mktcp t TFIN+TACK nil;
+fun _tcp_send_close t=
+#ifdef IPV4_DEBUG
+	_tcp_debug "## _tcp_send_close";
+#endif
+	_tcp_send t _tcp_create_pkg t TFIN+TACK nil;
 	set t.stateT=STFIN;
 	0;;
 
-fun cbnettcp src mac=
-	//Secho "t";
-	let /*Iecholn*/ strgetword src 8+20+2 -> locp in
-	let /*Iecholn*/ strgetword src 8+20+0 -> dstp in
-	let findtcp ltcp locp dstp src -> t in
+fun tcp_handler src mac=
+	let strgetword src 8+20+2 -> locp in
+	let strgetword src 8+20+0 -> dstp in
+	let _tcp_find tcp_connections locp dstp src -> t in
 	if t!=nil && t.enableT then let t.stateT -> st in
-		let /*Iecholn*/ strget src 8+33 -> flag in
-		let /*SEQecho*/ (strsub src 8+24 4) /*0 1*/-> rseq in
-		let /*SEQecho*/ (strsub src 8+28 4) /*0 1*/-> rack in
+		let strget src 8+33 -> flag in
+		let (strsub src 8+24 4) /*0 1*/-> rseq in
+		let (strsub src 8+28 4) /*0 1*/-> rack in
 		if st==STSYN then
 		(
-			Tcpw "stsyn";
-			if (flag==TSYN+TACK) && !vstrcmp (SEQecho(t.seqT)0 1) 0 rack 0 4 then
+#ifdef IPV4_DEBUG
+			_tcp_debug "stsyn";
+#endif
+			if (flag==TSYN+TACK) && !vstrcmp (_tcp_echo_seq(t.seqT)0 1) 0 rack 0 4 then
 			(
-				set t.ackT=SEQecho (netSeqAdd rseq 1) 0 1;
-				sendtcp t mktcp t TACK nil;
+				set t.ackT=_tcp_echo_seq (netSeqAdd rseq 1) 0 1;
+				_tcp_send t _tcp_create_pkg t TACK nil;
 				set t.stateT=STEST;
 				set t.lastsentT=nil;
-				Tcpw "call TCPWRITE";
+#ifdef IPV4_DEBUG
+				_tcp_debug "call TCPWRITE";
+#endif
 				call t.cbT [t TCPWRITE nil]
 			)
 			else
 			(
-				Tcpw "TSRT+TACK";
-				sendtcp t mktcp t TRST+TACK nil;
-				remtcp t;
+#ifdef IPV4_DEBUG
+				_tcp_debug "TSRT+TACK";
+#endif
+				_tcp_send t _tcp_create_pkg t TRST+TACK nil;
+				_tcp_remove t;
 				nil
 			)
 		)
@@ -215,14 +233,10 @@ fun cbnettcp src mac=
 			if !vstrcmp t.ackT 0 rseq 0 4 then
 			let strgetword src 10 -> iplen in
 			let ((strget src 8+32)>>4)<<2 -> tcplen in
-			let datalength src -> datalen in
+			let _tcp_data_length src -> datalen in
 			(
 				if datalen then
 				(
-	//				dump src;
-	//				Iecholn iplen;
-	//				Iecholn tcplen;
-//					Secho "update ackT : add ";
 					set t.ackT=netSeqAdd t.ackT datalen
 				);
 				if (flag&TFIN) then
@@ -232,7 +246,9 @@ fun cbnettcp src mac=
 				)
 				else if (!vstrcmp t.seqT 0 rack 0 4) then
 				(
-//					Tcpw "acquittement de l'envoi";
+#ifdef IPV4_DEBUG
+//					_tcp_debug "acquittement de l'envoi";
+#endif
 					set t.lastsentT=nil;	// acquittement de l'envoi
 					if t.locksendT==1 then
 					(
@@ -241,33 +257,47 @@ fun cbnettcp src mac=
 					)
 					else if t.locksendT==2 then
 					(
-						sendclose t;
+						_tcp_send_close t;
 						nil
 					)
 				)
-				else (Tcpw "##bad ack"; /* SEQecho t.seqT 0 1;SEQecho rack 0 1; */ nil);
+				else (
+#ifdef IPV4_DEBUG
+                    _tcp_debug "##bad ack";
+#endif
+                    nil
+                );
 				if datalen then
-					let 8+20+headerlen src -> start in
+					let 8+20+_tcp_header_len src -> start in
 					let strsub src start datalen -> data in
 					call t.cbT [t TCPREAD data];
 				if (datalen || (flag&TFIN)) then
-					sendtcp t mktcp t TACK nil;
+					_tcp_send t _tcp_create_pkg t TACK nil;
 				if (flag&TFIN) then
 				(
-					Tcpw "tcp : sender closes";
-					//Iecholn t.stateT;
-					sendtcp t mktcp t TFIN+TACK nil;
-					remtcp t;
+#ifdef IPV4_DEBUG
+					_tcp_debug "tcp : sender closes";
+#endif
+					_tcp_send t _tcp_create_pkg t TFIN+TACK nil;
+					_tcp_remove t;
 					call t.cbT [t TCPCLOSE nil]
 				)
 			)
-			else (/*SEQecho(t.ackT)0 1; SEQecho rseq 0 1;*/Secho "##bs/";sendtcp t mktcp t TACK nil; nil)
+			else (
+#ifdef IPV4_DEBUG
+                    _tcp_debug "##bs/";
+#endif
+                    _tcp_send t _tcp_create_pkg t TACK nil;
+                    nil
+            )
 		else if st==STFIN then
 			(
-				Tcpw "STFIN";
-				set t.ackT=SEQecho (netSeqAdd rseq 1) 0 1;
-				sendtcp t mktcp t TACK nil;
-				remtcp t;
+#ifdef IPV4_DEBUG
+				_tcp_debug "STFIN";
+#endif
+				set t.ackT=_tcp_echo_seq (netSeqAdd rseq 1) 0 1;
+				_tcp_send t _tcp_create_pkg t TACK nil;
+				_tcp_remove t;
 				nil
 			)
 		else if (st==STLISTEN) then
@@ -276,27 +306,31 @@ fun cbnettcp src mac=
 				let [stateT:STEST locT:(strsub src 8+16 4) dstT:(strsub src 8+12 4) locpT:locp dstpT:dstp
 				seqT:CLIENT_SEQ_START ackT:(netSeqAdd rseq 1) cbT:t.cbT macT:mac  enableT:1] -> tcp in
 				(
-					set ltcp=tcp::ltcp;
-					sendtcpforretry tcp mktcp tcp (TACK+TSYN) nil;
+					set tcp_connections=tcp::tcp_connections;
+					_tcp_send_for_retry tcp _tcp_create_pkg tcp (TACK+TSYN) nil;
 					call tcp.cbT [tcp TCPSTART nil]
 				)
 			)
 	;;
 
 
-fun writetcp t msg i=
+fun tcp_write t msg i=
 	if t.stateT!=STEST then nil
 	else if t.lastsentT!=nil then
 	(
-		Tcpw "locksend";
+#ifdef IPV4_DEBUG
+		_tcp_debug "locksend";
+#endif
 		set t.locksendT=1;
 		i
 	)
 	else let strsub msg i TCPMAX -> content in
-	let mktcp t TACK content -> trame in
+	let _tcp_create_pkg t TACK content -> trame in
 	(
-		Tcpw strcatlist "writetcp. len: " :: (itoa (strlen msg)) :: nil;
-		sendtcpforretry t trame;
+#ifdef IPV4_DEBUG
+		_tcp_debug strcatlist "tcp_write. len: " :: (itoa (strlen msg)) :: nil;
+#endif
+		_tcp_send_for_retry t trame;
 		let i+strlen content -> ni in
 		(
 			if ni!=strlen msg then set t.locksendT=1;
@@ -304,35 +338,41 @@ fun writetcp t msg i=
 		)
 	);;
 
-
-fun closetcp t=
+/**
+ * Close a TCP connection. takes a TCP connection as an argument
+ * t: TCP connection to close
+ */
+fun tcp_close t=
 	if t.stateT!=STEST then 0
 	else if t.lastsentT!=nil then
 	(
 		set t.locksendT=2;
 		0
 	)
-	else sendclose t;
+	else _tcp_send_close t;
 	0;;
 
-fun tcpcb t cb=
-    set t.cbT=cb;;
+fun tcp_set_cb t cb=
+    set t.cbT = cb;;
 
-fun enabletcp t v=
-    set t.enableT=v;;
+fun tcp_set_enabled t v=
+    set t.enableT = v;;
 
-fun enabledtcpP t=
+fun tcp_is_enabled t=
     t.enableT;;
 
+/**
+ * Remove all TCP connections
+ */
 fun tcp_reset=
-	set ltcp=nil;
+	set tcp_connections=nil;
 	0;;
 
 /**
  * Periodic TCP job
  */
-fun tcp_periodic_job=
-	for l=ltcp;l!=nil;tl l do let hd l-> t in
+fun tcp_job=
+	for l=tcp_connections;l!=nil;tl l do let hd l-> t in
 	if (nil != t.lastsentT) then
 	(
 		if (nil != t.retryT) then
@@ -340,12 +380,14 @@ fun tcp_periodic_job=
 			set t.retryT = (1+t.retryT);
 			if (t.retryT>10) then
 			(
-				remtcp t;
-				Tcpw "TCP > 10 send retries => closing";
+				_tcp_remove t;
+#ifdef IPV4_DEBUG
+				_tcp_debug "TCP > 10 send retries => closing";
+#endif
 				call t.cbT [t TCPCLOSE nil];
 				nil
 			)
-			else resendtcp t
+			else _tcp_resend t
 		)
 		else set t.retryT=0
 	);
@@ -356,4 +398,4 @@ fun tcp_periodic_job=
  */
 fun tcp_init=
     tcp_reset;
-    job_start_ex "tcp" TCP_TIME_DELAY #tcp_periodic_job;;
+    job_start_ex "tcp" TCP_TIME_DELAY #tcp_job;;

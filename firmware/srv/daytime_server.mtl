@@ -20,12 +20,12 @@ fun daytime_server_cb cnx code msg=
     let [sockCnx:cnx sockCallback:nil]-> sock in
     let strcatlist time_date_utc :: "\13\10" :: nil -> res in  // Generate the current time in a human-readable format
     (
-        tcpcb cnx fixarg4 #daytime_sock_event sock;
+        tcp_set_cb cnx fixarg4 #daytime_sock_event sock;
         sock_send sock res;
         sock_close_after sock;
         0
     );;
 
 fun daytime_start_srv port =
-    listentcp port #daytime_server_cb;
+    tcp_listen port #daytime_server_cb;
     0;;

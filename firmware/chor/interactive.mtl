@@ -80,9 +80,15 @@ fun _interactive_control_chor Type =
     0
 ;;
 
+/**
+ * Initialize interactive mode
+ * Set default sounds and chors
+ * Start the ear process touched job
+ */
 fun interactive_init =
     set _interactive_sounds = [intDefaultStart intDefaultStop]; // Default Sounds of InteractiveMode
     set _interactive_chors = [intchorDefaultStart intchorDefaultStop]; // Default Sounds of InteractiveMode
+    job_start "ear_process_touched" #interactive_ear_process_touched_job;
     0;;
 
 // Starts interactivity : sets run mode, remember application and request commands

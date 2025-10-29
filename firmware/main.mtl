@@ -15,6 +15,7 @@ proto main 0;;
 #define DAYTIMESERVER
 
 // #define WIFI_DEBUG
+// #define IPV4_DEBUG
 // #define DHCP_DEBUG
 // #define DNS_DEBUG
 // #define HTTP_DEBUG
@@ -107,23 +108,6 @@ fun XmppSessionSendButtonMsg btn withEvent eventValue = 0 ;;
 #include srv/run.mtl
 #include forth/forth.mtl
 
-/**
- * Initialize the jobs
- */
-fun jobs_init=
-    job_start "button" #button_job;
-#ifdef XMPP
-    job_start "XmppSessionRun" #XmppSessionRun;
-    job_start "XmppSessionIdle" #XmppSessionIdle;
-#endif
-    job_start "record_upload_timeout" #record_upload_timeout_job;
-    job_start "ear_process_touched" #interactive_ear_process_touched_job;
-    job_start_ex "time_update" 1 * 1000 #time_update_job; // every second
-    job_start_ex "crontab" 60 * 1000 #crontab_job; // every minute
-    // Set the loop callback
-    loopcb #job_loop;
-    0;;
-
 fun main=
     // forth_test;
     interactive_init;
@@ -143,8 +127,18 @@ fun main=
 #ifdef DAYTIMESERVER
     daytime_start_srv PORT_DAYTIME;
 #endif
+    time_init;
     run_init;
+    record_init;
     forth_init;
-    jobs_init;
-    job_stop "crontab";
+#ifdef SERVERLESS
+    meteo_init;
+#endif
+#ifdef XMPP
+    xmpp_init;
+#endif
+    button_init;
+    crontab_init;
+    // Set the loop callback
+    loopcb #job_loop;
     0;;

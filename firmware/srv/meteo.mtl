@@ -1,5 +1,11 @@
+#include protos/jobs_protos.mtl
 
-const METEO_TEST = "{\"latitude\":45.46,\"longitude\":9.18,\"generationtime_ms\":0.048995018005371094,\"utc_offset_seconds\":0,\"timezone\":\"GMT\",\"timezone_abbreviation\":\"GMT\",\"elevation\":145.0,\"daily_units\":{\"time\":\"iso8601\",\"weathercode\":\"wmo code\"},\"daily\":{\"time\":[\"2023-09-22\"],\"weathercode\":[80]}}";;
+//--------------------------------------------------------------------------------------------------
+// Meteo functions
+//--------------------------------------------------------------------------------------------------
+
+const METEO_TIME_DELAY = 60 * 60 * 1000;; // 1 hour
+// const METEO_TEST = "{\"latitude\":45.46,\"longitude\":9.18,\"generationtime_ms\":0.048995018005371094,\"utc_offset_seconds\":0,\"timezone\":\"GMT\",\"timezone_abbreviation\":\"GMT\",\"elevation\":145.0,\"daily_units\":{\"time\":\"iso8601\",\"weathercode\":\"wmo code\"},\"daily\":{\"time\":[\"2023-09-22\"],\"weathercode\":[80]}}";;
 
 var _meteo_weather_code = nil;;
 
@@ -47,7 +53,10 @@ fun _meteo_prepare_url lat long =
 // 95           storm 5   Thunderstorm: Slight or moderate
 // 96, 99       storm 5   Thunderstorm with slight and heavy hail
 
-// Convert weather code info info code
+/**
+ * Convert weather code info info code
+ * weather_code: weather code
+ */
 fun _weather_code_to_info_code weather_code =
     if weather_code == 0 then 0
     else if weather_code <= 3 then 1
@@ -63,6 +72,7 @@ fun _weather_code_to_info_code weather_code =
 
 /**
  * Get weather callback - parse the JSON, the the weather code and set the led status
+ * res: http response
  */
 fun _meteo_get_cb httpreq res=
     let http_get_content res -> content in
@@ -76,8 +86,23 @@ fun _meteo_get_cb httpreq res=
 /**
  * Get weather and set the led status
  */
-fun meteo_get =
+fun meteo_get=
     // Iecholn _meteo_get_weathercode METEO_TEST;
     let _meteo_prepare_url config_get_latitude config_get_longitude -> url in
     http_request "GET" url nil #_meteo_get_cb HTTP_NORMAL;
     0;;
+
+/**
+ * Meteo periodic job
+ */
+fun meteo_job=
+    Secholn "## Meteo update";
+    meteo_get;
+    JobRun;;
+
+/**
+ * Initialize the periodic job
+ */
+fun meteo_init=
+    job_start_ex "meteo_update" METEO_TIME_DELAY #meteo_job;;
+

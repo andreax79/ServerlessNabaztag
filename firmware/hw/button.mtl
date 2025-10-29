@@ -47,3 +47,6 @@ fun button_get_event=
         set _button_event=nil;
         ev
     );;
+
+fun button_init=
+    job_start "button" #button_job;;

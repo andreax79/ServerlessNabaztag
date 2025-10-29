@@ -45,4 +45,4 @@ fun forth_mac f=
  * Push the IP address of the WIFI interface onto the stack
  */
 fun forth_ip f=
-    forth_push f [str:webip netip];;
+    forth_push f [str:ip_to_str netip];;

@@ -24,8 +24,6 @@ const DNS_TIME_DELAY = 1000;; // Delay between DNS periodic job (in ms)
 // debug
 #ifdef DNS_DEBUG
 fun _dns_debug str = Secholn strcatlist "[dns] " :: str :: nil; nil;;
-#else
-fun _dns_debug str= nil;;
 #endif
 
 // skippe une question dans la section 2.
@@ -77,12 +75,16 @@ fun parseans s i n=
 			let TTLl + 65536 * TTLh -> ttl in
 			let strcatlist (itoa strget s j+10)::"."::(itoa strget s j+11)::"."::(itoa strget s j+12)::"."::(itoa strget s j+13)::nil -> ip in
 			(
+#ifdef DNS_DEBUG
 				_dns_debug strcatlist "DNS: parsed an answear. TTLl = " :: (itoa TTLl) :: ", TTLh = " :: (itoa TTLh) :: ", so TTL = " :: (itoa ttl) :: " and ip = " :: ip :: nil;
+#endif
 				[ ip ttl ]
 			)
 		)
 		else if typ==33 then ( // ON PARSE LES REQUETES SRV (les réponses)
+#ifdef DNS_DEBUG
 			_dns_debug "DNS: parsing a SRV answear";
+#endif
 			let strsub s j+2 nil -> SrvAns in
 			let strgetword s j+2 -> Class in
 			let strgetword s j+4 -> TTLh in
@@ -175,7 +177,9 @@ fun dnsremoveipfromcacheR l iptoremove =
 // retire une ip du cache contenu dans ldns
 //  ip: l'ip a retirer
 fun dnsremoveipfromcache iptoremove =
+#ifdef DNS_DEBUG
 	_dns_debug strcatlist "DNS: CACHE: cache for ip " :: iptoremove :: " has expired. removing it" :: nil;
+#endif
 	set ldns = dnsremoveipfromcacheR ldns iptoremove
 ;;
 
@@ -184,14 +188,22 @@ fun dnsremoveipfromcache iptoremove =
 //  domain: le domaine à rechercher
 //  cb: le callback à appeler
 fun dnsreq domain cb=
+#ifdef DNS_DEBUG
 	_dns_debug strcatlist "dnsreq(" :: domain :: ")" :: nil;
+#endif
 	set dnsid=(if dnsid==nil then time_ms else (dnsid+1));
 	let listswitchstr ldns domain -> [ ip time_valid ] in
-		if (ip!=nil && time < time_valid)
-			then (_dns_debug "ip dans le cache"; call cb[ip])
+		if (ip!=nil && time < time_valid) then (
+#ifdef DNS_DEBUG
+            _dns_debug "ip dans le cache";
+#endif
+            call cb[ip]
+        )
 	else let dump question dnsid domain -> tramedns in
 	(
+#ifdef DNS_DEBUG
 		_dns_debug strcatlist "on fait une requete dns pour le domaine " :: domain :: nil;
+#endif
 		if (nil!=ip) then // il y a une reponse dans le cache mais elle est périmée
 			dnsremoveipfromcache ip;
 		let listnth netdnslist 0 -> netdns in
@@ -220,11 +232,15 @@ fun dnsChangeIdInTrame oldTrame newId =
  * It is assumed that there _is_ a next server, ie dnsHasAnotherServer has been called and returned != 0
  */
 fun dnsAskNextServer x =
-	_dns_debug strcatlist ("DNS -- pas de reponse pour la requete " :: (itoa x.idD) :: " donc on en essaie un autre. dns numero " :: (itoa x.idxDnsD+1) :: " -> " :: (webip listnth netdnslist (x.idxDnsD+1)) :: nil);
+#ifdef DNS_DEBUG
+	_dns_debug strcatlist ("DNS -- pas de reponse pour la requete " :: (itoa x.idD) :: " donc on en essaie un autre. dns numero " :: (itoa x.idxDnsD+1) :: " -> " :: (ip_to_str listnth netdnslist (x.idxDnsD+1)) :: nil);
+#endif
 	let (listnth netdnslist (x.idxDnsD+1)) -> netdns in
 	let (dnsChangeIdInTrame x.reqD (set dnsid=(dnsid+1))) -> newtrame in
 	(
+#ifdef DNS_DEBUG
 		_dns_debug strcatlist ("la nouvelle requete a le numero " :: (itoa dnsid) :: nil);
+#endif
 		udp_send netip DNSLOCAL netdns 53 newtrame nil;
 		set ldnsreq=[idD:dnsid domainD:(x.domainD) reqD:newtrame timeoutD:(time+5) cbD:(x.cbD) idxDnsD:(x.idxDnsD+1)]::ldnsreq
 	);
@@ -239,15 +255,18 @@ fun selectbyid d v= d.idD==v;;
 // callback appelé pour chaque paquet udp qui arrive
 // sur le port DNSLOCAL (setté dans dns_start_client)
 fun cbnetdns msg mac ipfrom=
+#ifdef DNS_DEBUG
 	_dns_debug strcatlist "cbnetdns [" :: msg :: "]" :: nil;
+#endif
 	let strgetword msg 0 -> id in
 	let parsemsg msg -> [ ip ttl ] in
 	let hd select ldnsreq id #selectbyid -> x in
 	if x!=nil then
 	(
+#ifdef DNS_DEBUG
 		_dns_debug strcatlist ("on recoit une reponse pour une question dns, id " :: (itoa id) :: ", ip = " :: (if nil!=ip then ip else "nil") :: " pour le domaine " :: x.domainD :: nil);
-		_dns_debug strcatlist ("cette requete etait avec le serveur numero " :: (itoa x.idxDnsD) :: ", c'est a dire l'ip " :: (webip listnth netdnslist (x.idxDnsD)) :: nil);
-
+		_dns_debug strcatlist ("cette requete etait avec le serveur numero " :: (itoa x.idxDnsD) :: ", c'est a dire l'ip " :: (ip_to_str listnth netdnslist (x.idxDnsD)) :: nil);
+#endif
 		set ldnsreq=listrem ldnsreq x;
 
 		// check if the answear is empty. if it is, we should try to ask the next dns server
@@ -258,12 +277,22 @@ fun cbnetdns msg mac ipfrom=
 			if ip!=nil then
 				set ldns = [ x.domainD [ ip (time + ttl)] ]::ldns	// ### attention à la taille de la liste
 			else
-				(_dns_debug "ip est nil"; nil);
+            (
+#ifdef DNS_DEBUG
+                _dns_debug "ip est nil";
+#endif
+                nil
+            );
 			call x.cbD [ip]
 		)
 	)
 	else
-		(_dns_debug "x nil"; 0);
+	(
+#ifdef DNS_DEBUG
+        _dns_debug "x nil";
+#endif
+        0
+    );
 	0;;
 
 /**
@@ -281,7 +310,9 @@ fun dns_periodic_job=
 	if time-d.timeoutD>=0 then
 	(
 		set d.timeoutD=nil;
+#ifdef DNS_DEBUG
 		_dns_debug strcatlist "dns_time, timeout pour la requete d'id " :: (itoa d.idD) :: nil;
+#endif
 		// s'il y a un dns "de secours", on l'utilise. sinon, on appelle la cb avec nil
 		if (dnsHasAnotherServer d) then
 			( dnsAskNextServer d; 0 )
@@ -362,7 +393,7 @@ fun dns_add_new_srv dns front =
  */
 fun _dns_list_to_str_r l =
 	if (nil != l) then
-		(webip hd l) :: " " :: (_dns_list_to_str_r tl l)
+		(ip_to_str hd l) :: " " :: (_dns_list_to_str_r tl l)
 	else
 		nil
 ;;
@@ -377,7 +408,7 @@ fun dns_list_to_str =
 fun _dns_list_to_json_r l =
 	if l == nil then nil
     else
-		"\"" :: (webip hd l) :: "\"" :: if (tl l) != nil then
+		"\"" :: (ip_to_str hd l) :: "\"" :: if (tl l) != nil then
             (", " :: _dns_list_to_json_r tl l)
         else
             "]" :: nil;;
@@ -407,23 +438,34 @@ fun DnsSrvCb2 ip Params=
 
 // CALLBACK DU DnsSrv
 fun DnsSrvCb NotUse cb=
+#ifdef DNS_DEBUG
 	_dns_debug "DnsSrvCb";
+#endif
 	if SrvAnswerL != nil then (			// Si le callback a ete appele et qu'il n'y a aucun parametre, on passe en BOSH
+#ifdef DNS_DEBUG
 		_dns_debug "Reponse pas nil";
+#endif
 		let hd SrvAnswerL -> Actuel in	//  ON TENTE SUR LE PREMIER de la liste : REGLE SRV A FAIRE ICI
 		(
 			if isip Actuel.SrvTargetS 0 then				// Si on a une ip, on lance la connexion directement
 				call cb [Actuel.SrvTargetS Actuel.SrvPort]	// SI C'est une IP
-			else (
+			else
+            (
+#ifdef DNS_DEBUG
 				_dns_debug strcatlist ("On a recu " :: Actuel.SrvTargetS :: " et on enchaine donc sur une requete dns" :: nil);
+#endif
 				dnsreq Actuel.SrvTargetS fixarg2 #DnsSrvCb2 [Actuel.SrvPort cb];
 
 			0); // Sinon on lance la resolution en donnant le callback
 			set SrvAnswerL = tl SrvAnswerL;	// On vide la liste petit à petit, il faudra vider cette chaine dans le callback (sinon on empilera les dns)
 			0
 		)
-	)else(
+	)
+    else
+    (
+#ifdef DNS_DEBUG
 		_dns_debug "SrvAnswerL nil";
+#endif
 		call cb [nil nil];
 		0
 	);;
@@ -431,14 +473,18 @@ fun DnsSrvCb NotUse cb=
 // REQUETE DNS SRV
 fun DnsSrv Request CallBack=
 	set dnsid=if dnsid==nil then time_ms%9999 else dnsid+1;	// ON MET l'ID pour identifier par la suite
+#ifdef DNS_DEBUG
 	_dns_debug strcatlist "requete DNS SRV. dnsid=" :: (itoa dnsid) :: nil;
 	_dns_debug dns_list_to_str;
+#endif
 	let filterdns Request -> domain in
 	let strcatlist (itobin2 dnsid)::"\$01\$00\$00\$01\$00\$00\$00\$00\$00\$00"::domain::"\$00\$00\$21\$00\$01"::nil -> dnssrvquestion in
 	let dump dnssrvquestion -> tramedns in // Creation de la question
 	(
 		let listnth netdnslist 0 -> netdns in (
-		  _dns_debug webip netdns;
+#ifdef DNS_DEBUG
+		    _dns_debug ip_to_str netdns;
+#endif
 			udp_send netip DNSLOCAL netdns 53 tramedns nil) ; // On lance la requete sur le DNS
 		set ldnsreq=[idD:dnsid domainD:Request reqD:tramedns timeoutD:time+7 cbD:fixarg2 #DnsSrvCb CallBack idxDnsD:0]::ldnsreq;
 		nil

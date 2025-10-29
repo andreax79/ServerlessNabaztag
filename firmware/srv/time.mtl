@@ -1,11 +1,14 @@
 #include utils/timezones.mtl
 #include protos/json_protos.mtl
+#include protos/jobs_protos.mtl
 #include protos/crontab_protos.mtl
 
 //--------------------------------------------------------------------------------------------------
 // Time functions
 //--------------------------------------------------------------------------------------------------
 
+const TIME_DELAY = 1000;; // Time update job delay (in ms)
+const TIME_RFC868_DELAY = 24 * 60 * 60 * 1000;; // Delay between time server requests (in ms)
 const TIME_PROTOCOL_PORT = 37 ;;
 const TIME_PROTOCOL_EPHEMERAL_PORT = 49152 ;;
 const WEEKDAYS = {"Sun" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat"} ;;
@@ -120,7 +123,8 @@ fun time_json=
             (json_str "ts" time_local_human) :: ",\n" ::
             (json_int "dst" config_get_dst) :: ",\n" ::
             (json_int "offset" time_offset) :: ",\n" ::
-            (json_str "city_code" config_get_city_code) :: "\n" ::
+            (json_str "city_code" config_get_city_code) :: ",\n" ::
+            (json_str "time_server_ip" ip_to_str time_server_ip) :: "\n" ::
         "}" :: nil
 ;;
 
@@ -152,4 +156,11 @@ fun time_rfc868_received=
 fun get_time_from_timeserver=
     udp_send netip TIME_PROTOCOL_EPHEMERAL_PORT time_server_ip TIME_PROTOCOL_PORT "" nil;
     regudp TIME_PROTOCOL_EPHEMERAL_PORT #_time_rfc868_cb;
-    0;;
+    JobRun;;
+
+/**
+ * Initialize the periodic job
+ */
+fun time_init=
+    job_start_ex "time_update" TIME_DELAY #time_update_job;
+    job_start_ex "rfc868_client" TIME_RFC868_DELAY #get_time_from_timeserver;;

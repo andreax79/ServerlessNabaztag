@@ -1,6 +1,6 @@
 proto http_abort 1;;
 proto http_enable 2;;
-proto http_enabledP 1;;
+proto http_is_enabled 1;;
 proto http_get_content 1;;
 proto http_get_header 1;;
 proto http_inactive 1;;

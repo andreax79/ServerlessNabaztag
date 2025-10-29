@@ -31,12 +31,7 @@ const ICMP_ECHOREPLY = 0 ;;   // Echo Reply
 const ICMP_ECHO = 8 ;;	      // Echo Request
 const ICMP_PING_DELAY = 60 * 1000 ;; // Delay between pings (in ms)
 
-fun strputchk s i w=
-	strset s i ~(w>>8);
-	strset s i+1 ~w;
-	0;;
-
-fun mkicmp ipsrc ipdst icmp_type quench content=
+fun _icmp_create_pkg ipsrc ipdst icmp_type quench content=
 	let strcatlist
 	"\$aa\$aa\$03\$00\$00\$00\$08\$00\$45\$00\$00\$00\$00\$00\$00\$00\64\1\0\0"::  // 1=ICMP
 	ipsrc:: // source ip
@@ -61,7 +56,7 @@ fun icmp_handler src mac=
 	(
 		if icmp_type == ICMP_ECHO then ( // ping reply
 			// todo: add an hook
-			let mkicmp netip ipfrom ICMP_ECHOREPLY quench content -> response in
+			let _icmp_create_pkg netip ipfrom ICMP_ECHOREPLY quench content -> response in
 				netSend response 0 nil mac 0 1;
 			0
 		);
@@ -72,7 +67,7 @@ fun icmp_ping_job=
     let netgateway -> ipdst in
     let "\0\1\0\1" -> quench in
     let "abcd" -> content in
-    let mkicmp netip ipdst ICMP_ECHO quench content -> response in
+    let _icmp_create_pkg netip ipdst ICMP_ECHO quench content -> response in
         netSend response 0 nil netMac 0 1;
     JobRun;;
 

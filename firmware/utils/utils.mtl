@@ -105,22 +105,28 @@ fun conc p q=if p==nil then q else (hd p)::conc tl p q;;
 
 fun random n= ((rand&255)*n)>>8;; // nombre entre 0 et n-1 inclus
 
-fun _useparamip s i val j=
+fun _str_to_ip s i val j=
 	if i<4 then
 	let strstr val "." j -> k in
 	(
 		strset s i atoi strsub val j if k==nil then nil else k-j;
-		_useparamip s i+1 val if k==nil then strlen val else k+1
+		_str_to_ip s i+1 val if k==nil then strlen val else k+1
 	);;
 
-fun useparamip val=
+/**
+ * Convert a string to an IP address (4 bytes)
+ */
+fun str_to_ip val=
 	let strnew 4 -> ip in
 	(
-		_useparamip ip 0 val 0;
+		_str_to_ip ip 0 val 0;
 		ip
 	);;
 
-fun webip ip=
+/**
+ * Convert an IP address (4 bytes) to a string
+ */
+fun ip_to_str ip=
 	strcatlist (itoa strget ip 0)::"."::(itoa strget ip 1)::"."::(itoa strget ip 2)::"."::(itoa strget ip 3)::nil;;
 
 /**
@@ -176,27 +182,24 @@ fun dataToHexStr s =
 	)
 ;;
 
-// Convert a MAC address to a string
-fun MAC_to_str src i0 ln=
-    let strnew (if ln then 18 else 17) -> s in
+/**
+ * Convert a MAC address to a string
+ */
+fun mac_to_str src=
+    let strnew 17 -> s in
     let 0->i in
     (
         for j=0;j<6 do
         (
-            strcpy s i (ctoh strget src i0+j) 0 2;
+            strcpy s i (ctoh strget src j) 0 2;
             set i=i+2;
-            if j<5 then (strset s i '.'; set i=i+1)
+            if j<5 then (strset s i ':'; set i=i+1)
         );
-        if ln then strset s i 0 else strset s i 0;
     s
     );;
 
 fun MACecho src i0 ln=
 	for i=0;i<6 do (Secho ctoh strget src i0+i; Secho ".");	if ln then Secholn "";
-	src;;
-
-fun SEQecho src i0 ln=
-	for i=0;i<4 do (Secho ctoh strget src i0+i; Secho ".");	if ln then Secholn "";
 	src;;
 
 fun IPecho src i0 ln=
@@ -214,6 +217,12 @@ fun isip s i=
 	if (c<'0' || c>'9')&&c!='.' then 0
 	else isip s i+1;;
 
+/**
+ * Puts a checksum into a string at position i
+ * s: string
+ * i: position
+ * w: checksum value
+ */
 fun strputchk s i w=
 	strset s i ~(w>>8);
 	strset s i+1 ~w;

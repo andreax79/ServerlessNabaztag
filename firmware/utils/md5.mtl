@@ -50,7 +50,7 @@ const md5k 		= { 0xd76a 0xa478 0xe8c7 0xb756 0x2420 0x70db 0xc1bd 0xceee
 var md5h0h		= 0x6745;;var md5h0l		= 0x2301;;var md5h1h		= 0xEFCD;;var md5h1l		= 0xAB89;;
 var md5h2h		= 0x98BA;;var md5h2l		= 0xDCFE;;var md5h3h		= 0x1032;;var md5h3l		= 0x5476;;
 var md5len		= 0;;	// Taille du message     md5len = 512 * md5mult + md5reste
-var md5mult		= 0;;var md5reste	= 0;;var md5message	= "msg";;var md5return	= "";;
+var md5mult		= 0;;var md5reste	= 0;;var md5message	= "msg";;
 var md5bloc		= {
 	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000
 	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000
@@ -59,7 +59,7 @@ var md5bloc		= {
 // Variables (a, b, c, d, f,g et divers)
 var md5ah		= 0;;var md5al		= 0;;var md5bh		= 0;;var md5bl		= 0;;var md5ch		= 0;;var md5cl		= 0;;
 var md5dh		= 0;;var md5dl		= 0;;var md5fh		= 0;;var md5fl		= 0;;var md5g		= 0;;var md5msglen	= 0;;
-var md5tmp1h	= 0;;var md5tmp1l	= 0;;var md5tmp2h	= 0;;var md5tmp2l	= 0;;var md5tmp3h	= 0;;var md5tmp3l	= 0;;
+var md5tmp1h	= 0;;var md5tmp1l	= 0;;var md5tmp2h	= 0;;var md5tmp2l	= 0;;
 var md5len64h	= 0x00000000;;			 var md5len64l	= 0x00000000;;
 
 // Fonction Principale MD5

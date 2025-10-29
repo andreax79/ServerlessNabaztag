@@ -30,20 +30,25 @@ fun _job_add e l=
  * job: job to execute
  */
 fun _job_execute job=
-    if job.job_period_ms != nil then
-        let time_ms -> now in (
+    let time_ms -> now in
+        if job.job_period_ms != nil then
+        (
             // Initialize next run time
             if job.job_next_run_ms == nil then
                 set job.job_next_run_ms = now + job.job_period_ms;
             // Check if it's time to run the job
             if (job.job_next_run_ms - now) <= 0 then (
+                set job.job_last_run_ms = now;
                 set job.job_next_run_ms = now + job.job_period_ms;
                 call job.job_f []
             ) else
                 job.job_status
         )
-    else
-        call job.job_f [];;
+        else
+        (
+            set job.job_last_run_ms = now;
+            call job.job_f []
+        );;
 
 /**
  * Initialize a job
@@ -126,7 +131,8 @@ fun job_format_json job=
         "{ "::
             (json_int "id" job.job_id) :: ", " ::
             (json_str "name" job.job_name) :: ", " ::
-            (json_str "status" job_status_fmt job) ::
+            (json_str "status" job_status_fmt job) :: ", " ::
+            (json_int "last_run" job.job_last_run_ms) ::
             (
                 if job.job_period_ms != nil then
                     (strcat ", " json_int "period_ms" job.job_period_ms)
@@ -141,7 +147,8 @@ fun job_json=
     let listlen _jobs -> n in (
         for l=_jobs;l!=nil; tl l do
             let hd l -> job in
-            let if nil!=tl l then ",\n" else "\n]" -> sep in
+            let if nil!=tl l then ",\n" else "\n" -> sep in
             set result = strcatlist result::(job_format_json job)::sep::nil;
+        set result = strcat result "]";
         result
     );;

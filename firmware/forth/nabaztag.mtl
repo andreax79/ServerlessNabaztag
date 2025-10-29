@@ -225,6 +225,22 @@ fun forth_play_midi f=
         midi_play_random_note;;
 
 /**
+ * TIME-SERVER-IP ( -- ip )
+ * Get the time server IP address
+ */
+fun forth_time_server_ip f=
+    forth_push f [str:ip_to_str time_server_ip];;
+
+/**
+ * SET-TIME-SERVER-IP ( ip -- )
+ * Set the time server IP address
+ */
+fun forth_set_time_server_ip f=
+    let forth_pop f -> ip in
+    set time_server_ip = str_to_ip ip.str;
+    nil;;
+
+/**
  * SET-MD5-PASSWORD ( pwd -- )
  * Set the MD5 password used for server authentication
  */

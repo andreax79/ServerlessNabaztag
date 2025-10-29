@@ -417,5 +417,5 @@ fun ears_json=
             (json_int "left" ears_left) :: ",\n" ::
             (json_int "right" ears_right) :: ",\n" ::
             (json_int "ear_detecting" ears_detecting) :: "\n" ::
-        "}" :: nil
-;;
+        "}" :: nil;;
+

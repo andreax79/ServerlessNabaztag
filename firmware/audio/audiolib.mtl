@@ -135,7 +135,7 @@ fun _audiolib_wav_play_cb i =
                 set _audiolib_wav_index=0;
                 set _audiolib_wav_fifo=tl _audiolib_wav_fifo;
                 // Secho "[b-:" ; Iecho (slistlen _audiolib_wav_fifo); Secho "]";
-                if _audiolib_wav_http!=nil then if (slistlen _audiolib_wav_fifo)<WAV_BUFFER_MAXSIZE then if !(http_enabledP _audiolib_wav_http) then
+                if _audiolib_wav_http!=nil then if (slistlen _audiolib_wav_fifo)<WAV_BUFFER_MAXSIZE then if !(http_is_enabled _audiolib_wav_http) then
                 (
                     Audiowln "##http_enable 1##";
                     http_enable _audiolib_wav_http 1

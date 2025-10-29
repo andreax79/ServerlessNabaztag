@@ -49,22 +49,6 @@ var _wifi_try;;
 #include protos/json_protos.mtl
 
 /**
- * Convert a MAC address to a string
- */
-fun _wifi_mac_to_str src=
-    let strnew 17 -> s in
-    let 0->i in
-    (
-        for j=0;j<6 do
-        (
-            strcpy s i (ctoh strget src j) 0 2;
-            set i=i+2;
-            if j<5 then (strset s i ':'; set i=i+1)
-        );
-    s
-    );;
-
-/**
  * Return true if the wifi is connected
  */
 fun wifi_connected=
@@ -80,17 +64,21 @@ fun wifi_scan_serialize l=
     (itoh4 listlen l)::_wifi_scan_serialize l;;
 
 fun _wifi_dump_scan l0=
+#ifdef WIFI_DEBUG
     _wifi_debug "## DUMPSCAN >>>>";
+#endif
     for l=l0;l!=nil;tl l do
     let hd l->[ssid mac bssid rssi channel rateset encryption] in
     (
+#ifdef WIFI_DEBUG
         _wifi_debug strcatlist "## SCAN " :: ssid :: nil;
-        _wifi_debug strcatlist "mac: " :: (MAC_to_str mac 0 1) :: nil;
-        _wifi_debug strcatlist "bssid: " :: (MAC_to_str bssid 0 1) :: nil;
+        _wifi_debug strcatlist "mac: " :: (mac_to_str mac) :: nil;
+        _wifi_debug strcatlist "bssid: " :: (mac_to_str bssid) :: nil;
         _wifi_debug strcatlist "rssi: " :: (itoa rssi) :: nil;
         _wifi_debug strcatlist "channel: " :: (itoa channel) :: nil;
         _wifi_debug strcatlist "rateset: " :: (itoa rateset) :: nil;
         _wifi_debug strcatlist "encryption: " :: (itoa encryption) :: nil;
+#endif
         0
     );
     l0;;
@@ -126,7 +114,7 @@ proto wifi_job 0;;
  * rescan: if true, force a new scan
  */
 fun wifi_init rescan=
-    set wifi_mac_addr = _wifi_mac_to_str netMac;
+    set wifi_mac_addr = mac_to_str netMac;
 	set _wifi_try = nil;
     set _wifi_master = 0; // TODO
     let envget -> env in

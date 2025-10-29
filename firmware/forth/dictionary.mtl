@@ -130,6 +130,8 @@ fun forth_init_dictionary=
         [ name:"play-midi"          func:#forth_play_midi ] ::
         [ name:"revision"           func:#forth_revision ] ::
         [ name:"md5"                func:#forth_md5 ] ::
+        [ name:"time-server-ip"     func:#forth_time_server_ip ] ::
+        [ name:"set-time-server-ip" func:#forth_set_time_server_ip ] ::
         [ name:"set-md5-password"   func:#forth_set_md5_password ] ::
         [ name:"md5-password"       func:#forth_md5_password ] ::
         nil

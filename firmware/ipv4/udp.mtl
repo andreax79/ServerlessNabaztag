@@ -2,7 +2,10 @@
 // UDP
 // -------------------------------------------------------------------------------------------------
 
-fun mkudp ipsrc ipdst portsrc portdst content=
+/**
+ * Create a UDP packet
+ */
+fun _udp_create_pkg ipsrc ipdst portsrc portdst content=
 	let strcatlist
 	"\$aa\$aa\$03\$00\$00\$00\$08\$00\$45\$00\$00\$00\$00\$00\$00\$00\100\17\0\0"::
 	ipsrc::
@@ -23,31 +26,57 @@ fun mkudp ipsrc ipdst portsrc portdst content=
 fun _udp_send2 mac udp=
 	netSend udp 0 nil mac 0 1;;
 
+/**
+ * Send a UDP packet
+ * local: local ip
+ * localp: local port
+ * dst: destination ip
+ * dstp: destination port
+ * content: content string
+ * mac: destination mac (nil to use arp)
+ */
 fun udp_send local localp dst dstp content mac=
-	let mkudp local dst localp dstp content -> udp in
-	if mac!=nil then _udp_send2 mac udp
-	else let dst -> ip in	//	ajouter le test de passerelle
-	arp_req ip fixarg2 #_udp_send2 udp;;
+	let _udp_create_pkg local dst localp dstp content -> udp in
+	if mac != nil then
+        _udp_send2 mac udp
+	else
+        let dst -> ip in	//	ajouter le test de passerelle
+	        arp_req ip fixarg2 #_udp_send2 udp;;
 
-var ludp;;
+// UDP listeners
+var udp_listeners;; // list of [port cb]
 
-fun remudp l port=
-	if l!=nil then let hd l ->[p _] in if p==port then remudp tl l port else (hd l)::remudp tl l port;;
+/**
+ * Remove UDP listener for a given port
+ * l: list of [port cb]
+ * port: port to remove
+ */
+fun _udp_remove_listener l port=
+	if l!=nil then
+        let hd l ->[p _] in
+            if p==port then
+                _udp_remove_listener tl l port
+            else
+                (hd l) :: _udp_remove_listener tl l port;;
 
 fun regudp port cb=
-	set ludp=[port cb]::remudp ludp port;;
+	set udp_listeners=[port cb]::_udp_remove_listener udp_listeners port;;
 
 fun unregudp port=
-	set ludp=remudp ludp port;;
+	set udp_listeners=_udp_remove_listener udp_listeners port;;
 
+/**
+ * Remove all UDP listeners
+ */
 fun udp_reset=
-    set ludp=nil;;
+    set udp_listeners=nil;;
 
-// UDP handler
-fun cbnetudp src mac=
-	Secho "<u";
-	let Iecholn strgetword src 8+20+2 -> locp in
-	let listswitch ludp locp -> cb in
+/**
+ * UDP handler
+ */
+fun udp_handler src mac=
+	let strgetword src 8+20+2 -> locp in
+	let listswitch udp_listeners locp -> cb in
 	call cb [strsub src 8+20+8 nil mac strsub src 20 4];;
 
 /**

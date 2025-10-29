@@ -5,6 +5,7 @@ type Job=[
     job_f           // function
     job_status      // status (JobStatus)
     job_period_ms   // how often to run
+    job_last_run_ms // system time (in ms) when it last ran
     job_next_run_ms // system time (in ms) when it should next run
 ];;
 

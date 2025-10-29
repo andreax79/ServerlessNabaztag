@@ -18,3 +18,4 @@ proto XmppSessionIsDisconnected 1;; // We don't know where we are but we seem to
 proto XmppSessionProcess 2;;        // Process for the CTED!!! RESTART? WE ARE connexion, deals with all type of messages
 proto XmppSessionProcessR 3;;       // Process for the CTED!!! RESTART? WE ARE connexion, deals with all type of messages
 proto XmppSessionUpdate 1;;         // When the status is changed
+proto xmpp_init 0;;

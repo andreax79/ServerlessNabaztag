@@ -7,6 +7,8 @@
 // Crontab
 //--------------------------------------------------------------------------------------------------
 
+const CRONTAB_TIME_DELAY = 60 * 1000;; // 1 minute
+
 fun crontab_job =
     let time_local -> [_ _ _ local_time_hour local_time_minute local_time_second _] in
     if time_rfc868_received then (
@@ -15,12 +17,8 @@ fun crontab_job =
 
         if local_time_minute == 0 then (
             hook_time // Play time sound
-        ) else if local_time_minute == 15 then (
-            meteo_get // Update weather info
         ) else if local_time_minute == 30 then (
             hook_halftime // Play halftime sound
-        ) else if (local_time_hour == 23 && local_time_minute == 55) then (
-            get_time_from_timeserver
         );
 
         if (!sleep_status && local_time_hour == config_get_go_to_bed) then sleep_start;
@@ -28,3 +26,9 @@ fun crontab_job =
         0
     );
     JobRun;;
+
+/**
+ * Initialize the crontab job
+ */
+fun crontab_init=
+    job_start_ex "crontab" CRONTAB_TIME_DELAY #crontab_job;;

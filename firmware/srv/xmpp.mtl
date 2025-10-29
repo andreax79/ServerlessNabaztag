@@ -131,7 +131,7 @@ const XmppVioletObjectsComponent = "xmpp.objects.violet.net";;
 const XmppVioletAppletComponent = "xmpp.applet.violet.net";;
 const XmppVioletPlatformClient = "net.violet.platform";;
 
-const TcpServerNoResponseTimeOut = 2;;  // When opentcp don't response after x sec, try another server
+const TcpServerNoResponseTimeOut = 2;;  // When tcp_open don't response after x sec, try another server
 
 const XmppTcpOpenStream1 = "<?xml version='1.0' encoding='UTF-8'?>\n<stream:stream to='";;
 const XmppTcpOpenStream2 = "' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0'>\n";;
@@ -218,7 +218,7 @@ type tXmppGate = [pParent pMode pStatus pTry pTcpV pBoshV pBuffer pSId pActualMo
 // ---------------------------------------------------------
 // XMPP TCP > SEND, READ_CB, IDLE
 // ---------------------------------------------------------
-proto XmppTcpOpen 3;;   // Try to open the tcp (opentcp...)
+proto XmppTcpOpen 3;;   // Try to open the tcp (tcp_open...)
 proto XmppTcpSend 2;;
 proto XmppTcpRead 4;;
 proto XmppTcpIdle 1;;   // Check if the stream works
@@ -298,7 +298,7 @@ fun XmppTcpOpen ip port xSession =
         set xSession.sLastReadTime = time;
         if xSession.sGate.pTcpV != nil then         // On supprime et ferme tout si quelque chose avant existait
         (
-            closetcp xSession.sGate.pTcpV.xSocket;  // Fermeture du socket
+            tcp_close xSession.sGate.pTcpV.xSocket;  // Fermeture du socket
             set xSession.sGate.pTcpV = nil          // Suppression de la variable
         );
 
@@ -308,7 +308,7 @@ fun XmppTcpOpen ip port xSession =
         let [xParent:xSession xSocket:nil xHost:ip xPort:port] -> newTcp in
         (
             set xSession.sGate.pTcpV = newTcp;
-            set newTcp.xSocket = opentcp netip nil (useparamip ip) port fixarg4 #XmppTcpRead xSession   // On ouvre le socket
+            set newTcp.xSocket = tcp_open netip nil (str_to_ip ip) port fixarg4 #XmppTcpRead xSession   // On ouvre le socket
         );
         0
     )
@@ -329,14 +329,14 @@ fun XmppTcpReOpen ip port xSession =
         (
         if xSession.sGate.pTcpV != nil then                     // On supprime et ferme tout si quelque chose avant existait
                 (
-            closetcp xSession.sGate.pTcpV.xSocket;  // Fermeture du socket
+                        tcp_close xSession.sGate.pTcpV.xSocket;  // Fermeture du socket
                         set xSession.sGate.pTcpV = nil                  // Suppression de la variable
                 );
 
                 let [xParent:xSession xSocket:nil xHost:ip xPort:port] -> newTcp in
                 (
                         set xSession.sGate.pTcpV = newTcp;
-                        set newTcp.xSocket = opentcp netip nil (useparamip ip) port fixarg4 #XmppTcpRead xSession       // On ouvre le socket
+                        set newTcp.xSocket = tcp_open netip nil (str_to_ip ip) port fixarg4 #XmppTcpRead xSession       // On ouvre le socket
                 );
         0
     )
@@ -367,7 +367,7 @@ fun XmppTcpActuallySendData xSession =
     else
         (
             let xSession.sGate.pTcpV.xSocket -> socket in
-            let writetcp socket data index -> newIndex in
+            let tcp_write socket data index -> newIndex in
                 if (nil != newIndex) then
                     (
                         set xSession.sLastIOTime = time;    // Mise à jour
@@ -2833,14 +2833,14 @@ fun XmppSessionProcessHandleStanzaIqSet xSession xmlStanza =
                     :: "<field var='wifi_ssid'><value>" :: (StoB64 config_get_wifi_ssid) :: "</value></field>"
                     :: "<field var='wifi_crypt'><value>" :: (itoa config_get_wifi_crypt) :: "</value></field>"
                     :: "<field var='net_dhcp'><value>" :: (itoa config_get_dhcp) :: "</value></field>"
-                    :: "<field var='net_ip'><value>" :: (webip config_get_net_ip) :: "</value></field>"
-                    :: "<field var='net_mask'><value>" :: (webip config_get_netmask) :: "</value></field>"
-                    :: "<field var='net_gateway'><value>" :: (webip config_get_net_gw) :: "</value></field>"
-                    :: "<field var='net_dns'><value>" :: (webip config_get_net_dns) :: "</value></field>"
+                    :: "<field var='net_ip'><value>" :: (ip_to_str config_get_net_ip) :: "</value></field>"
+                    :: "<field var='net_mask'><value>" :: (ip_to_str config_get_netmask) :: "</value></field>"
+                    :: "<field var='net_gateway'><value>" :: (ip_to_str config_get_net_gw) :: "</value></field>"
+                    :: "<field var='net_dns'><value>" :: (ip_to_str config_get_net_dns) :: "</value></field>"
                     :: "<field var='server_url'><value>" :: config_get_server_url :: "</value></field>"
                     :: "<field var='login'><value></value></field>"
                     :: "<field var='proxy_enabled'><value>" :: (itoa config_get_proxy) :: "</value></field>"
-                    :: "<field var='proxy_ip'><value>" :: (webip config_get_proxy_ip) :: "</value></field>"
+                    :: "<field var='proxy_ip'><value>" :: (ip_to_str config_get_proxy_ip) :: "</value></field>"
                     :: "<field var='proxy_port'><value>" :: (itoa config_get_proxy_port) :: "</value></field>"
                     :: "</item></x>"
                     :: "</command>"
@@ -2851,9 +2851,9 @@ fun XmppSessionProcessHandleStanzaIqSet xSession xmlStanza =
                 "<command xmlns='http://jabber.org/protocol/commands' node='getrunningstate' status='completed'>"
                     :: "<x xmlns='jabber:x:data' type='result'><item>"
                     :: "<field var='connection_mode'><value>" :: (if (1 == xSession.sGate.pActualMode) then "tcp" else "bosh") :: "</value></field>"
-                    :: "<field var='net_ip'><value>" :: (webip netip) :: "</value></field>"
-                    :: "<field var='net_mask'><value>" :: (webip netmask) :: "</value></field>"
-                    :: "<field var='net_gateway'><value>" :: (webip netgateway) :: "</value></field>"
+                    :: "<field var='net_ip'><value>" :: (ip_to_str netip) :: "</value></field>"
+                    :: "<field var='net_mask'><value>" :: (ip_to_str netmask) :: "</value></field>"
+                    :: "<field var='net_gateway'><value>" :: (ip_to_str netgateway) :: "</value></field>"
                     :: "<field var='net_dns'><value>" :: (dns_list_to_str) :: "</value></field>"
                     :: "<field var='sState'><value>" :: (xmppStateToStr xSession.sState) :: "</value></field>"
                     :: "<field var='sResource'><value>" :: xSession.sResource :: "</value></field>"
@@ -3027,3 +3027,7 @@ fun XmppSessionProcessHandleStanzaIqError type =
 // ---------------------------------------------------------
 // END XMPP SESSION
 // ---------------------------------------------------------
+
+fun xmpp_init=
+    job_start "XmppSessionRun" #XmppSessionRun;
+    job_start "XmppSessionIdle" #XmppSessionIdle;;

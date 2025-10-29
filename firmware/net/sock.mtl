@@ -10,12 +10,12 @@ fun sock_write sock=
     if sock.sockOutput!=nil then
     (
         if sock.sockIndex==nil then set sock.sockIndex=0;
-        set sock.sockIndex=writetcp sock.sockCnx sock.sockOutput sock.sockIndex;
+        set sock.sockIndex=tcp_write sock.sockCnx sock.sockOutput sock.sockIndex;
         // Check if the entire output buffer has been sent
         if sock.sockIndex!=nil && sock.sockIndex>=strlen sock.sockOutput then
         (   set sock.sockIndex=nil;
             set sock.sockOutput=nil;
-            if sock.sockCloseAfter==1 then closetcp sock.sockCnx
+            if sock.sockCloseAfter==1 then tcp_close sock.sockCnx
         )
     );
     0;;
@@ -35,7 +35,7 @@ fun sock_send sock s =
  */
 fun sock_close_after sock =
     set sock.sockCloseAfter=1;
-    if sock.sockIndex>=strlen sock.sockOutput then closetcp sock.sockCnx
+    if sock.sockIndex>=strlen sock.sockOutput then tcp_close sock.sockCnx
     ;;
 
 /**

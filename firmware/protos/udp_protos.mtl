@@ -1,4 +1,4 @@
-proto cbnetudp 2 ;;
+proto udp_handler 2;;
 proto udp_reset 0;;
 proto udp_init 0;;
 proto udp_send 6;;

@@ -121,3 +121,8 @@ fun _record_interactive_send_upload =
     run_set_state interactiveReqWaitRun recordreq;
     0;;
 
+/**
+ * Initialize the periodic job
+ */
+fun record_init=
+    job_start "record_upload_timeout" #record_upload_timeout_job;;

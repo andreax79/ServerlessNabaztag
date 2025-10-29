@@ -12,9 +12,6 @@ const DHCP_NACK=6;;
 /* 1 if the dhcp client is running */
 var dhcp_client_started=0;;
 
-/* length, in seconds, of the dhcp lease */
-var dhcp_lease_len=0;;
-
 /* the time when we received the lease */
 var dhcp_lease_start=0;;
 
@@ -42,7 +39,6 @@ fun _dhcp_debug str= nil;;
 //--------------------------------------------------------------------------------------------------
 // DHCP CLient
 //--------------------------------------------------------------------------------------------------
-
 
 /**
  * Updates the var dhcp_lease_t1, that contains the time of the dhcp renewal time
@@ -109,7 +105,9 @@ fun _dhcp_extract src i type lease submask dnslist gateway mac=
     else _dhcp_extract src i+len type lease submask dnslist gateway mac;;
 
 fun _dhcp_client_cb src macfrom hostip=
+#ifdef DHCP_DEBUG
     Secholn "<dhcp"; MACecho macfrom 0 1;
+#endif
     let strget src 0 -> x in
     let MACecho (strsub src 28 6)0 1 -> mac in
     if x==2 && !strcmp mac mymac then
@@ -118,20 +116,24 @@ fun _dhcp_client_cb src macfrom hostip=
         let _dhcp_extract src 240 0 nil nil nil nil nil->[type lease submask dnslist gateway _] in
         if type==DHCP_OFFER then
         (
-            Secholn ">>>>>>>>>>>>>>>OFFER";
+#ifdef DHCP_DEBUG
+            _dhcp_debug ">>>>>>>>>>>>>>>OFFER";
+#endif
             udp_send netip 68 ipbroadcast 67 (_dhcp_mk DHCP_REQUEST netip hostip newip) macbroadcast;
             nil
         )
         else if type==DHCP_ACK then
         (
-            Secholn ">>>>>>>>>>>>>>>ACK";
-            Secho "server    ";IPecho hostip 0 1;
-            Secho "ip        ";IPecho set netip=newip 0 1;
-            Secho "type      ";Iecholn type;
-            Secho "leasetime ";Iecholn lease; _dhcp_client_update_lease_time lease;
-            Secho "submask   ";IPecho set netmask=submask 0 1;
+#ifdef DHCP_DEBUG
+            _dhcp_debug ">>>>>>>>>>>>>>>ACK";
+            Secho "server    "; IPecho hostip 0 1;
+            Secho "ip        "; IPecho set netip=newip 0 1;
+            Secho "type      "; Iecholn type;
+            Secho "leasetime "; Iecholn lease; _dhcp_client_update_lease_time lease;
+            Secho "submask   "; IPecho set netmask=submask 0 1;
             Secho "dns       "; dns_list_from_dhcp dnslist; Secholn dns_list_to_str;
-            Secho "gateway   ";IPecho set netgateway=gateway 0 1;
+            Secho "gateway   "; IPecho set netgateway=gateway 0 1;
+#endif
             nil
         )
         else if type==DHCP_NACK then
@@ -143,8 +145,6 @@ fun _dhcp_client_cb src macfrom hostip=
             nil
         )
     );;
-
-
 
 /**
  * Ask to renew the lease

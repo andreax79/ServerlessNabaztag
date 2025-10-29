@@ -1,4 +1,4 @@
-proto arp_net_cb 2;;
+proto arp_handler 2;;
 proto arp_req 2;;
 proto arp_reset 0;;
 proto arp_init 0;;

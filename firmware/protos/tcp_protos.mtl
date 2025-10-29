@@ -1,6 +1,9 @@
-proto cbnettcp 2 ;;
-proto opentcp 5 ;;
-proto writetcp 3 ;;
-proto closetcp 1 ;;
-proto tcp_init 0 ;;
-proto tcp_reset 0 ;;
+proto tcp_close 1;;
+proto tcp_handler 2;;
+proto tcp_init 0;;
+proto tcp_is_enabled 1;;
+proto tcp_listen 2;;
+proto tcp_open 5;;
+proto tcp_reset 0;;
+proto tcp_set_enabled 2;;
+proto tcp_write 3;;

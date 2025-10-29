@@ -83,7 +83,7 @@ fun _telnet_process_iac input f=
 fun _telnet_sock_read input f=
     // If the input is nil or empty, the client has closed the connection
     if input==nil ||0==strlen input then
-        closetcp f.forth_sock.sockCnx
+        tcp_close f.forth_sock.sockCnx
     else if f.forth_sock.sockCallback != nil then
          let _telnet_process_iac input f -> input in
             if (strlen input) > 0 then
@@ -124,7 +124,7 @@ fun _telnet_forth_interpreter_cb f sock=
 fun telnet_server_cb cnx _ _=
     let [sockCnx:cnx sockCallback:nil] -> sock in
     let [stack:nil rstack:nil pc:0 forth_sock:sock] -> f in (
-        tcpcb cnx fixarg4 #_telnet_sock_event f;
+        tcp_set_cb cnx fixarg4 #_telnet_sock_event f;
         forth_interpreter "interpreter" f sock (fixarg2 #_telnet_forth_interpreter_cb sock)
     );
     0;;
@@ -134,5 +134,5 @@ fun telnet_server_cb cnx _ _=
  * port: TCP port number to listen on
  */
 fun telnet_server_start_srv port =
-    listentcp port #telnet_server_cb;
+    tcp_listen port #telnet_server_cb;
     0;;
