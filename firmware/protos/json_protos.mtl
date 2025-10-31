@@ -2,11 +2,22 @@ proto json_int 2;;
 proto json_obj 2;;
 proto json_quote_str 1;;
 proto json_str 2;;
+proto json_parse 1;;
+proto json_get_str 2;;
+proto json_get_int 2;;
+proto json_get_arr 2;;
 
-const JSON_TAB=9;; // ASCII code for tab
-const JSON_NEWLINE=10;; // ASCII code for newline
-const JSON_DOUBLE_QUOTE=34;; // ASCII code for double quote
-const JSON_SLASH=47;; // ASCII code for slash
-const JSON_BACK_SLASH=92;; // ASCII code for backslash
-const JSON_AMPERSAND=38;; // ASCII code for ampersand
+// JSON value
+type JsonValue=[
+    json_value_int   // integer value
+    json_value_str   // string value and decimal number as string
+    json_value_arr   // list of values
+    json_value_obj   // list of [key value]
+];;
 
+// State of the JSON parser
+type JsonParserState=[
+    json_string
+    json_index
+    json_length
+];;
