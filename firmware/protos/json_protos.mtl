@@ -3,21 +3,7 @@ proto json_obj 2;;
 proto json_quote_str 1;;
 proto json_str 2;;
 proto json_parse 1;;
+proto json_get 2;;
 proto json_get_str 2;;
 proto json_get_int 2;;
 proto json_get_arr 2;;
-
-// JSON value
-type JsonValue=[
-    json_value_int   // integer value
-    json_value_str   // string value and decimal number as string
-    json_value_arr   // list of values
-    json_value_obj   // list of [key value]
-];;
-
-// State of the JSON parser
-type JsonParserState=[
-    json_string
-    json_index
-    json_length
-];;

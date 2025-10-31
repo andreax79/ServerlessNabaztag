@@ -71,6 +71,9 @@ fun forth_init_dictionary=
         [ name:"nth"                func:#forth_nth ] ::    // list or string
         [ name:"count"              func:#forth_count ] ::  // list or string
         [ name:"str-join"           func:#forth_str_join ] ::
+        // JSON
+        [ name:"json-parse"         func:#forth_json_parse ] ::
+        [ name:"json-get"           func:#forth_json_get ] ::
         // String
         // lower
         // upper

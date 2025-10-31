@@ -6,27 +6,14 @@
 
 const METEO_TIME_DELAY = 60 * 60 * 1000;; // 1 hour
 // const METEO_TEST = "{\"latitude\":45.46,\"longitude\":9.18,\"generationtime_ms\":0.048995018005371094,\"utc_offset_seconds\":0,\"timezone\":\"GMT\",\"timezone_abbreviation\":\"GMT\",\"elevation\":145.0,\"daily_units\":{\"time\":\"iso8601\",\"weathercode\":\"wmo code\"},\"daily\":{\"time\":[\"2023-09-22\"],\"weathercode\":[80]}}";;
+const METEO_TEST = "{\"latitude\":45.46,\"longitude\":9.18,\"generationtime_ms\":0.10848045349121094,\"utc_offset_seconds\":0,\"timezone\":\"GMT\",\"timezone_abbreviation\":\"GMT\",\"elevation\":148.0,\"current_units\":{\"time\":\"iso8601\",\"interval\":\"seconds\",\"temperature_2m\":\"°C\",\"wind_speed_10m\":\"km/h\"},\"current\":{\"time\":\"2025-10-30T15:30\",\"interval\":900,\"temperature_2m\":15.4,\"wind_speed_10m\":6.3},\"daily_units\":{\"time\":\"iso8601\",\"weathercode\":\"wmo code\"},\"daily\":{\"time\":[\"2025-10-30\",\"2025-10-31\",\"2025-11-01\"],\"weathercode\":[61,3,45]}}\"";;
 
 var _meteo_weather_code = nil;;
 
-fun _meteo_search_key s=
-    strcatlist "\""::s::"\""::nil;;
-
-// Get JSON string from the given key
-fun _meteo_get_json_from_key json key =
-    let strstr json _meteo_search_key key 0 -> start in
-    let if (start==nil) then nil else (strstr json ":" start) -> kv_start in
-    if (kv_start==nil) then nil else (strsub json kv_start+1 nil);;
-
 // Get weathercode from JSON
 fun _meteo_get_weathercode json =
-    let _meteo_get_json_from_key json "daily" -> daily_json in
-    let _meteo_get_json_from_key daily_json "weathercode" -> weathercode_json in
-    let strstr weathercode_json "[" 0 -> c_start in
-    let strstr weathercode_json "]" c_start -> c_end in
-    let if (weathercode_json==nil || c_start==nil || c_end ==nil) then nil else (strsub weathercode_json c_start+1 c_end-1) -> weathercode_txt in
-    if (weathercode_txt==nil) then nil else atoi weathercode_txt
-    ;;
+    let json_parse json -> j in
+        json_get_int j "daily.weathercode[0]";;
 
 // Prepare the url for getting the weather for a given lat long
 fun _meteo_prepare_url lat long =

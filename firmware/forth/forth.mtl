@@ -14,16 +14,6 @@
 fun _forth_debug str= Secho strcatlist "[forth] " :: str :: nil; nil;;
 #endif
 
-type Word=[
-    name                // name of the defined word
-    code                // array of Words if a colon
-    func                // function if primitive
-    int                 // data field - integer value for variables/constants
-    str                 // data field - string value
-    list                // data field - stack of Words
-    flag                // immediate, async
-];;
-
 type Interpreter=[
     start               // current token start
     end                 // current token end
@@ -47,6 +37,7 @@ var forth_dictionary;;
 #include forth/comparison.mtl
 #include forth/output.mtl
 #include forth/list.mtl
+#include forth/json.mtl
 #include forth/control.mtl
 #include forth/misc.mtl
 #include forth/net.mtl

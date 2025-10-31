@@ -4,6 +4,17 @@
  * This code is licensed under the MIT License
  */
 
+type Word=[
+    name                // name of the defined word
+    code                // array of Words if a colon
+    func                // function if primitive
+    int                 // data field - integer value for variables/constants
+    str                 // data field - string value
+    list                // data field - list of Word
+    dict                // data field - dictionary (list of [str Word])
+    flag                // immediate, async
+];;
+
 type Forth=[
     stack               // data stack
     rstack              // return stack
@@ -33,9 +44,6 @@ const FORTH_FALSE = 0;;
 
 const FORTH_STATE_NORMAL = 0;;
 const FORTH_STATE_COMPILATION = -1;;
-const FORTH_SPACE = 32;; // ASCII space
-const FORTH_DOUBLE_QUOTE = 34;; // ASCII " (double quote)
-const FORTH_BACKSLASH = 92;; // ASCII \ (backslash)
 
 const FORTH_IMMEDIATE = 1;;
 const FORTH_ASYNC = 2;;

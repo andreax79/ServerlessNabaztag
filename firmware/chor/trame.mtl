@@ -46,11 +46,11 @@ fun _trame_bintoi3 s x=((strget s x)<<16)+((strget s x+1)<<8)+(strget s x+2);;
 // aide pour la fonction _trame_pingextract juste en dessous
 fun _trame_pingextract_ s i res=
     if i<strlen s then
-    let (strget s i)-> code in
-    if code==255 then res
-    else if code>=0 && code<=11 then
+    let (strget s i)-> trame_code in
+    if trame_code==255 then res
+    else if trame_code>=0 && trame_code<=11 then
         let _trame_bintoi3 s i+1 -> len in
-        if len>=0 then _trame_pingextract_ s i+4+len [code strsub s i+4 len]::res;;
+        if len>=0 then _trame_pingextract_ s i+4+len [trame_code strsub s i+4 len]::res;;
 
 
 // parse la chaine s et renvoie une liste des commandes contenues dedans

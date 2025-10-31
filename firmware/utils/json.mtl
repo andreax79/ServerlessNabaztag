@@ -1,5 +1,10 @@
 #include protos/ascii_protos.mtl
+#include protos/forth_protos.mtl
 #include protos/json_protos.mtl
+
+#ifdef JSON_DEBUG
+fun _json_debug str= Secho strcatlist "[json] " :: str :: nil; nil;;
+#endif
 
 //--------------------------------------------------------------------------------------------------
 // JSON output
@@ -34,20 +39,20 @@ fun json_quote_str str=
     let strlen str -> len in
     let _json_count_special_char str -> nquote in
 	let strnew (len + nquote + 2) -> s in (
-        strset s 0 34; // opening quote
+        strset s 0 ASCII_DOUBLE_QUOTE; // opening quote
         let 1 -> j in
         for i=0; i<len do (
             let strget str i -> ch in (
-                if ch == ASCII_TAB then (strset s j 92; set j = j + 1; set ch = 116) // 't'
-                else if ch == ASCII_NEWLINE then (strset s j 92; set j = j + 1; set ch = 110) // 'n'
-                else if ch == ASCII_DOUBLE_QUOTE then (strset s j 92; set j = j + 1; set ch = 34) // '"'
-                else if ch == ASCII_SLASH then (strset s j 92; set j = j + 1; set ch = 47) // '/'
-                else if ch == ASCII_BACKSLASH then (strset s j 92; set j = j + 1; set ch = 92); // '\'
+                if ch == ASCII_TAB then (strset s j ASCII_BACKSLASH; set j = j + 1; set ch = 116) // 't'
+                else if ch == ASCII_NEWLINE then (strset s j ASCII_BACKSLASH; set j = j + 1; set ch = 110) // 'n'
+                else if ch == ASCII_DOUBLE_QUOTE then (strset s j ASCII_BACKSLASH; set j = j + 1; set ch = ASCII_DOUBLE_QUOTE) // '"'
+                else if ch == ASCII_SLASH then (strset s j ASCII_BACKSLASH; set j = j + 1; set ch = ASCII_SLASH) // '/'
+                else if ch == ASCII_BACKSLASH then (strset s j ASCII_BACKSLASH; set j = j + 1; set ch = ASCII_BACKSLASH); // '\'
                 strset s j ch;
                 set j = j + 1
             )
         );
-        strset s (len + nquote + 1) 34; // closing quote
+        strset s (len + nquote + 1) ASCII_DOUBLE_QUOTE; // closing quote
         s
     )
 ;;
@@ -77,6 +82,13 @@ fun json_obj k v=
 // Parse JSON
 //--------------------------------------------------------------------------------------------------
 
+// State of the JSON parser
+type JsonParserState=[
+    json_input
+    json_index
+    json_length
+];;
+
 proto _json_parse_object 1;;
 proto _json_parse_array 1;;
 proto _json_is_whitespace 1;;
@@ -99,7 +111,7 @@ fun _json_is_whitespace ch=
  */
 fun _json_peek_char j=
     if j.json_index < j.json_length then
-        strget j.json_string j.json_index
+        strget j.json_input j.json_index
     else
         nil;;
 
@@ -127,7 +139,7 @@ fun _json_parse_string j=
                     )
                 )
             );
-            [json_value_str: strsub j.json_string start (end - start)]
+            [str: strsub j.json_input start (end - start)]
         )
     );;
 
@@ -151,21 +163,21 @@ fun _json_parse_number j=
                     set j.json_index = j.json_index + 1
                 )
         );
-        let strsub j.json_string start (end - start) -> str in
-            [json_value_str:str json_value_int:atoi str]
+        let strsub j.json_input start (end - start) -> str in
+            [str:str int:atoi str]
     );;
 
 /**
- * Move the index past any spaces, tabs, or newlines
+ * Move the index past any spaces, tabs, or newlines, returning the next non-whitespace character
  * j: JsonParserState
  */
 fun _json_skip_whitespace j=
-    let strget j.json_string j.json_index -> ch in (
+    let _json_peek_char j -> ch in (
         while (j.json_index < j.json_length) && _json_is_whitespace ch do (
             set j.json_index = j.json_index + 1;
-            let strget j.json_string j.json_index -> ch in 0
+            set ch = _json_peek_char j
         );
-        0
+        ch
     );;
 
 /**
@@ -174,15 +186,14 @@ fun _json_skip_whitespace j=
  */
 fun _json_parse_value j=
     // Skip whitespace
-    _json_skip_whitespace j;
-    let _json_peek_char j -> ch in (
+    let _json_skip_whitespace j -> ch in (
         if ch == ASCII_LEFT_BRACE then _json_parse_object j
         else if ch == ASCII_LEFT_BRACKET then _json_parse_array j
         else if ch == ASCII_DOUBLE_QUOTE then _json_parse_string j
         else if (ch == ASCII_MINUS) || (ch == ASCII_DOT) || ((ch >= 48) && (ch <= 57)) then _json_parse_number j
-        else if (ch == 116) then [json_value_int:1] // true
-        else if (ch == 102) then [json_value_int:0] // false
-        else if (ch == 110) then [json_value_int:nil] // null
+        else if (ch == 116) then [int:1] // true
+        else if (ch == 102) then [int:0] // false
+        else if (ch == 110) then [int:nil] // null
         else nil // Unexpected character, could handle error here
     );;
 
@@ -194,22 +205,23 @@ fun _json_parse_array j=
     // Consume the opening bracket
     set j.json_index = j.json_index + 1;
     let 0 -> done in
-    let [json_value_arr: nil] -> arr in (
+    let [list: nil] -> arr in (
         while (j.json_index < j.json_length) && (!done) do (
             // Skip whitespace
-            _json_skip_whitespace j;
-            let _json_peek_char j -> ch in (
+            let _json_skip_whitespace j -> ch in (
                 if ch == ASCII_RIGHT_BRACKET then ( // End of array
                     set j.json_index = j.json_index + 1; // Consume closing bracket
-                    set arr.json_value_arr = rev arr.json_value_arr nil;
+                    set arr.list = rev arr.list nil;
                     set done = 1
                 ) else if ch == ASCII_COMMA then (
                     set j.json_index = j.json_index + 1  // Consume comma
                 ) else (
                     // Parse value
                     let _json_parse_value j -> value in (
-                        // Secho "Array value: "; Secholn value.json_value_str;
-                        set arr.json_value_arr = value::arr.json_value_arr;
+#ifdef JSON_DEBUG
+                        _json_debug "array value: "; Secholn value.str;
+#endif
+                        set arr.list = value::arr.list;
                         nil
                     )
                 )
@@ -226,11 +238,10 @@ fun _json_parse_object j=
     // Consume the opening brace
     set j.json_index = j.json_index + 1;
     let 0 -> done in
-    let [json_value_obj: nil] -> obj in (
+    let [dict: nil] -> obj in (
         while (j.json_index < j.json_length) && (!done) do (
             // Skip whitespace
-            _json_skip_whitespace j;
-            let _json_peek_char j -> ch in (
+            let _json_skip_whitespace j -> ch in (
                 if ch == ASCII_RIGHT_BRACE then ( // End of object
                     set j.json_index = j.json_index + 1; // Consume closing brace
                     set done = 1
@@ -242,12 +253,12 @@ fun _json_parse_object j=
                 ) else (
                     let _json_parse_string j -> key in (
                         // Skip whitespace before colon
-                        _json_skip_whitespace j;
+                        set ch = _json_skip_whitespace j;
                         if (key == nil) then (
                             Secholn "Error: Invalid key in object";
                             set done = 1;
                             nil
-                        ) else if (_json_peek_char j) != ASCII_COLON then (
+                        ) else if ch != ASCII_COLON then (
                             Secholn "Error: Expected colon after key in object";
                             set done = 1;
                             nil
@@ -256,8 +267,10 @@ fun _json_parse_object j=
                             set j.json_index = j.json_index + 1;
                             // Get the value
                             let _json_parse_value j -> value in (
-                                // Secho key.json_value_str; Secho "="; Secholn value.json_value_str;
-                                set obj.json_value_obj = [key value]::obj.json_value_obj;
+#ifdef JSON_DEBUG
+                                _json_debug key.str; Secho "="; Secholn value.str;
+#endif
+                                set obj.dict = [key value]::obj.dict;
                                 nil
                             )
                         );
@@ -271,12 +284,11 @@ fun _json_parse_object j=
 
 /**
  * Parse a JSON string and return the parsed value as JsonValue
- * json_str: JSON string to parse
+ * json_input: JSON string to parse
  */
-fun json_parse json_str=
-    let [json_string:json_str json_index:0 json_length:strlen json_str] -> j in (
-        _json_skip_whitespace j;
-        let _json_peek_char j -> ch in (
+fun json_parse json_input=
+    let [json_input:json_input json_index:0 json_length:strlen json_input] -> j in (
+        let _json_skip_whitespace j -> ch in (
             if ch == ASCII_LEFT_BRACE then _json_parse_object j
             else if ch == ASCII_LEFT_BRACKET then _json_parse_array j
             else nil
@@ -290,10 +302,10 @@ fun json_parse json_str=
  */
 fun json_obj_get_value j key=
     let nil -> res in (
-        for p=j.json_value_obj;p!=nil&&res==nil;tl p do
+        for p=j.dict;p!=nil&&res==nil;tl p do
             let hd p -> pair in
             let pair -> [k v] in
-            if !strcmp k.json_value_str key then set res = v;
+            if !strcmp k.str key then set res = v;
         res
     );;
 
@@ -305,7 +317,7 @@ fun json_obj_get_value j key=
 fun json_arr_get_value j index=
     let 0 -> i in
     let nil -> res in (
-        for p=j.json_value_arr;p!=nil&&res==nil;tl p do (
+        for p=j.list;p!=nil&&res==nil;tl p do (
             if i==index then set res = hd p;
             set i = i + 1
         );
@@ -318,7 +330,7 @@ fun json_arr_get_value j index=
  * index: index to search
  */
 fun json_arr_get_str j index=
-    let json_arr_get_value j index -> v in v.json_value_str;;
+    let json_arr_get_value j index -> v in v.str;;
 
 /**
  * Get integer value from JSON array by index
@@ -326,7 +338,7 @@ fun json_arr_get_str j index=
  * index: index to search
  */
 fun json_arr_get_int j index=
-    let json_arr_get_value j index -> v in v.json_value_int;;
+    let json_arr_get_value j index -> v in v.int;;
 
 /**
  * Split JSON key into parts
@@ -372,7 +384,7 @@ fun json_get j k=
  * k: JSON key to search
  */
 fun json_get_str j k=
-    let json_get j k -> v in v.json_value_str;;
+    let json_get j k -> v in v.str;;
 
 /**
  * Get integer value from JSON by key
@@ -380,7 +392,7 @@ fun json_get_str j k=
  * k: JSON key to search
  */
 fun json_get_int j k=
-    let json_get j k -> v in v.json_value_int;;
+    let json_get j k -> v in v.int;;
 
 /**
  * Get array value from JSON by key
@@ -388,4 +400,4 @@ fun json_get_int j k=
  * k: JSON key to search
  */
 fun json_get_arr j k=
-    let json_get j k -> v in v.json_value_arr;;
+    let json_get j k -> v in v.list;;

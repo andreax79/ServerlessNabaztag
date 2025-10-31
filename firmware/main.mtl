@@ -60,8 +60,8 @@ proto XmppSessionRequestResource 1;;
 #include utils/sleep.mtl
 #ifdef XMPP
 #include utils/b64.mtl
-#include utils/xmlparser.mtl
 #endif
+#include utils/xmlparser.mtl
 
 #include net/net.mtl
 
