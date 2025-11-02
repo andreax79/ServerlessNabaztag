@@ -129,6 +129,40 @@ fun forth_set_dst f=
     nil;;
 
 /**
+ * LATITUDE ( -- lat )
+ * Get the latitude from the configuration
+ */
+fun forth_latitude f=
+    forth_push f [str:config_get_latitude];;
+
+/**
+ * SET-LATITUDE ( lat -- )
+ * Set the latitude in the configuration
+ */
+fun forth_set_latitude f=
+    let forth_pop f -> lat in
+    config_set_latitude lat.str;
+    config_save;
+    nil;;
+
+/**
+ * LONGITUDE ( -- lon )
+ * Get the longitude from the configuration
+ */
+fun forth_longitude f=
+    forth_push f [str:config_get_longitude];;
+
+/**
+ * SET-LONGITUDE ( lon -- )
+ * Set the longitude in the configuration
+ */
+fun forth_set_longitude f=
+    let forth_pop f -> lon in
+    config_set_longitude lon.str;
+    config_save;
+    nil;;
+
+/**
  * VOLUME ( -- vol )
  * Get the audio volume
  */

@@ -15,21 +15,22 @@ fun forth_colon f=
             // Enter compilation state
             set f.state = FORTH_STATE_COMPILATION;
             // Get the new word name
-            forth_get_token f;
+            forth_interpreter_get_token f;
             if !strcmp inter.token ";" then
                 forth_abort_msg f "Error: ';' without word name"
             else
                 let forth_get_word inter.token -> new_word in (
-                    if new_word == nil then (
+                    if new_word == nil then
+                        let [str:to_lower inter.token] -> key in (
                         // Secho "Creating new word "; Secholn inter.token;
-                        set new_word = [name:to_lower inter.token code:nil];
-                        set forth_dictionary = new_word :: forth_dictionary;
-                        forth_rpush f new_word
+                        set new_word = [code:nil];
+                        word_dict_set_w forth_dictionary key new_word
                     );
+                    forth_rpush f new_word;
                     set f.cstack = nil;
-                nil
-            )
-    );;
+                    nil
+                )
+        );;
 
 /**
  * ; End a word definition
@@ -40,6 +41,7 @@ fun forth_semi f=
     ) else
         let forth_rpop f -> new_word in (
             // Finish the new word definition
+            // Set the code field to the compiled code
             set new_word.code = forth_word_list_to_array (rev f.cstack nil);
             set f.cstack = nil;
             set f.state = FORTH_STATE_NORMAL;
@@ -50,30 +52,21 @@ fun forth_p f=
     nil;;
 
 /**
- * Helper function to print words in the dictionary
- */
-fun _forth_print_words f forth_dictionary=
-    if forth_dictionary==nil then nil
-    else let hd forth_dictionary -> head in (
-        forth_write f strcat " " head.name;
-        _forth_print_words f (tl forth_dictionary)
-    );;
-
-/**
  * CONSTANT (immediate) ( x "<spaces>name" -- )
  * Define a constant with the given name and value
  */
 fun forth_constant f=
     // Get the new word name
-    forth_get_token f;
+    forth_interpreter_get_token f;
     let forth_pop f -> x in
     let hd f.istack -> inter in
     let forth_get_word inter.token -> new_word in
-        if new_word == nil then (
-            set new_word = [name:to_lower inter.token code:{x}];
-            set forth_dictionary = new_word :: forth_dictionary;
-            nil
-        )
+        if new_word == nil then
+            let [str:to_lower inter.token] -> key in (
+                set new_word = [code:{x}];
+                word_dict_set_w forth_dictionary key new_word;
+                nil
+            )
         else
         (
             set new_word.code = {x};
@@ -81,11 +74,21 @@ fun forth_constant f=
         );;
 
 /**
+ * Helper function to print words in the dictionary
+ */
+fun _forth_print_words f dict=
+    if dict==nil then nil
+    else let hd dict -> [name _]in (
+        forth_write f strcat " " name.str;
+        _forth_print_words f (tl dict)
+    );;
+
+/**
  * WORDS ( -- )
  * List the words in the dictionary
  */
 fun forth_words f=
-    _forth_print_words f forth_dictionary;
+    _forth_print_words f forth_dictionary.dict;
     forth_write f " \n";
     nil;;
 

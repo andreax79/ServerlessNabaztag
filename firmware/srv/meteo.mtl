@@ -12,8 +12,9 @@ var _meteo_weather_code = nil;;
 
 // Get weathercode from JSON
 fun _meteo_get_weathercode json =
-    let json_parse json -> j in
-        json_get_int j "daily.weathercode[0]";;
+    let json_parse json -> word in
+    let word_get word "daily.weathercode[0]" -> v in
+        v.int;;
 
 // Prepare the url for getting the weather for a given lat long
 fun _meteo_prepare_url lat long =
@@ -75,8 +76,8 @@ fun _meteo_get_cb httpreq res=
  */
 fun meteo_get=
     // Iecholn _meteo_get_weathercode METEO_TEST;
-    let _meteo_prepare_url config_get_latitude config_get_longitude -> url in
-    http_request "GET" url nil #_meteo_get_cb HTTP_NORMAL;
+    // let _meteo_prepare_url config_get_latitude config_get_longitude -> url in
+    // http_request "GET" url nil #_meteo_get_cb HTTP_NORMAL;
     0;;
 
 /**

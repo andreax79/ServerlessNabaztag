@@ -1,6 +1,7 @@
-proto hook_click 0;;
-proto hook_dbl_click 0;;
-proto hook_ears 0;;
-proto hook_halftime 0;;
 proto hook_rfid 2;;
-proto hook_time 0;;
+
+const HOOK_EARS = "on-ears";;
+const HOOK_CLICK = "on-click";;
+const HOOK_DBL_CLICK = "on-dbl-click";;
+const HOOK_TIME = "on-time";;
+const HOOK_HALFTIME = "on-halftime";;

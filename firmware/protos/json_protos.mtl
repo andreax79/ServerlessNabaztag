@@ -3,7 +3,3 @@ proto json_obj 2;;
 proto json_quote_str 1;;
 proto json_str 2;;
 proto json_parse 1;;
-proto json_get 2;;
-proto json_get_str 2;;
-proto json_get_int 2;;
-proto json_get_arr 2;;

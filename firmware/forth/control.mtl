@@ -80,7 +80,7 @@ fun forth_until f=
                 // Remove the loop start from the return stack
                 set f.rstack = tl f.rstack;
                 // Compile a conditional jump back to the loop start
-                set f.cstack = [ name:"?jmp" func:#forth_qjmp] :: loop_start :: f.cstack;
+                set f.cstack = [func:#forth_qjmp] :: loop_start :: f.cstack;
                 nil
             )
         )
@@ -101,7 +101,7 @@ fun forth_if f=
         let listlen f.cstack -> current_pos in
             set f.rstack = [int:current_pos+1] :: f.rstack;
         // Compile a placeholder for the conditional jump
-        set f.cstack = [ name:"?jmp" func:#forth_qjmp] :: [int:-1] :: f.cstack;
+        set f.cstack = [func:#forth_qjmp] :: [int:-1] :: f.cstack;
         0
     );;
 
@@ -128,7 +128,7 @@ fun forth_else f=
                 // Push the jump address position onto the return stack
                 set f.rstack = [int:current_pos+1] :: f.rstack;
                 // Compile an unconditional jump
-                set f.cstack = [ name:"jmp" func:#forth_jmp] :: [int:-1] :: f.cstack;
+                set f.cstack = [func:#forth_jmp] :: [int:-1] :: f.cstack;
                 // Update the placeholder for the conditional jump to point to the instruction after the JMP
                 set jmp_addr_w.int = current_pos + 2;
                 0

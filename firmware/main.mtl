@@ -55,6 +55,7 @@ proto XmppSessionRequestResource 1;;
 #include utils/jobs.mtl
 #include utils/md5.mtl
 #include utils/config.mtl
+#include utils/word.mtl
 #include utils/url.mtl
 #include utils/hooks.mtl
 #include utils/sleep.mtl

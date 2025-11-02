@@ -46,3 +46,42 @@ fun forth_mac f=
  */
 fun forth_ip f=
     forth_push f [str:ip_to_str netip];;
+
+/**
+ * Handle HTTP callback for Forth interpreter. Return the output as JSON.
+ */
+#ifdef WEBSERVER
+fun _forth_http_cb f sock=
+    http_send_content_and_close sock "application/json"
+    strcatlist
+        "{\n" ::
+            (json_str "output" (strcatlist (rev f.output nil))) ::
+        "\n}" ::
+        nil;;
+#endif
+
+/**
+ * Handle an HTTP POST request to execute Forth code.
+ * sock: http socket
+ * args: HTTP request arguments
+ */
+#ifdef WEBSERVER
+fun forth_http_post_req sock args=
+    let _http_arg_str args 'c' -> code in
+    forth_interpreter code nil nil (fixarg2 #_forth_http_cb sock);;
+#endif
+
+/**
+ * Handle HTTP callback for loading Forth code from URL.
+ */
+fun _forth_load_cb http res=
+    if res != nil then
+        forth_interpreter (http_get_content res) nil nil nil;;
+        // TOOD callback when done
+
+/**
+ * Load and execute a Forth code from a URL.
+ */
+fun forth_load url=
+    http_request "GET" url nil #_forth_load_cb HTTP_NORMAL;
+    nil;;

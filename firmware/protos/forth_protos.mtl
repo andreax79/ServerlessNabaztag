@@ -5,7 +5,6 @@
  */
 
 type Word=[
-    name                // name of the defined word
     code                // array of Words if a colon
     func                // function if primitive
     int                 // data field - integer value for variables/constants
@@ -28,16 +27,17 @@ type Forth=[
 
 proto forth_compare_words 2;;
 proto forth_execute_code 2;;
-proto forth_get_token 1;;
 proto forth_get_word 1;;
-#ifdef WEBSERVER
-proto forth_http_post_req 2;;
-#endif
+proto forth_init_dictionary 0;;
 proto forth_interpreter 4;;
+proto forth_interpreter_get_token 1;;
 proto forth_interpreter_loop 1;;
 proto forth_interpreter_resume 1;;
 proto forth_list_to_str 2;;
 proto forth_word_list_to_array 1;;
+#ifdef WEBSERVER
+proto forth_http_post_req 2;;
+#endif
 
 const FORTH_TRUE = -1;;
 const FORTH_FALSE = 0;;

@@ -1,5 +1,4 @@
 #include protos/http_protos.mtl
-#include protos/forth_protos.mtl
 
 //--------------------------------------------------------------------------------------------------
 // Hooks
@@ -7,24 +6,3 @@
 
 fun hook_rfid tag cb=
 	http_request "POST" url_hook_rfid (strcatlist "tag="::(webmac tag)::nil) cb HTTP_NORMAL;;
-
-fun hook_ears=
-    forth_interpreter "hook-ears" nil nil nil;
-    0;;
-
-fun hook_click=
-    forth_interpreter "hook-click" nil nil nil;
-    0;;
-
-fun hook_dbl_click=
-    forth_interpreter "hook-dbl-click" nil nil nil;
-    0;;
-
-fun hook_time=
-    forth_interpreter "hook-time" nil nil nil;
-    0;;
-
-fun hook_halftime=
-    forth_interpreter "hook-halftime" nil nil nil;
-    0;;
-

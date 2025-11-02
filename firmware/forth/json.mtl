@@ -1,0 +1,24 @@
+/**
+ * List operations words for Forth interpreter
+ * Copyright (c) 2025 Andrea Bonomi
+ * This code is licensed under the MIT License
+ */
+
+/**
+ * JSON-PARSE ( str -- list/dict )
+ * Parse a JSON string into a list or dictionary
+ */
+fun forth_json_parse f=
+    let forth_pop f -> x in
+    forth_push f json_parse x.str;;
+
+/**
+ * JSON-GET ( w path -- x )
+ * Get an element from a dictionary or list by path (e.g., "daily.weathercode[0]")
+ */
+fun forth_json_get f=
+    let forth_pop f -> path in
+    let forth_pop f -> word in
+    let word_get word path.str -> val in
+    forth_push f val;
+    nil;;

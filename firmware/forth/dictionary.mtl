@@ -8,147 +8,153 @@
  * Initialize the dictionary with primitive words
  */
 fun forth_init_dictionary=
-    set forth_dictionary =
+    let
         // Stack manipulation
-        [ name:"dup"    func:#forth_dup ] ::
-        [ name:"drop"   func:#forth_drop ] ::
-        [ name:"swap"   func:#forth_swap ] ::
-        [ name:"over"   func:#forth_over ] ::
-        [ name:"rot"    func:#forth_rot ] ::
-        [ name:"pick"   func:#forth_pick ] ::
-        [ name:"nip"    func:#forth_nip ] ::
-        [ name:"tuck"   func:#forth_tuck ] ::
-        //[ name:"roll"   func:#forth_roll ] ::
-        [ name:"?dup"   func:#forth_qdup ] ::
-        [ name:">r"     func:#forth_to_r] ::
-        [ name:"r>"     func:#forth_r_from ] ::
-        [ name:"r@"     func:#forth_r_fetch ] ::
-        [ name:"depth"  func:#forth_depth ] ::
+        [ [str: "dup"              ] [func:#forth_dup]] ::
+        [ [str: "drop"             ] [func:#forth_drop]] ::
+        [ [str: "swap"             ] [func:#forth_swap]] ::
+        [ [str: "over"             ] [func:#forth_over]] ::
+        [ [str: "rot"              ] [func:#forth_rot]] ::
+        [ [str: "pick"             ] [func:#forth_pick]] ::
+        [ [str: "nip"              ] [func:#forth_nip]] ::
+        [ [str: "tuck"             ] [func:#forth_tuck]] ::
+        //[str: [ name:"roll"      ] [func:#forth_roll]] ::
+        [ [str: "?dup"             ] [func:#forth_qdup]] ::
+        [ [str: ">r"               ] [func:#forth_to_r]] ::
+        [ [str: "r>"               ] [func:#forth_r_from]] ::
+        [ [str: "r@"               ] [func:#forth_r_fetch]] ::
+        [ [str: "depth"            ] [func:#forth_depth]] ::
         // Comparison
-        [ name:"<"      func:#forth_less ] ::
-        [ name:"="      func:#forth_eq ] ::
-        [ name:">"      func:#forth_more ] ::
-        [ name:"<0"     func:#forth_zero_less ] ::
-        [ name:"0="     func:#forth_zero_eq ] ::
-        [ name:">0"     func:#forth_zero_more ] ::
-        [ name:"0<>"    func:#forth_zero_ne ] ::
+        [ [str: "<"                ] [func:#forth_less]] ::
+        [ [str: "<="               ] [func:#forth_less_eq]] ::
+        [ [str: "="                ] [func:#forth_eq]] ::
+        [ [str: ">"                ] [func:#forth_more]] ::
+        [ [str: ">="               ] [func:#forth_more_eq]] ::
+        [ [str: "<0"               ] [func:#forth_zero_less]] ::
+        [ [str: "0="               ] [func:#forth_zero_eq]] ::
+        [ [str: ">0"               ] [func:#forth_zero_more]] ::
+        [ [str: "0<>"              ] [func:#forth_zero_ne]] ::
         // Arithmetic
-        [ name:"+"      func:#forth_sum ] ::
-        [ name:"-"      func:#forth_sub ] ::
-        [ name:"1+"     func:#forth_one_plus ] ::
-        [ name:"1-"     func:#forth_one_minus ] ::
-        [ name:"2+"     func:#forth_two_plus ] ::
-        [ name:"2-"     func:#forth_two_minus ] ::
-        [ name:"*"      func:#forth_mul ] ::
-        [ name:"/"      func:#forth_div ] ::
-        [ name:"mod"    func:#forth_mod ] ::
-        [ name:"/mod"   func:#forth_div_mod ] ::
-        [ name:"*/"     func:#forth_times_div ] ::
-        [ name:"*/mod"  func:#forth_times_div_mod ] ::
-        [ name:"max"    func:#forth_max ] ::
-        [ name:"min"    func:#forth_min ] ::
-        [ name:"abs"    func:#forth_abs ] ::
+        [ [str: "+"                ] [func:#forth_sum]] ::
+        [ [str: "-"                ] [func:#forth_sub]] ::
+        [ [str: "1+"               ] [func:#forth_one_plus]] ::
+        [ [str: "1-"               ] [func:#forth_one_minus]] ::
+        [ [str: "2+"               ] [func:#forth_two_plus]] ::
+        [ [str: "2-"               ] [func:#forth_two_minus]] ::
+        [ [str: "*"                ] [func:#forth_mul]] ::
+        [ [str: "/"                ] [func:#forth_div]] ::
+        [ [str: "mod"              ] [func:#forth_mod]] ::
+        [ [str: "/mod"             ] [func:#forth_div_mod]] ::
+        [ [str: "*/"               ] [func:#forth_times_div]] ::
+        [ [str: "*/mod"            ] [func:#forth_times_div_mod]] ::
+        [ [str: "max"              ] [func:#forth_max]] ::
+        [ [str: "min"              ] [func:#forth_min]] ::
+        [ [str: "abs"              ] [func:#forth_abs]] ::
         // Logical
-        [ name:"and"    func:#forth_and ] ::
-        [ name:"or"     func:#forth_or ] ::
-        [ name:"xor"    func:#forth_xor ] ::
-        [ name:"invert" func:#forth_invert ] ::
-        [ name:"true"   func:#forth_true ] ::
-        [ name:"false"  func:#forth_false ] ::
+        [ [str: "and"              ] [func:#forth_and ]] ::
+        [ [str: "or"               ] [func:#forth_or ]] ::
+        [ [str: "xor"              ] [func:#forth_xor ]] ::
+        [ [str: "invert"           ] [func:#forth_invert ]] ::
+        [ [str: "true"             ] [func:#forth_true ]] ::
+        [ [str: "false"            ] [func:#forth_false ]] ::
         // Output
-        [ name:"."                  func:#forth_d ] ::
-        [ name:".s"                 func:#forth_dot_s ] ::
-        [ name:"emit"               func:#forth_emit ] ::
-        [ name:"cr"                 func:#forth_cr ] ::
-        [ name:"space"              func:#forth_space ] ::
-        [ name:"bl"                 func:#forth_bl ] ::
-        [ name:"read-line"          func:#forth_read_line   flag:FORTH_ASYNC] ::
+        [ [str: "."                ] [func:#forth_d ]] ::
+        [ [str: ".s"               ] [func:#forth_dot_s ]] ::
+        [ [str: "emit"             ] [func:#forth_emit ]] ::
+        [ [str: "cr"               ] [func:#forth_cr ]] ::
+        [ [str: "space"            ] [func:#forth_space ]] ::
+        [ [str: "bl"               ] [func:#forth_bl ]] ::
+        [ [str: "read-line"        ] [func:#forth_read_line   flag:FORTH_ASYNC]] ::
         // List
-        [ name:"nil"                func:#forth_nil ] ::
-        [ name:"::"                 func:#forth_colon_colon] ::
-        [ name:"hd"                 func:#forth_hd ] ::
-        [ name:"tl"                 func:#forth_tl ] ::
-        [ name:"nth"                func:#forth_nth ] ::    // list or string
-        [ name:"count"              func:#forth_count ] ::  // list or string
-        [ name:"str-join"           func:#forth_str_join ] ::
+        [ [str: "nil"              ] [func:#forth_nil ]] ::
+        [ [str: "::"               ] [func:#forth_colon_colon]] ::
+        [ [str: "hd"               ] [func:#forth_hd ]] ::
+        [ [str: "tl"               ] [func:#forth_tl ]] ::
+        [ [str: "nth"              ] [func:#forth_nth ]] ::    // list or string
+        [ [str: "count"            ] [func:#forth_count ]] ::  // list or string
+        [ [str: "str-join"         ] [func:#forth_str_join ]] ::
         // JSON
-        [ name:"json-parse"         func:#forth_json_parse ] ::
-        [ name:"json-get"           func:#forth_json_get ] ::
+        [ [str: "json-parse"       ] [func:#forth_json_parse ]] ::
+        [ [str: "json-get"         ] [func:#forth_json_get ]] ::
         // String
         // lower
         // upper
         // replace
         // zero-pad
         // atoi, itoa ...
+        // Memory
+        [ [str: "allocate-word"    ] [ func:#forth_allocate_word ]] ::
+        [ [str: "free-word"        ] [ func:#forth_free_word ]] ::
+        [ [str: "@"                ] [ func:#forth_fetch ]] ::
+        [ [str: "!"                ] [ func:#forth_store ]] ::
+        [ [str: "variable"         ] [ func:#forth_variable    flag:FORTH_IMMEDIATE]] ::
         // Control
-        [ name:"begin"              func:#forth_begin       flag:FORTH_IMMEDIATE] ::
-        [ name:"until"              func:#forth_until       flag:FORTH_IMMEDIATE] ::
-        [ name:"if"                 func:#forth_if          flag:FORTH_IMMEDIATE] ::
-        [ name:"else"               func:#forth_else        flag:FORTH_IMMEDIATE] ::
-        [ name:"then"               func:#forth_then        flag:FORTH_IMMEDIATE] ::
-        [ name:"jmp"                func:#forth_jmp ] ::
-        [ name:"?jmp"               func:#forth_qjmp ] ::
-        [ name:"abort"              func:#forth_abort ] ::
-        [ name:"exit"               func:#forth_exit ] ::
+        [ [str: "begin"            ] [ func:#forth_begin       flag:FORTH_IMMEDIATE]] ::
+        [ [str: "until"            ] [ func:#forth_until       flag:FORTH_IMMEDIATE]] ::
+        [ [str: "if"               ] [ func:#forth_if          flag:FORTH_IMMEDIATE]] ::
+        [ [str: "else"             ] [ func:#forth_else        flag:FORTH_IMMEDIATE]] ::
+        [ [str: "then"             ] [ func:#forth_then        flag:FORTH_IMMEDIATE]] ::
+        [ [str: "jmp"              ] [ func:#forth_jmp ]] ::
+        [ [str: "?jmp"             ] [ func:#forth_qjmp ]] ::
+        [ [str: "abort"            ] [ func:#forth_abort ]] ::
+        [ [str: "exit"             ] [ func:#forth_exit ]] ::
         // Misc
-        [ name:":"                  func:#forth_colon] ::
-        [ name:";"                  func:#forth_semi        flag:FORTH_IMMEDIATE] ::
-        [ name:"("                  func:#forth_p] ::
-        [ name:"constant"           func:#forth_constant    flag:FORTH_IMMEDIATE] ::
-        [ name:"words"              func:#forth_words] ::
-        [ name:"time&date"          func:#forth_time_and_date ] ::
-        [ name:"evaluate"           func:#forth_evaluate    flag:FORTH_ASYNC] ::
-        [ name:"time-ms"            func:#forth_time_ms ] ::
-        [ name:"ms"                 func:#forth_ms          flag:FORTH_ASYNC] ::
+        [ [str: ":"                ] [ func:#forth_colon]] ::
+        [ [str: ";"                ] [ func:#forth_semi        flag:FORTH_IMMEDIATE]] ::
+        [ [str: "("                ] [ func:#forth_p]] ::
+        [ [str: "constant"         ] [ func:#forth_constant    flag:FORTH_IMMEDIATE]] ::
+        [ [str: "words"            ] [ func:#forth_words]] ::
+        [ [str: "time&date"        ] [ func:#forth_time_and_date ]] ::
+        [ [str: "evaluate"         ] [ func:#forth_evaluate    flag:FORTH_ASYNC]] ::
+        [ [str: "time-ms"          ] [ func:#forth_time_ms ]] ::
+        [ [str: "ms"               ] [ func:#forth_ms          flag:FORTH_ASYNC]] ::
         // Net
-        [ name:"http-get"           func:#forth_http_get    flag:FORTH_ASYNC] ::
-        [ name:"http-post"          func:#forth_http_post   flag:FORTH_ASYNC] ::
-        [ name:"mac"                func:#forth_mac] ::
-        [ name:"ip"                 func:#forth_ip] ::
+        [ [str: "http-get"         ] [ func:#forth_http_get    flag:FORTH_ASYNC]] ::
+        [ [str: "http-post"        ] [ func:#forth_http_post   flag:FORTH_ASYNC]] ::
+        [ [str: "mac"              ] [ func:#forth_mac]] ::
+        [ [str: "ip"               ] [ func:#forth_ip]] ::
         // Nabaztag
-        [ name:"sleeping"           func:#forth_sleeping ] ::
-        [ name:"sleep"              func:#forth_sleep ] ::
-        [ name:"wakeup"             func:#forth_wakeup ] ::
-        [ name:"left-ear-position"  func:#forth_left_ear_position ] ::
-        [ name:"move-left-ear"      func:#forth_move_left_ear ] ::
-        [ name:"right-ear-position" func:#forth_right_ear_position ] ::
-        [ name:"move-right-ear"     func:#forth_move_right_ear ] ::
-        [ name:"random"             func:#forth_random ] ::
-        [ name:"server-url"         func:#forth_server_url ] ::
-        [ name:"language"           func:#forth_language ] ::
-        [ name:"set-language"       func:#forth_set_language ] ::
-        [ name:"city-code"          func:#forth_city_code ] ::
-        [ name:"set-city-code"      func:#forth_set_city_code ] ::
-        [ name:"dst"                func:#forth_dst ] ::
-        [ name:"set-dst"            func:#forth_set_dst ] ::
-        [ name:"volume"             func:#forth_volume ] ::
-        [ name:"set-info-weather"   func:#forth_set_info_weather ] ::
-        [ name:"set-info-stock"     func:#forth_set_info_stock ] ::
-        [ name:"set-info-traffic"   func:#forth_set_info_traffic ] ::
-        [ name:"set-info-mail"      func:#forth_set_info_mail ] ::
-        [ name:"set-info-pollution" func:#forth_set_info_pollution ] ::
-        [ name:"clear-info"         func:#forth_clear_info ] ::
-        [ name:"taichi"             func:#forth_taichi      flag:FORTH_ASYNC] ::
-        [ name:"play-url"           func:#forth_play_url ] ::
-        [ name:"play-midi"          func:#forth_play_midi ] ::
-        [ name:"revision"           func:#forth_revision ] ::
-        [ name:"md5"                func:#forth_md5 ] ::
-        [ name:"time-server-ip"     func:#forth_time_server_ip ] ::
-        [ name:"set-time-server-ip" func:#forth_set_time_server_ip ] ::
-        [ name:"set-md5-password"   func:#forth_set_md5_password ] ::
-        [ name:"md5-password"       func:#forth_md5_password ] ::
-        nil
-    ;;
-
-
-fun _forth_get_word name forth_dictionary=
-    if forth_dictionary==nil then nil  // not found
-    else let hd forth_dictionary -> head in
-        if !strcmp name head.name then head
-        else _forth_get_word name (tl forth_dictionary);;
+        [ [str:"sleeping"          ] [ func:#forth_sleeping ]] ::
+        [ [str:"sleep"             ] [ func:#forth_sleep ]] ::
+        [ [str:"wakeup"            ] [ func:#forth_wakeup ]] ::
+        [ [str:"left-ear-position" ] [ func:#forth_left_ear_position ]] ::
+        [ [str:"move-left-ear"     ] [ func:#forth_move_left_ear ]] ::
+        [ [str:"right-ear-position"] [ func:#forth_right_ear_position ]] ::
+        [ [str:"move-right-ear"    ] [ func:#forth_move_right_ear ]] ::
+        [ [str:"random"            ] [ func:#forth_random ]] ::
+        [ [str:"server-url"        ] [ func:#forth_server_url ]] ::
+        [ [str:"language"          ] [ func:#forth_language ]] ::
+        [ [str:"set-language"      ] [ func:#forth_set_language ]] ::
+        [ [str:"city-code"         ] [ func:#forth_city_code ]] ::
+        [ [str:"set-city-code"     ] [ func:#forth_set_city_code ]] ::
+        [ [str:"dst"               ] [ func:#forth_dst ]] ::
+        [ [str:"set-dst"           ] [ func:#forth_set_dst ]] ::
+        [ [str:"latitude"          ] [ func:#forth_latitude ]] ::
+        [ [str:"set-latitude"      ] [ func:#forth_set_latitude ]] ::
+        [ [str:"longitude"         ] [ func:#forth_longitude ]] ::
+        [ [str:"set-longitude"     ] [ func:#forth_set_longitude ]] ::
+        [ [str:"volume"            ] [ func:#forth_volume ]] ::
+        [ [str:"set-info-weather"  ] [ func:#forth_set_info_weather ]] ::
+        [ [str:"set-info-stock"    ] [ func:#forth_set_info_stock ]] ::
+        [ [str:"set-info-traffic"  ] [ func:#forth_set_info_traffic ]] ::
+        [ [str:"set-info-mail"     ] [ func:#forth_set_info_mail ]] ::
+        [ [str:"set-info-pollution"] [ func:#forth_set_info_pollution ]] ::
+        [ [str:"clear-info"        ] [ func:#forth_clear_info ]] ::
+        [ [str:"taichi"            ] [ func:#forth_taichi      flag:FORTH_ASYNC]] ::
+        [ [str:"play-url"          ] [ func:#forth_play_url ]] ::
+        [ [str:"play-midi"         ] [ func:#forth_play_midi ]] ::
+        [ [str:"revision"          ] [ func:#forth_revision ]] ::
+        [ [str:"md5"               ] [ func:#forth_md5 ]] ::
+        [ [str:"time-server-ip"    ] [ func:#forth_time_server_ip ]] ::
+        [ [str:"set-time-server-ip"] [ func:#forth_set_time_server_ip ]] ::
+        [ [str:"set-md5-password"  ] [ func:#forth_set_md5_password ]] ::
+        [ [str:"md5-password"      ] [ func:#forth_md5_password ]] ::
+        nil -> d in
+            set forth_dictionary = [dict:d];
+    0;;
 
 /**
  * Get a word from the dictionary by name (case insensitive)
  */
 fun forth_get_word name=
-    _forth_get_word (to_lower name) forth_dictionary;;
+    word_dict_get forth_dictionary (to_lower name);;

@@ -1,5 +1,6 @@
 #include protos/ascii_protos.mtl
 #include protos/forth_protos.mtl
+#include protos/word_protos.mtl
 #include protos/json_protos.mtl
 
 #ifdef JSON_DEBUG
@@ -191,9 +192,9 @@ fun _json_parse_value j=
         else if ch == ASCII_LEFT_BRACKET then _json_parse_array j
         else if ch == ASCII_DOUBLE_QUOTE then _json_parse_string j
         else if (ch == ASCII_MINUS) || (ch == ASCII_DOT) || ((ch >= 48) && (ch <= 57)) then _json_parse_number j
-        else if (ch == 116) then [int:1] // true
-        else if (ch == 102) then [int:0] // false
-        else if (ch == 110) then [int:nil] // null
+        else if (ch == 116) then [int:FORTH_TRUE] // "t"
+        else if (ch == 102) then [int:FORTH_FALSE] // "f"
+        else if (ch == 110) then [int:nil] // "n"
         else nil // Unexpected character, could handle error here
     );;
 
@@ -283,7 +284,7 @@ fun _json_parse_object j=
     );;
 
 /**
- * Parse a JSON string and return the parsed value as JsonValue
+ * Parse a JSON string and return the parsed value as Word
  * json_input: JSON string to parse
  */
 fun json_parse json_input=
@@ -294,110 +295,3 @@ fun json_parse json_input=
             else nil
         )
     );;
-
-/**
- * Get value from JSON object by key
- * j: JSON object
- * key: key to search
- */
-fun json_obj_get_value j key=
-    let nil -> res in (
-        for p=j.dict;p!=nil&&res==nil;tl p do
-            let hd p -> pair in
-            let pair -> [k v] in
-            if !strcmp k.str key then set res = v;
-        res
-    );;
-
-/**
- * Get value from JSON array by index
- * j: JSON array
- * index: index to search
- */
-fun json_arr_get_value j index=
-    let 0 -> i in
-    let nil -> res in (
-        for p=j.list;p!=nil&&res==nil;tl p do (
-            if i==index then set res = hd p;
-            set i = i + 1
-        );
-        res
-    );;
-
-/**
- * Get string value from JSON array by index
- * j: JSON array
- * index: index to search
- */
-fun json_arr_get_str j index=
-    let json_arr_get_value j index -> v in v.str;;
-
-/**
- * Get integer value from JSON array by index
- * j: JSON array
- * index: index to search
- */
-fun json_arr_get_int j index=
-    let json_arr_get_value j index -> v in v.int;;
-
-/**
- * Split JSON key into parts
- * k: JSON key (e.g., "daily.weathercode[0]")
- */
-fun _json_split_key k=
-    let nil -> next in
-    let (strstr k "." 1) -> start in (
-        if start==nil then (
-            set start = (strstr k "[" 1);
-            set next = start
-        ) else
-            set next = start + 1;
-        if start==nil then
-            k::nil
-        else
-            let strsub k 0 start -> key in
-            let strsub k next nil -> rest in
-                key::_json_split_key rest
-    );;
-
-/**
- * Get value from JSON by key
- * j: JSON object
- * k: JSON key to search (e.g., "daily.weathercode[0]")
- */
-fun json_get j k=
-    let j -> res in (
-        for p=_json_split_key k; p!=nil; tl p do
-            let hd p -> key in
-                set res = (
-                    if (strget key 0) == ASCII_LEFT_BRACKET then
-                        json_arr_get_value res atoi (strsub key 1 ((strlen key)-2))
-                    else
-                        json_obj_get_value res key
-                );
-        res
-    );;
-
-/**
- * Get string value from JSON by key
- * j: JSON object
- * k: JSON key to search
- */
-fun json_get_str j k=
-    let json_get j k -> v in v.str;;
-
-/**
- * Get integer value from JSON by key
- * j: JSON object
- * k: JSON key to search
- */
-fun json_get_int j k=
-    let json_get j k -> v in v.int;;
-
-/**
- * Get array value from JSON by key
- * j: JSON object
- * k: JSON key to search
- */
-fun json_get_arr j k=
-    let json_get j k -> v in v.list;;

@@ -1,0 +1,117 @@
+fun _word_dict_del word str_key=
+    if word!=nil then
+        let hd word -> [k v] in
+        if !strcmp str_key k.str then tl word else
+        (hd word)::_word_dict_del tl word str_key ;;
+
+/**
+ * Delete a word from the dictionary by string key
+ * word: a word dictionary
+ * str_key: string key
+ */
+fun word_dict_del word str_key=
+    set word.dict = _word_dict_del word.dict str_key;;
+
+fun word_dict_set_w word key value=
+    set word.dict = [key value] :: word.dict;;
+
+/**
+ * Set a word in the dictionary by string key
+ * word: a word dictionary
+ * str_key: string key
+ */
+fun word_dict_set word str_key value=
+    word_dict_del word str_key;
+    let [str:str_key] -> key in
+        word_dict_set_w word key value;;
+
+fun _word_dict_get word str_key=
+    if word==nil then nil  // not found
+    else let hd word -> [k v] in
+        if !strcmp str_key k.str then v
+        else _word_dict_get (tl word) str_key;;
+
+/**
+ * Get a word from the dictionary by string key
+ * word: a word dictionary
+ * str_key: string key
+ */
+fun word_dict_get word str_key=
+    _word_dict_get word.dict str_key;;
+
+/**
+ * Get value from a word list by index
+ * word: a word list
+ * index: index to search
+ */
+fun word_list_get word index=
+    let 0 -> i in
+    let nil -> res in (
+        for p=word.list;p!=nil&&res==nil;tl p do (
+            if i==index then set res = hd p;
+            set i = i + 1
+        );
+        res
+    );;
+
+/**
+ * Split a JSON path into parts
+ * k: JSON path (e.g., "daily.weathercode[0]")
+ */
+fun _word_split_path path=
+    let nil -> next in
+    let (strstr path "." 1) -> start in (
+        if start==nil then (
+            set start = (strstr path "[" 1);
+            set next = start
+        ) else
+            set next = start + 1;
+        if start==nil then
+            path::nil
+        else
+            let strsub path 0 start -> key in
+            let strsub path next nil -> rest in
+                key::_word_split_path rest
+    );;
+
+/**
+ * Get value from word by path
+ * word: a word
+ * path: JSON key to search (e.g., "daily.weathercode[0]")
+ */
+fun word_get word path=
+    let word -> res in (
+        for p=_word_split_path path; p!=nil; tl p do
+            let hd p -> key in
+                set res = (
+                    if (strget key 0) == ASCII_LEFT_BRACKET then
+                        word_list_get res atoi (strsub key 1 ((strlen key)-2))
+                    else
+                        word_dict_get res key
+                );
+        res
+    );;
+
+/**
+ * Get string value from JSON by key
+ * word: a word
+ * path: JSON path
+ */
+fun word_get_str word path=
+    let word_get word path -> v in v.str;;
+
+/**
+ * Get integer value from JSON by key
+ * word: a word
+ * path: JSON path
+ */
+fun word_get_int word path=
+    let word_get word path -> v in v.int;;
+
+/**
+ * Get list value from JSON by key
+ * word: a word
+ * path: JSON path
+ */
+fun word_get_list word path=
+    let word_get word path -> v in v.list;;

@@ -5,55 +5,73 @@
  */
 
 /**
- * < True if second word less than top word ( n1 n2 -- flag )
+ * < ( n1 n2 -- flag ) True if second word less than top word
  */
 fun forth_less f=
-    let forth_pop f -> a in
-    let forth_pop f -> b in
-    let forth_compare_words a b -> c in
+    let forth_pop f -> n2 in
+    let forth_pop f -> n1 in
+    let forth_compare_words n1 n2 -> c in
     if c < 0 then forth_true f else forth_false f;;
 
 /**
- * = True if top two words equal ( n1 n2 -- flag )
+ * <= ( n1 n2 -- flag ) True if second word less than or equal to top word
+ */
+fun forth_less_eq f=
+    let forth_pop f -> n2 in
+    let forth_pop f -> n1 in
+    let forth_compare_words n1 n2 -> c in
+    if c <= 0 then forth_true f else forth_false f;;
+
+/** ( n -- flag )
+ * = ( n1 n2 -- flag ) True if top two words equal
  */
 fun forth_eq f=
-    let forth_pop f -> a in
-    let forth_pop f -> b in
-    let forth_compare_words a b -> c in
+    let forth_pop f -> n2 in
+    let forth_pop f -> n1 in
+    let forth_compare_words n1 n2 -> c in
     if c == 0 then forth_true f else forth_false f;;
 
 /**
- * > True if second word greater than top word ( n1 n2 -- flag )
+ * > ( n1 n2 -- flag ) True if second word greater than top word
  */
 fun forth_more f=
-    let forth_pop f -> a in
-    let forth_pop f -> b in
-    let forth_compare_words a b -> c in
+    let forth_pop f -> n2 in
+    let forth_pop f -> n1 in
+    let forth_compare_words n1 n2 -> c in
     if c > 0 then forth_true f else forth_false f;;
 
 /**
- * <0 True if top number less than zero ( n -- flag )
+ * >= ( n1 n2 -- flag ) True if second word greater than or equal to
+ */
+fun forth_more_eq f=
+    let forth_pop f -> n2 in
+    let forth_pop f -> n1 in
+    let forth_compare_words n1 n2 -> c in
+    if c >= 0 then forth_true f else forth_false f;;
+
+/**
+ * <0 ( n -- flag ) True if top number less than zero
  */
 fun forth_zero_less f=
     let forth_pop f -> a in
     if a.int<0 then forth_true f else forth_false f;;
 
 /**
- * 0= True if top number zero ( n -- flag )
+ * 0= ( n -- flag ) True if top number zero
  */
 fun forth_zero_eq f=
     let forth_pop f -> a in
     if a.int==0 then forth_true f else forth_false f;;
 
 /**
- * >0 True if top number greater than zero ( n -- flag )
+ * >0 ( n -- flag ) True if top number greater than zero
  */
 fun forth_zero_more f=
     let forth_pop f -> a in
     if a.int>0 then forth_true f else forth_false f;;
 
 /**
- * 0<> True if top number is not zero ( n -- flag )
+ * 0<> ( n -- flag ) True if top number is not zero
  */
 fun forth_zero_ne f=
     let forth_pop f -> a in

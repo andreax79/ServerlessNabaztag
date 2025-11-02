@@ -1,0 +1,207 @@
+/**
+ * Forth interpreter
+ * Copyright (c) 2025 Andrea Bonomi
+ * This code is licensed under the MIT License
+ */
+
+/**
+ * Create a new word for a token not found in the dictionary.
+ * If the token is numeric, create an integer word.
+ * Otherwise, create a string word.
+ */
+fun forth_interpreter_new_word token=
+    if is_numeric token then
+        [int:(atoi token)]
+    else
+        [str:token];;
+
+/**
+ * Extract the next token from the input text.
+ * Tokens are separated by spaces or newlines.
+ * Quoted strings are handled as single tokens.
+ * Comments starting with parentheses are ignored until the matching closing parenthesis.
+ * Comments starting with backslash are ignored until end of line.
+ */
+fun forth_interpreter_get_token f=
+    let hd f.istack -> i in (
+        set i.end = strstr i.input " " i.start;
+        set i.end_ln = strstr i.input "\n" i.start;
+        if (i.end_ln != nil) && ((i.end == nil) || (i.end_ln < i.end)) then set i.end = i.end_ln;
+        if i.end == nil then set i.end = i.text_len;
+        // Skip leading spaces
+        while (i.start < i.end) && ((strget i.input i.start) == ASCII_SPACE) do set i.start = i.start + 1;
+        let strget i.input i.start -> ch in
+        if ch == ASCII_DOUBLE_QUOTE then ( // Handle quoted strings
+            set i.start = i.start + 1; // skip opening quote
+            set i.end = strstr i.input "\"" i.start; // find closing quote
+            if i.end == nil then set i.end = i.text_len; // if not found, go to end of text
+            set i.token = strsub i.input i.start (i.end-i.start);
+            set i.start = i.end + 2; // skip closing quote and following space
+            set i.quoted = 1
+        ) else if ch == ASCII_BACKSLASH then ( // Comment - skip to end of line
+            set i.end = if i.end_ln != nil then i.end_ln else i.text_len;
+            set i.start = i.end + 1;
+            set i.token = "";
+            set i.quoted = 0
+        ) else (
+            set i.token = strsub i.input i.start (i.end-i.start);
+            set i.start = i.end + 1;
+            set i.quoted = 0
+        );
+        0
+    );;
+
+/**
+ * Resume execution of a the Forth interpreter after an asynchronous word.
+ * f: existing Forth interpreter state
+ */
+fun forth_interpreter_resume f=
+    let 0 -> flag in (
+        // First, check the return stack
+        if f.rstack != nil then (
+            let forth_rpop f -> ret_addr in (
+                // Restore pc
+                set f.pc = ret_addr.int;
+                // Execute code at the return address
+                // code is nil if we are resuming to interpreted mode
+                if ret_addr.code != nil then
+                    set flag = forth_execute_code f ret_addr.code
+            )
+        );
+        // Secho "forth_interpreter_resume flag: "; Iecholn flag;
+        if flag != FORTH_ASYNC then (
+            // Then continue the main interpreter loop
+            forth_interpreter_loop f
+        )
+    );;
+
+/**
+ * Initialize a new Forth interpreter state or reuse an existing one.
+ * text: input Forth code as a string
+ * f: existing Forth interpreter state or nil to create a new one
+ * cb: callback function to call when execution completes
+ */
+fun _forth_interpreter_setup text f sock cb=
+    if forth_dictionary==nil then forth_init_dictionary;
+    let [
+        start:0
+        end:0
+        end_ln:0
+        parentheses:0
+        input:text
+        text_len:(strlen text)
+        token:nil
+        inter_cb:cb
+    ] -> inter in
+    if f == nil then (
+        // Secho "Creating new Forth interpreter\n";
+        // Secholn if sock != nil then "with socket" else "without socket";
+        [
+            stack:nil // data stack
+            rstack:nil // return stack
+            pc:0 // program counter
+            forth_sock: sock // socket
+            istack: inter :: nil // interpreter state
+        ]
+    ) else (
+        set f.istack = inter :: f.istack;
+        f
+    );;
+
+/**
+ * Execute a single word during interpreted mode.
+ * Update the program counter and state as needed.
+ * f: Forth interpreter state
+ * word: Word to execute
+ * Return the word flag (FORTH_IMMEDIATE, FORTH_ASYNC) if set
+ */
+fun forth_interpreter_execute_word f word=
+#ifdef FORTH_DEBUG
+    _forth_debug "pc: "; Iecho f.pc; Secho " word: "; forth_print_word word;
+#endif
+    set f.pc = f.pc + 1;
+    // Execute a colon-defined word
+    if word.code != nil then (
+        // Push current pc onto return stack.
+        // Code is nil because we are in interpreted mode.
+        forth_rpush f [int:f.pc code:nil];
+        set f.pc = 0;
+        forth_execute_code f word.code
+    )
+    // Execute primitive function
+    else if word.func != nil then (
+        if word.flag == FORTH_ASYNC then (
+            // If asynchronous word, push current pc onto return stack
+            // and return after word execution
+            forth_rpush f [int:f.pc code:nil]
+        );
+        call word.func [f];
+        word.flag
+    )
+    // Push the word onto the stack
+    else (
+        forth_push f word;
+        word.flag
+    );;
+
+/**
+ * Forth interpreter loop
+ */
+fun forth_interpreter_loop f=
+    let 0 -> flags in
+    let hd f.istack -> inter in (
+#ifdef FORTH_DEBUG
+        _forth_debug "Entering interpreter loop\n";
+#endif
+        while (f.pc != nil) && (inter.end != inter.text_len) && (flags != FORTH_ASYNC) do (
+            forth_interpreter_get_token f;
+            if (strlen inter.token) > 0 || inter.quoted then // skip empty tokens unless quoted
+            let if inter.quoted then nil else forth_get_word inter.token -> word in ( // get the word from the dictionary if not quoted
+                // Secho "Token: '"; Secho inter.token; Secholn "'";
+                // Iecho inter.end; Secho " / "; Iecholn inter.text_len;
+                if word == nil then set word = forth_interpreter_new_word inter.token;
+
+                if word.func == #forth_p then ( // open parentheses
+                    set inter.parentheses = inter.parentheses + 1
+                );
+
+                if inter.parentheses > 0 then ( // inside parentheses - ignore tokens until closing parenthesis
+                    if !strcmp inter.token ")" then set inter.parentheses = inter.parentheses - 1;
+                    0
+                ) else if f.state == FORTH_STATE_COMPILATION then (  // compilation state
+                    if word.flag == FORTH_IMMEDIATE then (
+                        // immediate word, execute now
+                        set flags = forth_interpreter_execute_word f word
+
+                    ) else (
+                        // add word to the control stack
+                        // Secho "--> compiling "; Secho inter.token; Secholn "";
+                        set f.cstack = word :: f.cstack;
+                        0
+                    )
+
+                ) else ( // normal state
+                    set flags = forth_interpreter_execute_word f word
+                )
+            )
+        );
+#ifdef FORTH_DEBUG
+        _forth_debug "Exiting interpreter loop\n";
+#endif
+        if (flags != FORTH_ASYNC) then (
+            call inter.inter_cb [f]
+        )
+    );;
+
+/**
+ * Main entry point for the Forth interpreter.
+ * text: input Forth code as a string
+ * f: existing interpreter state or nil to create a new one
+ * sock: socket
+ * cb: callback function to call when execution completes
+ */
+fun forth_interpreter text f sock cb=
+    if forth_dictionary==nil then forth_init_dictionary;
+    let _forth_interpreter_setup text f sock cb -> f in
+        forth_interpreter_loop f;;
+

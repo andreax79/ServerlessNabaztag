@@ -1,5 +1,6 @@
 #include protos/button_protos.mtl
 #include protos/hooks_protos.mtl
+#include protos/forth_protos.mtl
 #include protos/chor_protos.mtl
 #include protos/streaming_protos.mtl
 #include protos/surprise_protos.mtl
@@ -74,11 +75,11 @@ fun _run_control_wait =
     (
         audiolib_wav_stop;
         ears_stop 0;
-        if ev==BUTTON_CLIC then hook_click // click
-        else if ev==BUTTON_DCLIC then hook_dbl_click //ackall
-        else if ev==BUTTON_LCLIC then record_control 0  //  //back ou record
-        else if ev==BUTTON_DLCLIC then record_control 1 // //back ou record
-        else if ev&0x8000 then hook_ears // oreilles
+        if ev==BUTTON_CLIC then forth_interpreter HOOK_CLICK nil nil nil // click
+        else if ev==BUTTON_DCLIC then forth_interpreter HOOK_DBL_CLICK nil nil nil //ackall
+        else if ev==BUTTON_LCLIC then record_control 0  //back ou record
+        else if ev==BUTTON_DLCLIC then record_control 1 //back ou record
+        else if ev&0x8000 then forth_interpreter HOOK_EARS nil nil nil // oreilles
     );
     rfid_control
     ;;
@@ -269,9 +270,8 @@ fun _run_config_start =
     if wifi_connected && audiolib_wav_running==0 then (
         leds_set_state LEDS_STATE_CONFIG_WAIT ;
 #ifdef SERVERLESS
-        meteo_get;
-        get_time_from_timeserver;
-        sleep_end
+        sleep_end;
+        get_time_from_timeserver
 #else
         Secho "config_get_server_url: "; Secholn config_get_server_url;
         Secho "url_config: "; Secholn url_config;

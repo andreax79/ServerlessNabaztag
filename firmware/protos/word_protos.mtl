@@ -1,0 +1,5 @@
+proto word_dict_del 2;;
+proto word_dict_get 2;;
+proto word_dict_set 3;;
+proto word_list_get 2;;
+proto word_get 2;;
