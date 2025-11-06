@@ -21,7 +21,7 @@ fun _streaming_prepare_url url=
 
 // callback from rscLoadWaitRun : a resource has been loaded
 fun _streaming_load_cb http res maxsize=
-    if record_recording then
+    if record_is_recording then
     (
         http_abort http;
         nil

@@ -1,0 +1,164 @@
+/**
+ * Nabaztag config words for Forth interpreter
+ * Copyright (c) 2025 Andrea Bonomi
+ * This code is licensed under the MIT License
+ */
+
+/**
+ * SERVER-URL ( -- url )
+ * Get the server URL from the configuration
+ */
+fun forth_server_url f=
+    forth_push f [str:config_get_server_url];;
+
+/**
+ * LANGUAGE ( -- lang )
+ * Get the language from the configuration
+ */
+fun forth_language f=
+    forth_push f [str:config_get_lang];;
+
+/**
+ * SET-LANGUAGE ( lang -- )
+ * Set the language in the configuration
+ */
+fun forth_set_language f=
+    let forth_pop f -> lang in
+    config_set_lang lang.str;
+    config_save;
+    nil;;
+
+/**
+ * CITY-CODE ( -- code )
+ * Get the city code from the configuration
+ */
+fun forth_city_code f=
+    forth_push f [str:config_get_city_code];;
+
+/**
+ * SET-CITY-CODE ( code -- )
+ * Set the city code in the configuration
+ */
+fun forth_set_city_code f=
+    let forth_pop f -> code in
+    config_set_city code.str;
+    config_save;
+    nil;;
+
+/**
+ * DST ( -- flag )
+ * Get the Daylight Saving Time flag from the configuration
+ */
+fun forth_dst f=
+    forth_push f [int:if config_get_dst then FORTH_TRUE else FORTH_FALSE];;
+
+/**
+ * SET-DST ( flag -- )
+ * Set the Daylight Saving Time flag in the configuration
+ */
+fun forth_set_dst f=
+    let forth_pop f -> flag in
+    config_set_dst if flag.int then 1 else 0;
+    config_save;
+    nil;;
+
+/**
+ * LATITUDE ( -- lat )
+ * Get the latitude from the configuration
+ */
+fun forth_latitude f=
+    forth_push f [str:config_get_latitude];;
+
+/**
+ * SET-LATITUDE ( lat -- )
+ * Set the latitude in the configuration
+ */
+fun forth_set_latitude f=
+    let forth_pop f -> lat in
+    config_set_latitude lat.str;
+    config_save;
+    nil;;
+
+/**
+ * LONGITUDE ( -- lon )
+ * Get the longitude from the configuration
+ */
+fun forth_longitude f=
+    forth_push f [str:config_get_longitude];;
+
+/**
+ * SET-LONGITUDE ( lon -- )
+ * Set the longitude in the configuration
+ */
+fun forth_set_longitude f=
+    let forth_pop f -> lon in
+    config_set_longitude lon.str;
+    config_save;
+    nil;;
+
+/**
+ * WAKE-UP-AT ( -- hour )
+ * Get the wake up hour from the configuration
+ */
+fun forth_wake_up_at f=
+    forth_push f [int:config_get_wake_up];;
+
+/**
+ * SET-WAKE-UP-AT ( hour -- )
+ * Set the wake up hour in the configuration
+ */
+fun forth_set_wake_up_at f=
+    let forth_pop f -> hour in
+    config_set_wake_up hour.int;
+    config_save;
+    nil;;
+
+/**
+ * GO-TO-BED-AT ( -- hour )
+ * Get the go to bed hour from the configuration
+ */
+fun forth_go_to_bed_at f=
+    forth_push f [int:config_get_go_to_bed];;
+
+/**
+ * SET-GO-TO-BED-AT ( hour -- )
+ * Set the go to bed hour in the configuration
+ */
+fun forth_set_go_to_bed_at f=
+    let forth_pop f -> hour in
+    config_set_go_to_bed hour.int;
+    config_save;
+    nil;;
+
+/**
+ * TIME-SERVER-IP ( -- ip )
+ * Get the time server IP address
+ */
+fun forth_time_server_ip f=
+    forth_push f [str:ip_to_str time_server_ip];;
+
+/**
+ * SET-TIME-SERVER-IP ( ip -- )
+ * Set the time server IP address
+ */
+fun forth_set_time_server_ip f=
+    let forth_pop f -> ip in
+    set time_server_ip = str_to_ip ip.str;
+    nil;;
+
+/**
+ * SET-MD5-PASSWORD ( pwd -- )
+ * Set the MD5 password used for server authentication
+ */
+fun forth_set_md5_password f=
+    let forth_pop f -> pwd in
+    set config_md5_password = pwd.str;
+    nil;;
+
+/**
+ * MD5-PASSWORD ( -- pwd )
+ * Get the MD5 password used for server
+ */
+fun forth_md5_password f=
+    forth_push f [str:config_md5_password];;
+

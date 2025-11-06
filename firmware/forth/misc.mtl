@@ -74,6 +74,20 @@ fun forth_constant f=
         );;
 
 /**
+ * DEFINED? (immediate) ( "<spaces>name" -- flag )
+ * Check if a word is defined in the dictionary
+ */
+fun forth_defined_q f=
+    // Get the word name
+    forth_interpreter_get_token f;
+    let hd f.istack -> inter in
+    let forth_get_word inter.token -> word in
+    if word == nil then
+        forth_false f // not defined
+    else
+        forth_true f;; // defined
+
+/**
  * Helper function to print words in the dictionary
  */
 fun _forth_print_words f dict=
@@ -128,7 +142,7 @@ fun forth_evaluate f=
         forth_interpreter_resume f
         // forth_abort_msg f "EVALUATE expects a string"
     ) else (
-        forth_interpreter word.str f f.forth_sock #_forth_evaluate_cb
+        forth_interpreter_ex word.str f f.forth_sock #_forth_evaluate_cb
     );;
 
 /**

@@ -4,7 +4,7 @@ proto info_update_v2 1;;
 proto info_json 0;;
 
 // nombre de messages utilisateur en attente (0, 1, 2 et +)
-var info_messages=0;;
+var info_messages = 0;;
 
 // valeur de frequence du taichi (40: peu fréquent, 80: normal, 255: très fréquent)
 var info_taichi = 0;;

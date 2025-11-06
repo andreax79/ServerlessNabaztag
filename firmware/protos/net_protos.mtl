@@ -1,4 +1,4 @@
-proto net_start 0;;
+proto net_init 0;;
 
 var netip="\0\0\0\0";;
 var netmask="\255\255\255\0";;

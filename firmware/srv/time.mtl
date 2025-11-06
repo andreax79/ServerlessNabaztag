@@ -159,8 +159,12 @@ fun get_time_from_timeserver=
     JobRun;;
 
 /**
- * Initialize the periodic job
+ * Initialize the time job
  */
 fun time_init=
+    // Seed the random number generator
+    srand time_ms;
+    // Start the time update job
     job_start_ex "time_update" TIME_DELAY #time_update_job;
+    // Start the RFC 868 time client job
     job_start_ex "rfc868_client" TIME_RFC868_DELAY #get_time_from_timeserver;;

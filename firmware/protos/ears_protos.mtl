@@ -1,6 +1,5 @@
 proto ears_complete 0 ;;
 proto ears_detecting 0 ;;
-proto ears_detecting 0 ;;
 proto ears_finished_moving 0 ;;
 proto ears_get_event 0 ;;
 proto ears_go 3 ;;

@@ -267,13 +267,13 @@ fun interactive_send_ear_touched lefttouch righttouch=
     0;;
 
 fun interactive_ear_process_touched_job=
-    if (interactive_status) then
-    let touchedP 0 -> lefttouch in
-    let touchedP 1 -> righttouch in
-    if (lefttouch || righttouch) then (
-        interactive_send_ear_touched lefttouch righttouch;
-        interactive_reset_ears_touched
-    );
+    if interactive_status then
+        let touchedP 0 -> lefttouch in
+        let touchedP 1 -> righttouch in
+        if (lefttouch || righttouch) then (
+            interactive_send_ear_touched lefttouch righttouch;
+            interactive_reset_ears_touched
+        );
     JobRun;;
 
 // Interactive request answer
@@ -282,19 +282,18 @@ fun interactive_req_cb_http http res=
     _interactive_debug "interactive_req_cb_http=";
 #endif
 
-    if (record_uploading) then (
+    if record_is_uploading then (
         // mode upload / record
-        set recorddata=nil;
-        set recordreq=nil;
+        record_abort;
 #ifdef INTERACTIVE_DEBUG
         _interactive_debug res;
 #endif
         leds_set_all RGB_BLACK
     );
 
-    if !record_recording then
-    let http_get_content res -> ping_trame in
-        trame_eval ping_trame;
+    if !record_is_recording then
+        let http_get_content res -> ping_trame in
+            trame_eval ping_trame;
 
     0;;
 
@@ -302,7 +301,7 @@ fun interactive_req_cb_http http res=
 fun runInteractiveReqWait http=
     // Waiting for interactive request
     // check timeout
-    if (!record_uploading) then // upload record mode : timeout managed by record_upload_timeout_job
+    if (!record_is_uploading) then // upload record mode : timeout managed by record_upload_timeout_job
         if (http_inactive http)>STD_NET_TIMEOUT then
         (
 #ifdef INTERACTIVE_DEBUG

@@ -12,11 +12,16 @@ var _record_time_start;;
 var _record_mode;;
 var _record_retry;;
 var _record_play_end;;
-var recordreq;;
-var recorddata;;
+var _record_req;;
+var _record_data;;
 var record_last_wav_bytes = 0;;
 
-fun record_uploading = recordreq!=nil;;
+fun record_is_uploading=
+    _record_req!=nil;;
+
+fun record_abort=
+    set _record_data=nil;
+    set _record_req=nil;;
 
 fun record_start_run =
     // wait for the end of the starting sound
@@ -43,8 +48,8 @@ fun record_control mode=
 
 fun _record_cb_http http res=
     // record upload done
-    set recorddata=nil;
-    set recordreq=nil;
+    set _record_data=nil;
+    set _record_req=nil;
     Secholn res;
     leds_set_all RGB_BLACK;
     if _record_play_end!=nil then
@@ -56,24 +61,24 @@ fun _record_cb_http http res=
     0;;
 
 fun record_upload_timeout_job=
-    if record_uploading then
+    if record_is_uploading then
     (
         if _record_play_end!=nil && ((_record_play_end-time_ms)<0) then
         (
             set _record_play_end=nil;
             midi_play MIDI_END_RECORD
         );
-        if (http_inactive recordreq)>STD_NET_TIMEOUT then
+        if (http_inactive _record_req)>STD_NET_TIMEOUT then
         (
             Secholn "##timeout on upload";
-            http_abort recordreq;
-            set recordreq=nil;
+            http_abort _record_req;
+            set _record_req=nil;
             if _record_retry>0 then
             (
                 // retry
                 set _record_retry=_record_retry-1;
                 if (!interactive_status) then (
-                    set recordreq=http_request "POST" Secholn url_record _record_mode recorddata #_record_cb_http HTTP_NORMAL;0
+                    set _record_req=http_request "POST" Secholn url_record _record_mode _record_data #_record_cb_http HTTP_NORMAL;0
                 ) else (
                     _record_interactive_send_upload
                 );
@@ -82,7 +87,7 @@ fun record_upload_timeout_job=
             else
             (
                 // abort
-                set recorddata=nil;
+                set _record_data=nil;
                 if (!interactive_status) then (
                     run_set_state idleRun;
                     0
@@ -102,11 +107,11 @@ fun record_run=
         leds_set_all RGB_BLACK;
         let reclib_recriff -> wavfile in
         (
-            set recorddata=strcatlist wavfile;
+            set _record_data=strcatlist wavfile;
             set _record_retry=3;
             set _record_play_end=time_ms+400;
             if (!interactive_status) then (
-                set recordreq=http_request "POST" Secholn url_record _record_mode recorddata #_record_cb_http HTTP_NORMAL;
+                set _record_req=http_request "POST" Secholn url_record _record_mode _record_data #_record_cb_http HTTP_NORMAL;
                 run_set_state idleRun;
                 0
             ) else (
@@ -117,12 +122,12 @@ fun record_run=
     0;;
 
 fun _record_interactive_send_upload =
-    set recordreq = http_request "POST" (interactive_url_reco interactive_app record_last_wav_bytes streaming_audio_cmd_index) recorddata #interactive_req_cb_http HTTP_NORMAL;
-    run_set_state interactiveReqWaitRun recordreq;
+    set _record_req = http_request "POST" (interactive_url_reco interactive_app record_last_wav_bytes streaming_audio_cmd_index) _record_data #interactive_req_cb_http HTTP_NORMAL;
+    run_set_state interactiveReqWaitRun _record_req;
     0;;
 
 /**
- * Initialize the periodic job
+ * Initialize the record job
  */
 fun record_init=
     job_start "record_upload_timeout" #record_upload_timeout_job;;

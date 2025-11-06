@@ -174,8 +174,8 @@ fun trame_eval ping_trame=
 #ifdef TRAME_DEBUG
                         Secho "changemode = "; Iecholn mode;
 #endif
-                        if (mode == 0) then sleep_end
-                        else if (mode == 1) then sleep_start
+                        if (mode == 0) then sleep_wake_up nil
+                        else if (mode == 1) then sleep_start nil
                         else nil
                     )
                 ) else (
@@ -232,7 +232,7 @@ fun trame_is_resource_valid rsrcName=
     else if (!strcmp rsrcName "boot") then 1 // tjrs
     else if (streaming_status) then (if (!strcmp rsrcName "streaming") then 1 else 0)
     else if (interactive_status) then (if (!strcmp rsrcName "itmode") then 1 else 0)
-    else if (sleep_status) then (if (!strcmp rsrcName "asleep") then 1 else 0)
+    else if (sleep_is_sleeping) then (if (!strcmp rsrcName "asleep") then 1 else 0)
     else if (chor_processing_status) then 0
     else 1;;
 
@@ -250,7 +250,7 @@ fun _trame_queue_remove_entry binome=
         set xmpp_busy_status = 0;
 #endif
         // which resource now ? Can be in this order asleep, streaming, itmode or idle
-        if (sleep_status) then XmppSessionRequestResource "asleep"
+        if (sleep_is_sleeping) then XmppSessionRequestResource "asleep"
         else if (streaming_status) then XmppSessionRequestResource "streaming"
         else if (interactive_status) then XmppSessionRequestResource "itmode"
         else XmppSessionRequestResource "idle"

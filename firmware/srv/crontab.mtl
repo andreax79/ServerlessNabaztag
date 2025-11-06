@@ -1,7 +1,6 @@
 #include protos/config_protos.mtl
-#include protos/hooks_protos.mtl
+#include protos/word_protos.mtl
 #include protos/forth_protos.mtl
-#include protos/meteo_protos.mtl
 #include protos/sleep_protos.mtl
 #include protos/audiolib_protos.mtl
 
@@ -15,15 +14,15 @@ fun crontab_job =
     let time_local -> [_ _ _ local_time_hour local_time_minute local_time_second _] in
     if time_rfc868_received then (
 
-        if (sleep_status && local_time_hour == config_get_wake_up) then sleep_end;
+        if (sleep_is_sleeping && local_time_hour == config_get_wake_up) then sleep_wake_up nil;
 
         if local_time_minute == 0 then (
-            forth_interpreter HOOK_TIME nil nil nil // Play time sound
+            forth_interpreter WORD_ON_TIME // Play time sound
         ) else if local_time_minute == 30 then (
-            forth_interpreter HOOK_HALFTIME nil nil nil // Play halftime sound
+            forth_interpreter WORD_ON_HALFTIME // Play halftime sound
         );
 
-        if (!sleep_status && local_time_hour == config_get_go_to_bed) then sleep_start;
+        if (!sleep_is_sleeping && local_time_hour == config_get_go_to_bed) then sleep_start nil;
 
         0
     );

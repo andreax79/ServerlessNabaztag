@@ -200,8 +200,14 @@ fun forth_interpreter_loop f=
  * sock: socket
  * cb: callback function to call when execution completes
  */
-fun forth_interpreter text f sock cb=
+fun forth_interpreter_ex text f sock cb=
     if forth_dictionary==nil then forth_init_dictionary;
     let _forth_interpreter_setup text f sock cb -> f in
         forth_interpreter_loop f;;
 
+/**
+ * Simple Forth interpreter entry point without socket or callback.
+ * text: input Forth code as a string
+ */
+fun forth_interpreter text=
+    forth_interpreter_ex text nil nil nil;;

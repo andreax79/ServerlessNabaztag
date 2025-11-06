@@ -42,9 +42,11 @@ var forth_memory = nil;; // list of allocated memory blocks
 #include forth/control.mtl
 #include forth/misc.mtl
 #include forth/net.mtl
+#include forth/config.mtl
 #include forth/nabaztag.mtl
 #include forth/interpreter.mtl
 #include forth/memory.mtl
+#include forth/task.mtl
 #include forth/dictionary.mtl
 
 fun forth_word_list_to_array words =
@@ -135,12 +137,22 @@ fun forth_execute_code f code=
     );;
 
 /**
+ * Forth interpreter hook for connection established.
+ * Set the run state to idleRun and execute the on-connet word.
+ */
+fun _forth_init_cb _=
+    run_set_state idleRun;
+    forth_interpreter WORD_ON_CONNECT;
+    0;;
+
+/**
  * Initialize the Forth interpreter by loading the init.forth script from the server.
+ * Set the run state to configwaitRun while fetching init.forth
  */
 fun forth_init=
     if forth_dictionary==nil then forth_init_dictionary;
-    forth_load strcat config_get_server_url "/init.forth";
-    0;;
+    let strcat config_get_server_url "/init.forth" -> url in
+        run_set_state configwaitRun forth_load url #_forth_init_cb;;
 
 // const FORTH_TEST = "5 2 + 10 * dup 1 + >";;
 // const FORTH_TEST = ": bla 1 + exit 10 + ; 5 2 + bla exit 100 +";;
@@ -183,5 +195,5 @@ fun forth_init=
 //     let cb_args -> [cnx sock] in 0;;
 //
 // fun forth_test=
-//     forth_interpreter FORTH_TEST nil nil (fixarg2 #_forth_test_cb [nil nil]);
+//     forth_interpreter_ex FORTH_TEST nil nil (fixarg2 #_forth_test_cb [nil nil]);
 //     reboot 0x0407FE58 0x13fb6754;;

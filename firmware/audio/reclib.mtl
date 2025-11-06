@@ -28,12 +28,12 @@ fun _reclib_mkriff ldata=
 
 fun reclib_rec_start =
 	recStop;
-	set record_recording=1;
+	set record_is_recording=1;
 	set _reclib_lrec=nil;
 	recStart 8000 0 #_reclib_rec_cb;;
 
 fun reclib_rec_stop =
-	set record_recording=0;
+	set record_is_recording=0;
 	recStop;;
 
 fun reclib_recriff =

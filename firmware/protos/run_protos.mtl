@@ -1,11 +1,29 @@
 // Main loop states
-type Run = configstartRun | configwaitRun _ | interactiveReqWaitRun _ |
+type Run =
+    configstartRun |
+    configwaitRun _ |
+    interactiveReqWaitRun _ |
 #ifdef PING
-    pingstartRun | pingwaitRun _| stdWaitRun _ | pingRequestWaitRun _ |
+    pingstartRun |
+    pingwaitRun _|
+    stdWaitRun _ |
+    pingRequestWaitRun _ |
 #endif
-    rscLoadNextRun | rscLoadWaitRun _ | chorCmdRun _ |streamCmdRun _ | waitCmdRun _ | cmdEvalOne _ | idleRun | sleepRun |
-    recordRun | recordStartRun |
-    earResetWaitRun _ | xmppLoginRun | xmppReconnectRun _ ;;
+#ifdef XMPP
+    xmppLoginRun |
+    xmppReconnectRun _ |
+#endif
+    rscLoadNextRun |
+    rscLoadWaitRun _ |
+    chorCmdRun _ |
+    streamCmdRun _ |
+    waitCmdRun _ |
+    cmdEvalOne _ |
+    idleRun |
+    sleepRun |
+    recordRun |
+    recordStartRun |
+    earResetWaitRun _;;
 
 proto run_init 0;;
 proto run_set_state 1;;

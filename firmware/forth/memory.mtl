@@ -183,7 +183,7 @@ fun forth_variable f=
             forth_interpreter_get_token f;
             let forth_get_word inter.token -> new_word in (
                 if new_word != nil then (
-                    forth_abort_msg f "Variable already defined"
+                    nil // Variable already defined
                 ) else (
                     let forth_memory_alloc_word -> addr in
                     let [str:to_lower inter.token] -> key in (

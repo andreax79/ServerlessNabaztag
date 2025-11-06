@@ -58,7 +58,6 @@ proto XmppSessionRequestResource 1;;
 #include utils/word.mtl
 #include utils/url.mtl
 #include utils/hooks.mtl
-#include utils/sleep.mtl
 #ifdef XMPP
 #include utils/b64.mtl
 #endif
@@ -78,11 +77,10 @@ proto XmppSessionRequestResource 1;;
 #include chor/streaming.mtl
 #include chor/surprise.mtl
 #include chor/trame.mtl
+#include chor/info.mtl
 
 #include srv/time.mtl
-#include srv/info.mtl
 #include srv/crontab.mtl
-#include srv/meteo.mtl
 #include hw/rfid.mtl
 
 #ifdef XMPP
@@ -106,19 +104,33 @@ fun XmppSessionSendButtonMsg btn withEvent eventValue = 0 ;;
 #include srv/daytime_server.mtl
 #endif
 
-#include srv/run.mtl
+#include run/sleep.mtl
+#include run/run.mtl
 #include forth/forth.mtl
 
 fun main=
-    // forth_test;
-    interactive_init;
     leds_set_state LEDS_STATE_START;
-    config_init;
+    // Set the loop callback
+    loopcb #job_loop;
+    // Load the configuration
+    config_load;
+    // Init the wifi and start the wifi job
     wifi_init 0;
+    // Initialize the network stack, start the network jobs
+    net_init;
+
     info_init;
-    net_start;
-    srand time_ms;
+    // Start the time update job and the RFC 868 time client
+    time_init;
     audiolib_init;
+    button_init;
+    record_init;
+    // Initialize interactive mode (set default sounds and chors, start ear process touched job)
+    interactive_init;
+    // Start the main loop
+    run_init;
+
+    // Start the servers
 #ifdef WEBSERVER
     http_server_start_srv PORT_HTTP;
 #endif
@@ -128,18 +140,8 @@ fun main=
 #ifdef DAYTIMESERVER
     daytime_start_srv PORT_DAYTIME;
 #endif
-    time_init;
-    run_init;
-    record_init;
-    forth_init;
-#ifdef SERVERLESS
-    meteo_init;
-#endif
 #ifdef XMPP
     xmpp_init;
 #endif
-    button_init;
     crontab_init;
-    // Set the loop callback
-    loopcb #job_loop;
     0;;

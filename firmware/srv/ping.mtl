@@ -10,7 +10,7 @@ var _ping_send_data=0;;
 // ping processing
 fun _pingcbhttp http res=
 	Secholn "ping=";
-	if !record_recording then
+	if !record_is_recording then
 		trame_eval http_get_content res;
 	0;;
 

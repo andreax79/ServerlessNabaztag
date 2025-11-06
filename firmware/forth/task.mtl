@@ -1,0 +1,25 @@
+/**
+ * Task words for Forth interpreter
+ * Copyright (c) 2025 Andrea Bonomi
+ * This code is licensed under the MIT License
+ */
+
+#include protos/jobs_protos.mtl
+
+fun _forth_job text=
+    Secholn "!!!Forth job!!!";
+    Secholn text;
+    forth_interpreter text;
+    Secholn "done";
+    JobRun;;
+
+/**
+ * START-TASK ( text delay name -- )
+ * Start a new task with the given name, delay, and text to execute.
+ */
+fun forth_task_start f=
+    let forth_pop f -> name in
+    let forth_pop f -> delay in
+    let forth_pop f -> text in
+    job_start_ex name.str delay.int (fixarg1 #_forth_job text.str);
+    nil;;

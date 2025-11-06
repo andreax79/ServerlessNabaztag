@@ -3,3 +3,12 @@ proto word_dict_get 2;;
 proto word_dict_set 3;;
 proto word_list_get 2;;
 proto word_get 2;;
+
+const WORD_ON_CONNECT = "on-connect";;
+const WORD_ON_EARS = "on-ears";;
+const WORD_ON_CLICK = "on-click";;
+const WORD_ON_DBL_CLICK = "on-dbl-click";;
+const WORD_ON_TIME = "on-time";;
+const WORD_ON_HALFTIME = "on-halftime";;
+const WORD_UPDATE_WEATHER = "update-weather";;
+const WORD_SURPRISE = "surprise";;

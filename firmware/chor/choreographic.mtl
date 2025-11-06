@@ -189,7 +189,7 @@ fun chor_taichi_start cb=
     0;;
 
 fun chor_do_taichi_now=
-    if info_taichi && (info_taichi != nil) && (!sleep_status) then let (if chor_next_taichi!=nil then (time>chor_next_taichi) else 0) -> now in (
+    if info_taichi && (info_taichi != nil) && (!sleep_is_sleeping) then let (if chor_next_taichi!=nil then (time>chor_next_taichi) else 0) -> now in (
         if now || chor_next_taichi==nil then // compute chor_next_taichi
         let if (info_taichi == 40) then 255 else if (info_taichi == 255) then 40 else 80 -> correctedTaichi in // etait inversé
         let ((correctedTaichi*60*((rand&127)+64))>>7) -> delaye in (

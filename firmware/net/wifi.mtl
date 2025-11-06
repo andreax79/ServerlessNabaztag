@@ -35,7 +35,7 @@ var wifi;;
 var wifi_mac_addr;; // MAC address as human-readable string
 var _wifi_scans;;
 var _wifi_master=0;; // 1 = master mode (access point), 0 = client mode (station)
-var _wifi_last_state;;
+var _wifi_last_state;; // wifi last status (Wifi type)
 var _wifi_try;;
 
 #include utils/utils.mtl

@@ -15,13 +15,11 @@ var _info_data;;
 
 // info_src : les services courants affichés par ce lapin (envoyé par le serveur et mis à jour par le fonction 'info_update')
 // Un tableau de 16 valeurs, pour les services courants. 2 valeurs par service donc 8 services max.
-// 2 valeurs par service : la première valeur vaut 1+infoType (ex : 1 pour meteo), la deuxième vaut infoVal, la valeur du service (ex : 0 pour soleil)
+// 2 valeurs par service : la première valeur vaut 1+info_type (ex : 1 pour meteo), la deuxième vaut infoVal, la valeur du service (ex : 0 pour soleil)
 var info_src;;
 
 fun info_init=
     set info_src=tabnew 0 16;
-    set info_messages=0;
-    set info_taichi = 0;
 
     set _info_data=
 [0 // meteo
@@ -91,11 +89,11 @@ const INFO_PALETTE={
 
 
 // heure de démarrage du service courant
-var infoStartTime;;
+var _info_start_time;;
 // index du service courant (dans info_src)
-var infoIndex=0;;
+var _info_index=0;;
 // type du service courant
-var infoType;;
+var info_type;;
 // valeur du service courant
 var infoVal;;
 // index de la couleur dans le tableau des couleurs de l'animation courante
@@ -108,28 +106,29 @@ var infoAnimColorDur;;
 // durée d'affichage d'un service, en secondes
 const INFO_TIMEOUT=15;;
 
-fun infoAnimationsOf typ=listswitch _info_data typ;;
+fun _info_get_animations info_type=
+    listswitch _info_data info_type;;
 
-// retourne le prochain index utile (infoType non nul)
-fun _infoNextIndex i=
+// retourne le prochain index utile (info_type non nul)
+fun _info_next_index i=
     let i+2-> i in
-    if i>=16 then 0 else if info_src.i then i else _infoNextIndex i;;
+    if i>=16 then 0 else if info_src.i then i else _info_next_index i;;
 
 // le service suivant
-fun infoStartOne i=
-    set infoIndex= i;
-    set infoType=(info_src.(infoIndex))-1;
-    set infoVal=info_src.(infoIndex+1);
-    set infoStartTime=time;
+fun _info_start_one i=
+    set _info_index= i;
+    set info_type=(info_src.(_info_index))-1;
+    set infoVal=info_src.(_info_index+1);
+    set _info_start_time=time;
     set infoAnimColori=0;
     set infoAnimColorStart=time_ms;
-    let infoAnimationsOf infoType -> anims in
-    if anims==nil then set infoStartTime=nil
+    let _info_get_animations info_type -> anims in
+    if anims==nil then set _info_start_time=nil
     else let anims.infoVal ->[dur _] in set infoAnimColorDur= dur*10;
     0;;
 
-fun infoNext=
-    infoStartOne (_infoNextIndex infoIndex);
+fun _info_next=
+    _info_start_one (_info_next_index _info_index);
     0;;
 
 /**
@@ -158,15 +157,15 @@ fun info_json=
             _info_src_json ::
             (json_int "messages" info_messages) :: ",\n" ::
             (json_int "taichi" info_taichi) :: "\n" ::
-        "}" :: nil
-;;
+        "}" :: nil;;
 
 fun info_run=
-    if (!sleep_status && !interactive_status && !ears_detecting) then // no info while sleeping and while in interactive mode
+    if info_src==nil then info_init;
+    if (!sleep_is_sleeping && !interactive_status && !ears_detecting) then // no info while sleeping and while in interactive mode
     (
         // passage au service suivant ?
-        set infoType=(info_src.(infoIndex))-1;
-        if infoStartTime==nil || (time-infoStartTime>INFO_TIMEOUT) || infoType<0 then infoNext;
+        set info_type=(info_src.(_info_index))-1;
+        if _info_start_time==nil || (time-_info_start_time>INFO_TIMEOUT) || info_type<0 then _info_next;
 
         // Allumage de la tête en verde si message(s) en attente (info_messages)
         let (time_ms>>8)&7 -> t in
@@ -177,9 +176,9 @@ fun info_run=
             led LED_NOSE color;
 
         // couleurs des 3 leds du ventre (service courant/animation courante/couleur courante)
-        set infoType=(info_src.(infoIndex))-1;
-        set infoVal=info_src.(infoIndex+1);
-        let infoAnimationsOf infoType -> anims in
+        set info_type=(info_src.(_info_index))-1;
+        set infoVal=info_src.(_info_index+1);
+        let _info_get_animations info_type -> anims in
         let anims.infoVal ->[dur anime] in
         if anime!=nil then
         (
@@ -236,7 +235,7 @@ fun _info_src_update key val i=
             // add
             set info_src.i = key;
             // set lapin to play this new one now
-            infoStartOne i
+            _info_start_one i
         )
     ) else _info_src_update key val i+2;; // recurse
 
@@ -285,7 +284,7 @@ fun info_update data=
         if (newleft != nil || newright != nil) && ((newleft!=ears_left) || (newright!=ears_right)) then (
             set ears_left=newleft;
             set ears_right=newright;
-            if ((!sleep_status) && (!ears_resetting)) then (
+            if ((!sleep_is_sleeping) && (!ears_resetting)) then (
                 midi_play MIDI_COMMUNION;
                 ears_go_to_ref_pos
             )
@@ -320,11 +319,11 @@ fun info_update_v2 data=
         );
         // process ears
         Secho "newleft="; Iecho newleft; Secho "newright="; Iecho newright; Secho "ears_left="; Iecho ears_left; Secho "ears_right="; Iecho ears_right;
-        Secho "sleep_status="; Iecho sleep_status; Secho "ears_resetting="; Iecho ears_resetting;
+        Secho "sleep_is_sleeping="; Iecho sleep_is_sleeping; Secho "ears_resetting="; Iecho ears_resetting;
         if (newleft != nil || newright != nil) && ((newleft!=ears_left) || (newright!=ears_right)) then (
             set ears_left=newleft;
             set ears_right=newright;
-            if ((!sleep_status) && (!ears_resetting)) then (
+            if ((!sleep_is_sleeping) && (!ears_resetting)) then (
 //              midi_play MIDI_COMMUNION;
                 ears_go_to_ref_pos
             )

@@ -1,4 +1,3 @@
-#include protos/meteo_protos.mtl
 #include protos/sleep_protos.mtl
 #include protos/audiolib_protos.mtl
 #include protos/streaming_protos.mtl
@@ -153,10 +152,9 @@ fun http_get_json_status sock args=
             (json_str "longitude" config_get_longitude) :: ",\n" ::
             (json_int "wake_up" config_get_wake_up) :: ",\n" ::
             (json_int "go_to_bed" config_get_go_to_bed) :: ",\n" ::
-            (json_int "sleep_state" sleep_status) :: ",\n" ::
+            (json_int "sleep_state" sleep_is_sleeping) :: ",\n" ::
             (json_int "streaming_state" streaming_status) :: ",\n" ::
             (json_int "processing_state" chor_processing_status) :: ",\n" ::
-            (json_int "meteo_weather_code" _meteo_weather_code) :: ",\n" ::
             (json_obj "interactive" interactive_json) :: ",\n" ::
             (json_obj "time" time_json) :: ",\n" ::
             (json_obj "ears" ears_json) :: ",\n" ::
@@ -191,12 +189,6 @@ fun http_index=
         strreplace "
 #include srv/www/index.html
         " "{SERVER_URL}" config_get_server_url
-;;
-
-fun openapi_yaml=
-        "
-#include srv/www/openapi.yaml
-        "
 ;;
 
 //--------------------------------------------------------------------------------------------------
@@ -279,7 +271,7 @@ fun http_get_update_time sock args=
  * Get weather information from the weather server
  */
 fun http_get_update_weather sock args=
-    meteo_get;
+    forth_interpreter WORD_UPDATE_WEATHER;
     http_send_header_and_close HTTP_204 nil sock;;
 
 /**
@@ -308,26 +300,26 @@ fun http_get_surprise sock args=
  * Play a sound
  */
 fun http_get_play_midi midi sock args=
-    if !sleep_status then (
+    if !sleep_is_sleeping then (
         midi_play midi
     );
     http_send_header_and_close HTTP_204 nil sock;;
 
 fun http_get_play sock args=
-    if !sleep_status then (
+    if !sleep_is_sleeping then (
         audiolib_start_http _http_arg_str args 'u' #streaming_wav_error
     );
     http_send_header_and_close HTTP_204 nil sock;;
 
 fun http_get_say sock args=
-    if !sleep_status then (
+    if !sleep_is_sleeping then (
         audiolib_start_http (strcatlist "http://translate.google.com/translate_tts?ie=UTF-8&total=1&idx=0&textlen=32&client=tw-ob&tl=En-gb&q="::(strreplace (_http_arg_str args 't') " " "+")::nil) #streaming_wav_error
     );
     http_send_header_and_close HTTP_204 nil sock;;
 
 fun http_get_taichi sock args=
     let _http_arg_int args 'v' -> v in
-        if v == 1000 && !sleep_status then
+        if v == 1000 && !sleep_is_sleeping then
             chor_taichi_start nil
         else
             set info_taichi = v;
@@ -338,21 +330,21 @@ fun http_get_mp3 sock args=
     http_send_header_and_close HTTP_204 nil sock;;
 
 fun http_get_sleep sock args=
-    sleep_start;
+    sleep_start nil;
     http_send_header_and_close HTTP_204 nil sock;;
 
 fun http_get_wakeup sock args=
-    sleep_end;
+    sleep_wake_up nil;
     http_send_header_and_close HTTP_204 nil sock;;
 
 fun http_get_left sock args=
-    if !sleep_status then (
+    if !sleep_is_sleeping then (
         ears_go EARS_LEFT _http_arg_int args 'p' _http_arg_int args 'd'
     );
     http_send_header_and_close HTTP_204 nil sock;;
 
 fun http_get_right sock args=
-    if !sleep_status then (
+    if !sleep_is_sleeping then (
         ears_go EARS_RIGHT _http_arg_int args 'p' _http_arg_int args 'd'
     );
     http_send_header_and_close HTTP_204 nil sock;;
@@ -362,31 +354,31 @@ fun http_get_nose sock args=
     http_send_header_and_close HTTP_204 nil sock;;
 
 fun http_get_weather sock args=
-    if !sleep_status then (
+    if !sleep_is_sleeping then (
         info_src_update INFO_WEATHER _http_arg_int args 'v'
     );
     http_send_header_and_close HTTP_204 nil sock;;
 
 fun http_get_stock sock args=
-    if !sleep_status then (
+    if !sleep_is_sleeping then (
         info_src_update INFO_STOCK _http_arg_int args 'v'
     );
     http_send_header_and_close HTTP_204 nil sock;;
 
 fun http_get_traffic sock args=
-    if !sleep_status then (
+    if !sleep_is_sleeping then (
         info_src_update INFO_TRAFFIC _http_arg_int args 'v'
     );
     http_send_header_and_close HTTP_204 nil sock;;
 
 fun http_get_mail sock args=
-    if !sleep_status then (
+    if !sleep_is_sleeping then (
         info_src_update INFO_MAIL _http_arg_int args 'v'
     );
     http_send_header_and_close HTTP_204 nil sock;;
 
 fun http_get_pollution sock args=
-    if !sleep_status then (
+    if !sleep_is_sleeping then (
         info_src_update INFO_POLLUTION _http_arg_int args 'v'
     );
     http_send_header_and_close HTTP_204 nil sock;;
@@ -418,15 +410,28 @@ fun http_get_setup sock args=
     config_set_wake_up atoi _http_arg_str args 'w';    // set wake up time
     config_set_go_to_bed atoi _http_arg_str args 'b';  // set go to bed time
     config_save;
-    meteo_get;
+    forth_interpreter WORD_UPDATE_WEATHER;
     http_send_header_and_close HTTP_204 nil sock;;
 
-fun http_get_openapi_yaml sock args=
-    let ip_to_str netip -> ip_str in
-    let strreplace openapi_yaml "192.168.1.100" ip_str -> res in (
-        sock_send sock (http_header HTTP_200 "application/yaml" (strlen res)); // header
-        sock_send_and_close sock res
-    );;
+/**
+ * Handle HTTP callback for Forth interpreter. Return the output as JSON.
+ */
+fun _forth_http_cb f sock=
+    http_send_content_and_close sock "application/json"
+    strcatlist
+        "{\n" ::
+            (json_str "output" (strcatlist (rev f.output nil))) ::
+        "\n}" ::
+        nil;;
+
+/**
+ * Handle an HTTP POST request to execute Forth code.
+ * sock: http socket
+ * args: HTTP request arguments
+ */
+fun forth_http_post_req sock args=
+    let _http_arg_str args 'c' -> code in
+    forth_interpreter_ex code nil nil (fixarg2 #_forth_http_cb sock);;
 
 fun http_get_index sock args=
     sock_send sock (http_header HTTP_200 "text/html" (strlen http_index)); // header
@@ -437,6 +442,22 @@ fun http_not_found sock args=
         sock_send sock (http_header HTTP_404 "text/plain" (strlen res)); // header
         sock_send_and_close sock res
     );;
+
+fun _http_get_openapi_yaml_cb http res sock=
+    if res == nil then
+        http_not_found sock nil
+    else (
+        let strreplace (http_get_content res) "192.168.1.100" (ip_to_str netip) -> yaml in ( // adjust server URL
+            sock_send sock (http_header HTTP_200 "application/yaml" (strlen yaml)); // header
+            sock_send_and_close sock yaml;
+            nil
+        )
+    );;
+
+fun http_get_openapi_yaml sock args=
+    let strcatlist "http://" :: config_get_server_url :: "/api/openapi.yaml" :: nil -> url in
+        http_request "GET" url nil (fixarg3 #_http_get_openapi_yaml_cb sock) HTTP_NORMAL;
+    nil;;
 
 /**
  * Process an HTTP request and generate the response

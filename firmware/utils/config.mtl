@@ -23,20 +23,24 @@ const CONF_WIFIPMK=175;;		//32    WiFi PMK (Pairwise Master Key)
 const CONF_MAGIC=207;;		    //1
 const CONF_LATITUDE=208;;	    //8     Latitude (string)
 const CONF_LONGITUDE=216;;	    //8     Longitude (string)
-const CONF_WAKE_UP=224;;	    //1     Wake up time
-const CONF_GO_TO_BED=225;;      //1     Go to bed time
+const CONF_WAKE_UP=224;;	    //1     Wake up at (hour)
+const CONF_GO_TO_BED=225;;      //1     Go to bed at (hour)
 const CONF_LENGTH=226;;
 
 var _config_data;;
 var config_md5_password = nil;; // MD5 hash of the HTTP password
 
-// Store configuration
+/**
+ * Store the configuration
+ */
 fun config_save =
     Secholn "## save configuration";
     save _config_data 0 "conf.bin" 0 CONF_LENGTH;;
 
-// Init configuration
-fun config_init =
+/**
+ * Load the configuration
+ */
+fun config_load =
     set _config_data = strnew CONF_LENGTH;
     load _config_data 0 "conf.bin" 0 CONF_LENGTH;;
 
@@ -115,11 +119,11 @@ fun config_get_longitude =
 fun config_get_dst =
     strget _config_get CONF_DST 1 0;;
 
-// Get wake up time
+// Get wake up at (hour)
 fun config_get_wake_up =
     strget _config_get CONF_WAKE_UP 1 0;;
 
-// Get go to bed time
+// Get go to bed at (hour)
 fun config_get_go_to_bed =
     strget _config_get CONF_GO_TO_BED 1 0;;
 
@@ -147,10 +151,10 @@ fun config_set_latitude val =
 fun config_set_longitude val =
     _config_set_str CONF_LONGITUDE val 8;;
 
-// Set wake up time
+// Set wake up at (hour)
 fun config_set_wake_up val =
     strset _config_data CONF_WAKE_UP val;;
 
-// Set go to bed time
+// Set go to bed at (hour)
 fun config_set_go_to_bed val =
     strset _config_data CONF_GO_TO_BED val;;

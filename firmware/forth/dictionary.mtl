@@ -103,6 +103,7 @@ fun forth_init_dictionary=
         [ [str: ";"                ] [ func:#forth_semi        flag:FORTH_IMMEDIATE]] ::
         [ [str: "("                ] [ func:#forth_p]] ::
         [ [str: "constant"         ] [ func:#forth_constant    flag:FORTH_IMMEDIATE]] ::
+        [ [str: "defined?"         ] [ func:#forth_defined_q   flag:FORTH_IMMEDIATE]] ::
         [ [str: "words"            ] [ func:#forth_words]] ::
         [ [str: "time&date"        ] [ func:#forth_time_and_date ]] ::
         [ [str: "evaluate"         ] [ func:#forth_evaluate    flag:FORTH_ASYNC]] ::
@@ -113,15 +114,11 @@ fun forth_init_dictionary=
         [ [str: "http-post"        ] [ func:#forth_http_post   flag:FORTH_ASYNC]] ::
         [ [str: "mac"              ] [ func:#forth_mac]] ::
         [ [str: "ip"               ] [ func:#forth_ip]] ::
-        // Nabaztag
-        [ [str:"sleeping"          ] [ func:#forth_sleeping ]] ::
-        [ [str:"sleep"             ] [ func:#forth_sleep ]] ::
-        [ [str:"wakeup"            ] [ func:#forth_wakeup ]] ::
-        [ [str:"left-ear-position" ] [ func:#forth_left_ear_position ]] ::
-        [ [str:"move-left-ear"     ] [ func:#forth_move_left_ear ]] ::
-        [ [str:"right-ear-position"] [ func:#forth_right_ear_position ]] ::
-        [ [str:"move-right-ear"    ] [ func:#forth_move_right_ear ]] ::
-        [ [str:"random"            ] [ func:#forth_random ]] ::
+        // Task
+        [ [str: "task-start"       ] [ func:#forth_task_start]] ::
+        // [ [str: "task-stop"     ] [ func:#forth_task_stop]] ::
+        // [ [str: ".tasks"        ] [ func:#forth_dot_tasks]] ::
+        // Nabaztag config
         [ [str:"server-url"        ] [ func:#forth_server_url ]] ::
         [ [str:"language"          ] [ func:#forth_language ]] ::
         [ [str:"set-language"      ] [ func:#forth_set_language ]] ::
@@ -133,6 +130,23 @@ fun forth_init_dictionary=
         [ [str:"set-latitude"      ] [ func:#forth_set_latitude ]] ::
         [ [str:"longitude"         ] [ func:#forth_longitude ]] ::
         [ [str:"set-longitude"     ] [ func:#forth_set_longitude ]] ::
+        [ [str:"wake-up-at"        ] [ func:#forth_wake_up_at ]] ::
+        [ [str:"set-wake-up-at"    ] [ func:#forth_set_wake_up_at ]] ::
+        [ [str:"go-to-bed-at"      ] [ func:#forth_go_to_bed_at ]] ::
+        [ [str:"set-go-to-bed-at"  ] [ func:#forth_set_go_to_bed_at ]] ::
+        [ [str:"time-server-ip"    ] [ func:#forth_time_server_ip ]] ::
+        [ [str:"set-time-server-ip"] [ func:#forth_set_time_server_ip ]] ::
+        [ [str:"set-md5-password"  ] [ func:#forth_set_md5_password ]] ::
+        [ [str:"md5-password"      ] [ func:#forth_md5_password ]] ::
+        // Nabaztag
+        [ [str:"sleeping?"         ] [ func:#forth_sleeping ]] ::
+        [ [str:"sleep"             ] [ func:#forth_sleep       flag:FORTH_ASYNC ]] ::
+        [ [str:"wake-up"           ] [ func:#forth_wake_up     flag:FORTH_ASYNC ]] ::
+        [ [str:"left-ear-position" ] [ func:#forth_left_ear_position ]] ::
+        [ [str:"move-left-ear"     ] [ func:#forth_move_left_ear ]] ::
+        [ [str:"right-ear-position"] [ func:#forth_right_ear_position ]] ::
+        [ [str:"move-right-ear"    ] [ func:#forth_move_right_ear ]] ::
+        [ [str:"random"            ] [ func:#forth_random ]] ::
         [ [str:"volume"            ] [ func:#forth_volume ]] ::
         [ [str:"set-info-weather"  ] [ func:#forth_set_info_weather ]] ::
         [ [str:"set-info-stock"    ] [ func:#forth_set_info_stock ]] ::
@@ -145,10 +159,6 @@ fun forth_init_dictionary=
         [ [str:"play-midi"         ] [ func:#forth_play_midi ]] ::
         [ [str:"revision"          ] [ func:#forth_revision ]] ::
         [ [str:"md5"               ] [ func:#forth_md5 ]] ::
-        [ [str:"time-server-ip"    ] [ func:#forth_time_server_ip ]] ::
-        [ [str:"set-time-server-ip"] [ func:#forth_set_time_server_ip ]] ::
-        [ [str:"set-md5-password"  ] [ func:#forth_set_md5_password ]] ::
-        [ [str:"md5-password"      ] [ func:#forth_md5_password ]] ::
         nil -> d in
             set forth_dictionary = [dict:d];
     0;;

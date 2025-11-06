@@ -1,0 +1,80 @@
+#include protos/streaming_protos.mtl
+#include protos/run_protos.mtl
+#include protos/chor_protos.mtl
+#include protos/sleep_protos.mtl
+
+var _sleep_is_sleeping = 1;;       // sleeping
+
+/**
+ * Callback called when sleeping is finished
+ */
+fun _sleep_start_cb f=
+    // oreilles arrivées en haut : eteindre tout + oreille basses
+    leds_set_all RGB_BLACK;
+    ears_go 0 10 0; // sur le v2 c'est la position 10 qui est en bas
+    ears_go 1 10 0;
+    if f!=nil then forth_interpreter_resume f;
+    run_set_state sleepRun;;
+
+/**
+ * Callback called when waking up is finished
+ */
+fun _sleep_wake_up_cb f=
+    Secho "wake_up_now ";
+    ears_go_to_ref_pos;
+    ears_set_wait_and_detect_mode;
+    if f!=nil then forth_interpreter_resume f;
+    run_set_state idleRun;;
+
+/**
+ * Check if the Nabaztag is sleeping
+ */
+fun sleep_is_sleeping =
+    _sleep_is_sleeping;;
+
+/**
+ * Put the Nabaztag into sleep mode
+ */
+fun sleep_start f=
+    Secholn "sleep_start";
+    let sleep_is_sleeping -> sleeping in
+    let XmppSessionRequestResource "asleep" -> result in (  // server resource
+        set _sleep_is_sleeping = 1;
+        set streaming_status = 0; // just to be sure
+        set chor_processing_status = 0; // just to be sure
+        // Starts to sleep
+        if sleeping == 0 then (
+            leds_set_all RGB_VIOLET;
+            ears_start_reset // oreilles en haut
+        );
+        run_set_state earResetWaitRun (fixarg1 #_sleep_start_cb f); // attente de fin oreille
+        result
+    );;
+
+/**
+ * Wake up the Nabaztag from sleep mode
+ */
+fun sleep_wake_up f=
+    Secho "sleep_wake_up "; Iecholn sleep_is_sleeping;
+    if sleep_is_sleeping then
+        let XmppSessionRequestResource "idle" -> result in (
+            // was asleep or initial booting (_sleep_is_sleeping = 1 at start)
+            set _sleep_is_sleeping = 0;
+            set streaming_status = 0; // just to be sure
+            set chor_processing_status = 0; // just to be sure
+            leds_set_all RGB_VIOLET; // violet
+            ears_start_reset; // reset oreilles
+            run_set_state earResetWaitRun (fixarg1 #_sleep_wake_up_cb f); // attente de fin oreille
+            result
+        )
+    else
+        // was not asleep (after a reconnect for example)
+        let (
+            if (streaming_status) then XmppSessionRequestResource "streaming"
+            else if (interactive_status) then XmppSessionRequestResource "itmode"
+            else XmppSessionRequestResource "idle"
+        ) -> result in (
+            run_set_state idleRun;
+            if f!=nil then forth_interpreter_resume f;
+            result
+        );;

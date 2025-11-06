@@ -4,7 +4,7 @@
 
 COMPILER="./compiler/mtl_comp/mtl_comp"
 SIMULATOR="./compiler/mtl_simu/mtl_simu"
-# init,vm,simunet,simuleds,simuaudio,http_server
+# init,vm,simunet,simuleds,simuaudio,simumotors,http_server
 LOGS="init,vm,http_server"
 HTTP_SERVER_PATH=vl
 HTTP_SERVER_PORT=8081
@@ -26,7 +26,6 @@ firmware:
 	@$(COMPILER) -s "nominal.mtl" "bootcode.bin"
 	@rm -f nominal.mtl
 	@cp bootcode.bin vl/bc.jsp
-	@cp firmware/srv/www/openapi.yaml vl/api/openapi.yaml
 	@echo "Firmware copied to $$PWD/vl/bc.jsp"
 
 run-sim:

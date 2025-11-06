@@ -1,6 +1,7 @@
 proto _record_interactive_send_upload 0;;
+proto record_is_uploading 0;;
 
 const RECORD_MAX_RECORDING_TIME = 8000;;
 
-var record_recording = 0;;
+var record_is_recording = 0;;
 var record_enabled = 1;;

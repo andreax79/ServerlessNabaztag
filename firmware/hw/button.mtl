@@ -6,6 +6,10 @@ var _button_time;;
 var _button_event;;
 var _button_clic;;
 
+/**
+ * Button job
+ * This job checks the button state and generates events
+ */
 fun button_job=
     let button2 -> b in
     if b!=_button_last then
@@ -41,6 +45,9 @@ fun button_job=
     );
     JobRun;;
 
+/**
+ * Get the last button event
+ */
 fun button_get_event=
     let _button_event -> ev in
     (
@@ -48,5 +55,8 @@ fun button_get_event=
         ev
     );;
 
+/**
+ * Initialize the button job
+ */
 fun button_init=
     job_start "button" #button_job;;

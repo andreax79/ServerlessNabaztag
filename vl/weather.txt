@@ -1,0 +1,16 @@
+WMO Weather interpretation codes (WW)
+
+Code         Info Code Description
+0            sun   0   Clear sky
+1, 2, 3      cloud 1   Mainly clear, partly cloudy, and overcast
+45, 48       fog   2   Fog and depositing rime fog
+51, 53, 55   rain  3   Drizzle: Light, moderate, and dense intensity
+56, 57       rain  3   Freezing Drizzle: Light and dense intensity
+61, 63, 65   rain  3   Rain: Slight, moderate and heavy intensity
+66, 67       rain  3   Freezing Rain: Light and heavy intensity
+71, 73, 75   snow  4   Snow fall: Slight, moderate, and heavy intensity
+77           snow  4   Snow grains
+80, 81, 82   rain  3   Rain showers: Slight, moderate, and violent
+85, 86       snow  4   Snow showers slight and heavy
+95           storm 5   Thunderstorm: Slight or moderate
+96, 99       storm 5   Thunderstorm with slight and heavy hail

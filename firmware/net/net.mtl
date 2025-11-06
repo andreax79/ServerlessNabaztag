@@ -30,9 +30,9 @@ fun net src mac=
 	0;;
 
 /**
- * Initialize the network stack
+ * Initialize the network stack, start the network jobs
  */
-fun net_start=
+fun net_init=
 #ifdef SIMU
 	tcpCb #nettcp;
 	udpCb #netudp;

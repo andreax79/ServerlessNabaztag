@@ -1,7 +1,1 @@
 proto hook_rfid 2;;
-
-const HOOK_EARS = "on-ears";;
-const HOOK_CLICK = "on-click";;
-const HOOK_DBL_CLICK = "on-dbl-click";;
-const HOOK_TIME = "on-time";;
-const HOOK_HALFTIME = "on-halftime";;
