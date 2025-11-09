@@ -38,6 +38,7 @@ var forth_memory = nil;; // list of allocated memory blocks
 #include forth/comparison.mtl
 #include forth/output.mtl
 #include forth/list.mtl
+#include forth/string.mtl
 #include forth/json.mtl
 #include forth/control.mtl
 #include forth/misc.mtl
@@ -195,5 +196,5 @@ fun forth_init=
 //     let cb_args -> [cnx sock] in 0;;
 //
 // fun forth_test=
-//     forth_interpreter_ex FORTH_TEST nil nil (fixarg2 #_forth_test_cb [nil nil]);
+//     forth_interpreter_ex FORTH_TEST nil nil nil (fixarg2 #_forth_test_cb [nil nil]);
 //     reboot 0x0407FE58 0x13fb6754;;

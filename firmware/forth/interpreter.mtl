@@ -79,9 +79,11 @@ fun forth_interpreter_resume f=
  * Initialize a new Forth interpreter state or reuse an existing one.
  * text: input Forth code as a string
  * f: existing Forth interpreter state or nil to create a new one
+ * sock: socket
+ * task: task associated with this interpreter
  * cb: callback function to call when execution completes
  */
-fun _forth_interpreter_setup text f sock cb=
+fun _forth_interpreter_setup text f sock task cb=
     if forth_dictionary==nil then forth_init_dictionary;
     let [
         start:0
@@ -101,6 +103,7 @@ fun _forth_interpreter_setup text f sock cb=
             rstack:nil // return stack
             pc:0 // program counter
             forth_sock: sock // socket
+            forth_task: task // task
             istack: inter :: nil // interpreter state
         ]
     ) else (
@@ -198,11 +201,12 @@ fun forth_interpreter_loop f=
  * text: input Forth code as a string
  * f: existing interpreter state or nil to create a new one
  * sock: socket
+ * task: task associated with this interpreter
  * cb: callback function to call when execution completes
  */
-fun forth_interpreter_ex text f sock cb=
+fun forth_interpreter_ex text f sock task cb=
     if forth_dictionary==nil then forth_init_dictionary;
-    let _forth_interpreter_setup text f sock cb -> f in
+    let _forth_interpreter_setup text f sock task cb -> f in
         forth_interpreter_loop f;;
 
 /**
@@ -210,4 +214,4 @@ fun forth_interpreter_ex text f sock cb=
  * text: input Forth code as a string
  */
 fun forth_interpreter text=
-    forth_interpreter_ex text nil nil nil;;
+    forth_interpreter_ex text nil nil nil nil;;

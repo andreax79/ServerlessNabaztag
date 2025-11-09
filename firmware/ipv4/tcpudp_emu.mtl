@@ -9,12 +9,14 @@ fun udp_send local localp dst dstp content mac=
 var udp_listeners;; // list of [port cb]
 
 fun regudp port cb=
+    Secholn strcatlist "regudp port:" :: (itoa port) :: nil;
 	set udp_listeners=[udpStart port cb]::udp_listeners;;
 
 fun udp_reset=
     set udp_listeners = nil;;
 
 fun netudp t src ip=
+    Secholn "UDP received"; Iecholn t;
 	let listswitch udp_listeners t -> cb in
 	call cb [src nil ip];;
 

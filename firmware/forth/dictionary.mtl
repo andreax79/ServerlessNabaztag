@@ -77,14 +77,17 @@ fun forth_init_dictionary=
         [ [str: "json-parse"       ] [func:#forth_json_parse ]] ::
         [ [str: "json-get"         ] [func:#forth_json_get ]] ::
         // String
-        // lower
-        // upper
-        // replace
-        // zero-pad
-        // atoi, itoa ...
+        [ [str: "$repeat"          ] [func:#forth_dollar_repeat ]] ::
+        [ [str: "$pad-right"       ] [func:#forth_dollar_pad_right ]] ::
+        [ [str: "$pad-left"        ] [func:#forth_dollar_pad_left ]] ::
+        [ [str: "$lower"           ] [func:#forth_dollar_lower ]] ::
+        [ [str: "$upper"           ] [func:#forth_dollar_upper ]] ::
+        // [ [str: "$replace"         ] [func:#forth_dollar_replace ]] ::
+        // [ [str: "atoi"             ] [func:#forth_atoi ]] ::
+        // [ [str: "itoa"             ] [func:#forth_itoa ]] ::
         // Memory
-        [ [str: "allocate-word"    ] [ func:#forth_allocate_word ]] ::
-        [ [str: "free-word"        ] [ func:#forth_free_word ]] ::
+        [ [str: "allocate-cell"    ] [ func:#forth_allocate_cell ]] ::
+        [ [str: "free-cell"        ] [ func:#forth_free_cell ]] ::
         [ [str: "@"                ] [ func:#forth_fetch ]] ::
         [ [str: "!"                ] [ func:#forth_store ]] ::
         [ [str: "variable"         ] [ func:#forth_variable    flag:FORTH_IMMEDIATE]] ::
@@ -106,18 +109,26 @@ fun forth_init_dictionary=
         [ [str: "defined?"         ] [ func:#forth_defined_q   flag:FORTH_IMMEDIATE]] ::
         [ [str: "words"            ] [ func:#forth_words]] ::
         [ [str: "time&date"        ] [ func:#forth_time_and_date ]] ::
+        // [ [str: "time&date$"       ] [ func:#forth_time_and_date_dollar ]] ::
+        [ [str: "time&date-utc$"   ] [ func:#forth_time_and_date_utc_dollar ]] ::
         [ [str: "evaluate"         ] [ func:#forth_evaluate    flag:FORTH_ASYNC]] ::
         [ [str: "time-ms"          ] [ func:#forth_time_ms ]] ::
+        [ [str: "uptime"           ] [ func:#forth_uptime ]] ::
         [ [str: "ms"               ] [ func:#forth_ms          flag:FORTH_ASYNC]] ::
+        [ [str: "update-time"      ] [ func:#forth_update_time]] ::
+        [ [str: "time-received?"   ] [ func:#forth_time_received ]] ::
         // Net
         [ [str: "http-get"         ] [ func:#forth_http_get    flag:FORTH_ASYNC]] ::
         [ [str: "http-post"        ] [ func:#forth_http_post   flag:FORTH_ASYNC]] ::
         [ [str: "mac"              ] [ func:#forth_mac]] ::
         [ [str: "ip"               ] [ func:#forth_ip]] ::
+        [ [str: "tcp-listen"       ] [ func:#forth_tcp_listen]] ::
         // Task
         [ [str: "task-start"       ] [ func:#forth_task_start]] ::
-        // [ [str: "task-stop"     ] [ func:#forth_task_stop]] ::
-        // [ [str: ".tasks"        ] [ func:#forth_dot_tasks]] ::
+        [ [str: "task-stop"        ] [ func:#forth_task_stop]] ::
+        [ [str: "task-suspend"     ] [ func:#forth_task_suspend]] ::
+        [ [str: "task-resume"      ] [ func:#forth_task_resume]] ::
+        [ [str: ".tasks"           ] [ func:#forth_dot_tasks]] ::
         // Nabaztag config
         [ [str:"server-url"        ] [ func:#forth_server_url ]] ::
         [ [str:"language"          ] [ func:#forth_language ]] ::

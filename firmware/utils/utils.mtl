@@ -376,5 +376,31 @@ fun zero_pad s l=
         strcat "0" (zero_pad s l-1)
         else s;;
 
+/**
+ * Repeat a string s n times
+ */
+fun str_repeat s n=
+    if n>0 then
+        strcat s (str_repeat s n-1)
+    else "";;
+
+/**
+ * Right pad a string to length l with character ch
+ */
+fun str_pad_right s l ch=
+    let l - strlen s -> d in
+    if d>0 then
+        strcat (str_repeat ch d) s
+    else s;;
+
+/**
+ * Left pad a string to length l with character ch
+ */
+fun str_pad_left s l ch=
+    let l - strlen s -> d in
+    if d>0 then
+        strcat s (str_repeat ch d)
+    else s;;
+
 fun getBytecodeRevision =
     strsub BYTECODE_REVISION_STR 6 ((strlen BYTECODE_REVISION_STR) - 8);;

@@ -164,10 +164,10 @@ fun dhcp_client_renew=
  * should ask for a renewal
  */
 #ifndef SIMU
-fun _dhcp_client_job=
+fun _dhcp_client_task task=
     if ((dhcp_client_started && dhcp_lease_t1 != 0 && time > dhcp_lease_t1 && !dhcp_infinite_lease)) then
         dhcp_client_renew;
-    JobRun;;
+    TaskRun;;
 #endif
 
 /**
@@ -191,8 +191,8 @@ fun dhcp_start_client=
         else
             dhcp_client_renew;
         set dhcp_client_started=1;
-        // Start the DHCP client job
-        job_start "dhcp_client" #_dhcp_client_job
+        // Start the DHCP client task
+        task_start "dhcp_client" #_dhcp_client_task
     );
 #endif
     0;;

@@ -122,6 +122,20 @@ fun forth_time_and_date f=
     );;
 
 /**
+ * TIME&DATE$ ( -- str )
+ * Push the current time and date as a string onto the stack
+ */
+// fun forth_time_and_date_dollar f=
+//     forth_push f [str:time_date];;
+
+/**
+ * TIME&DATE-UTC$ ( -- str )
+ * Push the current UTC time and date as a string onto the stack
+ */
+fun forth_time_and_date_utc_dollar f=
+    forth_push f [str:time_date_utc];;
+
+/**
  * Callback function to resume interpreter after EVALUATE
  * Restore the previous interpreter state
  */
@@ -142,7 +156,7 @@ fun forth_evaluate f=
         forth_interpreter_resume f
         // forth_abort_msg f "EVALUATE expects a string"
     ) else (
-        forth_interpreter_ex word.str f f.forth_sock #_forth_evaluate_cb
+        forth_interpreter_ex word.str f f.forth_sock f.forth_task #_forth_evaluate_cb
     );;
 
 /**
@@ -155,12 +169,21 @@ fun forth_time_ms f=
     nil;;
 
 /**
+ * UPTIME ( -- s )
+ * Push the system uptime in seconds onto the stack
+ */
+fun forth_uptime f=
+    let time -> s in
+    forth_push f [int:s];
+    nil;;
+
+/**
  * Callback function to resume interpreter after MS
  * Restore the previous interpreter state
  */
-fun _forth_ms_cb f=
+fun _forth_ms_cb task f=
     forth_interpreter_resume f;
-    JobStop;;
+    TaskStop;;
 
 /**
  * MS ( delay -- )
@@ -168,7 +191,25 @@ fun _forth_ms_cb f=
  */
 fun forth_ms f=
     let forth_pop f -> delay in
-        // Add the job to the scheduler
+        // Add the task to the scheduler
         // The interpreter will be resumed after the delay
-        job_start_ex "forth" delay.int (fixarg1 #_forth_ms_cb f);
+        task_start_ex "forth" delay.int (fixarg2 #_forth_ms_cb f);
     nil;;
+
+/**
+ * UPDATE-TIME ( -- )
+ * Update the system time from the time server
+ */
+fun forth_update_time f=
+    nettime_get;
+    nil;;
+
+/**
+ * TIME-RECEIVED? ( -- flag )
+ * Check if the system time has been received from the time server
+ */
+fun forth_time_received f=
+    if time_configured then
+        forth_true f
+    else
+        forth_false f;;

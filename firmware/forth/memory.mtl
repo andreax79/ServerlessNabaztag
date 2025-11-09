@@ -7,9 +7,9 @@
 const FORTH_MEMORY_BLOCK_SIZE = 30;;
 
 type MemoryBlock = [
-    memory_block_size   // size of the memory block in words
-    memory_bitmap       // bitmap of used/free words
-    memory_words        // table (array) of words
+    memory_block_size   // size of the memory block
+    memory_bitmap       // bitmap of used/free cells
+    memory_cells        // table (array) of cells
 ];;
 
 /**
@@ -35,16 +35,16 @@ fun _forth_memory_add_block l a=
  * Returns the new memory block.
  */
 fun forth_memory_add_block=
-    let [memory_block_size:FORTH_MEMORY_BLOCK_SIZE memory_bitmap:0 memory_words:tabnew nil FORTH_MEMORY_BLOCK_SIZE] -> block in (
+    let [memory_block_size:FORTH_MEMORY_BLOCK_SIZE memory_bitmap:0 memory_cells:tabnew nil FORTH_MEMORY_BLOCK_SIZE] -> block in (
         set forth_memory = _forth_memory_add_block forth_memory block;
         block
     );;
 
 /**
- * Allocate a word from the memory manager.
- * Returns the address (index) of the allocated word.
+ * Allocate a cell from the memory manager.
+ * Returns the address (index) of the allocated cell.
  */
-fun forth_memory_alloc_word=
+fun forth_memory_alloc_cell=
     let 0 -> addr in
     let 0 -> found in
     let nil -> block in (
@@ -63,26 +63,26 @@ fun forth_memory_alloc_word=
         // if no block found, add a new block
         if !found then (
             let forth_memory_add_block -> block in
-                // allocate first word in new block
+                // allocate first cell in new block
                 set block.memory_bitmap = block.memory_bitmap | (1<<0)
         );
         addr
     );;
 
 /**
- * Free a word in the memory manager at the given address.
- * addr: address (index) of the word to free
+ * Free a cell in the memory manager at the given address.
+ * addr: address (index) of the cell to free
  */
-fun forth_memory_free_word addr=
-    let nil -> word in
+fun forth_memory_free_cell addr=
+    let nil -> cell in
     let nil -> block in (
-        for p=forth_memory; (p!=nil) && (word==nil); tl p do (
+        for p=forth_memory; (p!=nil) && (cell==nil); tl p do (
             let hd p -> block in
             if addr < block.memory_block_size then
             (
-                // free the word at addr
+                // free the cell at addr
                 set block.memory_bitmap = block.memory_bitmap & ~(1<<addr);
-                set word = block.memory_words.(addr);
+                set cell = block.memory_cells.(addr);
                 nil
             )
             else
@@ -90,21 +90,21 @@ fun forth_memory_free_word addr=
                 set addr = addr - block.memory_block_size
             )
         );
-        word
+        cell
     );;
 
 /**
- * Get a word from the memory manager at the given address.
- * addr: address (index) of the word to get
+ * Get a cell from the memory manager at the given address.
+ * addr: address (index) of the cell to get
  */
-fun forth_memory_get_word addr=
-    let nil -> word in
+fun forth_memory_get_cell addr=
+    let nil -> cell in
     let nil -> block in (
-        for p=forth_memory; (p!=nil) && (word==nil); tl p do (
+        for p=forth_memory; (p!=nil) && (cell==nil); tl p do (
             let hd p -> block in
             if addr < block.memory_block_size then
             (
-                set word = block.memory_words.(addr);
+                set cell = block.memory_cells.(addr);
                 nil
             )
             else
@@ -112,21 +112,21 @@ fun forth_memory_get_word addr=
                 set addr = addr - block.memory_block_size
             )
         );
-        word
+        cell
     );;
 
 /**
- * Set a word in the memory manager at the given address.
- * addr: address (index) of the word to set
- * value: word to set
+ * Set a cell in the memory manager at the given address.
+ * addr: address (index) of the cell to set
+ * value: cell to set
  */
-fun forth_memory_set_word addr value=
+fun forth_memory_set_cell addr value=
     let nil -> block in (
         for p=forth_memory; (p!=nil) && (block==nil); tl p do (
             let hd p -> block in
             if addr < block.memory_block_size then
             (
-                set block.memory_words.(addr) = value;
+                set block.memory_cells.(addr) = value;
                 nil
             )
             else
@@ -138,19 +138,19 @@ fun forth_memory_set_word addr value=
     );;
 
 /**
- * ALLOCATE-WORD ( -- addr )  Allocate a word from memory and return its address.
+ * ALLOCATE-CELL ( -- addr )  Allocate a cell from memory and return its address.
  */
-fun forth_allocate_word f=
-    let forth_memory_alloc_word -> addr in
+fun forth_allocate_cell f=
+    let forth_memory_alloc_cell -> addr in
         forth_push f [int:addr];
     nil;;
 
 /**
- * FREE-WORD ( addr -- )  Free a word in memory at the given address.
+ * FREE-CELL ( addr -- )  Free a cell in memory at the given address.
  */
-fun forth_free_word f=
+fun forth_free_cell f=
     let forth_pop f -> addr in
-        forth_memory_free_word addr.int;
+        forth_memory_free_cell addr.int;
     nil;;
 
 /**
@@ -158,7 +158,7 @@ fun forth_free_word f=
  */
 fun forth_fetch f=
     let forth_pop f -> addr in
-    let forth_memory_get_word addr.int -> word in
+    let forth_memory_get_cell addr.int -> word in
         forth_push f word;
     nil;;
 
@@ -168,7 +168,7 @@ fun forth_fetch f=
 fun forth_store f=
     let forth_pop f -> addr in
     let forth_pop f -> value in
-        forth_memory_set_word addr.int value;
+        forth_memory_set_cell addr.int value;
     nil;;
 
 /**
@@ -181,15 +181,15 @@ fun forth_variable f=
         let hd f.istack -> inter in (
             // Get the new word name
             forth_interpreter_get_token f;
-            let forth_get_word inter.token -> new_word in (
-                if new_word != nil then (
+            let forth_get_word inter.token -> new_cell in (
+                if new_cell != nil then (
                     nil // Variable already defined
                 ) else (
-                    let forth_memory_alloc_word -> addr in
+                    let forth_memory_alloc_cell -> addr in
                     let [str:to_lower inter.token] -> key in (
-                        set new_word = [code:tabnew nil 1];
-                        set new_word.code.(0) = [int:addr];
-                        word_dict_set_w forth_dictionary key new_word
+                        set new_cell = [code:tabnew nil 1];
+                        set new_cell.code.(0) = [int:addr];
+                        word_dict_set_w forth_dictionary key new_cell
                     )
                 )
             )
@@ -201,14 +201,14 @@ fun forth_variable f=
 /*
 fun xxx=
     for i=0; (i<2*FORTH_MEMORY_BLOCK_SIZE); i+1 do
-        forth_memory_alloc_word;
-    forth_memory_set_word 0 [int:42];
-    forth_memory_set_word 31 [str:"hello"];
-    let forth_memory_alloc_word -> addr in (
-        forth_memory_set_word addr [int:1234];
-        let forth_memory_get_word addr -> word in Iecholn word.int
+        forth_memory_alloc_cell;
+    forth_memory_set_cell 0 [int:42];
+    forth_memory_set_cell 31 [str:"hello"];
+    let forth_memory_alloc_cell -> addr in (
+        forth_memory_set_cell addr [int:1234];
+        let forth_memory_get_cell addr -> word in Iecholn word.int
     );
-    let forth_memory_get_word 0 -> word in Iecholn word.int;
-    let forth_memory_get_word 31 -> word in Secholn word.str;
+    let forth_memory_get_cell 0 -> word in Iecholn word.int;
+    let forth_memory_get_cell 31 -> word in Secholn word.str;
     nil;;
 */

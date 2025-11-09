@@ -77,3 +77,4 @@ fun net_json=
 #include net/http.mtl
 #include net/sock.mtl
 #include net/wifi.mtl
+#include net/nettime.mtl

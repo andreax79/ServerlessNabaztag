@@ -23,6 +23,7 @@
 
 #define TCPMAX 128 // nombre max de sockets tcp pouvant être ouvertes en même temps
 #define UDPMAX 128 // nombre max de sockets udp pouvant être ouvertes en même temps
+#define TCP_SERVER_PORT_BASE 8000
 
 int http_server_idx = -1;
 
@@ -442,6 +443,9 @@ int tcpservercreate(int port)
 	int socksrv;
 	int i=tcpgetfree();
 	if (i<0) return i;
+
+    if ((getuid != 0) && (port < 1024))
+        port += TCP_SERVER_PORT_BASE;
 
 	socksrv=socket(AF_INET,SOCK_STREAM,0);
 	if (socksrv==-1)

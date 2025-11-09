@@ -1,4 +1,4 @@
-proto interactive_ear_process_touched_job 0;;
+proto interactive_ears_task 1;;
 proto interactive_error 0;;
 proto interactive_eval_IC_msg 1;;
 proto interactive_init 0;;

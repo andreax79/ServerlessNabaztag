@@ -1,2 +1,6 @@
 proto audiolib_start_http 2;;
 proto audiolib_update_vol 0;;
+
+var audiolib_wav_buffering=0;;
+var audiolib_volume;;
+var audiolib_wav_cur_played_bytes=0;;

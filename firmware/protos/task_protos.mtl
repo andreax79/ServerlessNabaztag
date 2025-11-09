@@ -1,0 +1,20 @@
+type TaskStatus = TaskRun | TaskWait _ | TaskSuspend | TaskStop;;
+
+type Task=[
+    task_id          // job identifier
+    task_name        // name
+    task_f           // function
+    task_status      // status (TaskStatus)
+    task_period_ms   // how often to run
+    task_last_run_ms // system time (in ms) when it last ran
+    task_next_run_ms // system time (in ms) when it should next run
+];;
+
+proto task_format_json 1;;
+proto task_get 1;;
+proto task_json 0;;
+proto task_resume 1;;
+proto task_scheduler 0;;
+proto task_start 2;;
+proto task_status_fmt 1;;
+proto task_suspend 1;;

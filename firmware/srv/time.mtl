@@ -1,23 +1,17 @@
 #include utils/timezones.mtl
 #include protos/json_protos.mtl
-#include protos/jobs_protos.mtl
-#include protos/crontab_protos.mtl
+#include protos/task_protos.mtl
 
 //--------------------------------------------------------------------------------------------------
 // Time functions
 //--------------------------------------------------------------------------------------------------
 
-const TIME_DELAY = 1000;; // Time update job delay (in ms)
+const TIME_DELAY = 1000;; // Time update task delay (in ms)
 const TIME_RFC868_DELAY = 24 * 60 * 60 * 1000;; // Delay between time server requests (in ms)
 const TIME_PROTOCOL_PORT = 37 ;;
 const TIME_PROTOCOL_EPHEMERAL_PORT = 49152 ;;
 const WEEKDAYS = {"Sun" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat"} ;;
 const MONTHS = {"Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"} ;;
-
-var time_server_ip = "\128\138\140\44" ;;
-
-var _time_rfc868_low = nil ;;  // low part of the last value read from the time server
-var _time_rfc868_high = nil ;; // high part of the last value read from the time
 
 var time_local = [0 0 0 0 0 0 0] ;; // [year, month, day, hour, minute, second, days_since_epoc]
 var time_utc = [0 0 0 0 0 0 0] ;; // [year, month, day, hour, minute, second, days_since_epoc]
@@ -36,13 +30,16 @@ fun time_offset=
     _time_dst_offset + get_offset_from_city_code config_get_city_code;;
 
 
+fun time_configured=
+    time_high !=0 || time_low != 0;;
+
 /**
  * Calculate the year, month, day, hours, minutes, seconds
  * offset: offset is in minutes
  */
 fun _time_calculate_parts offset=
-    let _time_rfc868_high -> h in
-    let _time_rfc868_low -> l in
+    let time_high -> h in
+    let time_low -> l in
     let offset * 60 + time -> offset in
     let if (l + offset) > 65536 then h + ((l + offset) >> 16) else h -> h in
     let (l + offset) % 65536 -> l in
@@ -76,10 +73,10 @@ fun _time_calculate=
 /**
  * Update the time, day, local time
  */
-fun time_update_job=
+fun time_update_task task=
     // Update time of the day
     _time_calculate;
-    JobRun;;
+    TaskRun;;
 
 
 /**
@@ -124,47 +121,14 @@ fun time_json=
             (json_int "dst" config_get_dst) :: ",\n" ::
             (json_int "offset" time_offset) :: ",\n" ::
             (json_str "city_code" config_get_city_code) :: ",\n" ::
-            (json_str "time_server_ip" ip_to_str time_server_ip) :: "\n" ::
         "}" :: nil
 ;;
 
-//--------------------------------------------------------------------------------------------------
-// Time Protocol (RFC 868) client
-//--------------------------------------------------------------------------------------------------
-
 /**
- * Time protocol client - callback function
- */
-fun _time_rfc868_cb msg mac ipfrom=
-    unregudp TIME_PROTOCOL_EPHEMERAL_PORT;
-    let time -> now in (
-        set _time_rfc868_high = (strgetword msg 0) - (now >> 16);
-        set _time_rfc868_low = (strgetword msg 2) - (now % 65536);
-        _time_calculate
-    );
-    0;;
-
-/**
- * Check if time has been received from the time server
- */
-fun time_rfc868_received=
-    _time_rfc868_low !=nil;;
-
-/**
- * Get the current time from the time server
- */
-fun get_time_from_timeserver=
-    udp_send netip TIME_PROTOCOL_EPHEMERAL_PORT time_server_ip TIME_PROTOCOL_PORT "" nil;
-    regudp TIME_PROTOCOL_EPHEMERAL_PORT #_time_rfc868_cb;
-    JobRun;;
-
-/**
- * Initialize the time job
+ * Initialize the time task
  */
 fun time_init=
     // Seed the random number generator
     srand time_ms;
-    // Start the time update job
-    job_start_ex "time_update" TIME_DELAY #time_update_job;
-    // Start the RFC 868 time client job
-    job_start_ex "rfc868_client" TIME_RFC868_DELAY #get_time_from_timeserver;;
+    // Start the time update task
+    task_start_ex "time_update" TIME_DELAY #time_update_task;;

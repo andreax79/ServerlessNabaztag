@@ -1,0 +1,6 @@
+
+var time_low = nil ;;  // low part of the last value read from the time server
+var time_high = nil ;; // high part of the last value read from the time
+
+proto nettime_get 0;;
+proto time_configured 0;;

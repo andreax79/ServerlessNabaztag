@@ -9,6 +9,9 @@
  */
 fun forth_write f s=
     if f.forth_sock != nil then (
+#ifdef SIMU
+        Secho s;
+#endif
         // send to socket
         sock_send f.forth_sock s;
         nil

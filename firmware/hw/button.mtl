@@ -1,5 +1,5 @@
 #include protos/button_protos.mtl
-#include protos/jobs_protos.mtl
+#include protos/task_protos.mtl
 
 var _button_last;;
 var _button_time;;
@@ -7,10 +7,10 @@ var _button_event;;
 var _button_clic;;
 
 /**
- * Button job
- * This job checks the button state and generates events
+ * Button task
+ * This task checks the button state and generates events
  */
-fun button_job=
+fun button_task task=
     let button2 -> b in
     if b!=_button_last then
     (
@@ -43,7 +43,7 @@ fun button_job=
             set _button_time=nil
         )
     );
-    JobRun;;
+    TaskRun;;
 
 /**
  * Get the last button event
@@ -56,7 +56,7 @@ fun button_get_event=
     );;
 
 /**
- * Initialize the button job
+ * Initialize the button task
  */
 fun button_init=
-    job_start "button" #button_job;;
+    task_start "button" #button_task;;

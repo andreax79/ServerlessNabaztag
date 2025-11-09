@@ -4,14 +4,11 @@
  * This code is licensed under the MIT License
  */
 
-#include protos/jobs_protos.mtl
+#include protos/task_protos.mtl
 
-fun _forth_job text=
-    Secholn "!!!Forth job!!!";
-    Secholn text;
-    forth_interpreter text;
-    Secholn "done";
-    JobRun;;
+fun _forth_task task text=
+    forth_interpreter_ex text nil nil task nil; // TODO cb ?
+    TaskRun;;
 
 /**
  * START-TASK ( text delay name -- )
@@ -21,5 +18,64 @@ fun forth_task_start f=
     let forth_pop f -> name in
     let forth_pop f -> delay in
     let forth_pop f -> text in
-    job_start_ex name.str delay.int (fixarg1 #_forth_job text.str);
+    task_start_ex name.str delay.int (fixarg2 #_forth_task text.str);
+    nil;;
+
+/**
+ * STOP-TASK ( task-id -- flag )
+ * Stop the task with the given task id.
+ */
+fun forth_task_stop f=
+    let forth_pop f -> task_id in
+    if (task_stop task_id.int) != nil then
+        forth_true f
+    else
+        forth_false f;;
+
+/**
+ * SUSPEND-TASK ( task-id -- flag )
+ * Suspend the task with the given task id.
+ */
+fun forth_task_suspend f=
+    let forth_pop f -> task_id in
+    if (task_suspend task_id.int) != nil then
+        forth_true f
+    else
+        forth_false f;;
+
+/**
+ * RESUME-TASK ( task-id -- flag )
+ * Resume the task with the given task id.
+ */
+fun forth_task_resume f=
+    let forth_pop f -> task_id in
+    if (task_resume task_id.int) != nil then
+        forth_true f
+    else
+        forth_false f;;
+
+/**
+ * Helper function to print tasks
+ */
+fun _forth_print_tasks f tasks=
+    if tasks==nil then nil
+    else let hd tasks -> task in (
+        forth_write f strcatlist
+            (str_pad_right (itoa task.task_id) 5 " ") :: " " ::
+            (str_pad_left (task_status_fmt task) 8 " ") ::
+            (str_pad_left task.task_name 21 " " ) ::
+            (str_pad_right (itoa task.task_last_run_ms) 11 " ") ::
+            (if task.task_period_ms != nil then
+                (strcat "/" itoa task.task_period_ms) else "") ::
+            "\n" :: nil;
+        _forth_print_tasks f tl tasks
+    );;
+
+/**
+ * .TASKS ( -- )
+ * List the words in the dictionary
+ */
+fun forth_dot_tasks f=
+    _forth_print_tasks f _tasks;
+    forth_write f " \n";
     nil;;
