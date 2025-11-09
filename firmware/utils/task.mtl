@@ -1,0 +1,163 @@
+#include protos/task_protos.mtl
+
+//--------------------------------------------------------------------------------------------------
+// Tasks
+//--------------------------------------------------------------------------------------------------
+
+var _tasks = nil;; // list of Task
+var _task_next_id = 1;; // next task ID
+
+fun task_status_fmt task=
+    match task.task_status with
+        (TaskRun -> "run") |
+        (TaskWait _ -> "wait") |
+        (TaskSuspend -> "suspend") |
+        (TaskStop -> "stop") |
+        (_ -> nil)
+    ;;
+
+/**
+ * Add a task at the end of tasks list
+ */
+fun _task_add e l=
+    if l==nil then
+        e::nil
+    else
+        (hd l)::_task_add e tl l
+    ;;
+
+/**
+ * Execute a task
+ * task: task to execute
+ */
+fun _task_execute task=
+    let time_ms -> now in
+        if task.task_period_ms != nil then
+        (
+            // Initialize next run time
+            if task.task_next_run_ms == nil then
+                set task.task_next_run_ms = now + task.task_period_ms;
+            // Check if it's time to run the task
+            if (task.task_next_run_ms - now) <= 0 then (
+                set task.task_last_run_ms = now;
+                set task.task_next_run_ms = now + task.task_period_ms;
+                call task.task_f [task]
+            ) else
+                task.task_status
+        )
+        else
+        (
+            set task.task_last_run_ms = now;
+            call task.task_f [task]
+        );;
+
+/**
+ * Initialize a task
+ * name: task name
+ * period_ms: how often to run (in milliseconds) (nil = execute every time task_loop is called)
+ * f: function to call
+ */
+fun task_start_ex name period_ms f=
+    let [task_id:_task_next_id task_name:name task_f:f task_status:TaskRun task_period_ms:period_ms] -> task in (
+        set _task_next_id = _task_next_id + 1;
+        set _tasks = _task_add task _tasks
+    )
+    ;;
+
+fun task_start name f=
+    task_start_ex name nil f;;
+
+/**
+ * Get a task by name
+ * name: task name
+ */
+fun task_get name=
+    let nil -> result in (
+        for l=_tasks;l!=nil; tl l do
+            let hd l -> task in
+                if !strcmp name task.task_name then
+                    set result = task;
+        result
+    );;
+
+fun _task_set_status id status=
+    let nil -> found in (
+        for l=_tasks;(l!=nil)&&(found==nil); tl l do
+            let hd l -> task in
+                if task.task_id == id then (
+                    set task.task_status = status;
+                    set found = task
+                );
+        found
+    );;
+
+
+/**
+ * Temporarily stop execution of a task
+ * name: task id
+ */
+fun task_suspend id=
+    _task_set_status id TaskSuspend;;
+
+/**
+ * Resume execution of a suspended task
+ * name: task id
+ */
+fun task_resume id=
+    _task_set_status id TaskRun;;
+
+/**
+ * Stop a task
+ * name: task id
+ */
+fun task_stop id=
+    _task_set_status id TaskStop;;
+
+/**
+ * Tasks loop
+ */
+fun task_scheduler=
+    for l=_tasks;l!=nil; tl l do
+        let hd l -> task in (
+            set task.task_status = match task.task_status with
+                (TaskRun -> _task_execute task) | // Execute running tasks
+                (TaskWait period_ms -> // Set the period
+                    set task.task_period_ms = period_ms;
+                    set task.task_next_run_ms = time_ms + task.task_period_ms;
+                    TaskRun
+                ) |
+                (TaskSuspend -> TaskSuspend) | // Keep suspended tasks suspended
+                (_ -> set _tasks = remfromlist _tasks task; TaskStop) // Remove stopped tasks
+            );
+    0;;
+
+/**
+ * Format a task in JSON format
+ * task: task to format
+ */
+fun task_format_json task=
+    strcatlist
+        "{ "::
+            (json_int "id" task.task_id) :: ", " ::
+            (json_str "name" task.task_name) :: ", " ::
+            (json_str "status" task_status_fmt task) :: ", " ::
+            (json_int "last_run" task.task_last_run_ms) ::
+            (
+                if task.task_period_ms != nil then
+                    (strcat ", " json_int "period_ms" task.task_period_ms)
+            ) ::
+        " }" :: nil;;
+
+/**
+ * Return the tasks list in JSON format
+ */
+fun task_json=
+    let "[\n" -> result in
+    let listlen _tasks -> n in (
+        for l=_tasks;l!=nil; tl l do
+            let hd l -> task in
+            let if nil!=tl l then ",\n" else "\n" -> sep in
+            set result = strcatlist result::(task_format_json task)::sep::nil;
+        set result = strcat result "]";
+        result
+    );;

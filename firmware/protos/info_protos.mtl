@@ -1,7 +1,8 @@
+proto info_json 0;;
+proto info_run 0;;
 proto info_src_update 2;;
 proto info_update 1;;
 proto info_update_v2 1;;
-proto info_json 0;;
 
 // nombre de messages utilisateur en attente (0, 1, 2 et +)
 var info_messages = 0;;

@@ -121,11 +121,11 @@ fun _telnet_forth_interpreter_cb f sock=
  * This is called by the TCP stack whenever a new client connects.
  * cnx: TCP connection
  */
-fun telnet_server_cb cnx _ _=
+fun telnet_server_cb cnx _ _ text=
     let [sockCnx:cnx sockCallback:nil] -> sock in
     let [stack:nil rstack:nil pc:0 forth_sock:sock] -> f in (
         tcp_set_cb cnx fixarg4 #_telnet_sock_event f;
-        forth_interpreter_ex "interpreter" f sock (fixarg2 #_telnet_forth_interpreter_cb sock)
+        forth_interpreter_ex text f sock nil (fixarg2 #_telnet_forth_interpreter_cb sock)
     );
     0;;
 
@@ -133,6 +133,6 @@ fun telnet_server_cb cnx _ _=
  * Start the Telnet server on the specified port.
  * port: TCP port number to listen on
  */
-fun telnet_server_start_srv port =
-    tcp_listen port #telnet_server_cb;
+fun telnet_server_start_srv port=
+    tcp_listen port fixarg4 #telnet_server_cb "interpreter";
     0;;

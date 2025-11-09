@@ -1,4 +1,4 @@
-#include protos/jobs_protos.mtl
+#include protos/task_protos.mtl
 
 // -------------------------------------------------------------------------------------------------
 // ICMP
@@ -63,16 +63,16 @@ fun icmp_handler src mac=
 		0
 	);;
 
-fun icmp_ping_job=
+fun icmp_ping_task task=
     let netgateway -> ipdst in
     let "\0\1\0\1" -> quench in
     let "abcd" -> content in
     let _icmp_create_pkg netip ipdst ICMP_ECHO quench content -> response in
         netSend response 0 nil netMac 0 1;
-    JobRun;;
+    TaskRun;;
 
 /**
  * Initialize periodic sending of ICMP ping
  */
 fun icmp_ping_init=
-    job_start_ex "icmp_ping" ICMP_PING_DELAY #icmp_ping_job;;
+    task_start_ex "icmp_ping" ICMP_PING_DELAY #icmp_ping_task;;

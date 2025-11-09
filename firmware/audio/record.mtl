@@ -60,7 +60,7 @@ fun _record_cb_http http res=
     run_set_state idleRun;
     0;;
 
-fun record_upload_timeout_job=
+fun record_upload_timeout_task task=
     if record_is_uploading then
     (
         if _record_play_end!=nil && ((_record_play_end-time_ms)<0) then
@@ -97,7 +97,7 @@ fun record_upload_timeout_job=
             )
         )
     );
-    JobRun;;
+    TaskRun;;
 
 
 fun record_run=
@@ -127,7 +127,7 @@ fun _record_interactive_send_upload =
     0;;
 
 /**
- * Initialize the record job
+ * Initialize the record task
  */
 fun record_init=
-    job_start "record_upload_timeout" #record_upload_timeout_job;;
+    task_start "record_upload_timeout" #record_upload_timeout_task;;

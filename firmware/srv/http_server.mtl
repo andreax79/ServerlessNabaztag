@@ -2,7 +2,7 @@
 #include protos/audiolib_protos.mtl
 #include protos/streaming_protos.mtl
 #include protos/chor_protos.mtl
-#include protos/jobs_protos.mtl
+#include protos/task_protos.mtl
 #include protos/midi_protos.mtl
 #include protos/forth_protos.mtl
 #include protos/json_protos.mtl
@@ -106,13 +106,13 @@ fun http_sock_read input sock=
         );
         // Check if the total received data length now equals or exceeds the expected size
         if sock.sockSize!=nil && (slistlen sock.sockInput)>=sock.sockSize then
-        let strcatlist rev sock.sockInput nil -> str in
-        (
-            // Clear the input buffer
-            set sock.sockInput=nil;
-            // Call the callback function with the full request
-            call sock.sockCallback [str sock]
-        )
+            let strcatlist rev sock.sockInput nil -> str in
+            (
+                // Clear the input buffer
+                set sock.sockInput=nil;
+                // Call the callback function with the full request
+                call sock.sockCallback [str sock]
+            )
     );
     0;;
 
@@ -166,10 +166,10 @@ fun http_get_json_status sock args=
 ;;
 
 /**
- * Retrieve the jobs list as a JSON object.
+ * Retrieve the tasks list as a JSON object.
  */
-fun http_get_json_jobs sock args =
-    http_send_content_and_close sock "application/json" job_json;;
+fun http_get_json_tasks sock args =
+    http_send_content_and_close sock "application/json" task_json;;
 
 /**
  * Retrieve the ARP table as a JSON object.
@@ -193,8 +193,8 @@ fun http_index=
 
 //--------------------------------------------------------------------------------------------------
 
-proto stopEverythingAndResetToIdle 0;;
-proto get_time_from_timeserver 0;;
+proto run_reset_to_idle 0;;
+proto get_time_from_timeserver;;
 proto surprise 0;;
 
 //--------------------------------------------------------------------------------------------------
@@ -278,7 +278,7 @@ fun http_get_update_weather sock args=
  * Stop everything we can be doing and resets to either idle or asleep
  */
 fun http_get_stop sock args=
-    stopEverythingAndResetToIdle;
+    run_reset_to_idle;
     http_send_header_and_close HTTP_204 nil sock;;
 
 /**
@@ -431,7 +431,7 @@ fun _forth_http_cb f sock=
  */
 fun forth_http_post_req sock args=
     let _http_arg_str args 'c' -> code in
-    forth_interpreter_ex code nil nil (fixarg2 #_forth_http_cb sock);;
+    forth_interpreter_ex code nil nil nil (fixarg2 #_forth_http_cb sock);;
 
 fun http_get_index sock args=
     sock_send sock (http_header HTTP_200 "text/html" (strlen http_index)); // header
@@ -473,8 +473,8 @@ fun http_process_request req sock=
         else if !strcmp path "/reboot" then http_get_reboot sock args // reboot
         else if !strcmp path "/surprise" then http_get_surprise sock args // surprise
         else if !strcmp path "/status" then http_get_json_status sock args // status
-        else if !strcmp path "/jobs" then http_get_json_jobs sock args // jobs
-        else if !strcmp path "/arp" then http_get_json_arp_table sock args // jobs
+        else if !strcmp path "/tasks" then http_get_json_tasks sock args // tasks
+        else if !strcmp path "/arp" then http_get_json_arp_table sock args // arp table
         else if !strcmp path "/timezones" then http_get_timezones sock args // timezones
         else if !strcmp path "/communication" then http_get_play_midi MIDI_COMMUNION sock args // play communication sound
         else if !strcmp path "/ack" then http_get_play_midi MIDI_ACK sock args // play ack sound

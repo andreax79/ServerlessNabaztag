@@ -1,6 +1,8 @@
 #include protos/interactive_protos.mtl
 #include protos/leds_protos.mtl
 #include protos/ears_protos.mtl
+#include protos/run_protos.mtl
+#include protos/task_protos.mtl
 #include protos/json_protos.mtl
 
 /*
@@ -123,17 +125,6 @@ fun ears_start_reset=
         0
 	);;
 
-/**
- * Creates the tab to handle the ears. No action should be made
- * concerning the ears before having called this function.
- */
-fun ears_init=
-	set ears=tabnew nil 2;
-	for i=0;i<2 do set ears.i=[numE:i];
-	set _ears_initialized = 1;
-	set ears_mode = -1;
-	ears_start_reset
-	;;
 
 fun ears_start_detect=
 #ifdef EARS_DEBUG
@@ -300,15 +291,6 @@ fun _ears_wait_run=
 		)
 	);;
 
-// boucle pour faire tourner les oreilles vers leur targetobjectif
-fun ears_run=
-	if (_ears_initialized) then (
-		if ears_mode==EARSMODE_RESET then _ears_reset_run
-		else if ears_mode==EARSMODE_DETECT then _ears_detect_run
-		else _ears_wait_run
-	);
-	0;;
-
 fun ears_resetting=
     ears_mode==EARSMODE_RESET;;
 
@@ -419,3 +401,52 @@ fun ears_json=
             (json_int "ear_detecting" ears_detecting) :: "\n" ::
         "}" :: nil;;
 
+// boucle pour faire tourner les oreilles vers leur targetobjectif
+fun ears_run=
+	if (_ears_initialized) then (
+		if ears_mode==EARSMODE_RESET then _ears_reset_run
+		else if ears_mode==EARSMODE_DETECT then _ears_detect_run
+		else _ears_wait_run
+	);
+	0;;
+
+/**
+ * Ears task
+ */
+fun ears_task task=
+    match run_get_state with
+    ( configstartRun -> ears_run )|
+    ( configwaitRun _ -> ears_run )|
+#ifdef PING
+    ( pingstartRun -> ears_run )|
+    ( pingwaitRun _ -> ears_run )|
+    ( stdWaitRun _ -> ears_run )|
+#endif
+#ifdef XMPP
+    ( xmppLoginRun -> if (ears_resetting && ears_is_initialized) then ears_run else ears_stop 1 )|
+    ( xmppReconnectRun params -> if (ears_resetting && ears_is_initialized) then ears_run else ears_stop 1)|
+#endif
+    ( idleRun -> ears_run )|
+    ( sleepRun -> ears_run )|
+    ( rscLoadNextRun -> ears_run )|
+    ( rscLoadWaitRun http-> ears_run )|
+    ( cmdEvalOne _-> ears_run )|
+    ( chorCmdRun _-> ears_run )|
+    ( streamCmdRun _-> ears_run )|
+    ( waitCmdRun _ -> ears_run )|
+    ( earResetWaitRun cb -> ears_run; if (!ears_resetting) then call cb []; ears_run )|
+    ( interactiveReqWaitRun http -> ears_run );
+    TaskRun;;
+
+/**
+ * Creates the tab to handle the ears. No action should be made
+ * concerning the ears before having called this function.
+ */
+fun ears_init=
+	set ears=tabnew nil 2;
+	for i=0;i<2 do set ears.i=[numE:i];
+	set _ears_initialized = 1;
+	set ears_mode = -1;
+	ears_start_reset;
+    // Start the ears task
+    task_start "ears" #ears_task;;

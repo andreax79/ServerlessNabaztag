@@ -1,7 +1,13 @@
 #include protos/sleep_protos.mtl
 #include protos/ears_protos.mtl
+#include protos/record_protos.mtl
+#include protos/run_protos.mtl
+#include protos/audiolib_protos.mtl
 #include protos/leds_protos.mtl
 
+var _leds_net_activity = 0;;
+
+// Get main loop state
 
 /**
  * Set all the leds to the color rgbCode
@@ -48,8 +54,38 @@ fun _leds_osc x=
 /**
  * Run bottom led animation
  */
-fun leds_bottom_animation_run=
+fun leds_bottom_animation=
     if !sleep_is_sleeping && !ears_detecting then
         let _leds_osc time_ms>>4 -> v in
             led LED_BASE v*leds_bottom_base_color; // pulse green - was violet 0x10001
     0;;
+
+/**
+ * Check if there is network activity
+ */
+fun _leds_netactivity=
+    record_is_uploading ||
+    match run_get_state with
+        (rscLoadWaitRun _-> 1)|
+        (interactiveReqWaitRun _->1)|
+        (_->0);;
+
+/**
+ * Run nose led animation
+ */
+fun leds_nose_animation=
+    if !ears_detecting then
+    // led tete clignote if netactivity or audiolib_wav_buffering //
+    if (_leds_netactivity) then (
+        led LED_NOSE (if time_ms&256 then RGB_BLUE else RGB_BLACK);
+        set _leds_net_activity = 1
+    ) else if (audiolib_wav_buffering) then (
+        led LED_NOSE (if time_ms&128 then RGB_VIOLET else RGB_BLACK);
+        set _leds_net_activity = 1
+    ) else if (_leds_net_activity) then (
+        // show off the light
+        led LED_NOSE RGB_BLACK;
+        set _leds_net_activity = 0
+    );
+    0;;
+

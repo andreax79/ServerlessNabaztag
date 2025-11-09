@@ -47,12 +47,25 @@ fun forth_mac f=
 fun forth_ip f=
     forth_push f [str:ip_to_str netip];;
 
+
+/**
+ * TCP-LISTEN ( text port name -- )
+ * Start a TCP server listening on the given port with the given name
+ */
+fun forth_tcp_listen f=
+    let forth_pop f -> name in // unused
+    let forth_pop f -> port in
+    let forth_pop f -> text in
+    tcp_listen port.int fixarg4 #telnet_server_cb text.str;
+    nil;;
+
+
 /**
  * Handle HTTP callback for loading Forth code from URL.
  */
 fun _forth_load_cb http res cb=
     if res != nil then
-        forth_interpreter_ex (http_get_content res) nil nil cb;;
+        forth_interpreter_ex (http_get_content res) nil nil nil cb;;
 
 /**
  * Load and execute a Forth code from a URL.

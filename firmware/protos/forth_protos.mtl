@@ -23,6 +23,7 @@ type Forth=[
     state               // normal (0) or compilation state (-1)
     output              // list of collected output strings
     forth_sock          // socket
+    forth_task          // associated task
 ];;
 
 proto forth_compare_words 2;;
@@ -31,7 +32,7 @@ proto forth_get_word 1;;
 proto forth_init 0;;
 proto forth_init_dictionary 0;;
 proto forth_interpreter 1;;
-proto forth_interpreter_ex 4;;
+proto forth_interpreter_ex 5;;
 proto forth_interpreter_get_token 1;;
 proto forth_interpreter_loop 1;;
 proto forth_interpreter_resume 1;;

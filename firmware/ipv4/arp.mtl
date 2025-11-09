@@ -1,10 +1,10 @@
-#include protos/jobs_protos.mtl
+#include protos/task_protos.mtl
 #include protos/arp_protos.mtl
 
 const ARP_REQUEST = 1;;
 const ARP_REPLY = 2;;
 
-const ARP_TIME_DELAY = 1000;; // Delay between ARP periodic job (in ms)
+const ARP_TIME_DELAY = 1000;; // Delay between ARP periodic task (in ms)
 const GRATUITOUS_ARP_DELAY = 60 * 1000;; // Delay between gratuitous arp (in ms)
 
 var arp_table;; // list of [ip mac]
@@ -120,28 +120,28 @@ fun _arp_filter l dt=
     );;
 
 /**
- * Periodic ARP job
+ * ARP task
  */
-fun arp_job=
+fun arp_task task=
     set _arp_reqs=_arp_filter _arp_reqs 10;
-    JobRun;;
+    TaskRun;;
 
 /**
- * Periodic sending of gratuitous ARP job
+ * Periodic sending of gratuitous ARP
  */
-fun arp_periodic_send_gratuitous_arp_job=
+fun arp_periodic_send_gratuitous_arp_task task=
     arp_send_gratuitous;
-    JobRun;;
+    TaskRun;;
 
 /**
- * Initialize ARP job
+ * Initialize ARP task
  */
 fun arp_init=
 	arp_reset;
-    job_start_ex "arp" ARP_TIME_DELAY #arp_job;
+    task_start_ex "arp" ARP_TIME_DELAY #arp_task;
 #ifdef SERVERLESS
     // Initialize periodic sending of gratuitous ARP
-    job_start_ex "send_gratuitous_arp" GRATUITOUS_ARP_DELAY #arp_periodic_send_gratuitous_arp_job;
+    task_start_ex "send_gratuitous_arp" GRATUITOUS_ARP_DELAY #arp_periodic_send_gratuitous_arp_task;
 #endif
     0;;
 

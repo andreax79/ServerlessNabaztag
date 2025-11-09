@@ -1,13 +1,12 @@
 #include utils/timezones.mtl
 #include protos/json_protos.mtl
-#include protos/jobs_protos.mtl
-#include protos/crontab_protos.mtl
+#include protos/task_protos.mtl
 
 //--------------------------------------------------------------------------------------------------
 // Time functions
 //--------------------------------------------------------------------------------------------------
 
-const TIME_DELAY = 1000;; // Time update job delay (in ms)
+const TIME_DELAY = 1000;; // Time update task delay (in ms)
 const TIME_RFC868_DELAY = 24 * 60 * 60 * 1000;; // Delay between time server requests (in ms)
 const TIME_PROTOCOL_PORT = 37 ;;
 const TIME_PROTOCOL_EPHEMERAL_PORT = 49152 ;;
@@ -76,10 +75,10 @@ fun _time_calculate=
 /**
  * Update the time, day, local time
  */
-fun time_update_job=
+fun time_update_task task=
     // Update time of the day
     _time_calculate;
-    JobRun;;
+    TaskRun;;
 
 
 /**
@@ -155,16 +154,22 @@ fun time_rfc868_received=
  */
 fun get_time_from_timeserver=
     udp_send netip TIME_PROTOCOL_EPHEMERAL_PORT time_server_ip TIME_PROTOCOL_PORT "" nil;
-    regudp TIME_PROTOCOL_EPHEMERAL_PORT #_time_rfc868_cb;
-    JobRun;;
+    regudp TIME_PROTOCOL_EPHEMERAL_PORT #_time_rfc868_cb;;
 
 /**
- * Initialize the time job
+ * RFC 868 time client task
+ */
+fun time_rfc868_client_task task=
+    get_time_from_timeserver;
+    TaskRun;;
+
+/**
+ * Initialize the time task
  */
 fun time_init=
     // Seed the random number generator
     srand time_ms;
-    // Start the time update job
-    job_start_ex "time_update" TIME_DELAY #time_update_job;
-    // Start the RFC 868 time client job
-    job_start_ex "rfc868_client" TIME_RFC868_DELAY #get_time_from_timeserver;;
+    // Start the time update task
+    task_start_ex "time_update" TIME_DELAY #time_update_task;
+    // Start the RFC 868 time client task
+    task_start_ex "rfc868_client" TIME_RFC868_DELAY #time_rfc868_client_task;;

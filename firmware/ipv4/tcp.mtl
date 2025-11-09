@@ -1,5 +1,5 @@
 #include protos/tcp_protos.mtl
-#include protos/jobs_protos.mtl
+#include protos/task_protos.mtl
 #include protos/arp_protos.mtl
 
 const TFIN=0x01;;
@@ -25,7 +25,7 @@ const TCPSTART=2;;
 
 const TCPMAX=1024;;
 
-const TCP_TIME_DELAY = 1000;; // Delay between TCP periodic job (in ms)
+const TCP_TIME_DELAY = 1000;; // Delay between TCP periodic task (in ms)
 
 #ifdef IPV4_DEBUG
 fun _tcp_debug str= Secholn strcatlist "[tcp] " :: str :: nil; nil;;
@@ -369,9 +369,9 @@ fun tcp_reset=
 	0;;
 
 /**
- * Periodic TCP job
+ * Periodic TCP task
  */
-fun tcp_job=
+fun tcp_task task=
 	for l=tcp_connections;l!=nil;tl l do let hd l-> t in
 	if (nil != t.lastsentT) then
 	(
@@ -391,11 +391,11 @@ fun tcp_job=
 		)
 		else set t.retryT=0
 	);
-    JobRun;;
+    TaskRun;;
 
 /**
- * Initialize the periodic TCP job
+ * Initialize the periodic TCP task
  */
 fun tcp_init=
     tcp_reset;
-    job_start_ex "tcp" TCP_TIME_DELAY #tcp_job;;
+    task_start_ex "tcp" TCP_TIME_DELAY #tcp_task;;

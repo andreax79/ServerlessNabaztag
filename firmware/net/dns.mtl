@@ -1,4 +1,4 @@
-#include protos/jobs_protos.mtl
+#include protos/task_protos.mtl
 #include protos/dns_protos.mtl
 
 /*
@@ -19,7 +19,7 @@ var SrvAnswerL = nil;;
 
 // port local pour le dns
 const DNSLOCAL=1597;;
-const DNS_TIME_DELAY = 1000;; // Delay between DNS periodic job (in ms)
+const DNS_TIME_DELAY = 1000;; // Delay between DNS periodic task (in ms)
 
 // debug
 #ifdef DNS_DEBUG
@@ -305,7 +305,7 @@ fun filterdnsdead l=if l!=nil then let hd l-> d in if d.timeoutD==nil then filte
  * request to the next dns server available or calls the callback with
  * a null answear.
  */
-fun dns_periodic_job=
+fun dns_periodic_task task=
 	for l=ldnsreq;l!=nil;tl l do let hd l-> d in
 	if time-d.timeoutD>=0 then
 	(
@@ -320,7 +320,7 @@ fun dns_periodic_job=
 			(call d.cbD [nil] ; 0)
 	);
 	set ldnsreq=filterdnsdead ldnsreq;
-    JobRun;;
+    TaskRun;;
 
 /**
  * DNS client initialization
@@ -333,8 +333,8 @@ fun dns_client_init=
 	regudp DNSLOCAL #cbnetdns;
 	set ldnsreq=nil;
 	set ldns=nil;
-    if nil == job_get "dns" then
-        job_start_ex "dns" DNS_TIME_DELAY #dns_periodic_job;
+    if nil == task_get "dns" then
+        task_start_ex "dns" DNS_TIME_DELAY #dns_periodic_task;
 	0;;
 
 /**

@@ -13,10 +13,6 @@ const WAV_BUFFER_MAXSIZE=400000;;
 const WAV_END_TIMEOUT=500;;
 const WAV_NET_TIMEOUT=15000;;
 
-var audiolib_wav_buffering=0;;
-var audiolib_volume;;
-var audiolib_wav_cur_played_bytes=0;;
-
 var _audiolib_wav_end_timeout;;
 var _audiolib_wav_http_cb=nil;;
 var _audiolib_wav_state=0;; // WAV_IDLE
@@ -218,14 +214,14 @@ fun audiolib_start_http url cb=
     set _audiolib_wav_lastnet=time_ms;
     set _audiolib_wav_http=http_request "GET" url nil #_wavcbhttp HTTP_STREAM;;
 
-fun audiolib_wav_time_job=
+fun audiolib_wav_time_task task=
     // Check timeout against _audiolib_wav_buffering_since
     if (_audiolib_wav_http!=nil && _audiolib_wav_state==WAV_RUN && audiolib_wav_buffering && (time_ms - _audiolib_wav_buffering_since > WAV_NET_TIMEOUT)) then (
         Audiowln "wavhttp timeout";
         audiolib_wav_stop;
         if (_audiolib_wav_http_cb != nil) then call _audiolib_wav_http_cb []
     );
-    JobRun;;
+    TaskRun;;
 
 /**
  * Update the volume according to button3
@@ -239,16 +235,16 @@ fun audiolib_update_vol=
     );;
 
 /**
- * Job to update the volume job
+ * Task to update the volume task
  */
-fun audiolib_update_vol_job=
+fun audiolib_update_vol_task task=
     audiolib_update_vol;
-    JobRun;;
+    TaskRun;;
 
 /**
- * Initialize the audiolib jobs
+ * Initialize the audiolib tasks
  */
 fun audiolib_init=
     audiolib_update_vol;
-    job_start "audiolib_wav_time" #audiolib_wav_time_job;
-    job_start "audiolib_update_vol" #audiolib_update_vol_job;;
+    task_start "audiolib_wav_time" #audiolib_wav_time_task;
+    task_start "audiolib_update_vol" #audiolib_update_vol_task;;

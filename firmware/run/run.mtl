@@ -24,9 +24,6 @@ const RUN_MSG_ASLEEP=0x7ffffffe;;
 // Main loop state
 var run;; // type Run
 
-var _run_net_activity = 0;;
-
-// Get main loop state
 fun run_get_state =
     run;;
 
@@ -68,7 +65,7 @@ fun run_set_state r =
 
 fun run_init =
     run_set_state configstartRun;
-    job_start "run" #run_job;;
+    task_start "run" #run_task;;
 
 fun _run_control_wait =
     let button_get_event -> ev in
@@ -112,7 +109,7 @@ fun _run_control_inter =
 /**
     Stop everything we can be doing and resets to either idle or asleep
  */
-fun stopEverythingAndResetToIdle =
+fun run_reset_to_idle =
     audiolib_wav_stop;
     streaming_stop;
     ears_start_reset;
@@ -167,23 +164,6 @@ fun _run_control_program_wait =
 ;;
 
 
-
-fun _run_nose_led=
-    if !ears_detecting then
-    // led tete clignote if netactivity or audiolib_wav_buffering //
-    let record_is_uploading || (match run with (rscLoadWaitRun _-> 1)|(interactiveReqWaitRun _->1)|(_->0)) -> netactivity in
-    if (netactivity) then (
-        led LED_NOSE (if time_ms&256 then RGB_BLUE else RGB_BLACK);
-        set _run_net_activity = 1
-    ) else if (audiolib_wav_buffering) then (
-        led LED_NOSE (if time_ms&128 then RGB_VIOLET else RGB_BLACK);
-        set _run_net_activity = 1
-    ) else if (_run_net_activity) then (
-        // show off the light
-        led LED_NOSE RGB_BLACK;
-        set _run_net_activity = 0
-    );
-    0;;
 
 fun _run_idle =
     // if trame waiting, execute it
@@ -279,53 +259,41 @@ fun _run_step_match=
     // Secholn _run_to_str run;
     match run with
     ( configstartRun ->
-        ears_run;
         _run_config_start )|
     ( configwaitRun http ->
-        ears_run;
         _run_config_wait http )|
 #ifdef PING
     ( pingstartRun ->
-        ears_run;
-        if ping_current_trame_id!=RUN_MSG_ASLEEP then leds_bottom_animation_run;
+        if ping_current_trame_id!=RUN_MSG_ASLEEP then leds_bottom_animation;
         ping_run_start )|
     ( pingwaitRun http ->
-        ears_run;
         if ping_current_trame_id!=RUN_MSG_ASLEEP then (
-            info_run;
-            leds_bottom_animation_run;
-            _run_nose_led
+            leds_bottom_animation;
+            leds_nose_animation
         );
         runpingwait http;
         if ping_current_trame_id!=RUN_MSG_ASLEEP then RUN_WAIT)|
     ( pingRequestWaitRun http->
-        leds_bottom_animation_run;
-        _run_nose_led;
+        leds_bottom_animation;
+        leds_nose_animation;
         runPingRequestWait http;
         RUN_NONE )|
     ( stdWaitRun t ->
-        ears_run;
         if ping_current_trame_id != RUN_MSG_ASLEEP then (
-            info_run;
-            leds_bottom_animation_run;
-            _run_nose_led
+            leds_bottom_animation;
+            leds_nose_animation
         );
         runStdWait t;
         RUN_WAIT )|
 #endif
 #ifdef XMPP
     ( xmppLoginRun ->
-        if (ears_resetting && ears_is_initialized) then ears_run else ears_stop 1;
         xmpp_run_login;
         RUN_WAIT )|
     ( xmppReconnectRun params ->
-        if (ears_resetting && ears_is_initialized) then ears_run else ears_stop 1;
-        if !sleep_is_sleeping then (
-            // Affichage des sources.
-            info_run;
+        if !sleep_is_sleeping then
             // On fige la base en violet
-            led LED_BASE RGB_VIOLET
-        );
+            led LED_BASE RGB_VIOLET;
         let params -> [waitTime xSession oldRun] in
             match xSession.sStatus with
                 (sOpened -> run_set_state oldRun; 0)|
@@ -334,66 +302,51 @@ fun _run_step_match=
         RUN_WAIT )|
 #endif
     ( idleRun ->
-        ears_run;
-        info_run;
-        leds_bottom_animation_run;
-        _run_nose_led;
+        leds_bottom_animation;
+        leds_nose_animation;
         _run_idle;
         RUN_WAIT ) |
     ( sleepRun ->
-        ears_run;
         _run_idle;
         RUN_NONE )|
     ( rscLoadNextRun ->
-        ears_run;
-        info_run;
-        leds_bottom_animation_run;
-        _run_nose_led;
+        leds_bottom_animation;
+        leds_nose_animation;
         streaming_run_rsc_load_next_cmd;
         RUN_WAIT ) |
     ( rscLoadWaitRun http->
-        ears_run;
-        info_run;
-        leds_bottom_animation_run;
-        _run_nose_led;
+        leds_bottom_animation;
+        leds_nose_animation;
         streaming_run_rsc_load_wait_cmd http;
         RUN_WAIT )|
     ( cmdEvalOne i->
-        ears_run;
         streaming_run_eval_one_cmd i;
         RUN_PLAY )|
     ( chorCmdRun i->
-        ears_run;
-        _run_nose_led;
+        leds_nose_animation;
         chor_run_cmd i;
         RUN_PLAY )|
     ( streamCmdRun i0->
-        ears_run;
-        _run_nose_led;
+        leds_nose_animation;
         streaming_run_cmd i0;
         RUN_PLAY )|
     ( waitCmdRun i ->
-        ears_run;
-        _run_nose_led;
+        leds_nose_animation;
         streaming_run_wait_cmd i;
         RUN_PROGRAM_WAIT )|
     ( earResetWaitRun cb ->
-        ears_run;
-        if (!ears_resetting) then call cb [];
         RUN_NONE) |
     ( recordRun ->
         record_run )|
     ( recordStartRun ->
         record_start_run )|
     ( interactiveReqWaitRun http ->
-        ears_run;
-        info_run;
-        leds_bottom_animation_run;
-        _run_nose_led;
-        runInteractiveReqWait http;
+        leds_bottom_animation;
+        leds_nose_animation;
+        interactive_request_wait http;
         RUN_WAIT );;
 
-fun run_job=
+fun run_task task=
     let _run_step_match -> keymanager in (
         if keymanager == RUN_WAIT then
             _run_control_wait
@@ -407,4 +360,4 @@ fun run_job=
         else
             button_get_event
     );
-    JobRun;;
+    TaskRun;;

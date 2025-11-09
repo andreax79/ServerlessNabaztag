@@ -1,6 +1,6 @@
 #include protos/trame_protos.mtl
 #include protos/dns_protos.mtl
-#include protos/jobs_protos.mtl
+#include protos/task_protos.mtl
 #include protos/streaming_protos.mtl
 #include protos/http_protos.mtl
 #include protos/xmpp_protos.mtl
@@ -1837,7 +1837,7 @@ fun sendPkts pktList state =
 ;;
 
 
-fun XmppSessionRun=
+fun XmppSessionRun task=
     if (XmppGlobalSession.sPacketQueue!=nil) then (
         let sendPkts rev XmppGlobalSession.sPacketQueue nil XmppGlobalSession.sState -> [ newList data2send] in
         (
@@ -1845,14 +1845,14 @@ fun XmppSessionRun=
             XmppGateSend XmppGlobalSession data2send
         )
     );
-    JobRun;;
+    TaskRun;;
 
 
 var lastIdle = 0;;
 var tmpi=0;; //DEBUG
 
 // Manage all Xmpp Session
-fun XmppSessionIdle=
+fun XmppSessionIdle task=
     let time_ms - lastIdle -> Checking in
     (
         if (Checking < 0 || Checking > 100) then // ON TEST TOUTES LES 100ms
@@ -1898,7 +1898,7 @@ fun XmppSessionIdle=
             )
         )
     );
-    JobRun;;
+    TaskRun;;
 
 fun XmppSessionUnreachable id =
 #ifdef XMPP_DEBUG
@@ -1914,7 +1914,7 @@ fun XmppSessionSetStatus xSession xStatus =
 
 
 // définie tout à la fin
-proto stopEverythingAndResetToIdle 0;;
+proto run_reset_to_idle 0;;
 
 // le nombre de secondes maximum qu'on peut attendre avant d'essayer de se reconnecter
 // au serveur xmpp si on a été déconnecté
@@ -1925,7 +1925,7 @@ fun XmppSessionIsDisconnected xSession=
     // on arrête tout ce qu'on est en train de faire, afin de ne pas
   // avoir un problème avec l'état du lapin : on gère mal de ne pas
     // être en idle à la reconnection...
-    stopEverythingAndResetToIdle;
+    run_reset_to_idle;
 
     match run_get_state with
     (xmppReconnectRun _ -> 0)
@@ -3029,5 +3029,5 @@ fun XmppSessionProcessHandleStanzaIqError type =
 // ---------------------------------------------------------
 
 fun xmpp_init=
-    job_start "XmppSessionRun" #XmppSessionRun;
-    job_start "XmppSessionIdle" #XmppSessionIdle;;
+    task_start "XmppSessionRun" #XmppSessionRun;
+    task_start "XmppSessionIdle" #XmppSessionIdle;;

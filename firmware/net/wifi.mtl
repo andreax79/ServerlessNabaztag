@@ -39,7 +39,7 @@ var _wifi_last_state;; // wifi last status (Wifi type)
 var _wifi_try;;
 
 #include utils/utils.mtl
-#include protos/jobs_protos.mtl
+#include protos/task_protos.mtl
 #include protos/dhcp_protos.mtl
 #include protos/udp_protos.mtl
 #include protos/dns_protos.mtl
@@ -107,7 +107,7 @@ fun _wifi_scan_cmp_ssid a b=
     let b->[sb _ _ _ _ _ _] in
     strcmp sa sb;;
 
-proto wifi_job 0;;
+proto wifi_task 1;;
 
 /**
  * Initialize the WIFI.
@@ -160,8 +160,8 @@ fun wifi_init rescan=
             0
         )
     );
-    if nil == job_get "wifi" then
-        job_start "wifi" #wifi_job;
+    if nil == task_get "wifi" then
+        task_start "wifi" #wifi_task;
     0;;
 
 
@@ -214,9 +214,9 @@ fun _wifi_check =
     ;;
 
 /**
- * WIFI job
+ * WIFI task
  */
-fun wifi_job=
+fun wifi_task task=
     let netState -> state in
     (
         if state!=_wifi_last_state then (
@@ -302,7 +302,7 @@ fun wifi_job=
         set _wifi_last_state=state
     );
     _wifi_check;
-    JobRun;;
+    TaskRun;;
 
 /**
  * Return WIFI status as JSON

@@ -28,5 +28,5 @@ type Run =
 proto run_init 0;;
 proto run_set_state 1;;
 proto run_get_state 0;;
-proto run_job 0;;
-proto stopEverythingAndResetToIdle 0;;
+proto run_task 1;;
+proto run_reset_to_idle 0;;

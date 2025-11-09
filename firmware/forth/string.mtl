@@ -1,0 +1,50 @@
+/**
+ * String manipulation words for Forth interpreter
+ * Copyright (c) 2025 Andrea Bonomi
+ * This code is licensed under the MIT License
+ */
+
+/**
+ * $REPEAT ( s n -- s )
+ * Repeat string s n times
+ */
+fun forth_dollar_repeat f=
+    let forth_pop f -> n in
+    let forth_pop f -> s in
+    forth_push f [str:str_repeat s.str n.int];;
+
+/**
+ * $PAD_RIGHT ( s n c -- s )
+ * Pad string s on the right to length n with character c
+ */
+fun forth_dollar_pad_right f=
+    let forth_pop f -> c in
+    let forth_pop f -> n in
+    let forth_pop f -> s in
+    forth_push f [str:str_pad_right s.str n.int c.str];;
+
+/**
+ * $PAD_LEFT ( s n c -- s )
+ * Pad string s on the left to length n with character c
+ */
+fun forth_dollar_pad_left f=
+    let forth_pop f -> c in
+    let forth_pop f -> n in
+    let forth_pop f -> s in
+    forth_push f [str:str_pad_left s.str n.int c.str];;
+
+/**
+ * $LOWER ( s -- s )
+ * Convert string s to lowercase
+ */
+fun forth_dollar_lower f=
+    let forth_pop f -> s in
+    forth_push f [str:to_lower s.str];;
+
+/**
+ * $UPPER ( s -- s )
+ * Convert string s to uppercase
+ */
+fun forth_dollar_upper f=
+    let forth_pop f -> s in
+    forth_push f [str:to_upper s.str];;

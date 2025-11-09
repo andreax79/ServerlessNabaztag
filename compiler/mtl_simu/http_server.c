@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <time.h>
 
 #include "../log.h"
 #include"../properties.h"
@@ -22,11 +23,22 @@
  */
 void http_server_send_error_response(int ns, int status_code, const char *status_message) {
     char response[HTTP_SERVER_BUFFER_SIZE];
+    char date[128];
+    time_t now = time(NULL);
+    struct tm tm;
+
+    gmtime_r(&now, &tm);
+    strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S GMT", &tm);
+
     snprintf(response, sizeof(response),
-             "HTTP/1.0 %d %s\r\n"
-             "Content-Type: text/html\r\n\r\n"
+             "HTTP/1.1 %d %s\r\n"
+             "Date: %s\r\n"
+             "Content-Type: text/html\r\n"
+             "Pragma: no-cache\r\n"
+             "Connection: close\r\n"
+             "\r\n"
              "<html><body><h1>%d %s</h1></body></html>",
-             status_code, status_message, status_code, status_message);
+             status_code, status_message, date, status_code, status_message);
     write(ns, response, strlen(response));
 }
 
@@ -138,6 +150,12 @@ int http_server(int ns) {
         http_server_send_error_response(ns, 404, "Not Found");
     } else {
         long file_size;
+        char date[128];
+        time_t now = time(NULL);
+        struct tm tm;
+
+        gmtime_r(&now, &tm);
+        strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S GMT", &tm);
 
         my_printf(LOG_HTTP_SERVER, "HTTP Server: %s %s 200\n", http_method, req_path);
 
@@ -149,12 +167,14 @@ int http_server(int ns) {
         // Send the response headers
         snprintf(buffer, sizeof(buffer),
                  "HTTP/1.1 200 OK\r\n"
+                 "Date: %s\r\n"
                  "Content-Type: %s\r\n"
                  "Content-Length: %ld\r\n"
                  "Cache-Control: max-age=0, no-cache, no-store\r\n"
                  "Pragma: no-cache\r\n"
                  "Connection: close\r\n"
                  "\r\n",
+                 date,
                  http_server_get_mime_type(req_path),
                  file_size);
         write(ns, buffer, strlen(buffer));

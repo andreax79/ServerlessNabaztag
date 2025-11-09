@@ -12,7 +12,6 @@ proto main 0;;
 
 #define WEBSERVER
 #define TELNETSERVER
-#define DAYTIMESERVER
 
 // #define WIFI_DEBUG
 // #define IPV4_DEBUG
@@ -29,16 +28,7 @@ proto main 0;;
 // #define WIFI_MASTER_MODE;; // Enable master mode (access point)
 #define WIFI_REBOOT_ON_LOST
 
-#ifdef SIMU
-const PORT_DAYTIME = 8013;;
-const PORT_TELNET = 8023;;
-const PORT_HTTP = 8080;;
-#else
-const PORT_DAYTIME = 13;;
-const PORT_TELNET = 23;;
 const PORT_HTTP = 80;;
-#endif
-
 const HARDWARE = 4;;
 const BYTECODE_REVISION_STR = "$Rev: __DATE__$";;
 const STD_NET_TIMEOUT = 10000;;
@@ -52,7 +42,7 @@ proto XmppSessionRequestResource 1;;
 
 #include utils/utils.mtl
 #include utils/json.mtl
-#include utils/jobs.mtl
+#include utils/task.mtl
 #include utils/md5.mtl
 #include utils/config.mtl
 #include utils/word.mtl
@@ -80,7 +70,6 @@ proto XmppSessionRequestResource 1;;
 #include chor/info.mtl
 
 #include srv/time.mtl
-#include srv/crontab.mtl
 #include hw/rfid.mtl
 
 #ifdef XMPP
@@ -100,9 +89,6 @@ fun XmppSessionSendButtonMsg btn withEvent eventValue = 0 ;;
 #ifdef TELNETSERVER
 #include srv/telnet_server.mtl
 #endif
-#ifdef DAYTIMESERVER
-#include srv/daytime_server.mtl
-#endif
 
 #include run/sleep.mtl
 #include run/run.mtl
@@ -111,37 +97,30 @@ fun XmppSessionSendButtonMsg btn withEvent eventValue = 0 ;;
 fun main=
     leds_set_state LEDS_STATE_START;
     // Set the loop callback
-    loopcb #job_loop;
+    loopcb #task_scheduler;
     // Load the configuration
     config_load;
     // Init the wifi and start the wifi job
     wifi_init 0;
     // Initialize the network stack, start the network jobs
     net_init;
-
+    // Initialize and start the info task
     info_init;
     // Start the time update job and the RFC 868 time client
     time_init;
     audiolib_init;
     button_init;
     record_init;
-    // Initialize interactive mode (set default sounds and chors, start ear process touched job)
+    ears_init;
+    // Initialize interactive mode (set defaults and start the interactive ears task)
     interactive_init;
     // Start the main loop
     run_init;
-
     // Start the servers
 #ifdef WEBSERVER
     http_server_start_srv PORT_HTTP;
 #endif
-#ifdef TELNETSERVER
-    telnet_server_start_srv PORT_TELNET;
-#endif
-#ifdef DAYTIMESERVER
-    daytime_start_srv PORT_DAYTIME;
-#endif
 #ifdef XMPP
     xmpp_init;
 #endif
-    crontab_init;
     0;;

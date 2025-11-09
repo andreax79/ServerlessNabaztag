@@ -82,13 +82,12 @@ fun _interactive_control_chor Type =
 
 /**
  * Initialize interactive mode
- * Set default sounds and chors
- * Start the ear process touched job
+ * Set default sounds, chors and start the interactive ears task
  */
 fun interactive_init =
     set _interactive_sounds = [intDefaultStart intDefaultStop]; // Default Sounds of InteractiveMode
     set _interactive_chors = [intchorDefaultStart intchorDefaultStop]; // Default Sounds of InteractiveMode
-    job_start "ear_process_touched" #interactive_ear_process_touched_job;
+    task_start "interactive_ears" #interactive_ears_task;
     0;;
 
 // Starts interactivity : sets run mode, remember application and request commands
@@ -250,9 +249,9 @@ fun interactive_note_ear_touched eari curPos deltaPos=
         )
     );;
 
-fun touchedP i=
-    let _interactive_ears_touch.i -> et in (et.turned_ET || ((et.lastMoveTime_ET != -1) && ((/*Secho "DLAST="; Iecho */(time_ms - et.lastMoveTime_ET))> EAR_TOUCH_TIMEOUT)))
-;;
+fun _interactive_ear_touched i=
+    let _interactive_ears_touch.i -> et in
+        (et.turned_ET || ((et.lastMoveTime_ET != -1) && (((time_ms - et.lastMoveTime_ET))> EAR_TOUCH_TIMEOUT)));;
 
 fun interactive_send_ear_touched lefttouch righttouch=
     // right = 0, left = 1
@@ -260,21 +259,21 @@ fun interactive_send_ear_touched lefttouch righttouch=
     ears_stop 0;
     let audiolib_wav_cur_played_bytes -> readBytes in  // midi_play resets audiolib_wav_cur_played_bytes so we cache it
     (
-        if (lefttouch) then midi_play MIDI_PRECEDENT;
-        if (righttouch) then midi_play MIDI_SUIVANT;
+        if lefttouch then midi_play MIDI_PRECEDENT;
+        if righttouch then midi_play MIDI_SUIVANT;
         run_set_state interactiveReqWaitRun (http_request "GET" (interactive_url_ear interactive_app readBytes streaming_audio_cmd_index righttouch lefttouch) nil #interactive_req_cb_http HTTP_NORMAL)
     );
     0;;
 
-fun interactive_ear_process_touched_job=
+fun interactive_ears_task task=
     if interactive_status then
-        let touchedP 0 -> lefttouch in
-        let touchedP 1 -> righttouch in
+        let _interactive_ear_touched 0 -> lefttouch in
+        let _interactive_ear_touched 1 -> righttouch in
         if (lefttouch || righttouch) then (
             interactive_send_ear_touched lefttouch righttouch;
             interactive_reset_ears_touched
         );
-    JobRun;;
+    TaskRun;;
 
 // Interactive request answer
 fun interactive_req_cb_http http res=
@@ -298,14 +297,14 @@ fun interactive_req_cb_http http res=
     0;;
 
 // Interactive request wait : timeout
-fun runInteractiveReqWait http=
+fun interactive_request_wait http=
     // Waiting for interactive request
     // check timeout
-    if (!record_is_uploading) then // upload record mode : timeout managed by record_upload_timeout_job
+    if (!record_is_uploading) then // upload record mode : timeout managed by record_upload_timeout_task
         if (http_inactive http)>STD_NET_TIMEOUT then
         (
 #ifdef INTERACTIVE_DEBUG
-            _interactive_debug "##timeout on runInteractiveReqWait";
+            _interactive_debug "##timeout on interactive_request_wait";
 #endif
             http_abort http;
 
