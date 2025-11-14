@@ -1,3 +1,5 @@
+#include protos/ntp_protos.mtl
+
 /**
  * Nabaztag config words for Forth interpreter
  * Copyright (c) 2025 Andrea Bonomi
@@ -131,19 +133,19 @@ fun forth_set_go_to_bed_at f=
     nil;;
 
 /**
- * TIME-SERVER-IP ( -- ip )
- * Get the time server IP address
+ * NTP-SERVER ( -- address )
+ * Get the time server address
  */
-fun forth_time_server_ip f=
-    forth_push f [str:ip_to_str nettime_server_ip];;
+fun forth_ntp_server f=
+    forth_push f [str:ip_to_str ntp_server];;
 
 /**
- * SET-TIME-SERVER-IP ( ip -- )
- * Set the time server IP address
+ * SET-NTP-SERVER ( address -- )
+ * Set the time server address
  */
-fun forth_set_time_server_ip f=
+fun forth_set_ntp_server f=
     let forth_pop f -> ip in
-    set nettime_server_ip = str_to_ip ip.str;
+    set ntp_server = str_to_ip ip.str;
     nil;;
 
 /**

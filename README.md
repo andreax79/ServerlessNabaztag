@@ -44,7 +44,7 @@ Firmware features
 
 * Control the rabbit via HTTP API
 * Configure via web interface
-* Fetch the current time from a time server and play the corresponding sound every hour
+* Fetch the current time from NTP and play the corresponding sound every hour
 * Fetch weather from [open-meteo](https://open-meteo.com)
 * Autonomously wake up at go to sleep
 * Respond to ICMP pings

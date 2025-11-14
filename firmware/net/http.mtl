@@ -1,4 +1,5 @@
 #include protos/http_protos.mtl
+#include protos/time_protos.mtl
 
 // debug
 #ifdef HTTP_DEBUG
@@ -69,10 +70,6 @@ fun _http_handle_tmp_redirect cnx httpreq =
 		);
 nil;;
 
-proto time_parse_date 1;;
-proto time_set 1;;
-proto time_is_valid 0;;
-
 /**
  * Extract the Date header from a HTTP response
  * res: the full HTTP response
@@ -100,7 +97,6 @@ fun _http_tcp_read cnx input httpreq=
                         // Secholn _http_get_date_from_header res;
                         // time_set time_parse_date _http_get_date_from_header res
                         // );
-
 					    call httpreq.http_req_cb [httpreq res]
                     )
 				else if code == 302 then

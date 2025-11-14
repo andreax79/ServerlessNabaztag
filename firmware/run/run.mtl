@@ -198,7 +198,7 @@ fun _run_idle =
 
 
 fun _run_parse_config_cb _ res=
-    nettime_get;
+    ntp_get_time;
     forth_init;
 
     if (nil != res) then
@@ -236,7 +236,7 @@ fun _run_config_start =
     if wifi_connected && audiolib_wav_running==0 then (
         leds_set_state LEDS_STATE_CONFIG_WAIT;
 #ifdef SERVERLESS
-        nettime_get;
+        ntp_get_time;
         forth_init // set the run state to configwaitRun while fetching init.forth
 #else
         Secho "config_get_server_url: "; Secholn config_get_server_url;

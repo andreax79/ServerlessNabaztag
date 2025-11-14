@@ -1,0 +1,3 @@
+var ntp_server = "pool.ntp.org";;
+
+proto ntp_get_time 0;;

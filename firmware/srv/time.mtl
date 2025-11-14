@@ -7,9 +7,11 @@
 //--------------------------------------------------------------------------------------------------
 
 const TIME_DELAY = 1000;; // Time update task delay (in ms)
+const WEEKDAYS = {"Sun" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat"} ;;
+const MONTHS = {"Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"} ;;
 
-var time_local = [0 0 0 0 0 0 0] ;; // [year, month, day, hour, minute, second, days_since_epoch]
-var time_utc = [0 0 0 0 0 0 0] ;; // [year, month, day, hour, minute, second, days_since_epoch]
+var time_local = [0 0 0 0 0 0 0] ;; // [year, month, day, hour, minute, second, days_since_epoc]
+var time_utc = [0 0 0 0 0 0 0] ;; // [year, month, day, hour, minute, second, days_since_epoc]
 
 /**
  * Get Daylight Saving Time offset (in minutes)
@@ -23,6 +25,9 @@ fun _time_dst_offset=
 fun time_offset=
     _time_dst_offset + get_offset_from_city_code config_get_city_code;;
 
+fun time_is_valid=
+    time_high !=0 || time_low != 0;;
+
 /**
  * Calculate the year, month, day, hours, minutes, seconds
  * offset: offset is in minutes
@@ -34,7 +39,7 @@ fun _time_calculate_datetime offset=
     let if (l + offset) > 65536 then h + ((l + offset) >> 16) else h -> h in
     let (l + offset) % 65536 -> l in
     let ((h % 675) * 65536 + l) % 86400 -> time_of_the_day in   // 675 is 86400 >> 7
-    let h * 512 / 675 + 1 -> days_since_epoch in
+    let h * 512 / 675 -> days_since_epoch in
     let 4 * (days_since_epoch - 59) + 3 -> ee in
     let (ee % 1461) / 4 -> gg in
     let 5 * gg + 2 -> hh in
@@ -140,80 +145,21 @@ fun time_parse_date date_str=
     let atoi strsub date_str 23 2 -> second in
     [year month day hour minute second];;
 
-fun time_datetime_to_high_low datetime=
-    let [0 0 0 0 1 0] -> datetime in
-    let 0 -> offset in
-    let datetime -> [year month day hour minute second] in
-    let hour * 3600 + minute * 60 + second -> time_of_the_day in
-    let 153 * ((month + 9) % 12) + 5 * (day - 1) -> hh in
-    let (hh - 2) / 5 -> gg in
-    let 4 * gg + 3 + 1461 * (year - 1900 - ((14 - month) / 12)) -> ee in
-    let (ee - 3) / 4 + 59 -> days_since_epoch in
-    let (days_since_epoch - 1) * 675 / 512 -> h in
-    let (time_of_the_day - (h % 675) * 65536) % 65536 -> l in (
-        // Reverse offset step:
-        if (l < offset) then
-            set h = h - 1;
-        set l = (l - offset) % 65536;
-        Secho "time_of_the_day:"; Iecholn time_of_the_day;
-        Secho "days_since_epoch:"; Iecholn days_since_epoch;
-        // set h=0;
-        // set l=0;
-        set h=60609;
-        set l=28176;
-
-        // -----------------------------------
-        let 0 -> offset in
-        let if (l + offset) > 65536 then h + ((l + offset) >> 16) else h -> h in
-        let (l + offset) % 65536 -> l in
-        let ((h % 675) * 65536 + l) % 86400 -> time_of_the_day in   // 675 is 86400 >> 7
-        let h * 512 / 675 + 1 -> days_since_epoch in
-        let 4 * (days_since_epoch - 59) + 3 -> ee in
-        let (ee % 1461) / 4 -> gg in
-        let 5 * gg + 2 -> hh in
-        let ((hh % 153) / 5) + 1 -> day in
-        let ((hh / 153) + 2) % 12 + 1 -> month in
-        let (ee / 1461) + 1900 + ((14 - month) / 12) -> year in (
-                Secho "time_of_the_day:"; Iecholn time_of_the_day;
-                Secho "days_since_epoch:"; Iecholn days_since_epoch;
-                Iecholn year;
-                Iecholn if (month > 0) then month else 1;
-                Iecholn if (day > 0) then day else 1;
-                Iecholn (time_of_the_day / 3600 ) % 24;
-                Iecholn time_of_the_day / 60 % 60;
-                Iecholn time_of_the_day % 60;
-                Iecholn days_since_epoch
-        );
-
-
-
-
-
-
-
-        [h l]
-    );;
+fun _time_datetime_to_high_low datetime=
+    [0 0];; // TODO - no implementation yet
 
 /**
  * Set the current time/date
  * datetime: [year month day hour minute second]
  */
 fun time_set datetime=
-    let time_datetime_to_high_low datetime -> [high low] in
+    let _time_datetime_to_high_low datetime -> [high low] in
     (
-        Iecholn high;
-        Iecholn low;
         set time_high = high;
         set time_low = low;
         _time_calculate;
-        Secho "Time updated "; Secholn time_date_utc
+        Secho "Time updated h:"; Iecho time_high; Secho " l:"; Iecho time_low; Secho " "; Secholn time_date_utc
     );;
-
-/**
- * Check if time has been set (received from time server or manually)
- */
-fun time_is_valid=
-    time_low !=nil;;
 
 /**
  * Initialize the time task

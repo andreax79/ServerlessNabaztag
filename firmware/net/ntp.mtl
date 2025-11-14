@@ -1,0 +1,67 @@
+#include protos/time_protos.mtl
+#include protos/ntp_protos.mtl
+
+//--------------------------------------------------------------------------------------------------
+// Simple Network Time Protocol client (RFC 2030)
+//--------------------------------------------------------------------------------------------------
+
+const NTP_DELAY = 24 * 60 * 60 * 1000;; // Delay between time server requests (in ms)
+const NTP_PROTOCOL_PORT = 123 ;;
+const NTP_PROTOCOL_EPHEMERAL_PORT = 49123 ;;
+
+/**
+ * Time protocol client - callback function
+ */
+fun _ntp_get_time_cb msg mac ipfrom=
+    unregudp NTP_PROTOCOL_EPHEMERAL_PORT;
+    let time -> now in (
+        // Time is returned as the number of seconds since midnight 1 January 1900 GMT
+        set time_high = (strgetword msg 40) - (now >> 16);
+        set time_low = (strgetword msg 42) - (now % 65536)
+    );;
+
+/**
+ * Create a NTP request packet
+ */
+fun _ntp_request_payload=
+    let strnew 48 -> payload in
+    (
+        strset payload 0 0x1b;
+        payload
+    );;
+
+/**
+ * Send an NTP request to the given IP address
+ * ip: target IP address
+ * x: [port req]
+ */
+fun _ntp_send_req ip=
+	if ip != nil then (
+        udp_send netip NTP_PROTOCOL_EPHEMERAL_PORT (str_to_ip ip) NTP_PROTOCOL_PORT _ntp_request_payload nil;
+        regudp NTP_PROTOCOL_EPHEMERAL_PORT #_ntp_get_time_cb
+    );
+	0;;
+
+/**
+ * Get the current time from the time server
+ */
+fun ntp_get_time=
+    if isip ntp_server 0 then (
+        Secholn "ISPIP";
+        _ntp_send_req ntp_server
+	) else
+        dnsreq ntp_server #_ntp_send_req;;
+
+/**
+ * NTP client task
+ */
+fun ntp_task task=
+    ntp_get_time;
+    TaskRun;;
+
+/**
+ * Initialize the NTP client task
+ */
+fun ntp_init=
+    // Start the NTP client task
+    task_start_ex "ntp_client" NTP_DELAY #ntp_task;;

@@ -333,8 +333,8 @@ fun dns_client_init=
 	regudp DNSLOCAL #cbnetdns;
 	set ldnsreq=nil;
 	set ldns=nil;
-    if nil == task_get "dns" then
-        task_start_ex "dns" DNS_TIME_DELAY #dns_periodic_task;
+    if nil == task_get "dns_client" then
+        task_start_ex "dns_client" DNS_TIME_DELAY #dns_periodic_task;
 	0;;
 
 /**

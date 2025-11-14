@@ -108,8 +108,8 @@ fun main=
     info_init;
     // Start the time update job
     time_init;
-    // Start the RFC 868 time client
-    nettime_init;
+    // Start the NTP client
+    ntp_init;
     audiolib_init;
     button_init;
     record_init;

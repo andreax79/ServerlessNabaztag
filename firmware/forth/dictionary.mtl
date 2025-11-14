@@ -145,8 +145,8 @@ fun forth_init_dictionary=
         [ [str:"set-wake-up-at"    ] [ func:#forth_set_wake_up_at ]] ::
         [ [str:"go-to-bed-at"      ] [ func:#forth_go_to_bed_at ]] ::
         [ [str:"set-go-to-bed-at"  ] [ func:#forth_set_go_to_bed_at ]] ::
-        [ [str:"time-server-ip"    ] [ func:#forth_time_server_ip ]] ::
-        [ [str:"set-time-server-ip"] [ func:#forth_set_time_server_ip ]] ::
+        [ [str:"ntp-server"        ] [ func:#forth_ntp_server ]] ::
+        [ [str:"set-ntp-server"    ] [ func:#forth_set_ntp_server ]] ::
         [ [str:"set-md5-password"  ] [ func:#forth_set_md5_password ]] ::
         [ [str:"md5-password"      ] [ func:#forth_md5_password ]] ::
         // Nabaztag

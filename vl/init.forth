@@ -50,6 +50,6 @@ time&date-utc$ . cr ;
 "daytime" 21 "daytime" tcp-listen  \ start daytime server
 "update-weather" weather-time-delay "weather" task-start \ start weather update
 "crontab" 60000 "crontab" task-start  \ start crontab
-\ update-weather
+update-weather
 sleeping-time? if sleep else wake-up then
 ;
