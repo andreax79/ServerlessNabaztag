@@ -1,0 +1,5 @@
+const WEEKDAYS = {"Sun" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat"} ;;
+const MONTHS = {"Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"} ;;
+
+var time_low = nil ;;  // low part of the last value read from the time server
+var time_high = nil ;; // high part of the last value read from the time

@@ -166,12 +166,16 @@ fun _run_control_program_wait =
 
 
 fun _run_idle =
+#ifdef XMPP
     // if trame waiting, execute it
     let trame_get_next_pending -> trame in
     if trame != nil then (
         trame_eval trame;
         0
-    ) else (
+    )
+    else
+#endif
+    (
         set chor_processing_status = 0;
 #ifdef SERVERLESS
         if surprise_check then (
@@ -194,7 +198,7 @@ fun _run_idle =
 
 
 fun _run_parse_config_cb _ res=
-    get_time_from_timeserver;
+    nettime_get;
     forth_init;
 
     if (nil != res) then
@@ -232,7 +236,7 @@ fun _run_config_start =
     if wifi_connected && audiolib_wav_running==0 then (
         leds_set_state LEDS_STATE_CONFIG_WAIT;
 #ifdef SERVERLESS
-        get_time_from_timeserver;
+        nettime_get;
         forth_init // set the run state to configwaitRun while fetching init.forth
 #else
         Secho "config_get_server_url: "; Secholn config_get_server_url;

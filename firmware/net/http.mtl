@@ -7,7 +7,7 @@ fun _http_debug str = Secholn strcatlist "[http] " :: str :: nil; nil;;
 
 // type Httpreq contenant l'état d'une requête
 //  - sonH : requête fille s'il y a (cas des 302 où on a fait une redirection via une nouvelle requête)
-type Httpreq=[cnxH inputH outputH indexH cbH typeH stateH aliveH sonH redirLevelH];;
+type Httpreq=[cnxH inputH outputH indexH http_req_cb typeH stateH aliveH sonH http_req_redir_depth];;
 
 //## retourne le code réponse HTTP d'une réponse
 //  - s est une chaine, le début de la réponse http
@@ -27,12 +27,12 @@ fun _http_handle_tmp_redirect cnx httpreq =
 #ifdef HTTP_DEBUG
 	_http_debug "HTTP - redirection temporaire";
 #endif
-	if (httpreq.redirLevelH > 2) then // on arrive à la 3eme redirection, c'est trop
+	if (httpreq.http_req_redir_depth > 2) then // on arrive à la 3eme redirection, c'est trop
 	(
 #ifdef HTTP_DEBUG
         _http_debug "HTTP - trop de niveaux de redirection : stop";
 #endif
-        call httpreq.cbH [httpreq nil];
+        call httpreq.http_req_cb [httpreq nil];
         nil
     )
 	else
@@ -45,7 +45,7 @@ fun _http_handle_tmp_redirect cnx httpreq =
 #ifdef HTTP_DEBUG
 						_http_debug "HTTP - Could not follow redirection, no 'Location:' found.";
 #endif
-						call httpreq.cbH [httpreq nil] ;
+						call httpreq.http_req_cb [httpreq nil] ;
 						nil
 					)
 				else
@@ -57,11 +57,11 @@ fun _http_handle_tmp_redirect cnx httpreq =
 #ifdef HTTP_DEBUG
 						_http_debug "HTTP - Following redirection. new url [" ; _http_debug newurl; _http_debug "]";
 #endif
-						let http_request "GET" newurl nil httpreq.cbH httpreq.typeH -> newReq in
+						let http_request "GET" newurl nil httpreq.http_req_cb httpreq.typeH -> newReq in
 						(
-							set newReq.redirLevelH = httpreq.redirLevelH + 1;
+							set newReq.http_req_redir_depth = httpreq.http_req_redir_depth + 1;
 							set httpreq.sonH = newReq;
-							set httpreq.cbH = nil
+							set httpreq.http_req_cb = nil
 						);
 					nil
 					)
@@ -69,6 +69,20 @@ fun _http_handle_tmp_redirect cnx httpreq =
 		);
 nil;;
 
+proto time_parse_date 1;;
+proto time_set 1;;
+proto time_is_valid 0;;
+
+/**
+ * Extract the Date header from a HTTP response
+ * res: the full HTTP response
+ */
+fun _http_get_date_from_header res=
+    let to_lower http_get_header res -> header in
+    let strstr header HTTP_DATE 0 -> i in
+    let if i!=nil then (strlen HTTP_DATE) + (strstr header HTTP_DATE i) -> j in
+    if i==nil then nil
+    else strsub header j 25;;
 
 // callback de lecture sur la socket d'une requête
 fun _http_tcp_read cnx input httpreq=
@@ -81,14 +95,21 @@ fun _http_tcp_read cnx input httpreq=
 			let strcatlist l -> s in
 			let _http_get_code s -> code in
 				if code == 200 then
-					call httpreq.cbH [httpreq strcatlist rev httpreq.inputH nil]	// on retourne ce qui a été reçu
+					let strcatlist rev httpreq.inputH nil -> res in	( // on retourne ce qui a été reçu
+                        // if !time_is_valid then (
+                        // Secholn _http_get_date_from_header res;
+                        // time_set time_parse_date _http_get_date_from_header res
+                        // );
+
+					    call httpreq.http_req_cb [httpreq res]
+                    )
 				else if code == 302 then
 					_http_handle_tmp_redirect nil httpreq
 				else // 404 ? autre ?
-					call httpreq.cbH [httpreq nil]
+					call httpreq.http_req_cb [httpreq nil]
 		)
 		else
-			call httpreq.cbH [httpreq nil] // HTTP_STREAM or HTTP_DIRECT
+			call httpreq.http_req_cb [httpreq nil] // HTTP_STREAM or HTTP_DIRECT
 	)
 	else
 	(
@@ -98,7 +119,7 @@ fun _http_tcp_read cnx input httpreq=
 			set httpreq.inputH=input::httpreq.inputH	// on bufferise ce qui a été reçu
 		else if httpreq.typeH==HTTP_DIRECT then
 		(
-			call httpreq.cbH [httpreq input];
+			call httpreq.http_req_cb [httpreq input];
 			nil
 		)
 		else
@@ -114,8 +135,8 @@ fun _http_tcp_read cnx input httpreq=
 				(
 					set httpreq.inputH=nil;
 					set httpreq.typeH=HTTP_DIRECT;
-					call httpreq.cbH [httpreq strsub s 0 i];
-					if i+4<strlen s then call httpreq.cbH [httpreq strsub s i+4 nil];
+					call httpreq.http_req_cb [httpreq strsub s 0 i];
+					if i+4<strlen s then call httpreq.http_req_cb [httpreq strsub s i+4 nil];
 					nil
 				)
 				else if code == 302 then
@@ -125,7 +146,7 @@ fun _http_tcp_read cnx input httpreq=
 					nil
 				)
 				else // 404 ? autre ?
-				( call httpreq.cbH [httpreq input]; nil )
+				( call httpreq.http_req_cb [httpreq input]; nil )
 			);
 			nil
 		);
@@ -146,7 +167,7 @@ fun _http_tcp_write cnx httpreq=
 		if httpreq.indexH==nil then	// si erreur lors de l'envoi
 		(
             tcp_close cnx;	// on ferme la socket
-			call httpreq.cbH [httpreq nil]
+			call httpreq.http_req_cb [httpreq nil]
         )	// on retourne nil
 		else if httpreq.indexH>=strlen httpreq.outputH then	// sinon si tout a été envoyé
 		(
@@ -179,6 +200,11 @@ fun _http_tcp_event t val msg sock=
 	0;;
 
 
+/**
+ * Send an HTTP request to the given IP address
+ * ip: target IP address
+ * x: [port httpreq]
+ */
 fun _http_send_req ip x=
 #ifdef HTTP_DEBUG
 	_http_debug strcatlist "found ip=" :: ip :: nil;
@@ -186,7 +212,7 @@ fun _http_send_req ip x=
 	let x->[port httpreq] in
 	if ip==nil then
     (
-        call httpreq.cbH [httpreq nil];
+        call httpreq.http_req_cb [httpreq nil];
         nil
     )
 	else
@@ -221,7 +247,7 @@ fun http_request verb url postdata cb type=
 		-> request in	// création de la chaîne requête
 	let if config_get_proxy then ip_to_str config_get_proxy_ip else host -> host in
 	let if config_get_proxy then config_get_proxy_port else port -> port in
-	let [outputH:request indexH:0 cbH:cb typeH:type stateH:HTTP_STATE_SOLVE aliveH:time_ms sonH:nil redirLevelH:0] -> httpreq in	// création de la structure requête
+	let [outputH:request indexH:0 http_req_cb:cb typeH:type stateH:HTTP_STATE_SOLVE aliveH:time_ms sonH:nil http_req_redir_depth:0] -> httpreq in	// création de la structure requête
 	(
 		if isip host 0 then _http_send_req host [port httpreq]
 		else
@@ -255,24 +281,24 @@ fun http_inactive httpreq=
  * res: the full HTTP response
  */
 fun http_get_header res=
-	let strstr res HTTP_SEP 0 -> i in
+	let strstr res HTTP_HEADER_SEP 0 -> i in
 	if i==nil then res
-	else strsub res 0 i+strlen HTTP_SEP;;
+	else strsub res 0 i+strlen HTTP_HEADER_SEP;;
 
 /**
  * Return the content of a HTTP response (after the header)
  * res: the full HTTP response
  */
 fun http_get_content res=
-	let strstr res HTTP_SEP 0 -> i in
+	let strstr res HTTP_HEADER_SEP 0 -> i in
 	if i==nil then nil
-	else strsub res i+strlen HTTP_SEP strlen res;;
+	else strsub res i+strlen HTTP_HEADER_SEP strlen res;;
 
 /**
  * Split a HTTP response into header and content
  * res: [header content]
  */
 fun http_split_header_content res=
-    let strstr res HTTP_SEP 0 -> i in
+    let strstr res HTTP_HEADER_SEP 0 -> i in
     if i==nil then [res nil]
-    else [strsub res 0 i+strlen HTTP_SEP strsub res i+strlen HTTP_SEP strlen res];;
+    else [strsub res 0 i+strlen HTTP_HEADER_SEP strsub res i+strlen HTTP_HEADER_SEP strlen res];;

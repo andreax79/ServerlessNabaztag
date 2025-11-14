@@ -1,0 +1,48 @@
+#include protos/time_protos.mtl
+
+//--------------------------------------------------------------------------------------------------
+// Time Protocol (RFC 868) client
+//--------------------------------------------------------------------------------------------------
+
+const NETTIME_RFC868_DELAY = 24 * 60 * 60 * 1000;; // Delay between time server requests (in ms)
+const NETTIME_PROTOCOL_PORT = 37 ;;
+const NETTIME_PROTOCOL_EPHEMERAL_PORT = 49152 ;;
+
+var nettime_server_ip = "\128\138\140\44" ;;  // utcnist.colorado.edu
+// var nettime_server_ip = "129\6\15\28" ;;  // time-a-g.nist.gov
+// var nettime_server_ip = "193\204\114\105" ;;  // time.inrim.it
+
+/**
+ * Time protocol client - callback function
+ */
+fun _nettime_get_cb msg mac ipfrom=
+    Secholn "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+    unregudp NETTIME_PROTOCOL_EPHEMERAL_PORT;
+    let time -> now in (
+        // Time is returned as the number of seconds since midnight 1 January 1900 GMT
+        set time_high = (strgetword msg 0) - (now >> 16);
+        set time_low = (strgetword msg 2) - (now % 65536)
+    );
+    0;;
+
+/**
+ * Get the current time from the time server
+ */
+fun nettime_get=
+    Secholn "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY";
+    udp_send netip NETTIME_PROTOCOL_EPHEMERAL_PORT nettime_server_ip NETTIME_PROTOCOL_PORT "" nil;
+    regudp NETTIME_PROTOCOL_EPHEMERAL_PORT #_nettime_get_cb;;
+
+/**
+ * RFC 868 time client task
+ */
+fun nettime_task task=
+    nettime_get;
+    TaskRun;;
+
+/**
+ * Initialize the nettime task
+ */
+fun nettime_init=
+    // Start the RFC 868 time client task
+    task_start_ex "rfc868_client" NETTIME_RFC868_DELAY #nettime_task;;

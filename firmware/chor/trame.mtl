@@ -225,6 +225,7 @@ fun trame_eval ping_trame=
 //*******************
 // Trames queue
 
+#ifdef XMPP
 fun trame_is_resource_valid rsrcName=
     // les règles d'adéquation entre resource et etats
     if (!strcmp rsrcName "urgent") then 1 // tjrs
@@ -246,9 +247,7 @@ fun _trame_queue_remove_entry binome=
 #ifdef TRAME_DEBUG
         _trame_debug "trame queue not full anymore, warning server";
 #endif
-#ifdef XMPP
         set xmpp_busy_status = 0;
-#endif
         // which resource now ? Can be in this order asleep, streaming, itmode or idle
         if (sleep_is_sleeping) then XmppSessionRequestResource "asleep"
         else if (streaming_status) then XmppSessionRequestResource "streaming"
@@ -282,3 +281,4 @@ fun trame_get_next_pending=
         theTrame
     )
     ;;
+#endif

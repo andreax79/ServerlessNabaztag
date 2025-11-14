@@ -15,5 +15,8 @@ const HTTP_STATE_SOLVE=0;;
 const HTTP_STATE_REACH=1;;
 const HTTP_STATE_CONNECTED=2;;
 
-const HTTP_SEP="\13\n\13\n";;	// séparateur entre l'en-tête et le corps de la réponse à une requête
 const HTTP_DEF_PROTO="http://";;	// en-tête normal (mais ici facultatif) d'une requête http
+const HTTP_HEADER_SEP = "\13\n\13\n";; // HTTP header separator
+const HTTP_CONTENT_END = "\13\n";;
+const HTTP_CONTENT_LENGTH = "content-length: ";; // lowerrcase
+const HTTP_DATE = "date: ";; // lowerrcase

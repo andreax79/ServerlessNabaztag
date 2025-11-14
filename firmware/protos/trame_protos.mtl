@@ -1,11 +1,17 @@
 proto trame_eval 1;;
 proto trame_filter_config 2;;
-proto trame_get_next_pending 0;;
-proto trame_is_resource_valid 1;;
 proto trame_program_start 0;;
+#ifdef XMPP
+proto trame_is_resource_valid 1;;
+proto trame_get_next_pending 0;;
+#endif
 
+#ifdef XMPP
 var trame_queue = nil;;
+#endif
 var trame_remaining_resources;; // list of remaining resources to get for the execution of the current trame
 
+#ifdef XMPP
 const TRAME_QUEUE_MAXLEN = 10;;
+#endif
 const TRAME_SIGN_CUT_SIZE = 40000;; // taille max du fichier audio de signature

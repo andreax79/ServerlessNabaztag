@@ -201,7 +201,7 @@ fun forth_ms f=
  * Update the system time from the time server
  */
 fun forth_update_time f=
-    get_time_from_timeserver;
+    nettime_get;
     nil;;
 
 /**
@@ -209,7 +209,7 @@ fun forth_update_time f=
  * Check if the system time has been received from the time server
  */
 fun forth_time_received f=
-    if time_rfc868_received then
+    if time_is_valid then
         forth_true f
     else
         forth_false f;;

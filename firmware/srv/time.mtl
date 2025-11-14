@@ -7,19 +7,9 @@
 //--------------------------------------------------------------------------------------------------
 
 const TIME_DELAY = 1000;; // Time update task delay (in ms)
-const TIME_RFC868_DELAY = 24 * 60 * 60 * 1000;; // Delay between time server requests (in ms)
-const TIME_PROTOCOL_PORT = 37 ;;
-const TIME_PROTOCOL_EPHEMERAL_PORT = 49152 ;;
-const WEEKDAYS = {"Sun" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat"} ;;
-const MONTHS = {"Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"} ;;
 
-var time_server_ip = "\128\138\140\44" ;;
-
-var _time_rfc868_low = nil ;;  // low part of the last value read from the time server
-var _time_rfc868_high = nil ;; // high part of the last value read from the time
-
-var time_local = [0 0 0 0 0 0 0] ;; // [year, month, day, hour, minute, second, days_since_epoc]
-var time_utc = [0 0 0 0 0 0 0] ;; // [year, month, day, hour, minute, second, days_since_epoc]
+var time_local = [0 0 0 0 0 0 0] ;; // [year, month, day, hour, minute, second, days_since_epoch]
+var time_utc = [0 0 0 0 0 0 0] ;; // [year, month, day, hour, minute, second, days_since_epoch]
 
 /**
  * Get Daylight Saving Time offset (in minutes)
@@ -27,27 +17,25 @@ var time_utc = [0 0 0 0 0 0 0] ;; // [year, month, day, hour, minute, second, da
 fun _time_dst_offset=
     if (config_get_dst == 1) then 60 else 0;;
 
-
 /**
  * Get the time offset (in minutes) from UTC
  */
 fun time_offset=
     _time_dst_offset + get_offset_from_city_code config_get_city_code;;
 
-
 /**
  * Calculate the year, month, day, hours, minutes, seconds
  * offset: offset is in minutes
  */
-fun _time_calculate_parts offset=
-    let _time_rfc868_high -> h in
-    let _time_rfc868_low -> l in
+fun _time_calculate_datetime offset=
+    let time_high -> h in
+    let time_low -> l in
     let offset * 60 + time -> offset in
     let if (l + offset) > 65536 then h + ((l + offset) >> 16) else h -> h in
     let (l + offset) % 65536 -> l in
     let ((h % 675) * 65536 + l) % 86400 -> time_of_the_day in   // 675 is 86400 >> 7
-    let h * 512 / 675 + 1 -> days_since_epoc in
-    let 4 * (days_since_epoc - 59) + 3 -> ee in
+    let h * 512 / 675 + 1 -> days_since_epoch in
+    let 4 * (days_since_epoch - 59) + 3 -> ee in
     let (ee % 1461) / 4 -> gg in
     let 5 * gg + 2 -> hh in
     let ((hh % 153) / 5) + 1 -> day in
@@ -60,26 +48,23 @@ fun _time_calculate_parts offset=
             (time_of_the_day / 3600 ) % 24
             time_of_the_day / 60 % 60
             time_of_the_day % 60
-            days_since_epoc
+            days_since_epoch
         ];;
 
 /**
  * Update the current year, month, day, housrs, minutes, seconds
  */
 fun _time_calculate=
-    set time_local = _time_calculate_parts time_offset;
-    set time_utc = _time_calculate_parts 0;
+    set time_local = _time_calculate_datetime time_offset;
+    set time_utc = _time_calculate_datetime 0;
     0;;
 
-
 /**
- * Update the time, day, local time
+ * Update the time of day
  */
 fun time_update_task task=
-    // Update time of the day
     _time_calculate;
     TaskRun;;
-
 
 /**
  * Return the current local time in human readable form
@@ -94,16 +79,19 @@ fun time_local_human=
            (zero_pad (itoa local_time_minute) 2) :: ":" ::
            (zero_pad (itoa local_time_second) 2) :: nil;;
 
-fun time_current_weekday days_since_epoc=
-    let (days_since_epoc + 1) % 7 -> weekday in
+/**
+ * Return the current time as a string
+ */
+fun time_current_weekday days_since_epoch=
+    let (days_since_epoch + 1) % 7 -> weekday in
         WEEKDAYS.weekday;;
 
 /**
  * Return the current time as a UTC string
  */
 fun time_date_utc=
-    let time_local -> [local_time_year local_time_month local_time_day local_time_hour local_time_minute local_time_second days_since_epoc] in
-        strcatlist (time_current_weekday days_since_epoc) :: ", " ::
+    let time_local -> [local_time_year local_time_month local_time_day local_time_hour local_time_minute local_time_second days_since_epoch] in
+        strcatlist (time_current_weekday days_since_epoch) :: ", " ::
            (zero_pad (itoa local_time_day) 2) :: " " ::
            MONTHS.(local_time_month - 1) :: " " ::
            (zero_pad (itoa local_time_year) 4) :: " " ::
@@ -122,46 +110,110 @@ fun time_json=
             (json_str "ts" time_local_human) :: ",\n" ::
             (json_int "dst" config_get_dst) :: ",\n" ::
             (json_int "offset" time_offset) :: ",\n" ::
-            (json_str "city_code" config_get_city_code) :: ",\n" ::
-            (json_str "time_server_ip" ip_to_str time_server_ip) :: "\n" ::
-        "}" :: nil
-;;
-
-//--------------------------------------------------------------------------------------------------
-// Time Protocol (RFC 868) client
-//--------------------------------------------------------------------------------------------------
+            (json_str "city_code" config_get_city_code) :: "\n" ::
+        "}" :: nil;;
 
 /**
- * Time protocol client - callback function
+ * Parse month string to month number
+ * month_str: three letter month string (e.g., "Jan", "Feb", etc.)
  */
-fun _time_rfc868_cb msg mac ipfrom=
-    unregudp TIME_PROTOCOL_EPHEMERAL_PORT;
-    let time -> now in (
-        set _time_rfc868_high = (strgetword msg 0) - (now >> 16);
-        set _time_rfc868_low = (strgetword msg 2) - (now % 65536);
-        _time_calculate
-    );
-    0;;
+fun _time_parse_month month_str=
+    let to_lower month_str -> month_str in
+    let nil -> result in (
+        for i=0;(i<12) && (result==nil) do
+            if !strcmp to_lower month_str MONTHS.i then set result=i;
+        if result != nil then
+            result + 1
+        else
+            nil
+    );;
 
 /**
- * Check if time has been received from the time server
+ * Parse a date string in the format "Day, DD Mon YYYY HH:MM:SS GMT"
  */
-fun time_rfc868_received=
-    _time_rfc868_low !=nil;;
+fun time_parse_date date_str=
+    let atoi strsub date_str 5 2 -> day in
+    let _time_parse_month (strsub date_str 8 3) -> month in
+    let atoi strsub date_str 12 4 -> year in
+    let atoi strsub date_str 17 2 -> hour in
+    let atoi strsub date_str 20 2 -> minute in
+    let atoi strsub date_str 23 2 -> second in
+    [year month day hour minute second];;
+
+fun time_datetime_to_high_low datetime=
+    let [0 0 0 0 1 0] -> datetime in
+    let 0 -> offset in
+    let datetime -> [year month day hour minute second] in
+    let hour * 3600 + minute * 60 + second -> time_of_the_day in
+    let 153 * ((month + 9) % 12) + 5 * (day - 1) -> hh in
+    let (hh - 2) / 5 -> gg in
+    let 4 * gg + 3 + 1461 * (year - 1900 - ((14 - month) / 12)) -> ee in
+    let (ee - 3) / 4 + 59 -> days_since_epoch in
+    let (days_since_epoch - 1) * 675 / 512 -> h in
+    let (time_of_the_day - (h % 675) * 65536) % 65536 -> l in (
+        // Reverse offset step:
+        if (l < offset) then
+            set h = h - 1;
+        set l = (l - offset) % 65536;
+        Secho "time_of_the_day:"; Iecholn time_of_the_day;
+        Secho "days_since_epoch:"; Iecholn days_since_epoch;
+        // set h=0;
+        // set l=0;
+        set h=60609;
+        set l=28176;
+
+        // -----------------------------------
+        let 0 -> offset in
+        let if (l + offset) > 65536 then h + ((l + offset) >> 16) else h -> h in
+        let (l + offset) % 65536 -> l in
+        let ((h % 675) * 65536 + l) % 86400 -> time_of_the_day in   // 675 is 86400 >> 7
+        let h * 512 / 675 + 1 -> days_since_epoch in
+        let 4 * (days_since_epoch - 59) + 3 -> ee in
+        let (ee % 1461) / 4 -> gg in
+        let 5 * gg + 2 -> hh in
+        let ((hh % 153) / 5) + 1 -> day in
+        let ((hh / 153) + 2) % 12 + 1 -> month in
+        let (ee / 1461) + 1900 + ((14 - month) / 12) -> year in (
+                Secho "time_of_the_day:"; Iecholn time_of_the_day;
+                Secho "days_since_epoch:"; Iecholn days_since_epoch;
+                Iecholn year;
+                Iecholn if (month > 0) then month else 1;
+                Iecholn if (day > 0) then day else 1;
+                Iecholn (time_of_the_day / 3600 ) % 24;
+                Iecholn time_of_the_day / 60 % 60;
+                Iecholn time_of_the_day % 60;
+                Iecholn days_since_epoch
+        );
+
+
+
+
+
+
+
+        [h l]
+    );;
 
 /**
- * Get the current time from the time server
+ * Set the current time/date
+ * datetime: [year month day hour minute second]
  */
-fun get_time_from_timeserver=
-    udp_send netip TIME_PROTOCOL_EPHEMERAL_PORT time_server_ip TIME_PROTOCOL_PORT "" nil;
-    regudp TIME_PROTOCOL_EPHEMERAL_PORT #_time_rfc868_cb;;
+fun time_set datetime=
+    let time_datetime_to_high_low datetime -> [high low] in
+    (
+        Iecholn high;
+        Iecholn low;
+        set time_high = high;
+        set time_low = low;
+        _time_calculate;
+        Secho "Time updated "; Secholn time_date_utc
+    );;
 
 /**
- * RFC 868 time client task
+ * Check if time has been set (received from time server or manually)
  */
-fun time_rfc868_client_task task=
-    get_time_from_timeserver;
-    TaskRun;;
+fun time_is_valid=
+    time_low !=nil;;
 
 /**
  * Initialize the time task
@@ -170,6 +222,4 @@ fun time_init=
     // Seed the random number generator
     srand time_ms;
     // Start the time update task
-    task_start_ex "time_update" TIME_DELAY #time_update_task;
-    // Start the RFC 868 time client task
-    task_start_ex "rfc868_client" TIME_RFC868_DELAY #time_rfc868_client_task;;
+    task_start_ex "time_update" TIME_DELAY #time_update_task;;

@@ -75,5 +75,6 @@ fun net_json=
 #include net/dhcp.mtl
 #include net/dns.mtl
 #include net/http.mtl
+#include net/nettime.mtl
 #include net/sock.mtl
 #include net/wifi.mtl

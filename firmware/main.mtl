@@ -106,8 +106,10 @@ fun main=
     net_init;
     // Initialize and start the info task
     info_init;
-    // Start the time update job and the RFC 868 time client
+    // Start the time update job
     time_init;
+    // Start the RFC 868 time client
+    nettime_init;
     audiolib_init;
     button_init;
     record_init;

@@ -6,6 +6,7 @@
 #include protos/midi_protos.mtl
 #include protos/forth_protos.mtl
 #include protos/json_protos.mtl
+#include protos/http_protos.mtl
 #include protos/info_protos.mtl
 
 //--------------------------------------------------------------------------------------------------
@@ -15,9 +16,6 @@
 const HTTP_200 = "200 OK";;
 const HTTP_204 = "204 No Content";;
 const HTTP_404 = "404 Not Found";;
-const HTTP_HEADER_SEP = "\13\n\13\n";; // HTTP header separator
-const HTTP_CONTENT_LENGTH = "content-length: ";; // lowerrcase
-const HTTP_CONTENT_END = "\13\n";;
 
 proto http_process_request 2;;
 
@@ -55,15 +53,6 @@ fun http_send_header_and_close http_status content_type sock=
 fun http_send_content_and_close sock content_type content=
     sock_send sock (http_header HTTP_200 content_type (strlen content)); // header
     sock_send_and_close sock content;;
-
-/**
- * Extract the header of an HTTP message string.
- * It works by finding the double CRLF that separates the header from the body.
- * res: HTTP request
- */
-fun http_get_header res =
-    let strstr res HTTP_HEADER_SEP 0 -> i in
-    if i!=nil then strsub res 0 i;;
 
 /**
  * Parse an HTTP header to calculate the total size of the full HTTP message.
@@ -194,7 +183,7 @@ fun http_index=
 //--------------------------------------------------------------------------------------------------
 
 proto run_reset_to_idle 0;;
-proto get_time_from_timeserver;;
+proto nettime_get;;
 proto surprise 0;;
 
 //--------------------------------------------------------------------------------------------------
@@ -264,7 +253,7 @@ fun _http_arg_int args key =
  * Get time from the time server
  */
 fun http_get_update_time sock args=
-    get_time_from_timeserver;
+    nettime_get;
     http_send_header_and_close HTTP_204 nil sock;;
 
 /**
