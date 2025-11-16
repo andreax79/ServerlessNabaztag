@@ -14,37 +14,61 @@ fun forth_dollar_repeat f=
     forth_push f [str:str_repeat s.str n.int];;
 
 /**
- * $PAD_RIGHT ( s n c -- s )
+ * PAD_RIGHT ( s n c -- s )
  * Pad string s on the right to length n with character c
  */
-fun forth_dollar_pad_right f=
+fun forth_pad_right f=
     let forth_pop f -> c in
     let forth_pop f -> n in
     let forth_pop f -> s in
     forth_push f [str:str_pad_right s.str n.int c.str];;
 
 /**
- * $PAD_LEFT ( s n c -- s )
+ * PAD_LEFT ( s n c -- s )
  * Pad string s on the left to length n with character c
  */
-fun forth_dollar_pad_left f=
+fun forth_pad_left f=
     let forth_pop f -> c in
     let forth_pop f -> n in
     let forth_pop f -> s in
     forth_push f [str:str_pad_left s.str n.int c.str];;
 
 /**
- * $LOWER ( s -- s )
+ * LOWER ( s -- s )
  * Convert string s to lowercase
  */
-fun forth_dollar_lower f=
+fun forth_lower f=
     let forth_pop f -> s in
     forth_push f [str:to_lower s.str];;
 
 /**
- * $UPPER ( s -- s )
+ * UPPER ( s -- s )
  * Convert string s to uppercase
  */
-fun forth_dollar_upper f=
+fun forth_upper f=
     let forth_pop f -> s in
     forth_push f [str:to_upper s.str];;
+
+/**
+ * Convert string s to integer based on the given base
+ */
+fun forth_str_to_int base s=
+    let strget s 0 -> first_char in
+        if first_char == ASCII_DOLLAR then  // hexadecimal number (e.g. $1ABC)
+            [int:(htoi strsub s 1 nil)]
+        else if first_char == ASCII_NUM then  // decimal number (e.g. #1234, #-1234)
+            [int:(atoi strsub s 1 nil)]
+        else if ((base == 10) || (base == nil)) && (is_numeric s) then
+            [int:(atoi s)]
+        else if (base == 16) && (1) then // TODO
+            [int:(htoi s)]
+        else
+            [str:s];;
+
+/**
+ * >NUMBER ( s -- n )
+ * Convert string s to number n
+ */
+fun forth_to_number f=
+    let forth_pop f -> s in
+    forth_push f forth_str_to_int nil s.str;;

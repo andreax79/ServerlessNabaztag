@@ -1,4 +1,5 @@
 #include utils/timezones.mtl
+#include protos/ntp_protos.mtl
 #include protos/json_protos.mtl
 #include protos/task_protos.mtl
 
@@ -92,9 +93,23 @@ fun time_current_weekday days_since_epoch=
         WEEKDAYS.weekday;;
 
 /**
- * Return the current time as a UTC string
+ * Return the current UTC time as string
  */
 fun time_date_utc=
+    let time_utc -> [utc_time_year utc_time_month utc_time_day utc_time_hour utc_time_minute utc_time_second days_since_epoch] in
+        strcatlist (time_current_weekday days_since_epoch) :: ", " ::
+           (zero_pad (itoa utc_time_day) 2) :: " " ::
+           MONTHS.(utc_time_month - 1) :: " " ::
+           (zero_pad (itoa utc_time_year) 4) :: " " ::
+           (zero_pad (itoa utc_time_hour) 2) :: ":"::
+           (zero_pad (itoa utc_time_minute) 2) :: ":"::
+           (zero_pad (itoa utc_time_second) 2) :: " GMT" ::
+           nil;;
+
+/**
+ * Return the current local time as string
+ */
+fun time_date_local=
     let time_local -> [local_time_year local_time_month local_time_day local_time_hour local_time_minute local_time_second days_since_epoch] in
         strcatlist (time_current_weekday days_since_epoch) :: ", " ::
            (zero_pad (itoa local_time_day) 2) :: " " ::
@@ -102,7 +117,8 @@ fun time_date_utc=
            (zero_pad (itoa local_time_year) 4) :: " " ::
            (zero_pad (itoa local_time_hour) 2) :: ":"::
            (zero_pad (itoa local_time_minute) 2) :: ":"::
-           (zero_pad (itoa local_time_second) 2) :: " GMT" ::
+           (zero_pad (itoa local_time_second) 2) :: " " ::
+           config_get_city_code ::
            nil;;
 
 /**
@@ -115,7 +131,8 @@ fun time_json=
             (json_str "ts" time_local_human) :: ",\n" ::
             (json_int "dst" config_get_dst) :: ",\n" ::
             (json_int "offset" time_offset) :: ",\n" ::
-            (json_str "city_code" config_get_city_code) :: "\n" ::
+            (json_str "city_code" config_get_city_code) :: ",\n" ::
+            (json_str "time_server" ntp_server) :: "\n" ::
         "}" :: nil;;
 
 /**

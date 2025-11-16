@@ -8,6 +8,8 @@ const DHCP_DECLINE=4;;
 const DHCP_ACK=5;;
 const DHCP_NACK=6;;
 
+const DHCP_SOURCE_PORT=68;;
+const DHCP_PORT=67;;
 
 /* 1 if the dhcp client is running */
 var dhcp_client_started=0;;
@@ -66,9 +68,9 @@ fun _dhcp_mk op netip hostip newip =
     let strnew n -> b in
     (
         for i=0;i<n do strset b  i 0;
-        strcpy b 0 "\1\1\6" 0 3;
-        strcpy b 12 netip 0 4;
-        strcpy b 12+16 mymac 0 6;
+        strcpy b 0 "\1\1\6" 0 3; // OP=1 (BOOTREQUEST), HTYPE=1 (Ethernet), HLEN (Mac address len)=6, HOPS=0
+        strcpy b 12 netip 0 4; // CIADDR (client IP address)
+        strcpy b 12+16 mymac 0 6;  // CHADDR (client hardware address)
         strcpy b 236 "\99\130\83\99\53\1" 0 6; // magic cookie + champ op
         strset b 236+6 op; // op
         strcpy b 236+7 "\61\7\1" 0 3; // id unique.
@@ -119,7 +121,7 @@ fun _dhcp_client_cb src macfrom hostip=
 #ifdef DHCP_DEBUG
             _dhcp_debug ">>>>>>>>>>>>>>>OFFER";
 #endif
-            udp_send netip 68 ipbroadcast 67 (_dhcp_mk DHCP_REQUEST netip hostip newip) macbroadcast;
+            udp_send netip DHCP_SOURCE_PORT ipbroadcast DHCP_PORT (_dhcp_mk DHCP_REQUEST netip hostip newip) macbroadcast;
             nil
         )
         else if type==DHCP_ACK then
@@ -151,7 +153,7 @@ fun _dhcp_client_cb src macfrom hostip=
  */
 #ifndef SIMU
 fun dhcp_client_renew=
-    udp_send netip 68 ipbroadcast 67 (_dhcp_mk DHCP_REQUEST netip nil nil) macbroadcast;
+    udp_send netip DHCP_SOURCE_PORT ipbroadcast DHCP_PORT (_dhcp_mk DHCP_REQUEST netip nil nil) macbroadcast;
     set dhcp_lease_start=time;
     if (0 != dhcp_lease_t1) then
         // if the request fails, try again in 10 seconds
@@ -185,9 +187,9 @@ fun dhcp_start_client=
 #ifdef DHCP_DEBUG
         _dhcp_debug "really do dhcp_start_client";
 #endif
-        regudp 68 #_dhcp_client_cb;
+        regudp DHCP_SOURCE_PORT #_dhcp_client_cb;
         if (!strcmp netip netip_empty) then
-            udp_send netip 68 ipbroadcast 67 (_dhcp_mk DHCP_DISCOVER netip nil nil) macbroadcast
+            udp_send netip DHCP_SOURCE_PORT ipbroadcast DHCP_PORT (_dhcp_mk DHCP_DISCOVER netip nil nil) macbroadcast
         else
             dhcp_client_renew;
         set dhcp_client_started=1;
@@ -241,14 +243,14 @@ fun _dhcp_server_cb src macfrom hostip=
         (
             Secholn ">>>>>>>>>>>>>>>DISCOVER";
 //          dump src;
-            udp_send netip 67 ipbroadcast 68 (_dhcp_server_make_ans DHCP_OFFER tid newip dmac) macbroadcast;
+            udp_send netip DHCP_PORT ipbroadcast DHCP_SOURCE_PORT (_dhcp_server_make_ans DHCP_OFFER tid newip dmac) macbroadcast;
             nil
         )
         else if type==DHCP_REQUEST then
         (
             Secholn ">>>>>>>>>>>>>>>REQUEST";
 //          dump src;
-            udp_send netip 67 ipbroadcast 68 (_dhcp_server_make_ans DHCP_ACK tid newip dmac) macbroadcast;
+            udp_send netip DHCP_PORT ipbroadcast DHCP_SOURCE_PORT (_dhcp_server_make_ans DHCP_ACK tid newip dmac) macbroadcast;
             nil
         )
     );;
@@ -257,7 +259,7 @@ fun _dhcp_server_cb src macfrom hostip=
  * Starts a DHCP server
  */
 fun dhcp_start_srv=
-    regudp 67 #_dhcp_server_cb;
+    regudp DHCP_PORT #_dhcp_server_cb;
     0;;
 
 #endif  // WIFI_MASTER_MODE

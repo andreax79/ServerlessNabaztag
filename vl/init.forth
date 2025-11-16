@@ -37,9 +37,10 @@ go-to-bed-at >=
 or ;
 
 : daytime ( -- )
-time&date-utc$ . cr ;
+utc>string . cr ;
 
 "config.forth" load-srv
+"consts.forth" load-srv
 "hooks.forth" load-srv
 "weather.forth" load-srv
 "telnet.forth" load-srv

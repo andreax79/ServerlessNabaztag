@@ -9,11 +9,11 @@
  * If the token is numeric, create an integer word.
  * Otherwise, create a string word.
  */
-fun forth_interpreter_new_word token=
-    if is_numeric token then
-        [int:(atoi token)]
+fun forth_interpreter_new_word token quoted=
+    if quoted then
+        [str:token]
     else
-        [str:token];;
+        forth_str_to_int nil token;;
 
 /**
  * Extract the next token from the input text.
@@ -162,7 +162,7 @@ fun forth_interpreter_loop f=
             let if inter.quoted then nil else forth_get_word inter.token -> word in ( // get the word from the dictionary if not quoted
                 // Secho "Token: '"; Secho inter.token; Secholn "'";
                 // Iecho inter.end; Secho " / "; Iecholn inter.text_len;
-                if word == nil then set word = forth_interpreter_new_word inter.token;
+                if word == nil then set word = forth_interpreter_new_word inter.token inter.quoted;
 
                 if word.func == #forth_p then ( // open parentheses
                     set inter.parentheses = inter.parentheses + 1

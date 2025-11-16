@@ -4,6 +4,8 @@ const MONTHS = {"Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov
 var time_low = nil ;;  // low part of the last value read from the time server
 var time_high = nil ;; // high part of the last value read from the time
 
+proto time_date_local 0;;
+proto time_date_utc 0;;
 proto time_is_valid 0;;
 proto time_parse_date 1;;
 proto time_set 1;;

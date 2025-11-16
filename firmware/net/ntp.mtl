@@ -47,7 +47,6 @@ fun _ntp_send_req ip=
  */
 fun ntp_get_time=
     if isip ntp_server 0 then (
-        Secholn "ISPIP";
         _ntp_send_req ntp_server
 	) else
         dnsreq ntp_server #_ntp_send_req;;

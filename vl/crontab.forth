@@ -1,5 +1,5 @@
 : crontab
-time-received? if
+time? if
   sleeping? sleepig-time? invert and if wake-up then \ wake up
   get-minute
   dup 0 = if on-time then \ on hour
