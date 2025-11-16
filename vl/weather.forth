@@ -15,8 +15,8 @@ dup 95 99 between if drop 5 exit then
 drop nil ;
 
 : update-weather ( -- )
-latitude count 0<> longitude count 0<> and if
-nil "http://api.open-meteo.com/v1/forecast?latitude=" :: latitude :: "&longitude=" :: longitude :: "&daily=weathercode&timezone=GMT&forecast_days=1" :: str-join \
+latitude @ count 0<> longitude @ count 0<> and if
+nil "http://api.open-meteo.com/v1/forecast?latitude=" :: latitude @ :: "&longitude=" :: longitude @ :: "&daily=weathercode&timezone=GMT&forecast_days=1" :: str-join \
 http-get drop json-parse
 "daily.weathercode[0]" json-get
 dup weather-code !  \ store the weather code

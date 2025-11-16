@@ -167,13 +167,13 @@ fun forth_play_midi f=
         midi_play_random_note;;
 
 /**
- * MD5 ( str -- hash )
- * Compute the MD5 hash of a string
+ * GC ( -- mem% )
+ * Perform garbage collection and return the memory usage percentage
  */
-fun forth_md5 f=
-    let forth_pop f -> str in
-    let md5 str.str -> hash in
-    forth_push f [str:hash];;
+fun forth_gc f=
+    let gc -> mem in
+        forth_push f [int:mem];
+    nil;;
 
 /**
  * REVISION ( -- str )

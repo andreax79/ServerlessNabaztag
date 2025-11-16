@@ -5,17 +5,11 @@ const LED_BODY_MIDDLE = 2 ;;
 const LED_BODY_RIGHT = 3 ;;
 const LED_BASE = 4 ;;
 
-/** différents états dans lesquels les leds sont dans un état particulier */
-type TLedsState = LEDS_STATE_START  | LEDS_STATE_CONFIG_WAIT | LEDS_STATE_XMPP_OPENING_XMPP_TCP | LEDS_STATE_XMPP_OPENING_XMPP_BOSH | LEDS_STATE_XMPP_OPENING_XMPP | LEDS_STATE_XMPP_CONNECTED ;;
-
-/** met toutes les leds du lapin dans la couleur rgbCode */
-proto leds_set_all 1;; // rgbCode
-/** place les leds du lapin dans la configuration correspondant à state */
-proto leds_set_state 1;; // TLedState state
 proto leds_bottom_animation 0;;
 proto leds_nose_animation 0;;
+proto leds_set_all 1;;
+proto leds_turn_off 0;;
 
-var leds_current_state = nil;; // TLedsState
-var leds_bottom_base_color = 0x000100;; // green
+var leds_bottom_base_color = 0x00ff00;; // RRGGBB
 
 #include protos/colors.mtl

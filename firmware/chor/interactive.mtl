@@ -287,7 +287,7 @@ fun interactive_req_cb_http http res=
 #ifdef INTERACTIVE_DEBUG
         _interactive_debug res;
 #endif
-        leds_set_all RGB_BLACK
+        leds_turn_off
     );
 
     if !record_is_recording then

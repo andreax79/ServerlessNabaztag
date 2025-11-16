@@ -95,7 +95,6 @@ fun XmppSessionSendButtonMsg btn withEvent eventValue = 0 ;;
 #include forth/forth.mtl
 
 fun main=
-    leds_set_state LEDS_STATE_START;
     // Set the loop callback
     loopcb #task_scheduler;
     // Load the configuration

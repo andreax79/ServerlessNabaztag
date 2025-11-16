@@ -44,7 +44,7 @@ fun runidlewait=
 	if ears_ready then
 	(
 		ears_start_detect;
-		leds_set_all RGB_BLACK;
+		leds_turn_off;
 		ears_go EARS_LEFT ears_left 0;
 		ears_go EARS_RIGHT ears_right 0;
 		run_set_state stdWaitRun time+ping_delay

@@ -367,7 +367,7 @@ fun streaming_run_eval_one_cmd i0=
         //IPecho netdns 0 1;
         //dns_start_client;
         set streaming_status = 1;
-        leds_set_all RGB_BLACK;
+        leds_turn_off;
 #ifdef XMPP
         if !xmpp_busy_status then XmppSessionRequestResource "streaming";
 #endif
@@ -384,7 +384,7 @@ fun streaming_run_eval_one_cmd i0=
         //IPecho netdns 0 1;
         //dns_start_client;
         set streaming_status = 1;
-        leds_set_all RGB_BLACK;
+        leds_turn_off;
 #ifdef XMPP
         if !xmpp_busy_status then XmppSessionRequestResource "streaming";
 #endif

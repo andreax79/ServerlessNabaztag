@@ -84,7 +84,6 @@ fun _trame_check_for_palette_before l=
 
 fun trame_program_start=
     // Starts playing the program
-    // leds_set_all RGB_RED;
 
     // Si la palette est definie pour ce programme, alors on ne met pas l'aleatoire
     if(_trame_palette_selected==0) then (
@@ -95,6 +94,99 @@ fun trame_program_start=
     set streaming_audio_cmd_index = -1;
     run_set_state cmdEvalOne 0;
     0;;
+
+/**
+ * Update sources, messages number and ears (old format)
+ */
+fun _trame_eval_info_update data=
+#ifdef TRAME_DEBUG
+    Secho "info_update OLD FORMAT:";
+#endif
+    let strlen data -> len in (
+        // /14/80/0/0/0/0/0/0/0/0/0/0/0/0/0/0/14/13/0/
+#ifdef TRAME_DEBUG
+        Secho "len="; Iecho len; Secho ":";
+        for i=0;i<len do (Iecho strget data i; Secho "/");
+#endif
+        // sources
+        for i=0;i<(min 16 len) do set info_src.i=strget data i;
+
+        // messages
+        set info_messages = 0;
+        if (len > 16+3) && (strget data (16+3)) then set info_messages = 2
+        else if (len > 16+2) && (strget data (16+2)) then set info_messages = 1;
+
+        // taichi
+        let 0 -> found in
+        for i=0;(i<(min 16 len) && !found);i+2 do
+        if ((strget data i) == 14) then (
+            set info_taichi = strget data i+1;
+            set found = 1
+        );
+
+        // process ears
+        if len > 17 then
+        let strget data 16 -> newleft in
+        let strget data 17 -> newright in
+        if (newleft != nil || newright != nil) && ((newleft!=ears_left) || (newright!=ears_right)) then (
+            set ears_left=newleft;
+            set ears_right=newright;
+            if ((!sleep_is_sleeping) && (!ears_resetting)) then (
+                midi_play MIDI_COMMUNION;
+                ears_go_to_ref_pos
+            )
+        )
+
+    );
+    0;;
+
+/**
+ * Update sources, messages number and ears (new format)
+ */
+fun _trame_eval_info_update_v2 data=
+#ifdef TRAME_DEBUG
+    Secho "info_update_v2:";
+#endif
+    let 0 -> i in
+    let nil -> newleft in
+    let nil -> newright in (
+        while (i < strlen data) do (
+            let strget data i -> key in
+            let strget data i+1 -> val in (
+#ifdef TRAME_DEBUG
+                Secho "key:"; Iecho key; Secho "="; Iecho val; Secho ",";
+#endif
+                if key == 8 then set info_messages = val
+                else if key == 0 then info_src_del val
+                else if key == 1 || key == 2 || key == 3 || key == 6 || key == 7 then info_src_update key val
+                else if key == 4 then set newleft = val
+                else if key == 5 then set newright = val
+                else if key == 14 then set info_taichi = val
+                else (
+#ifdef TRAME_DEBUG
+                    Secho "ERROR info_update_v2 unknown key="; Iecholn key;
+
+#endif
+                    0
+                )
+            );
+            set i = i + 2
+        );
+        // process ears
+#ifdef TRAME_DEBUG
+        Secho "newleft="; Iecho newleft; Secho "newright="; Iecho newright; Secho "ears_left="; Iecho ears_left; Secho "ears_right="; Iecho ears_right;
+        Secho "sleep_is_sleeping="; Iecho sleep_is_sleeping; Secho "ears_resetting="; Iecho ears_resetting;
+        Secholn ""
+#endif
+        if (newleft != nil || newright != nil) && ((newleft!=ears_left) || (newright!=ears_right)) then (
+            set ears_left=newleft;
+            set ears_right=newright;
+            if ((!sleep_is_sleeping) && (!ears_resetting)) then
+                ears_go_to_ref_pos
+        )
+    );
+    0;;
+
 
 // ******************************************
 // Main function : evaluate trame
@@ -148,11 +240,11 @@ fun trame_eval ping_trame=
                     let ((strget val 3) == 0xFF) -> fromHttp in
                     if fromHttp then (
                         // old format
-                        info_update strsub val 4 nil;
+                        _trame_eval_info_update strsub val 4 nil;
                         nil
                     ) else (
                         // new format
-                        info_update_v2 strsub val 4 nil;
+                        _trame_eval_info_update_v2 strsub val 4 nil;
                         nil
                     )
                 ) else if code == 9 then (

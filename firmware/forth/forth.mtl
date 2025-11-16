@@ -44,7 +44,6 @@ var forth_memory = nil;; // list of allocated memory blocks
 #include forth/control.mtl
 #include forth/misc.mtl
 #include forth/net.mtl
-#include forth/config.mtl
 #include forth/nabaztag.mtl
 #include forth/interpreter.mtl
 #include forth/memory.mtl

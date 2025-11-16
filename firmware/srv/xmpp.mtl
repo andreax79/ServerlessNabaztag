@@ -1865,8 +1865,6 @@ fun XmppSessionIdle task=
                     (sOpening -> // We are trying to open a connexion (jabber is not reached yet)
                     // on ne renvoie rien.
                         XmppGateConnect xSession;   // Try to connect (TCP or BOSH)
-                        if (xSession.sDisplayLeds == 1) then
-                            leds_set_state (if (xSession.sGate != nil) then (match xSession.sGate.pMode with (pTcp -> LEDS_STATE_XMPP_OPENING_XMPP_TCP) | (pBosh -> LEDS_STATE_XMPP_OPENING_XMPP_BOSH)) else LEDS_STATE_XMPP_OPENING_XMPP);
                     0)|(sLogging ->
 #ifdef XMPP_DEBUG
                         _xmpp_debug "TRY TO LOGGIN";
@@ -2349,7 +2347,6 @@ fun XmppSessionProcess xSession PaquetXml =
 
                             set xSession.sNextRestart = -1;
                             XmppSessionSetStatus xSession sOpened;
-                            leds_set_state LEDS_STATE_XMPP_CONNECTED ;
 
 #ifdef XMPP_DEBUG
                             _xmpp_debug "Session opened!";

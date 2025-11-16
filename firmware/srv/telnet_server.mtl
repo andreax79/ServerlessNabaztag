@@ -123,7 +123,7 @@ fun _telnet_forth_interpreter_cb f sock=
  */
 fun telnet_server_cb cnx _ _ text=
     let [sockCnx:cnx sockCallback:nil] -> sock in
-    let [stack:nil rstack:nil pc:0 forth_sock:sock] -> f in (
+    let forth_interpreter_setup nil nil sock nil nil -> f in (
         tcp_set_cb cnx fixarg4 #_telnet_sock_event f;
         forth_interpreter_ex text f sock nil (fixarg2 #_telnet_forth_interpreter_cb sock)
     );

@@ -14,11 +14,6 @@
 // tempo = 0.5*log2 du nombre d'itérations à durer sur la couleur courante (ex : tempo = 3, durée = 16 itérations)
 var _info_data;;
 
-// info_src : les services courants affichés par ce lapin (envoyé par le serveur et mis à jour par le fonction 'info_update')
-// Un tableau de 16 valeurs, pour les services courants. 2 valeurs par service donc 8 services max.
-// 2 valeurs par service : la première valeur vaut 1+info_type (ex : 1 pour meteo), la deuxième vaut infoVal, la valeur du service (ex : 0 pour soleil)
-var info_src;;
-
 /**
  * Info task
  */
@@ -191,14 +186,6 @@ fun info_run=
         set info_type=(info_src.(_info_index))-1;
         if _info_start_time==nil || (time-_info_start_time>INFO_TIMEOUT) || info_type<0 then _info_next;
 
-        // Allumage de la tête en verde si message(s) en attente (info_messages)
-        let (time_ms>>8)&7 -> t in
-        let if (((info_messages>3) && (t==7)) ||
-                ((info_messages>2) && (t==5)) ||
-                ((info_messages>1) && (t==3)) ||
-                ((info_messages>0) && (t==1))) then RGB_GREEN else RGB_BLACK -> color in
-            led LED_NOSE color;
-
         // couleurs des 3 leds du ventre (service courant/animation courante/couleur courante)
         set info_type=(info_src.(_info_index))-1;
         set infoVal=info_src.(_info_index+1);
@@ -246,7 +233,11 @@ fun __info_src_del key i=
         _info_slide i
     ) else __info_src_del key i+2;;
 
-fun _info_src_del key=
+/**
+ * Delete info source
+ * key: 1=weather, 2=stock, 3=traffic, 6=emails, 7=pollution
+ */
+fun info_src_del key=
     __info_src_del key 0;;
 
 // met à jour ou rajoute cette source
@@ -269,89 +260,8 @@ fun _info_src_update key val i=
  * val: value of the source (or key to delete if key=0)
  */
 fun info_src_update key val=
-    Secho "info_src_update key: "; Iecho key; Secho " val: "; Iecholn val;
     // allow for deletion
-    if key == 0 then _info_src_del val
-    else _info_src_update key val 0;;
-
-
-/**
- * Update sources, messages number and ears (old format)
- */
-fun info_update data=
-    Secho "info_update OLD FORMAT:";
-    let strlen data -> len in (
-        // /14/80/0/0/0/0/0/0/0/0/0/0/0/0/0/0/14/13/0/
-        Secho "len="; Iecho len; Secho ":";
-        for i=0;i<len do (Iecho strget data i; Secho "/");
-
-        // sources
-        for i=0;i<(min 16 len) do set info_src.i=strget data i;
-
-        // messages
-        set info_messages = 0;
-        if (len > 16+3) && (strget data (16+3)) then set info_messages = 2
-        else if (len > 16+2) && (strget data (16+2)) then set info_messages = 1;
-
-        // taichi
-        let 0 -> found in
-        for i=0;(i<(min 16 len) && !found);i+2 do
-        if ((strget data i) == 14) then (
-            set info_taichi = strget data i+1;
-            set found = 1
-        );
-
-        // process ears
-        if len > 17 then
-        let strget data 16 -> newleft in
-        let strget data 17 -> newright in
-        if (newleft != nil || newright != nil) && ((newleft!=ears_left) || (newright!=ears_right)) then (
-            set ears_left=newleft;
-            set ears_right=newright;
-            if ((!sleep_is_sleeping) && (!ears_resetting)) then (
-                midi_play MIDI_COMMUNION;
-                ears_go_to_ref_pos
-            )
-        )
-
-    );
-    0;;
-
-/**
- * Update sources, messages number and ears (new format)
- */
-fun info_update_v2 data=
-    Secho "info_update_v2:";
-    let 0 -> i in
-    let nil -> newleft in
-    let nil -> newright in (
-        while (i < strlen data) do (
-            let strget data i -> key in
-            let strget data i+1 -> val in (
-                Secho "key:"; Iecho key; Secho "="; Iecho val; Secho ",";
-                if key == 8 then set info_messages = val
-                else if key == 0 then _info_src_del val
-                else if key == 1 || key == 2 || key == 3 || key == 6 || key == 7 then info_src_update key val
-                else if key == 4 then set newleft = val
-                else if key == 5 then set newright = val
-                else if key == 14 then set info_taichi = val
-                else (
-                    Secho "ERROR info_update_v2 unknown key="; Iecholn key;0
-                )
-            );
-            set i = i + 2
-        );
-        // process ears
-        Secho "newleft="; Iecho newleft; Secho "newright="; Iecho newright; Secho "ears_left="; Iecho ears_left; Secho "ears_right="; Iecho ears_right;
-        Secho "sleep_is_sleeping="; Iecho sleep_is_sleeping; Secho "ears_resetting="; Iecho ears_resetting;
-        if (newleft != nil || newright != nil) && ((newleft!=ears_left) || (newright!=ears_right)) then (
-            set ears_left=newleft;
-            set ears_right=newright;
-            if ((!sleep_is_sleeping) && (!ears_resetting)) then (
-//              midi_play MIDI_COMMUNION;
-                ears_go_to_ref_pos
-            )
-        )
-    );
-    Secholn ""
-    ;;
+    if key == 0 then
+        info_src_del val
+    else
+        _info_src_update key val 0;;

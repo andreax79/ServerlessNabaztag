@@ -10,7 +10,7 @@ var _sleep_is_sleeping = 1;;       // sleeping
  */
 fun _sleep_start_cb f=
     // oreilles arrivées en haut : eteindre tout + oreille basses
-    leds_set_all RGB_BLACK;
+    leds_turn_off;
     ears_go 0 10 0; // sur le v2 c'est la position 10 qui est en bas
     ears_go 1 10 0;
     if f!=nil then forth_interpreter_resume f;

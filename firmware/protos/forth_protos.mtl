@@ -36,6 +36,7 @@ proto forth_interpreter_ex 5;;
 proto forth_interpreter_get_token 1;;
 proto forth_interpreter_loop 1;;
 proto forth_interpreter_resume 1;;
+proto forth_interpreter_setup 5;;
 proto forth_list_to_str 2;;
 proto forth_word_list_to_array 1;;
 

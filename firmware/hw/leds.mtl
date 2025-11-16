@@ -3,38 +3,11 @@
 #include protos/record_protos.mtl
 #include protos/run_protos.mtl
 #include protos/audiolib_protos.mtl
+#include protos/info_protos.mtl
+#include protos/interactive_protos.mtl
 #include protos/leds_protos.mtl
 
 var _leds_net_activity = 0;;
-
-// Get main loop state
-
-/**
- * Set all the leds to the color rgbCode
- */
-fun leds_set_all col=
-    for i=0;i<5 do led i col;;
-
-/**
- * Set the leds to reflect the current state
- */
-fun leds_set_state state =
-	if (leds_current_state != state) then
-	(
-		set leds_current_state = state;
-		match state with
-			 (LEDS_STATE_START ->
-                leds_set_all RGB_BLACK; led LED_NOSE RGB_BLUE)
-			|(LEDS_STATE_CONFIG_WAIT ->
-                leds_set_all RGB_BLACK; led LED_BODY_LEFT RGB_BLUE)
-			|(LEDS_STATE_XMPP_OPENING_XMPP_TCP ->
-                leds_set_all RGB_BLACK; led LED_BODY_MIDDLE RGB_BLUE)
-			|(LEDS_STATE_XMPP_OPENING_XMPP_BOSH ->
-                leds_set_all RGB_BLACK; led LED_BODY_MIDDLE RGB_AMBER)
-			|(LEDS_STATE_XMPP_OPENING_XMPP ->
-                leds_set_all RGB_BLACK; led LED_BODY_MIDDLE RGB_GREEN)
-			|(LEDS_STATE_XMPP_CONNECTED -> 0 /* ne rien faire, maintenant les leds sont settées dans le code */)
-	);;
 
 const LEDS_OSC = {
     0 0 0 0 0 0 1 1 2 3 3 4 5 6 7 8
@@ -57,7 +30,10 @@ fun _leds_osc x=
 fun leds_bottom_animation=
     if !sleep_is_sleeping && !ears_detecting then
         let _leds_osc time_ms>>4 -> v in
-            led LED_BASE v*leds_bottom_base_color; // pulse green - was violet 0x10001
+        let (leds_bottom_base_color >> 16) * v / 255 * 0x010000 +
+            ((leds_bottom_base_color >> 8) & 0xFF) * v / 255 * 0x000100 +
+            (leds_bottom_base_color & 0xFF) * v / 255 -> color in
+            led LED_BASE color;
     0;;
 
 /**
@@ -74,18 +50,38 @@ fun _leds_netactivity=
  * Run nose led animation
  */
 fun leds_nose_animation=
-    if !ears_detecting then
-    // led tete clignote if netactivity or audiolib_wav_buffering //
-    if (_leds_netactivity) then (
-        led LED_NOSE (if time_ms&256 then RGB_BLUE else RGB_BLACK);
-        set _leds_net_activity = 1
-    ) else if (audiolib_wav_buffering) then (
-        led LED_NOSE (if time_ms&128 then RGB_VIOLET else RGB_BLACK);
-        set _leds_net_activity = 1
-    ) else if (_leds_net_activity) then (
-        // show off the light
-        led LED_NOSE RGB_BLACK;
-        set _leds_net_activity = 0
+    if !ears_detecting then (
+        // led tete clignote if netactivity or audiolib_wav_buffering //
+        if (_leds_netactivity) then (
+            led LED_NOSE (if time_ms&256 then RGB_BLUE else RGB_BLACK);
+            set _leds_net_activity = 1
+        ) else if (audiolib_wav_buffering) then (
+            led LED_NOSE (if time_ms&128 then RGB_VIOLET else RGB_BLACK);
+            set _leds_net_activity = 1
+        ) else if (_leds_net_activity) then (
+            // show off the light
+            led LED_NOSE RGB_BLACK;
+            set _leds_net_activity = 0
+        );
+        if !sleep_is_sleeping && !interactive_status then // no info while sleeping and while in interactive mode
+            // Allumage de la tête en verde si message(s) en attente (info_messages)
+            let (time_ms>>8)&7 -> t in
+            let if (((info_messages>3) && (t==7)) ||
+                    ((info_messages>2) && (t==5)) ||
+                    ((info_messages>1) && (t==3)) ||
+                    ((info_messages>0) && (t==1))) then RGB_GREEN else RGB_BLACK -> color in
+                led LED_NOSE color
     );
     0;;
 
+/**
+ * Set all the leds to the color rgbCode
+ */
+fun leds_set_all col=
+    for i=0;i<5 do led i col;;
+
+/**
+ * Turn off all the leds
+ */
+fun leds_turn_off=
+    leds_set_all RGB_BLACK;;

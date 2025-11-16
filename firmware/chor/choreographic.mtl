@@ -34,7 +34,7 @@ fun chor_start_msg chor cb i0=
     set chor_paused_dur = 0;
     set chor_paused_since = nil;
     set chor_paused= 0;
-    leds_set_all RGB_BLACK; // shut off all leds at start (or should it be in the chor ?)
+    leds_turn_off; // shut off all leds at start (or should it be in the chor ?)
     run_set_state chorCmdRun i0;
     0;;
 

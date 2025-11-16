@@ -36,7 +36,7 @@ fun record_start_run =
     0;;
 
 fun record_control mode=
-    leds_set_all RGB_BLACK;
+    leds_turn_off;
     audiolib_wav_stop;
     motorset 0 0;
     motorset 1 0;
@@ -51,7 +51,7 @@ fun _record_cb_http http res=
     set _record_data=nil;
     set _record_req=nil;
     Secholn res;
-    leds_set_all RGB_BLACK;
+    leds_turn_off;
     if _record_play_end!=nil then
     (
         set _record_play_end=nil;
@@ -104,7 +104,7 @@ fun record_run=
     if !button2 || ((time_ms-_record_time_start)>RECORD_MAX_RECORDING_TIME)then
     (
         reclib_rec_stop;
-        leds_set_all RGB_BLACK;
+        leds_turn_off;
         let reclib_recriff -> wavfile in
         (
             set _record_data=strcatlist wavfile;

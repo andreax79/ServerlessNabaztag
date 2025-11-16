@@ -3,7 +3,7 @@
 
 : load-srv ( filename -- )
 \ load a forth file from the server
->r nil server-url :: "/" :: r> :: str-join http-get
+>r nil server-url @ :: "/" :: r> :: str-join http-get
 drop \ drop header
 evaluate ; \ evaluate the content
 
@@ -24,16 +24,16 @@ time&date drop drop drop drop swap drop ;
 
 : surprise ( -- )
 sleeping? invert if  \ if not sleeping
-nil server-url :: "/config/surprise/" :: language :: "/" :: 299 random 1 + :: ".mp3" :: str-join  \ url
+nil server-url @ :: "/config/surprise/" :: language @ :: "/" :: 299 random 1 + :: ".mp3" :: str-join  \ url
 play-url
 then ;
 
 : sleeping-time? ( -- flag )
 get-hour
 dup \ dup hour
-wake-up-at <
+wake-up-at @ <
 swap \ swap hour and flag
-go-to-bed-at >=
+go-to-bed-at @ >=
 or ;
 
 : daytime ( -- )

@@ -1,6 +1,6 @@
 : crontab
 time? if
-  sleeping? sleepig-time? invert and if wake-up then \ wake up
+  sleeping? sleeping-time? invert and if wake-up then \ wake up
   get-minute
   dup 0 = if on-time then \ on hour
   30 = if on-halftime then \ on half hour

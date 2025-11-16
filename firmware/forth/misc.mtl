@@ -213,3 +213,12 @@ fun forth_time_q f=
         forth_true f
     else
         forth_false f;;
+
+/**
+ * MD5 ( str -- hash )
+ * Compute the MD5 hash of a string
+ */
+fun forth_md5 f=
+    let forth_pop f -> str in
+    let md5 str.str -> hash in
+    forth_push f [str:hash];;

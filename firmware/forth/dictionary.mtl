@@ -93,6 +93,7 @@ fun forth_init_dictionary=
         [ [str: "?"                ] [ func:#forth_q ]] ::
         [ [str: "+!"               ] [ func:#forth_plus_store ]] ::
         [ [str: "variable"         ] [ func:#forth_variable    flag:FORTH_IMMEDIATE]] ::
+        [ [str: "state"            ] [ code:{[int:FORTH_MEMORY_STATE]} ]] ::
         // Control
         [ [str: "begin"            ] [ func:#forth_begin       flag:FORTH_IMMEDIATE]] ::
         [ [str: "until"            ] [ func:#forth_until       flag:FORTH_IMMEDIATE]] ::
@@ -119,6 +120,7 @@ fun forth_init_dictionary=
         [ [str: "ms"               ] [ func:#forth_ms          flag:FORTH_ASYNC]] ::
         [ [str: "update-time"      ] [ func:#forth_update_time]] ::
         [ [str: "time?"            ] [ func:#forth_time_q ]] ::
+        [ [str: "md5"              ] [ func:#forth_md5 ]] ::
         // Net
         [ [str: "http-get"         ] [ func:#forth_http_get    flag:FORTH_ASYNC]] ::
         [ [str: "http-post"        ] [ func:#forth_http_post   flag:FORTH_ASYNC]] ::
@@ -131,26 +133,6 @@ fun forth_init_dictionary=
         [ [str: "task-suspend"     ] [ func:#forth_task_suspend]] ::
         [ [str: "task-resume"      ] [ func:#forth_task_resume]] ::
         [ [str: ".tasks"           ] [ func:#forth_dot_tasks]] ::
-        // Nabaztag config
-        [ [str:"server-url"        ] [ func:#forth_server_url ]] ::
-        [ [str:"language"          ] [ func:#forth_language ]] ::
-        [ [str:"set-language"      ] [ func:#forth_set_language ]] ::
-        [ [str:"city-code"         ] [ func:#forth_city_code ]] ::
-        [ [str:"set-city-code"     ] [ func:#forth_set_city_code ]] ::
-        [ [str:"dst"               ] [ func:#forth_dst ]] ::
-        [ [str:"set-dst"           ] [ func:#forth_set_dst ]] ::
-        [ [str:"latitude"          ] [ func:#forth_latitude ]] ::
-        [ [str:"set-latitude"      ] [ func:#forth_set_latitude ]] ::
-        [ [str:"longitude"         ] [ func:#forth_longitude ]] ::
-        [ [str:"set-longitude"     ] [ func:#forth_set_longitude ]] ::
-        [ [str:"wake-up-at"        ] [ func:#forth_wake_up_at ]] ::
-        [ [str:"set-wake-up-at"    ] [ func:#forth_set_wake_up_at ]] ::
-        [ [str:"go-to-bed-at"      ] [ func:#forth_go_to_bed_at ]] ::
-        [ [str:"set-go-to-bed-at"  ] [ func:#forth_set_go_to_bed_at ]] ::
-        [ [str:"ntp-server"        ] [ func:#forth_ntp_server ]] ::
-        [ [str:"set-ntp-server"    ] [ func:#forth_set_ntp_server ]] ::
-        [ [str:"set-md5-password"  ] [ func:#forth_set_md5_password ]] ::
-        [ [str:"md5-password"      ] [ func:#forth_md5_password ]] ::
         // Nabaztag
         [ [str:"sleeping?"         ] [ func:#forth_sleeping ]] ::
         [ [str:"sleep"             ] [ func:#forth_sleep       flag:FORTH_ASYNC ]] ::
@@ -171,7 +153,19 @@ fun forth_init_dictionary=
         [ [str:"play-url"          ] [ func:#forth_play_url ]] ::
         [ [str:"play-midi"         ] [ func:#forth_play_midi ]] ::
         [ [str:"revision"          ] [ func:#forth_revision ]] ::
-        [ [str:"md5"               ] [ func:#forth_md5 ]] ::
+        [ [str:"gc"                ] [ func:#forth_gc ]] ::
+        // Config variables
+        [ [str:"server-url"        ] [ code:{[int:FORTH_MEMORY_SERVER_URL]} ]] ::
+        [ [str:"language"          ] [ code:{[int:FORTH_MEMORY_LANGUAGE]} ]] ::
+        [ [str:"city-code"         ] [ code:{[int:FORTH_MEMORY_CITY_CODE]} ]] ::
+        [ [str:"dst"               ] [ code:{[int:FORTH_MEMORY_DST]} ]] ::
+        [ [str:"latitude"          ] [ code:{[int:FORTH_MEMORY_LATITUDE]} ]] ::
+        [ [str:"longitude"         ] [ code:{[int:FORTH_MEMORY_LONGITUDE]} ]] ::
+        [ [str:"wake-up-at"        ] [ code:{[int:FORTH_MEMORY_WAKE_UP]} ]] ::
+        [ [str:"go-to-bed-at"      ] [ code:{[int:FORTH_MEMORY_GO_TO_BED]} ]] ::
+        [ [str:"ntp-server"        ] [ code:{[int:FORTH_MEMORY_NTP_SERVER]} ]] ::
+        [ [str:"md5-password"      ] [ code:{[int:FORTH_MEMORY_MD5_PASSWORD]} ]] ::
+        [ [str:"bottom-color"      ] [ code:{[int:FORTH_MEMORY_BOTTOM_COLOR]} ]] ::
         nil -> d in
             set forth_dictionary = [dict:d];
     0;;

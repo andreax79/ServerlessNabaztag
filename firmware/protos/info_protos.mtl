@@ -1,8 +1,12 @@
 proto info_json 0;;
 proto info_run 0;;
+proto info_src_del 1;;
 proto info_src_update 2;;
-proto info_update 1;;
-proto info_update_v2 1;;
+
+// info_src : les services courants affichés par ce lapin (envoyé par le serveur et mis à jour par le fonction 'info_update')
+// Un tableau de 16 valeurs, pour les services courants. 2 valeurs par service donc 8 services max.
+// 2 valeurs par service : la première valeur vaut 1+info_type (ex : 1 pour meteo), la deuxième vaut infoVal, la valeur du service (ex : 0 pour soleil)
+var info_src;;
 
 // nombre de messages utilisateur en attente (0, 1, 2 et +)
 var info_messages = 0;;

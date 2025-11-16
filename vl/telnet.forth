@@ -1,5 +1,5 @@
 : login ( logged line -- logged )
-md5 md5-password = if "logged" . else "Please login" . then cr ;
+md5 md5-password @ = if "logged" . else "Please login" . then cr ;
 
 : prompt ( -- )
 \ forth interpreter prompt
