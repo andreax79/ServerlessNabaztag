@@ -1,3 +1,5 @@
+-include .env
+
 .DEFAULT_GOAL := help
 
 .PHONY: compiler clean firmware
@@ -12,6 +14,7 @@ HTTP_SERVER_PORT=8081
 help:
 	@echo "- make compiler     Build the compiler and the simulator"
 	@echo "- make firmware     Build the firmware"
+	@echo "- make deploy       Build and deploy the firmware to the target server"
 	@echo "- make run-sim      Run the simulator"
 	@echo "- make clean        Cleanup"
 
@@ -27,6 +30,13 @@ firmware:
 	@rm -f nominal.mtl
 	@cp bootcode.bin vl/bc.jsp
 	@echo "Firmware copied to $$PWD/vl/bc.jsp"
+
+deploy: firmware
+	@if [ -z "$(DEPLOY_TARGET)" ]; then \
+		echo "Please set the DEPLOY_TARGET variable in .env file"; \
+		exit 1; \
+	fi
+	scp vl/bc.jsp vl/*.forth $(DEPLOY_TARGET)
 
 run-sim:
 	@./scripts/make_nominal.sh -D SIMU

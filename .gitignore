@@ -12,3 +12,4 @@ nominal.mtl
 deploy.sh
 foo.bin
 bootcode.bin
+.env
