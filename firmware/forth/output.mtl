@@ -21,13 +21,20 @@ fun forth_write f s=
         nil
     );;
 
+fun forth_write_cell f cell=
+    forth_write f
+        if cell.int != nil then (itoa cell.int)
+        else if cell.str != nil then cell.str
+        else if cell.list != nil then (forth_list_to_str cell.list " ")
+        else "?";;
+
 /**
- * Format a word as string
+ * Format a cell as string
  */
-fun forth_word_fmt word=
-    if word.int != nil then itoa word.int
-    else if word.str != nil then word.str
-    else if word.list != nil then (forth_list_to_str word.list " ")
+fun forth_word_fmt cell=
+    if cell.int != nil then itoa cell.int
+    else if cell.str != nil then cell.str
+    else if cell.list != nil then (forth_list_to_str cell.list " ")
     else "?";;
 
 /**
@@ -48,11 +55,7 @@ fun forth_list_to_str list separator=
  */
 fun forth_d f=
     let forth_pop f -> a in
-    forth_write f
-        if a.int != nil then (itoa a.int)
-        else if a.str != nil then a.str
-        else if a.list != nil then (forth_list_to_str a.list " ")
-        else "?";;
+    forth_write f forth_word_fmt a;;
 
 /**
  * CR ( -- )

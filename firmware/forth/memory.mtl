@@ -154,21 +154,40 @@ fun forth_free_cell f=
     nil;;
 
 /**
- * @ ( addr -- word )  Fetch a word from memory at the given address.
+ * @ ( addr -- value )  Fetch a value from memory at the given address.
  */
 fun forth_fetch f=
     let forth_pop f -> addr in
-    let forth_memory_get_cell addr.int -> word in
-        forth_push f word;
+    let forth_memory_get_cell addr.int -> value in
+        forth_push f value;
     nil;;
 
 /**
- * ! ( word addr -- )  Store a word into memory at the given address.
+ * ! ( value addr -- )  Store a value into memory at the given address.
  */
 fun forth_store f=
     let forth_pop f -> addr in
     let forth_pop f -> value in
         forth_memory_set_cell addr.int value;
+    nil;;
+
+/**
+ * ? ( addr -- )  Prints the contents of the address, followed by one space
+ */
+fun forth_q f=
+    let forth_pop f -> addr in
+    let forth_memory_get_cell addr.int -> value in
+        forth_write f forth_word_fmt value;
+    forth_write f " ";;
+
+/**
+ * +! ( n addr -- )  Adds a number to the contents of the address
+ */
+fun forth_plus_store f=
+    let forth_pop f -> addr in
+    let forth_pop f -> value in
+    let forth_memory_get_cell addr.int -> old_value in
+        forth_memory_set_cell addr.int [int:(old_value.int + value.int)];
     nil;;
 
 /**

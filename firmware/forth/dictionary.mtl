@@ -90,6 +90,8 @@ fun forth_init_dictionary=
         [ [str: "free-cell"        ] [ func:#forth_free_cell ]] ::
         [ [str: "@"                ] [ func:#forth_fetch ]] ::
         [ [str: "!"                ] [ func:#forth_store ]] ::
+        [ [str: "?"                ] [ func:#forth_q ]] ::
+        [ [str: "+!"               ] [ func:#forth_plus_store ]] ::
         [ [str: "variable"         ] [ func:#forth_variable    flag:FORTH_IMMEDIATE]] ::
         // Control
         [ [str: "begin"            ] [ func:#forth_begin       flag:FORTH_IMMEDIATE]] ::
