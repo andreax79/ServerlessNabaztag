@@ -7,39 +7,13 @@
 // gestion des services
 
 // _info_data : les definitions des animations visuelles des services (meteo, traffic, etc..)
-// Liste de tuples. Un tuple = [<type de service> <animations>]
+// Table de animations { <animation_service_0> <animation_service_1> ... <animation_service_N> }
 // animations = tableau de N animations, une par valeur du service. Animation = tuple = [tempo <couleurs>]
 // couleurs = X fois 3 couleurs pour les 3 leds du ventre (led 1, 2, 3)
-// couleur = index dans le tableau 'INFO_PALETTE'
+// couleur = index dans le tableau 'info_palette'
 // tempo = 0.5*log2 du nombre d'itérations à durer sur la couleur courante (ex : tempo = 3, durée = 16 itérations)
-var _info_data;;
-
-/**
- * Info task
- */
-fun info_task task=
-    match run_get_state with
-    ( idleRun -> info_run )|
-#ifdef PING
-    ( pingwaitRun http -> if ping_current_trame_id!=RUN_MSG_ASLEEP then info_run )|
-    ( stdWaitRun t -> if ping_current_trame_id != RUN_MSG_ASLEEP then info_run )|
-#endif
-#ifdef XMPP
-    ( xmppReconnectRun params -> info_run )|
-#endif
-    ( rscLoadNextRun -> info_run )|
-    ( rscLoadWaitRun http-> info_run )|
-    ( interactiveReqWaitRun http -> info_run );
-    TaskRun;;
-
-/**
- * Initialize and start the info task
- */
-fun info_init=
-    set info_src=tabnew 0 16;
-
-    set _info_data=
-[0 // meteo
+var _info_data = {
+// 0 meteo
 {
     [40 {0 3 0 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3}] // sun
     [125 {0 3 8 0 8 8 8 8 0 8 3 8 0 8 8 8 8 0 8 3 0}] // clouds
@@ -48,8 +22,7 @@ fun info_init=
     [40 {7 0 0 0 0 0 0 0 7 0 0 0 0 6 0 0 0 0 0 0 6 0 0 0 0 7 0 0 0 0 6 0 0 0 0 0}] // snow
     [25 {0 4 3 0 0 0 0 0 0 0 0 0 0 0 0 4 3 0 0 4 3 0 0 0 0 0 0 0 3 4 3 4 0}] // storm
 }
-]::
-[1 // bourse
+// 1 bourse
 {
     [7 {0 0 11 0 11 0 11 0 0 0 0 0 0 0 0 0 0 0}]
     [14 {0 0 11 0 11 0 11 0 0 0 0 0}]
@@ -59,8 +32,7 @@ fun info_init=
     [14 {11 0 0 0 11 0 0 0 11 0 0 0}]
     [7 {11 0 0 0 11 0 0 0 11 0 0 0 0 0 0 0 0 0}]
 }
-]::
-[2 // traffic
+// 2 traffic
 {
     [100 {1 0 1 1 0 1 1 0 1 0 0 0 0 0 0 0 0 0}]
     [100 {0 1 0 1 0 1 0 0 0 0 0 0 0 0 0}]
@@ -70,16 +42,18 @@ fun info_init=
     [8 {0 1 0 1 0 1 0 0 0 0 0 0 0 0 0}]
     [4 {0 1 0 1 0 1 0 1 0 1 0 1 0 0 0 0 0 0}]
 }
-]::
-[5 // mails
+// 3 nil
+nil
+// 4 nil
+nil
+// 5 mails
 {
     [70 {5 0 0 0 5 0 0 0 5 0 5 0}]
     [56 {0 5 0 0 0 0}]
     [56 {5 0 5 0 0 0}]
     [56 {5 5 5 0 0 0}]
 }
-]::
-[6 // pollution
+// 6 pollution
 {
     [42 {6 6 6 6 6 6 6 6 6 0 0 0}]
     [42 {6 6 6 6 6 6 6 6 6 0 0 0}]
@@ -93,20 +67,15 @@ fun info_init=
     [14 {0 6 0 0 6 6 6 6 6 6 0 0 0 0 0 0 6 0 0 6 6 0 0 0 6 6 0 6 6 6 0 0 6 6 0 0 0 6 0 0 0 0 6 0 6 0 6 0}]
     [14 {0 6 0 0 6 6 6 6 6 6 0 0 0 0 0 0 6 0 0 6 6 0 0 0 6 6 0 6 6 6 0 0 6 6 0 0 0 6 0 0 0 0 6 0 6 0 6 0}]
 }
-]::
-nil;
-    // Start the info task
-    task_start "info" #info_task;;
-
+};;
 
 // v21 : changé couleur jaune clair (11) de 0xffff80 à 0xffcc00 (bug 197)
-const INFO_PALETTE={
+var info_palette={
 //    0:black  1:red    2:green  3:yellow 4:blue   5:violet 6:cyan   7:white
     0x000000 0xff0000 0x00ff00 0xffff00 0x0000ff 0xff00ff 0x00ffff 0xffffff
 //    8:gray   9:rose  10:lt gr 11:lt yel 12:lt bl 13:lt vio 14:lt cy 15:orange
     0x808080 0xff8080 0x80ff80 0xffcc00 0x8080ff 0xff80ff 0x80ffff 0xff8000
 };;
-
 
 // heure de démarrage du service courant
 var _info_start_time;;
@@ -115,19 +84,48 @@ var _info_index=0;;
 // type du service courant
 var info_type;;
 // valeur du service courant
-var infoVal;;
+var _info_current_val;;
 // index de la couleur dans le tableau des couleurs de l'animation courante
-var infoAnimColori;;
+var _info_current_color_index;;
 // Date de démarrage de la couleur..
-var infoAnimColorStart;;
+var _info_start_ms;;
 // durée de la couleur...
-var infoAnimColorDur;;
+var _info_color_duration;;
 
 // durée d'affichage d'un service, en secondes
 const INFO_TIMEOUT=15;;
 
+/**
+ * Info task
+ */
+fun info_task task=
+    match run_get_state with
+    ( idleRun -> info_run )|
+#ifdef PING
+    ( pingwaitRun _ -> if ping_current_trame_id != RUN_MSG_ASLEEP then info_run )|
+    ( stdWaitRun _ -> if ping_current_trame_id != RUN_MSG_ASLEEP then info_run )|
+#endif
+#ifdef XMPP
+    ( xmppReconnectRun params -> info_run )|
+#endif
+    ( rscLoadNextRun -> info_run )|
+    ( rscLoadWaitRun _ -> info_run )|
+    ( interactiveReqWaitRun http -> info_run );
+    TaskRun;;
+
+/**
+ * Initialize and start the info task
+ */
+fun info_init=
+    set info_src=tabnew 0 16; // 8 services [type,val] x 8
+    // Start the info task
+    task_start "info" #info_task;;
+
+/**
+ * Get animations for info type
+ */
 fun _info_get_animations info_type=
-    listswitch _info_data info_type;;
+    _info_data.info_type;;
 
 // retourne le prochain index utile (info_type non nul)
 fun _info_next_index i=
@@ -138,13 +136,13 @@ fun _info_next_index i=
 fun _info_start_one i=
     set _info_index= i;
     set info_type=(info_src.(_info_index))-1;
-    set infoVal=info_src.(_info_index+1);
+    set _info_current_val=info_src.(_info_index+1);
     set _info_start_time=time;
-    set infoAnimColori=0;
-    set infoAnimColorStart=time_ms;
+    set _info_current_color_index=0;
+    set _info_start_ms=time_ms;
     let _info_get_animations info_type -> anims in
     if anims==nil then set _info_start_time=nil
-    else let anims.infoVal ->[dur _] in set infoAnimColorDur= dur*10;
+    else let anims._info_current_val ->[dur _] in set _info_color_duration= dur*10;
     0;;
 
 fun _info_next=
@@ -188,21 +186,21 @@ fun info_run=
 
         // couleurs des 3 leds du ventre (service courant/animation courante/couleur courante)
         set info_type=(info_src.(_info_index))-1;
-        set infoVal=info_src.(_info_index+1);
+        set _info_current_val=info_src.(_info_index+1);
         let _info_get_animations info_type -> anims in
-        let anims.infoVal ->[dur anime] in
+        let anims._info_current_val ->[dur anime] in
         if anime!=nil then
         (
-            led LED_BODY_LEFT INFO_PALETTE.(anime.infoAnimColori);
-            led LED_BODY_MIDDLE INFO_PALETTE.(anime.(1+infoAnimColori));
-            led LED_BODY_RIGHT INFO_PALETTE.(anime.(2+infoAnimColori));
-            if (time_ms-infoAnimColorStart >= infoAnimColorDur) then
+            led LED_BODY_LEFT info_palette.(anime._info_current_color_index);
+            led LED_BODY_MIDDLE info_palette.(anime.(1+_info_current_color_index));
+            led LED_BODY_RIGHT info_palette.(anime.(2+_info_current_color_index));
+            if (time_ms-_info_start_ms >= _info_color_duration) then
             (
                 // next colors
-                set infoAnimColori=infoAnimColori+3;
-                set infoAnimColorStart=time_ms;
-                set infoAnimColorDur= dur*10;
-                if infoAnimColori>=tablen anime then set infoAnimColori=0
+                set _info_current_color_index=_info_current_color_index+3;
+                set _info_start_ms=time_ms;
+                set _info_color_duration=dur*10;
+                if _info_current_color_index>=tablen anime then set _info_current_color_index=0
             )
         )
         else
@@ -240,20 +238,6 @@ fun __info_src_del key i=
 fun info_src_del key=
     __info_src_del key 0;;
 
-// met à jour ou rajoute cette source
-fun _info_src_update key val i=
-    if (i < 16) then
-    if (info_src.i == 0 || info_src.i == key) then (
-        // add or update
-        set info_src.(i+1) = val;
-        if (info_src.i == 0) then (
-            // add
-            set info_src.i = key;
-            // set lapin to play this new one now
-            _info_start_one i
-        )
-    ) else _info_src_update key val i+2;; // recurse
-
 /**
  * Update info source
  * key: 1=weather, 2=stock, 3=traffic, 6=emails, 7=pollution
@@ -264,4 +248,27 @@ fun info_src_update key val=
     if key == 0 then
         info_src_del val
     else
-        _info_src_update key val 0;;
+        let nil -> res in
+            for i=0;(i<16)&&(res==nil);i+2 do
+                if (info_src.i == 0 || info_src.i == key) then (
+                    set res = i;
+                    set info_src.(i+1) = val;
+                    if (info_src.i == 0) then (
+                        // add
+                        set info_src.i = key;
+                        // set lapin to play this new one now
+                        _info_start_one i
+                    )
+                );;
+
+/**
+ * Get info source value
+ * key: 1=weather, 2=stock, 3=traffic, 6=emails, 7=pollution
+ */
+fun info_src_get key=
+    let nil -> res in (
+        for i=0;(i<16)&&(res==nil);i+2 do
+            if info_src.i == key then
+                set res = info_src.(i+1);
+        res
+    );;

@@ -3,7 +3,6 @@
 #include protos/forth_protos.mtl
 #include protos/chor_protos.mtl
 #include protos/streaming_protos.mtl
-#include protos/surprise_protos.mtl
 #include protos/midi_protos.mtl
 #ifdef PING
 #include protos/ping_protos.mtl
@@ -11,15 +10,7 @@
 #ifdef XMPP
 #include protos/xmpp_protos.mtl
 #endif
-
-const RUN_NONE=0;;
-const RUN_WAIT=1;;
-const RUN_PLAY=2;;
-const RUN_INTERACTIF=3;;
-const RUN_PROGRAM_WAIT=4;;
-
-const RUN_MSG_IDLE=0x7fffffff;;
-const RUN_MSG_ASLEEP=0x7ffffffe;;
+#include protos/run_protos.mtl
 
 // Main loop state
 var run;; // type Run
@@ -177,13 +168,6 @@ fun _run_idle =
 #endif
     (
         set chor_processing_status = 0;
-#ifdef SERVERLESS
-        if surprise_check then (
-            surprise;
-            0
-        )
-        else
-#endif
         if chor_do_taichi_now then (
             chor_taichi_start nil
         ) else (

@@ -2826,7 +2826,7 @@ fun XmppSessionProcessHandleStanzaIqSet xSession xmlStanza =
             ( strcatlist
                     "<command xmlns='http://jabber.org/protocol/commands' node='getconfig' status='completed'>"
                     :: "<x xmlns='jabber:x:data' type='result'><item>"
-                    :: "<field var='bytecode_revision'><value>" :: getBytecodeRevision :: "</value></field>"
+                    :: "<field var='bytecode_revision'><value>" :: URL_BYTECODE_REVISION :: "</value></field>"
                     :: "<field var='wifi_ssid'><value>" :: (StoB64 config_get_wifi_ssid) :: "</value></field>"
                     :: "<field var='wifi_crypt'><value>" :: (itoa config_get_wifi_crypt) :: "</value></field>"
                     :: "<field var='net_dhcp'><value>" :: (itoa config_get_dhcp) :: "</value></field>"
@@ -2920,7 +2920,7 @@ fun XmppSessionProcessHandleStanzaIqGet xSession xmlStanza =
                     strcatlist
                                         "<query xmlns='jabber:iq:version'>"
                                         :: "<name>" :: "Nabaztag/tag" :: "</name>"
-                                        :: "<version>" :: getBytecodeRevision :: "</version>"
+                                        :: "<version>" :: URL_BYTECODE_REVISION :: "</version>"
                                         :: "</query>" :: nil
                 ]
             )

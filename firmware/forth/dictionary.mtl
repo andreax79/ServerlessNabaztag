@@ -30,6 +30,7 @@ fun forth_init_dictionary=
         [ [str: "="                ] [func:#forth_eq]] ::
         [ [str: ">"                ] [func:#forth_more]] ::
         [ [str: ">="               ] [func:#forth_more_eq]] ::
+        [ [str: "<>"               ] [func:#forth_ne]] ::
         [ [str: "<0"               ] [func:#forth_zero_less]] ::
         [ [str: "0="               ] [func:#forth_zero_eq]] ::
         [ [str: ">0"               ] [func:#forth_zero_more]] ::
@@ -143,11 +144,6 @@ fun forth_init_dictionary=
         [ [str:"move-right-ear"    ] [ func:#forth_move_right_ear ]] ::
         [ [str:"random"            ] [ func:#forth_random ]] ::
         [ [str:"volume"            ] [ func:#forth_volume ]] ::
-        [ [str:"set-info-weather"  ] [ func:#forth_set_info_weather ]] ::
-        [ [str:"set-info-stock"    ] [ func:#forth_set_info_stock ]] ::
-        [ [str:"set-info-traffic"  ] [ func:#forth_set_info_traffic ]] ::
-        [ [str:"set-info-mail"     ] [ func:#forth_set_info_mail ]] ::
-        [ [str:"set-info-pollution"] [ func:#forth_set_info_pollution ]] ::
         [ [str:"clear-info"        ] [ func:#forth_clear_info ]] ::
         [ [str:"taichi"            ] [ func:#forth_taichi      flag:FORTH_ASYNC]] ::
         [ [str:"play-url"          ] [ func:#forth_play_url ]] ::
@@ -166,6 +162,12 @@ fun forth_init_dictionary=
         [ [str:"ntp-server"        ] [ code:{[int:FORTH_MEMORY_NTP_SERVER]} ]] ::
         [ [str:"md5-password"      ] [ code:{[int:FORTH_MEMORY_MD5_PASSWORD]} ]] ::
         [ [str:"bottom-color"      ] [ code:{[int:FORTH_MEMORY_BOTTOM_COLOR]} ]] ::
+        [ [str:"info-palette"      ] [ code:{[int:FORTH_MEMORY_INFO_PALETTE]} ]] ::
+        [ [str:"info-weather"      ] [ code:{[int:FORTH_MEMORY_INFO_WEATHER]} ]] ::
+        [ [str:"info-stock"        ] [ code:{[int:FORTH_MEMORY_INFO_STOCK]} ]] ::
+        [ [str:"info-traffic"      ] [ code:{[int:FORTH_MEMORY_INFO_TRAFFIC]} ]] ::
+        [ [str:"info-mail"         ] [ code:{[int:FORTH_MEMORY_INFO_MAIL]} ]] ::
+        [ [str:"info-pollution"    ] [ code:{[int:FORTH_MEMORY_INFO_POLLUTION]} ]] ::
         nil -> d in
             set forth_dictionary = [dict:d];
     0;;

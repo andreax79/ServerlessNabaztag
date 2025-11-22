@@ -19,6 +19,13 @@ const FORTH_MEMORY_GO_TO_BED = (1<<29) + 8;;
 const FORTH_MEMORY_NTP_SERVER = (1<<29) + 9;;
 const FORTH_MEMORY_MD5_PASSWORD = (1<<29) + 10;;
 const FORTH_MEMORY_BOTTOM_COLOR = (1<<29) + 11;;
+const FORTH_MEMORY_INFO_PALETTE = (1<<29) + 12;;  // 16 cells
+const FORTH_MEMORY_INFO_PALETTE_SIZE = 16;;
+const FORTH_MEMORY_INFO_WEATHER = (1<<29) + 28;;
+const FORTH_MEMORY_INFO_STOCK = (1<<29) + 29;;
+const FORTH_MEMORY_INFO_TRAFFIC = (1<<29) + 30;;
+const FORTH_MEMORY_INFO_MAIL = (1<<29) + 31;;
+const FORTH_MEMORY_INFO_POLLUTION = (1<<29) + 32;;
 
 type MemoryBlock = [
     memory_block_size   // size of the memory block
@@ -136,6 +143,18 @@ fun _forth_memory_get_special f addr=
         [str:config_md5_password]
     else if addr == FORTH_MEMORY_BOTTOM_COLOR then
         [int:leds_bottom_base_color]
+    else if addr >= FORTH_MEMORY_INFO_PALETTE && addr < FORTH_MEMORY_INFO_PALETTE + 16 then
+        [int:info_palette.(addr - FORTH_MEMORY_INFO_PALETTE)]
+    else if addr == FORTH_MEMORY_INFO_WEATHER then
+        [int:info_src_get INFO_WEATHER]
+    else if addr == FORTH_MEMORY_INFO_STOCK then
+        [int:info_src_get INFO_STOCK]
+    else if addr == FORTH_MEMORY_INFO_TRAFFIC then
+        [int:info_src_get INFO_TRAFFIC]
+    else if addr == FORTH_MEMORY_INFO_MAIL then
+        [int:info_src_get INFO_MAIL]
+    else if addr == FORTH_MEMORY_INFO_POLLUTION then
+        [int:info_src_get INFO_POLLUTION]
     else
         nil;;
 
@@ -165,7 +184,27 @@ fun _forth_memory_set_special f addr value=
         set config_md5_password = value.str
     else if addr == FORTH_MEMORY_BOTTOM_COLOR then (
         set leds_bottom_base_color = value.int; nil
-    );;
+    )
+    else if addr >= FORTH_MEMORY_INFO_PALETTE && addr < FORTH_MEMORY_INFO_PALETTE + 16 then (
+        set info_palette.(addr - FORTH_MEMORY_INFO_PALETTE) = value.int; nil
+    )
+    else if addr == FORTH_MEMORY_INFO_WEATHER then (
+        info_src_update INFO_WEATHER value.int; nil
+    )
+    else if addr == FORTH_MEMORY_INFO_STOCK then (
+        info_src_update INFO_STOCK value.int; nil
+    )
+    else if addr == FORTH_MEMORY_INFO_TRAFFIC then (
+        info_src_update INFO_TRAFFIC value.int; nil
+    )
+    else if addr == FORTH_MEMORY_INFO_MAIL then (
+        info_src_update INFO_MAIL value.int; nil
+    )
+    else if addr == FORTH_MEMORY_INFO_POLLUTION then (
+        info_src_update INFO_POLLUTION value.int; nil
+    )
+    else
+        nil;;
 
 /**
  * Get a cell from the memory manager at the given address.

@@ -10,6 +10,7 @@ SIMULATOR="./compiler/mtl_simu/mtl_simu"
 LOGS="init,vm,http_server"
 HTTP_SERVER_PATH=vl
 HTTP_SERVER_PORT=8081
+MAC?=0123456789ab
 
 help:
 	@echo "- make compiler     Build the compiler and the simulator"
@@ -40,5 +41,5 @@ deploy: firmware
 
 run-sim:
 	@./scripts/make_nominal.sh -D SIMU
-	@$(SIMULATOR) --mac 0123456789ab --logs $(LOGS) --source "nominal.mtl" --http_server_path $(HTTP_SERVER_PATH) --http_server_port $(HTTP_SERVER_PORT) || true
+	@$(SIMULATOR) --mac $(MAC) --logs $(LOGS) --source "nominal.mtl" --http_server_path $(HTTP_SERVER_PATH) --http_server_port $(HTTP_SERVER_PORT) || true
 	@rm -f nominal.mtl foo.bin

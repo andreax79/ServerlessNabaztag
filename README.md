@@ -86,3 +86,4 @@ $ python3 -m http.server
 * [pynab](https://github.com/nabaztag2018/pynab)
 * [Vim syntax highlighting for the Metal language](https://github.com/andreax79/vim-metal-syntax)
 * [Metal language support in Atom](https://github.com/rngtng/language-metal)
+* [Nabaztag Controller](https://nabaztag.com/controller)

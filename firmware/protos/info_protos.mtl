@@ -1,6 +1,7 @@
 proto info_json 0;;
 proto info_run 0;;
 proto info_src_del 1;;
+proto info_src_get 1;;
 proto info_src_update 2;;
 
 // info_src : les services courants affichés par ce lapin (envoyé par le serveur et mis à jour par le fonction 'info_update')

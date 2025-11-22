@@ -20,6 +20,6 @@ nil "http://api.open-meteo.com/v1/forecast?latitude=" :: latitude @ :: "&longitu
 http-get drop json-parse
 "daily.weathercode[0]" json-get
 dup weather-code !  \ store the weather code
-meteo>info set-info-weather
+meteo>info info-weather !
 then
 ;

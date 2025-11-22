@@ -401,6 +401,3 @@ fun str_pad_left s l ch=
     if d>0 then
         strcat s (str_repeat ch d)
     else s;;
-
-fun getBytecodeRevision =
-    strsub BYTECODE_REVISION_STR 6 ((strlen BYTECODE_REVISION_STR) - 8);;

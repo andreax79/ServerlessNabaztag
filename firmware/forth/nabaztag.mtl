@@ -78,51 +78,6 @@ fun forth_volume f=
     forth_push f [int:audiolib_volume];;
 
 /**
- * SET-INFO-WEATHER ( weather -- )
- * Set the weather information
- */
-fun forth_set_info_weather f=
-    let forth_pop f -> v in
-    info_src_update INFO_WEATHER v.int;
-    nil;;
-
-/**
- * SET-INFO-STOCK ( stock -- )
- * Set the stock information
- */
-fun forth_set_info_stock f=
-    let forth_pop f -> v in
-    info_src_update INFO_STOCK v.int;
-    nil;;
-
-/**
- * SET-INFO-TRAFFIC ( traffic -- )
- * Set the traffic information
- */
-fun forth_set_info_traffic f=
-    let forth_pop f -> v in
-    info_src_update INFO_TRAFFIC v.int;
-    nil;;
-
-/**
- * SET-INFO-MAIL ( mail -- )
- * Set the mail information
- */
-fun forth_set_info_mail f=
-    let forth_pop f -> v in
-    info_src_update INFO_MAIL v.int;
-    nil;;
-
-/**
- * SET-INFO-POLLUTION ( pollution -- )
- * Set the pollution information
- */
-fun forth_set_info_pollution f=
-    let forth_pop f -> v in
-    info_src_update INFO_POLLUTION v.int;
-    nil;;
-
-/**
  * CLEAR-INFO ( -- )
  * Clear all information
  */

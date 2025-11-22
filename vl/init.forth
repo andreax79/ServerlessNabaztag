@@ -22,12 +22,6 @@ time&date drop drop drop swap drop swap drop ;
 : get-minute ( -- minute )
 time&date drop drop drop drop swap drop ;
 
-: surprise ( -- )
-sleeping? invert if  \ if not sleeping
-nil server-url @ :: "/config/surprise/" :: language @ :: "/" :: 299 random 1 + :: ".mp3" :: str-join  \ url
-play-url
-then ;
-
 : sleeping-time? ( -- flag )
 get-hour
 dup \ dup hour
@@ -45,12 +39,14 @@ utc>string . cr ;
 "weather.forth" load-srv
 "telnet.forth" load-srv
 "crontab.forth" load-srv
+\ "palette.forth" load-srv
 
 : on-connect ( -- )
 "interpreter" 23 "telnet" tcp-listen  \ start telnet server
 "daytime" 21 "daytime" tcp-listen  \ start daytime server
 "update-weather" weather-time-delay "weather" task-start \ start weather update
-"crontab" 60000 "crontab" task-start  \ start crontab
+"crontab" 59000 "crontab" task-start  \ start crontab
+crontab
 update-weather
 sleeping-time? if sleep else wake-up then
 ;

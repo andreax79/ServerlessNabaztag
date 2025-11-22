@@ -50,6 +50,15 @@ fun forth_more_eq f=
     if c >= 0 then forth_true f else forth_false f;;
 
 /**
+ * <> ( n1 n2 -- flag ) True if top two words are not equal
+ */
+fun forth_ne f=
+    let forth_pop f -> n2 in
+    let forth_pop f -> n1 in
+    let forth_compare_words n1 n2 -> c in
+    if c != 0 then forth_true f else forth_false f;;
+
+/**
  * <0 ( n -- flag ) True if top number less than zero
  */
 fun forth_zero_less f=

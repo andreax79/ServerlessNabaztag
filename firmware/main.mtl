@@ -29,7 +29,6 @@ proto main 0;;
 #define WIFI_REBOOT_ON_LOST
 
 const PORT_HTTP = 80;;
-const HARDWARE = 4;;
 const BYTECODE_REVISION_STR = "$Rev: __DATE__$";;
 const STD_NET_TIMEOUT = 10000;;
 const LED_TIMEOUT = 600;; // 10 minutes
@@ -65,7 +64,6 @@ proto XmppSessionRequestResource 1;;
 #include chor/interactive.mtl
 #include chor/palette.mtl
 #include chor/streaming.mtl
-#include chor/surprise.mtl
 #include chor/trame.mtl
 #include chor/info.mtl
 

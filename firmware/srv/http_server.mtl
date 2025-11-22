@@ -187,10 +187,6 @@ fun http_index=
 
 //--------------------------------------------------------------------------------------------------
 
-proto surprise 0;;
-
-//--------------------------------------------------------------------------------------------------
-
 fun filterplus s=
     let strlen s -> n in
     for i=0;i<n do if (strget s i)=='+' then strset s i 32;
@@ -285,7 +281,7 @@ fun http_get_reboot sock args=
  * Surprise action
  */
 fun http_get_surprise sock args=
-    surprise;
+    forth_interpreter WORD_SURPRISE;
     http_send_header_and_close HTTP_204 nil sock;;
 
 /**
