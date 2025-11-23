@@ -33,8 +33,14 @@ sub processThisFile
                 }
                 $linenum++;
                 if ($line =~ m/^#ifdef ([a-zA-Z0-9_-]+)/) {
-                        $ifdefLevel++;
-                        $ifdefskip[$ifdefLevel] = (! exists $defines{$1});
+                        if ($ifdefLevel > 0 && $ifdefskip[$ifdefLevel]) {
+                            # nested ifdef, inherit skip status
+                            $ifdefskip[$ifdefLevel+1] = $ifdefskip[$ifdefLevel];
+                            $ifdefLevel++;
+                        } else {
+                            $ifdefLevel++;
+                            $ifdefskip[$ifdefLevel] = (! exists $defines{$1});
+                        }
                 }
                 elsif ($line =~ m/^#ifndef ([a-zA-Z0-9_-]+)/) {
                         $ifdefLevel++;
