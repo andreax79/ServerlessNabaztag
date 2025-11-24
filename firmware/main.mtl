@@ -20,7 +20,7 @@ proto main 0;;
 // #define HTTP_DEBUG
 // #define EARS_DEBUG
 // #define XMPP_DEBUG
-// #define TRAME_DEBUG
+#define TRAME_DEBUG
 // #define AUDIOLIB_DEBUG
 // #define INTERACTIVE_DEBUG
 // #define CHOR_DEBUG
@@ -47,10 +47,12 @@ proto XmppSessionRequestResource 1;;
 #include utils/word.mtl
 #include utils/url.mtl
 #include utils/hooks.mtl
+#include utils/sleep.mtl
 #ifdef XMPP
 #include utils/b64.mtl
 #endif
 #include utils/xmlparser.mtl
+#include utils/time.mtl
 
 #include net/net.mtl
 
@@ -67,18 +69,17 @@ proto XmppSessionRequestResource 1;;
 #include chor/trame.mtl
 #include chor/info.mtl
 
-#include srv/time.mtl
 #include hw/rfid.mtl
 
 #ifdef XMPP
-#include srv/xmpp.mtl
+#include run/xmpp.mtl
 #else
 fun XmppSessionRequestResource newRes = 0 ;;
 fun XmppSessionSendButtonMsg btn withEvent eventValue = 0 ;;
 #endif
 
 #ifdef PING
-#include srv/ping.mtl
+#include run/ping.mtl
 #endif
 
 #ifdef WEBSERVER
@@ -88,7 +89,6 @@ fun XmppSessionSendButtonMsg btn withEvent eventValue = 0 ;;
 #include srv/telnet_server.mtl
 #endif
 
-#include run/sleep.mtl
 #include run/run.mtl
 #include forth/forth.mtl
 

@@ -148,8 +148,9 @@ fun forth_init_dictionary=
         [ [str:"taichi"            ] [ func:#forth_taichi      flag:FORTH_ASYNC]] ::
         [ [str:"play-url"          ] [ func:#forth_play_url ]] ::
         [ [str:"play-midi"         ] [ func:#forth_play_midi ]] ::
-        [ [str:"revision"          ] [ func:#forth_revision ]] ::
         [ [str:"gc"                ] [ func:#forth_gc ]] ::
+        [ [str:"eval-trame"        ] [ func:#forth_eval_trame]] ::
+        [ [str:"revision"          ] [ func:#forth_revision ]] ::
         // Config variables
         [ [str:"server-url"        ] [ code:{[int:FORTH_MEMORY_SERVER_URL]} ]] ::
         [ [str:"language"          ] [ code:{[int:FORTH_MEMORY_LANGUAGE]} ]] ::

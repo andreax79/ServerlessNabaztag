@@ -122,6 +122,15 @@ fun forth_play_midi f=
         midi_play_random_note;;
 
 /**
+ * EVAL-TRAME ( str -- )
+ * Evaluate a trame
+ */
+fun forth_eval_trame f=
+    let forth_pop f -> t in
+    trame_eval t.str;
+    nil;;
+
+/**
  * GC ( -- mem% )
  * Perform garbage collection and return the memory usage percentage
  */

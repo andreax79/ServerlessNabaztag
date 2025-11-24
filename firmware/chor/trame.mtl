@@ -1,5 +1,6 @@
 #include protos/trame_protos.mtl
 #include protos/palette_protos.mtl
+#include protos/info_protos.mtl
 #include protos/ping_protos.mtl
 #ifdef XMPP
 #include protos/xmpp_protos.mtl
@@ -8,6 +9,56 @@
 //--------------------------------------------------------------------------------------------------
 // Trame
 //--------------------------------------------------------------------------------------------------
+
+// A trame contains frames
+// Trame format:
+//
+// +------+-------+-------+-------+------+
+// | 0x7F | frame | frame |  ...  | 0xFF |
+// +------+-------+-------+-------+------+
+//
+// Frame format:
+//
+// +---------------+------------------+---------------------+
+// | code (1 byte) | length (3 bytes) | data (length bytes) |
+// +---------------+------------------+---------------------+
+//
+// Codes:
+// 0-11: data blocks
+// 0x03: change ping delay
+// 0x04: update info (sources, messages, ears)
+// 0x09: reboot
+// 0x0A: program
+// 0x0B: change mode (sleep/idle/interactive)
+// 0xFF: end of trame
+//
+// Set ping delay
+// +------+---------------------+
+// | 0x03 | ping delay (1 byte) |
+// +------+---------------------+
+
+// Ambient info update
+
+// Reboot
+// +------+
+// | 0x09 |
+// +------+
+
+// Program
+
+// Change mode
+// +------+------------------+
+// | 0x0B | mode (1 byte)    |
+// +------+------------------+
+// mode: 0 = wake up, 1 = sleep
+
+const TRAME_PREFIX = 0x7F;;
+const TRAME_END = 0xFF;;
+const TRAME_CODE_PING_DELAY = 0x03;;
+const TRAME_CODE_INFO_UPDATE = 0x04;;
+const TRAME_CODE_REBOOT = 0x09;;
+const TRAME_CODE_PROGRAM = 0x0A;;
+const TRAME_CODE_CHANGE_MODE = 0x0B;;
 
 // debug
 #ifdef TRAME_DEBUG
@@ -39,23 +90,30 @@ fun trame_filter_config s i0=
 
 // ---------------------------------------------------------------------------
 
-// Cryptage des trames
-fun _trame_bintoi3 s x=((strget s x)<<16)+((strget s x+1)<<8)+(strget s x+2);;
+/**
+ * Extract the frame length (3 bytes) from string s at position x
+ */
+fun _trame_extract_frame_length s x=
+    ((strget s x)<<16)+((strget s x+1)<<8)+(strget s x+2);;
 
 
-// aide pour la fonction _trame_pingextract juste en dessous
-fun _trame_pingextract_ s i res=
+// aide pour la fonction _trame_extract_frames juste en dessous
+fun _trame_extract_frame s i res=
     if i<strlen s then
-    let (strget s i)-> trame_code in
-    if trame_code==255 then res
-    else if trame_code>=0 && trame_code<=11 then
-        let _trame_bintoi3 s i+1 -> len in
-        if len>=0 then _trame_pingextract_ s i+4+len [trame_code strsub s i+4 len]::res;;
+        let (strget s i)-> trame_code in
+        if trame_code == TRAME_END
+            then res
+        else
+            if trame_code>=0 && trame_code<=11 then
+                let _trame_extract_frame_length s i+1 -> len in
+                if len>=0 then
+                    _trame_extract_frame s i+4+len [trame_code strsub s i+4 len]::res;;
 
 
 // parse la chaine s et renvoie une liste des commandes contenues dedans
-fun _trame_pingextract s=
-    if (strget s 0)==0x7f then _trame_pingextract_ s 1 nil;;
+fun _trame_extract_frames s=
+    if (strget s 0)==TRAME_PREFIX then
+        _trame_extract_frame s 1 nil;;
 
 
 fun _trame_rsc_from_program l=
@@ -158,7 +216,7 @@ fun _trame_eval_info_update_v2 data=
 #endif
                 if key == 8 then set info_messages = val
                 else if key == 0 then info_src_del val
-                else if key == 1 || key == 2 || key == 3 || key == 6 || key == 7 then info_src_update key val
+                else if key == INFO_WEATHER || key == INFO_STOCK || key == INFO_TRAFFIC || key == INFO_MAIL || key == INFO_POLLUTION then info_src_update key val
                 else if key == 4 then set newleft = val
                 else if key == 5 then set newright = val
                 else if key == 14 then set info_taichi = val
@@ -176,7 +234,7 @@ fun _trame_eval_info_update_v2 data=
 #ifdef TRAME_DEBUG
         Secho "newleft="; Iecho newleft; Secho "newright="; Iecho newright; Secho "ears_left="; Iecho ears_left; Secho "ears_right="; Iecho ears_right;
         Secho "sleep_is_sleeping="; Iecho sleep_is_sleeping; Secho "ears_resetting="; Iecho ears_resetting;
-        Secholn ""
+        Secholn "";
 #endif
         if (newleft != nil || newright != nil) && ((newleft!=ears_left) || (newright!=ears_right)) then (
             set ears_left=newleft;
@@ -187,24 +245,101 @@ fun _trame_eval_info_update_v2 data=
     );
     0;;
 
+/**
+ * Initialize a program
+ */
+fun _trame_initialize_program program=
+    set _trame_palette_selected = 0;
+    set streaming_current_program = program;
+    set chor_processing_status = 1;
+    set chor_processing_wait_status = 0;
+    _trame_check_for_palette_before program; // Permet de mettre la palette correspondante au programme, v17 (add romain)
+    // resources
+    set trame_remaining_resources=_trame_rsc_from_program program;
+    // empties the rsc cache
+    set streaming_rsc_loaded=nil;
+    let hd trame_remaining_resources -> [url _] in
+    if url==nil then (
+        // no resources to load : start the program now
+        trame_program_start;
+        0
+    ) else (
+        // will load trame_remaining_resources and then start the program 'streaming_current_program'
+#ifdef TRAME_DEBUG
+        _trame_debug "loading rsrcs...";
+#endif
+        run_set_state rscLoadNextRun;
+        0
+    );;
+
+/**
+ * Process ping delay command
+ */
+fun _trame_cmd_ping_delay val=
+#ifdef PING
+    set ping_delay = strget val 0;
+#endif
+    nil;;
+
+/**
+ * Process ambient info command
+ * Update sources, messages number and ears
+ */
+fun _trame_cmd_info_update val=
+    let ((strget val 3) == 0xFF) -> is_from_http in
+    if is_from_http then
+        // old format
+        _trame_eval_info_update strsub val 4 nil
+    else
+        // new format
+        _trame_eval_info_update_v2 strsub val 4 nil;
+    nil;;
+
+/**
+ * Process reboot command
+ */
+fun _trame_cmd_reboot val=
+    reboot 0x0407FE58 0x13fb6754;
+    nil;;
+
+/**
+ * Process program command
+ */
+fun _trame_cmd_program val=
+    uncrypt val 1 nil 0x47 47;
+#ifdef TRAME_DEBUG
+    _trame_dump_prgm trame_filter_config val 1;;
+#else
+    trame_filter_config val 1;;
+#endif
+
+/**
+ * Process change mode command
+ */
+fun _trame_cmd_change_mode val=
+    let strget val 0 -> mode in (
+#ifdef TRAME_DEBUG
+        Secho "changemode = "; Iecholn mode;
+#endif
+        if (mode == 0) then
+            sleep_wake_up nil
+        else if (mode == 1) then
+            sleep_start nil
+        else
+            nil
+    );;
+
 
 // ******************************************
 // Main function : evaluate trame
 // trames are sent back from ping and itmode
-// a trame contains frames
-// a frame can:
-// - change the ping delay (type 3)
-// - order 'reboot' (type 9)
-// - contain new service values and ear positions (type 4)
-// - contain a program (type 10)
 // In program frames, programs can contain url resources: resources are loaded and stored and then program is executed
-// Return the XMPP packet(s) to send or nil.
 
 fun trame_eval ping_trame=
-    let _trame_pingextract dump ping_trame -> frame_list in
+    let _trame_extract_frames dump ping_trame -> frame_list in
     if frame_list==nil then (
         // error, bad trame
-#ifdef TRAME_DEBUG
+#ifdef TRAME_DEBUG;
         _trame_debug "bad trame";
         dump ping_trame;
         _trame_debug "dropping";
@@ -218,100 +353,34 @@ fun trame_eval ping_trame=
             run_set_state idleRun;
             nil
         )
-    ) else (
+    ) else
         // frame_list ok
-        let nil->xmpp_packets in
         let nil->program in
         (
             for l=frame_list;l!=nil;tl l do let hd l-> [code val] in
             (
-                let (if code == 3 then (
-                    // ping delay
-#ifdef PING
-                    set ping_delay = strget val 0;
-#else
+                if code == TRAME_CODE_PING_DELAY then
+                    _trame_cmd_ping_delay val
+                else if code == TRAME_CODE_INFO_UPDATE then
+                    _trame_cmd_info_update val
+                else if code == TRAME_CODE_REBOOT then
+                    _trame_cmd_reboot val
+                else if code == TRAME_CODE_PROGRAM then (
+                    set program=_trame_cmd_program val;
+                    nil
+                ) else if code == TRAME_CODE_CHANGE_MODE then
+                    _trame_cmd_change_mode val
+                else (
 #ifdef TRAME_DEBUG
-                    _trame_debug "dropping ping delay";
-#endif
+                    Secho "Unknown code "; Iecholn code;
 #endif
                     nil
-                ) else if code == 4 then (
-                    // update sources, messages number and ears
-                    let ((strget val 3) == 0xFF) -> fromHttp in
-                    if fromHttp then (
-                        // old format
-                        _trame_eval_info_update strsub val 4 nil;
-                        nil
-                    ) else (
-                        // new format
-                        _trame_eval_info_update_v2 strsub val 4 nil;
-                        nil
-                    )
-                ) else if code == 9 then (
-                    // reboot
-                    //////// reboot 0x0407FE58 0x13fb6754;
-                    nil
-                ) else if code == 10 then (
-                    // programs (or IDLE or SLEEP)
-                    uncrypt val 1 nil 0x47 47;
-#ifdef TRAME_DEBUG
-                    set program=_trame_dump_prgm trame_filter_config val 1;
-#else
-                    set program=trame_filter_config val 1;
-#endif
-                    nil
-                ) else if code == 11 then (
-                    // change mode
-                    let strget val 0 -> mode in (
-#ifdef TRAME_DEBUG
-                        Secho "changemode = "; Iecholn mode;
-#endif
-                        if (mode == 0) then sleep_wake_up nil
-                        else if (mode == 1) then sleep_start nil
-                        else nil
-                    )
-                ) else (
-#ifdef TRAME_DEBUG
-                        Secho "Unknown code "; Iecholn code;
-#endif
-                        nil
-                )) -> xmpp_packet_list in
-                if (xmpp_packet_list != nil) then
-                    set xmpp_packets = xmpp_packet_list::xmpp_packets
-                else
-                    xmpp_packets
-            ); // for l=frame_list
-
-            // post process : a program ?
-            if program!=nil then (
-                // Initialize Program
-                set _trame_palette_selected = 0;
-                set streaming_current_program = program;
-                set chor_processing_status = 1;
-                set chor_processing_wait_status = 0;
-                _trame_check_for_palette_before program; // Permet de mettre la palette correspondante au programme, v17 (add romain)
-                // resources
-                set trame_remaining_resources=_trame_rsc_from_program program;
-                // empties the rsc cache
-                set streaming_rsc_loaded=nil;
-                let hd trame_remaining_resources -> [url _] in
-                if url==nil then (
-                    // no resources to load : start the program now
-                    trame_program_start;
-                    0
-                ) else (
-                    // will load trame_remaining_resources and then start the program 'streaming_current_program'
-#ifdef TRAME_DEBUG
-                    _trame_debug "loading rsrcs...";
-#endif
-                    run_set_state rscLoadNextRun;
-                    0
                 )
             );
-            xmpp_packets
-        ) // nil->program
-    ) // frame_list != nil
-    ;;
+            // post process : a program ?
+            if program!=nil then
+                _trame_initialize_program program
+        );;
 
 
 //*******************
