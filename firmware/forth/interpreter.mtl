@@ -4,6 +4,8 @@
  * This code is licensed under the MIT License
  */
 
+const FORTH_STRING_BUFFER_SIZE = 16;;
+
 /**
  * Create a new word for a token not found in the dictionary.
  * If the token is numeric, create an integer word.
@@ -14,6 +16,81 @@ fun forth_interpreter_new_word token quoted=
         [str:token]
     else
         forth_str_to_int nil token;;
+
+/**
+ * Process a quoted string token, handles escape sequences.
+ */
+fun _forth_process_quoted_string i=
+    set i.end = nil;
+    let FORTH_STRING_BUFFER_SIZE -> buffer_len in
+    let 0 -> token_len in
+    let strnew FORTH_STRING_BUFFER_SIZE -> buffer in (
+        set i.start = i.start + 1; // skip opening quote
+
+        for p=i.start; (p<i.text_len)&&(i.end==nil); p+1 do (
+            let strget i.input p -> ch in
+            if ch == ASCII_DOUBLE_QUOTE then (
+                // Closing quote found
+                set i.end = p
+            ) else if ch == ASCII_BACKSLASH then (  // Escape sequence
+                // Grow buffer if needed
+                if buffer_len <= (token_len + 1) then (
+                    set buffer = strcat buffer strnew FORTH_STRING_BUFFER_SIZE;
+                    set buffer_len = buffer_len + FORTH_STRING_BUFFER_SIZE
+                );
+                let strget i.input (p+1) -> next_ch in
+                if next_ch == ASCII_DOUBLE_QUOTE then ( // Escaped double quote \"
+                    strset buffer token_len ASCII_DOUBLE_QUOTE;
+                    set p = p + 1
+                ) else if next_ch == ASCII_BACKSLASH then ( // Escaped backslash \\
+                    strset buffer token_len ASCII_BACKSLASH;
+                    set p = p + 1
+                ) else if next_ch == ASCII_N then ( // Newline \n
+                    strset buffer token_len ASCII_NEWLINE;
+                    set p = p + 1
+                ) else if next_ch == ASCII_T then ( // Tab \t
+                    strset buffer token_len ASCII_TAB;
+                    set p = p + 1
+                ) else if (next_ch == ASCII_X) || (next_ch == ASCII_DOLLAR) then (
+                    // Hexadecimal escape sequence \xNN
+                    let strget i.input (p+2) -> hex1 in
+                    let strget i.input (p+3) -> hex2 in
+                    let (hex_to_int hex1) * 16 + (hex_to_int hex2) -> hex_val in
+                    strset buffer token_len hex_val;
+                    set p = p + 3
+                ) else if (next_ch >= ASCII_0) && (next_ch <= ASCII_7) then (
+                    // Octal escape sequence \NNN
+                    let strget i.input (p+1) -> oct1 in
+                    let strget i.input (p+2) -> oct2 in
+                    let strget i.input (p+3) -> oct3 in
+                    let (oct_to_int oct1) * 64 + (oct_to_int oct2) * 8 + (oct_to_int oct3) -> oct_val in
+                    strset buffer token_len oct_val;
+                    set p = p + 3
+                ) else if next_ch == ASCII_NEWLINE then ( // Escaped newline \ (line continuation)
+                    // skip both characters
+                    set p = p + 1;
+                    set token_len = token_len - 1
+                ) else (
+                    strset buffer token_len ASCII_BACKSLASH;  // keep the backslash
+                    nil
+                );
+                set token_len = token_len + 1
+            ) else (  // Regular character
+                // Grow buffer if needed
+                if buffer_len <= (token_len + 1) then (
+                    set buffer = strcat buffer strnew FORTH_STRING_BUFFER_SIZE;
+                    set buffer_len = buffer_len + FORTH_STRING_BUFFER_SIZE
+                );
+                strset buffer token_len ch;
+                set token_len = token_len + 1
+            )
+        );
+        if i.end == nil then set i.end = i.text_len; // if not found, go to end of text
+        set i.token = strsub buffer 0 token_len;
+        set i.start = i.end + 2; // skip closing quote and following space
+        set i.quoted = 1
+    )
+    ;;
 
 /**
  * Extract the next token from the input text.
@@ -32,12 +109,7 @@ fun forth_interpreter_get_token f=
         while (i.start < i.end) && ((strget i.input i.start) == ASCII_SPACE) do set i.start = i.start + 1;
         let strget i.input i.start -> ch in
         if ch == ASCII_DOUBLE_QUOTE then ( // Handle quoted strings
-            set i.start = i.start + 1; // skip opening quote
-            set i.end = strstr i.input "\"" i.start; // find closing quote
-            if i.end == nil then set i.end = i.text_len; // if not found, go to end of text
-            set i.token = strsub i.input i.start (i.end-i.start);
-            set i.start = i.end + 2; // skip closing quote and following space
-            set i.quoted = 1
+            _forth_process_quoted_string i
         ) else if ch == ASCII_BACKSLASH then ( // Comment - skip to end of line
             set i.end = if i.end_ln != nil then i.end_ln else i.text_len;
             set i.start = i.end + 1;

@@ -140,21 +140,31 @@ fun _webmac key i=
 	if i<strlen key then (ctoh strget key i)::_webmac key i+1;;
 fun webmac key=strcatlist _webmac key 0;;
 
-
-fun AsciiToInt asccode =
+/**
+ * Convert a hex ascii code to integer
+ */
+fun hex_to_int asccode =
 	if asccode <= 57 then // '9' /
 		asccode - 48 // '0'
 	else if asccode <= 70 then // 'F'
 		asccode - 55 // 'F' - 15
-	else asccode - 87 // 'f' - 15
-;;
+	else
+        asccode - 87;; // 'f' - 15
 
-fun IntToAscii intval =
+/**
+ * Convert an integer (0-15) to hex ascii code
+ */
+fun int_to_hex intval =
 	if intval < 10 then
 		intval + 48	// '0'
 	else
-		intval + 87	// 'f' - 15
-;;
+		intval + 87;; // 'f' - 15
+
+/**
+ * Convert an octal ascii code to integer
+ */
+fun oct_to_int asccode =
+    asccode - 48;; // '0'
 
 fun XorHexStr str1 str2 =
 	let strlen str1 -> length in
@@ -162,9 +172,9 @@ fun XorHexStr str1 str2 =
 	for i=0; i<length do (
         		let strget str1 i -> ch1 in
 			let strget str2 i -> ch2 in
-			let AsciiToInt ch1 -> int1 in
-			let AsciiToInt ch2 -> int2 in
-			let IntToAscii (int1 ^ int2) -> intval in (
+			let hex_to_int ch1 -> int1 in
+			let hex_to_int ch2 -> int2 in
+			let int_to_hex (int1 ^ int2) -> intval in (
         			strset result i intval
 			)
 	);
