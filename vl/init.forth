@@ -1,6 +1,18 @@
 : between ( n low high -- flag )
 >r over r> <= >r >= r> and ;
 
+: 2drop ( x1 x2 -- )
+drop drop ;
+
+: 2dup ( x1 x2 -- x1 x2 x1 x2 )
+over over ;
+
+: 2over ( x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2 )
+3 pick 3 pick ;
+
+: 2swap ( x1 x2 x3 x4 -- x3 x4 x1 x2 )
+rot >r rot r> ;
+
 : load-srv ( filename -- )
 \ load a forth file from the server
 >r nil server-url @ :: "/" :: r> :: str-join http-get
@@ -40,6 +52,7 @@ utc>string . cr ;
 "telnet.forth" load-srv
 "crontab.forth" load-srv
 \ "palette.forth" load-srv
+\ "choreography.forth" load-srv
 
 : on-connect ( -- )
 "interpreter" 23 "telnet" tcp-listen  \ start telnet server

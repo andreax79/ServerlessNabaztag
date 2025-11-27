@@ -45,6 +45,23 @@ fun forth_rpop f=
     );;
 
 /**
+ * Push a value onto the compiler stack
+ */
+fun forth_cpush f x=
+    set f.cstack = x :: f.cstack;
+    nil;;
+
+/**
+ * Pop a value from the compiler stack
+ */
+fun forth_cpop f=
+    if f.cstack==nil then nil
+    else let hd f.cstack -> head in (
+        set f.cstack = tl f.cstack;
+        head
+    );;
+
+/**
  * DUP ( n -- n n )
  * Duplicate top of stack
  */
@@ -136,6 +153,14 @@ fun forth_qdup f=
         if v.int!=0 then forth_push f v;;
 
 /**
+ * DEPTH ( -- count )
+ * Count number of items on stack
+ */
+fun forth_depth f=
+    let listlen f.stack -> l in
+    forth_push f [int:l];;
+
+/**
  * >R ( x -- ) ( R: -- x )
  * Move top item to ‘return stack” for temporary storage
  */
@@ -163,10 +188,42 @@ fun forth_r_fetch f=
     nil;;
 
 /**
- * DEPTH ( -- count )
- * Count number of items on stack
+ * RDROP ( n --  )
+ * Discard top of return stack
  */
-fun forth_depth f=
-    let listlen f.stack -> l in
-    forth_push f [int:l];;
+fun forth_rdrop f=
+    set f.rstack = tl f.rstack;
+    nil;;
 
+/**
+ * 2>R ( x1 x2 -- ) ( R: -- x1 x2 )
+ * Move two items to return stack
+ */
+fun forth_two_to_r f=
+    let forth_pop f -> a in
+    let forth_pop f -> b in (
+        forth_rpush f b;
+        forth_rpush f a
+    );;
+
+/**
+ * 2R> ( -- x1 x2 ) ( r: x1 x2 -- )
+ * Retrieve two items from return stack
+ */
+fun forth_two_r_from f=
+    let forth_rpop f -> a in
+    let forth_rpop f -> b in (
+        forth_push f b;
+        forth_push f a
+    );;
+
+/**
+ * 2R@ ( -- x1 x2 ) ( r: x1 x2 -- x1 x2 )
+ * Copy two items from return stack to data stack
+ */
+fun forth_two_r_fetch f=
+    let hd f.rstack -> a in
+    let hd tl f.rstack -> b in (
+        forth_push f b;
+        forth_push f a
+    );;

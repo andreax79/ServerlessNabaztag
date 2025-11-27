@@ -13,6 +13,7 @@
 
 #ifdef FORTH_DEBUG
 fun _forth_debug str= Secho strcatlist "[forth] " :: str :: nil; nil;;
+proto forth_print_word 1;;
 #endif
 
 type Interpreter=[
@@ -62,16 +63,17 @@ fun forth_word_list_to_array words =
     );;
 
 #ifdef FORTH_DEBUG
+fun forth_debug_word w=
+    if w.func!=nil then strcat "[func] " w.str
+    else if w.code!=nil then "[code]"
+    else if w.int != nil then strcat "[int]  " itoa w.int
+    else if w.str != nil then strcat "[str]  " w.str
+    else if w.list != nil then strcat "[list] #" itoa listlen w.list
+    else if w.dict != nil then strcat "[dict] #" itoa listlen w.dict
+    else "[nil]";;
+
 fun forth_print_word w=
-    if w.int != nil then (Iecholn w.int; 0)
-    else if w.str != nil then (Secho w.str; Secholn " [str]"; 0)
-    else (
-    Secho w.name; Secho " [";
-    if w.func!=nil then (Secho "func"; 0)
-    else if w.code!=nil then (Secho "code"; 0)
-    else (Secho "int "; Iecho w.int; 0);
-    Secholn "]"; 0
-    );;
+    Secholn forth_debug_word w;;
 #endif
 
 /**
@@ -98,7 +100,8 @@ fun forth_execute_code f code=
         while (code != nil) && (f.pc != nil) && (f.pc < (tablen code)) && (flag != FORTH_ASYNC) do
             let code.(f.pc) -> word in (
 #ifdef FORTH_DEBUG
-                _forth_debug "pc: "; Iecho f.pc; Secho " word: "; forth_print_word word;
+                _forth_debug "pc: "; Iecho f.pc; Secho " "; Secho forth_debug_word word;
+                Secho "  ["; Secho forth_list_to_str f.stack " "; Secholn "]";
 #endif
                 set f.pc = f.pc + 1;
                 set flag = word.flag;
@@ -184,6 +187,24 @@ fun forth_init=
 // ";;
 // const FORTH_TEST = ": bla begin dup . 1 - dup 0 = until ; 5 bla \"ciao\" emit";;
 // const FORTH_TEST = "server-url :: \"/init.forth\" str-join http-get .";;
+// const FORTH_TEST = ": bla begin dup . 1 - dup 0 = until ; 5 bla \"ciao\" emit";;
+//
+// const FORTH_TEST = "
+// : cs1
+// CASE
+//   1 OF 111 ENDOF
+//   2 OF 222 ENDOF
+//   3 OF 333 ENDOF
+//        999
+// ENDCASE
+// ;
+//
+// 1 cs1 . cr
+// 2 cs1 . cr
+// 3 cs1 . cr
+// 4 cs1 . cr
+// 0 cs1 . cr
+// " ;;
 //
 // fun _forth_test_cb f cb_args=
 //     Secholn "_forth_test_cb";
@@ -195,6 +216,7 @@ fun forth_init=
 //     // Avoid compiler error
 //     let cb_args -> [cnx sock] in 0;;
 //
-// fun forth_test=
+//
+// fun main=
 //     forth_interpreter_ex FORTH_TEST nil nil nil (fixarg2 #_forth_test_cb [nil nil]);
 //     reboot 0x0407FE58 0x13fb6754;;

@@ -20,10 +20,14 @@ fun forth_init_dictionary=
         [ [str: "tuck"             ] [func:#forth_tuck]] ::
         //[str: [ name:"roll"      ] [func:#forth_roll]] ::
         [ [str: "?dup"             ] [func:#forth_qdup]] ::
+        [ [str: "depth"            ] [func:#forth_depth]] ::
         [ [str: ">r"               ] [func:#forth_to_r]] ::
         [ [str: "r>"               ] [func:#forth_r_from]] ::
         [ [str: "r@"               ] [func:#forth_r_fetch]] ::
-        [ [str: "depth"            ] [func:#forth_depth]] ::
+        [ [str: "rdrop"            ] [func:#forth_rdrop]] ::
+        [ [str: "2>r"              ] [func:#forth_two_to_r]] ::
+        [ [str: "2r>"              ] [func:#forth_two_r_from]] ::
+        [ [str: "2r@"              ] [func:#forth_two_r_fetch]] ::
         // Comparison
         [ [str: "<"                ] [func:#forth_less]] ::
         [ [str: "<="               ] [func:#forth_less_eq]] ::
@@ -105,6 +109,10 @@ fun forth_init_dictionary=
         [ [str: "?jmp"             ] [ func:#forth_qjmp ]] ::
         [ [str: "abort"            ] [ func:#forth_abort ]] ::
         [ [str: "exit"             ] [ func:#forth_exit ]] ::
+        [ [str: "case"             ] [ func:#forth_case        flag:FORTH_IMMEDIATE]] ::
+        [ [str: "endcase"          ] [ func:#forth_endcase     flag:FORTH_IMMEDIATE]] ::
+        [ [str: "of"               ] [ func:#forth_of          flag:FORTH_IMMEDIATE]] ::
+        [ [str: "endof"            ] [ func:#forth_endof       flag:FORTH_IMMEDIATE]] ::
         // Misc
         [ [str: ":"                ] [ func:#forth_colon]] ::
         [ [str: ";"                ] [ func:#forth_semi        flag:FORTH_IMMEDIATE]] ::
@@ -171,6 +179,12 @@ fun forth_init_dictionary=
         [ [str:"info-pollution"    ] [ code:{[int:FORTH_MEMORY_INFO_POLLUTION]} ]] ::
         nil -> d in
             set forth_dictionary = [dict:d];
+#ifdef FORTH_DEBUG
+    // For debug purposes, copy the dictionary words into cells
+    for p=forth_dictionary.dict; p!=nil; tl p do
+        let hd p -> [k v] in
+            set v.str = k.str;
+#endif
     0;;
 
 /**

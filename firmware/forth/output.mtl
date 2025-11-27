@@ -39,7 +39,7 @@ fun forth_word_fmt cell=
     else "?";;
 
 /**
- * Format a stack of words to a string
+ * Format a list of words to a string
  */
 fun forth_list_to_str list separator=
     let nil -> t in (
