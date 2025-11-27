@@ -4,6 +4,10 @@
  * This code is licensed under the MIT License
  */
 
+const FORTH_IF_PLACEHOLDER = -1000;;
+const FORTH_CASE_PLACEHOLDER = -1001;;
+const FORTH_OF_PLACEHOLDER = -1002;;
+
 /**
  * ABORT ( i * x -- ) ( R: j * x -- )
  * Empty the data stack and the return stack
@@ -101,7 +105,7 @@ fun forth_if f=
         let listlen f.cstack -> current_pos in
             set f.rstack = [int:current_pos+1] :: f.rstack;
         // Compile a placeholder for the conditional jump
-        set f.cstack = [func:#forth_qjmp] :: [int:-1] :: f.cstack;
+        set f.cstack = [func:#forth_qjmp] :: [int:FORTH_IF_PLACEHOLDER] :: f.cstack;
         0
     );;
 
@@ -120,7 +124,7 @@ fun forth_else f=
         let listlen f.cstack -> current_pos in
         let (listnth f.cstack (current_pos - jmp_addr.int)) -> jmp_addr_w in (
             // Check the else_pos of the else position
-            if (jmp_addr == nil) || (jmp_addr_w.int != -1) then (
+            if (jmp_addr == nil) || (jmp_addr_w.int != FORTH_IF_PLACEHOLDER) then (
                 forth_abort_msg f "ELSE without matching IF"
             ) else (
                 // Pop the address from the return stack
@@ -128,7 +132,7 @@ fun forth_else f=
                 // Push the jump address position onto the return stack
                 set f.rstack = [int:current_pos+1] :: f.rstack;
                 // Compile an unconditional jump
-                set f.cstack = [func:#forth_jmp] :: [int:-1] :: f.cstack;
+                set f.cstack = [func:#forth_jmp] :: [int:FORTH_IF_PLACEHOLDER] :: f.cstack;
                 // Update the placeholder for the conditional jump to point to the instruction after the JMP
                 set jmp_addr_w.int = current_pos + 2;
                 0
@@ -150,7 +154,7 @@ fun forth_then f=
         let listlen f.cstack -> current_pos in
         let (listnth f.cstack (current_pos - jmp_addr.int)) -> jmp_addr_w in (
             // Check the else_pos of the else position
-            if (jmp_addr == nil) || (jmp_addr_w.int != -1) then (
+            if (jmp_addr == nil) || (jmp_addr_w.int != FORTH_IF_PLACEHOLDER) then (
                 forth_abort_msg f "THEN without matching IF"
             ) else (
                 // Pop the address from the return stack
@@ -160,4 +164,95 @@ fun forth_then f=
                 0
             )
         )
+    );;
+
+/**
+ * CASE (immediate)  ( -- )
+ * Begin a case statement
+ */
+fun forth_case f=
+    if f.state != FORTH_STATE_COMPILATION then (
+        forth_abort_msg f "CASE Compile mode only"
+    ) else (
+        // Compile "-1001 >r >r"
+        forth_cpush f [int:FORTH_CASE_PLACEHOLDER]; // placeholder for the jump address
+        forth_rpush f [int:(listlen f.cstack)]; // push the placeholder position onto the return stack
+        forth_cpush f [func:#forth_to_r str:">r"]; // push the placeholder to return stack
+        forth_cpush f [func:#forth_to_r str:">r"]; // push the test value to return stack
+        // forth_interpreter_ex ">r >r" f nil nil nil;
+        // set f.istack = tl f.istack;
+        nil
+    );;
+
+/**
+ * OF (immediate)  ( value -- )
+ * Begin a case option
+ */
+fun forth_of f=
+    if f.state != FORTH_STATE_COMPILATION then (
+        forth_abort_msg f "OF Compile mode only"
+    ) else (
+        // Compile "r@ = -1002 ?jmp"
+        forth_cpush f [func:#forth_r_fetch str:"r@"]; // fetch the case value
+        forth_cpush f [func:#forth_eq str:"="]; // compare case value
+        forth_cpush f [int:FORTH_OF_PLACEHOLDER]; // placeholder for the jump address
+        forth_rpush f [int:(listlen f.cstack)]; // push the placeholder position onto the return stack
+        forth_cpush f [func:#forth_qjmp str:"?jmp"]; // conditional jump if not zero
+        nil
+    );;
+
+/**
+ * ENDOF (immediate)  ( -- )
+ * End a case option
+ */
+fun forth_endof f=
+    if f.state != FORTH_STATE_COMPILATION then (
+        forth_abort_msg f "ENDOF Compile mode only"
+    ) else (
+        // Get the position of the ?JMP address from the return stack
+        let hd f.rstack -> jmp_addr in
+        let listlen f.cstack -> current_pos in
+        let (listnth f.cstack (current_pos - jmp_addr.int)) -> jmp_addr_w in (
+            // Check the position
+            if jmp_addr_w.int != FORTH_OF_PLACEHOLDER then (
+                forth_abort_msg f "ENDOF without matching OF"
+            ) else (
+                // Pop the address from the return stack
+                set f.rstack = tl f.rstack;
+                // Compile "r> r> swap >r jmp"
+                forth_cpush f [func:#forth_r_from str:"r>"]; // retrieve the test value from return stack
+                forth_cpush f [func:#forth_r_from str:"r>"]; // retrieve the return address from return stack
+                forth_cpush f [func:#forth_swap str:"swap"]; // swap to have the test value on top
+                forth_cpush f [func:#forth_to_r str:">r"]; // push the test value to return stack
+                forth_cpush f [func:#forth_jmp str:"jmp"]; // jump to the address
+                set jmp_addr_w.int = listlen f.cstack;  // update the placeholder for the conditional jump after endof
+                0
+            )
+        )
+    );;
+
+/**
+ * ENDCASE (immediate)  ( -- )
+ * End a case statement
+ */
+fun forth_endcase f=
+    if f.state != FORTH_STATE_COMPILATION then (
+        forth_abort_msg f "ENDCASE Compile mode only"
+    ) else (
+        // Pop the case address from the return stack
+        let hd f.rstack -> case_start in
+        let listlen f.cstack -> current_pos in
+        let (listnth f.cstack (current_pos - case_start.int)) -> case_start_w in
+            if case_start_w.int != FORTH_CASE_PLACEHOLDER then (
+                forth_abort_msg f "ENDCASE without matching CASE"
+            ) else (
+                // Update the placeholder
+                set case_start_w.int = current_pos;
+                // Pop the address from the return stack
+                set f.rstack = tl f.rstack;
+                // Compile "rdrop"
+                forth_cpush f [func:#forth_rdrop str:"rdrop"];
+                0
+            );
+        nil
     );;
