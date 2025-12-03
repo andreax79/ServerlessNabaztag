@@ -32,7 +32,7 @@ fun forth_wake_up f=
  * Return the current position of the left ear
  */
 fun forth_left_ear_position f=
-    forth_push f [int:ears_left];;
+    forth_push f [int:ears_target_position.EARS_LEFT];;
 
 /**
  * MOVE-LEFT-EAR ( dir pos -- )
@@ -49,7 +49,7 @@ fun forth_move_left_ear f=
  * Return the current position of the right ear
  */
 fun forth_right_ear_position f=
-    forth_push f [int:ears_right];;
+    forth_push f [int:ears_target_position.EARS_RIGHT];;
 
 /**
  * MOVE-RIGHT-EAR ( dir pos -- )

@@ -45,8 +45,8 @@ fun runidlewait=
 	(
 		ears_start_detect;
 		leds_turn_off;
-		ears_go EARS_LEFT ears_left 0;
-		ears_go EARS_RIGHT ears_right 0;
+		ears_go EARS_LEFT ears_target_position.EARS_LEFT 0;
+		ears_go EARS_RIGHT ears_target_position.EARS_RIGHT 0;
 		run_set_state stdWaitRun time+ping_delay
 	);
 	0;;

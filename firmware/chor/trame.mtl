@@ -186,9 +186,9 @@ fun _trame_eval_info_update data=
         if len > 17 then
         let strget data 16 -> newleft in
         let strget data 17 -> newright in
-        if (newleft != nil || newright != nil) && ((newleft!=ears_left) || (newright!=ears_right)) then (
-            set ears_left=newleft;
-            set ears_right=newright;
+        if (newleft != nil || newright != nil) && ((newleft!=ears_target_position.EARS_LEFT) || (newright!=ears_target_position.EARS_RIGHT)) then (
+            set ears_target_position.EARS_LEFT=newleft;
+            set ears_target_position.EARS_RIGHT=newright;
             if ((!sleep_is_sleeping) && (!ears_resetting)) then (
                 midi_play MIDI_COMMUNION;
                 ears_go_to_ref_pos
@@ -232,13 +232,13 @@ fun _trame_eval_info_update_v2 data=
         );
         // process ears
 #ifdef TRAME_DEBUG
-        Secho "newleft="; Iecho newleft; Secho "newright="; Iecho newright; Secho "ears_left="; Iecho ears_left; Secho "ears_right="; Iecho ears_right;
+        Secho "newleft="; Iecho newleft; Secho "newright="; Iecho newright; Secho "ears_left="; Iecho ears_target_position.EARS_LEFT; Secho "ears_right="; Iecho ears_target_position.EARS_RIGHT;
         Secho "sleep_is_sleeping="; Iecho sleep_is_sleeping; Secho "ears_resetting="; Iecho ears_resetting;
         Secholn "";
 #endif
-        if (newleft != nil || newright != nil) && ((newleft!=ears_left) || (newright!=ears_right)) then (
-            set ears_left=newleft;
-            set ears_right=newright;
+        if (newleft != nil || newright != nil) && ((newleft!=ears_target_position.EARS_LEFT) || (newright!=ears_target_position.EARS_RIGHT)) then (
+            set ears_target_position.EARS_LEFT=newleft;
+            set ears_target_position.EARS_RIGHT=newright;
             if ((!sleep_is_sleeping) && (!ears_resetting)) then
                 ears_go_to_ref_pos
         )
