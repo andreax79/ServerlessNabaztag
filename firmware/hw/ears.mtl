@@ -372,12 +372,12 @@ fun ears_go_to_ref_pos=
 	_ears_debug "ears_go_to_ref_pos";
 #endif
 	if (ears_left != nil || ears_right != nil) then (
-		ears_go 0 ears_left EARS_DIR_LEFT;
-		ears_go 1 ears_right EARS_DIR_RIGHT;
+		ears_go EARS_LEFT ears_left EARS_DIR_LEFT;
+		ears_go EARS_RIGHT ears_right EARS_DIR_RIGHT;
 		set ears_left = set ears_right = nil
 	) else (
-		ears_go 0 0 0;
-		ears_go 1 0 0
+		ears_go EARS_LEFT 0 0;
+		ears_go EARS_RIGHT 0 0
 	);;
 
 fun ears_ready=

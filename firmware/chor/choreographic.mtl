@@ -1,205 +1,359 @@
 #include protos/chor_protos.mtl
 #include protos/palette_protos.mtl
 #include protos/info_protos.mtl
+#include protos/forth_protos.mtl
 #include protos/sleep_protos.mtl
 
 //--------------------------------------------------------------------------------------------------
 // Choregraphies
 //--------------------------------------------------------------------------------------------------
 
-var chor_data;;
-var chor_index;;
-var chor_timescale;;
-var chor_next_time;;
-var chor_random;;  // for taichi
-var chor_motor_dir;; // tuple (left_dir right_dir)
-var chor_end_cb=nil;; // the callback to call in the end of the chor
-var chor_paused_dur;; // can be paused during buffering
-var chor_paused;;
-var chor_paused_since;;
+var _chor_data;;
+var _chor_index;;
+var _chor_timescale;;
+var _chor_next_ms;;
+var _chor_test_value;;  // for taichi
+var _chor_motor_dir;; // tuple (left_dir right_dir)
+var _chor_end_cb=nil;; // the callback to call in the end of the chor
+var _chro_paused_ms;; // can be paused during buffering
+var _chor_paused;;
+var _chor_paused_since;;
 // R=60*((rand&127)+64)) => 64 à 196 mn
 // donc si x=30, (x*R)>>7 => 15 à 45 mn
 // donc si x=40, (x*R)>>7 => 20 à 61 mn
 // donc si x=80, (x*R)>>7 => 40 à 122 mn
 // donc si x=216, (x*R)>>7 => 108 à 330 mn
 // donc si x=255, (x*R)>>7 => 127 à 390 mn, soit 2 à 6,5h
-var chor_next_taichi;;
 
-fun chor_start_msg chor cb i0=
-    set chor_end_cb = cb;
-    set chor_data=strcatlist chor;
-    set chor_index=4+1;  // on saute le header et la première attente
-    set chor_timescale=0;
-    set chor_next_time=time_ms;
-    set chor_paused_dur = 0;
-    set chor_paused_since = nil;
-    set chor_paused= 0;
+/**
+ * Start a choreography
+ * chor_data: the choreography data
+ * cb: the callback to call at the end of the choreography (can be nil)
+ * cb_args: arguments to pass to the callback
+ */
+fun chor_start_ex chor_data cb cb_args=
+    set _chor_end_cb = cb;
+    set _chor_data=chor_data;
+    set _chor_index=4+1;  // on saute le header et la première attente
+    set _chor_timescale=0;
+    set _chor_next_ms=time_ms;
+    set _chro_paused_ms = 0;
+    set _chor_paused_since = nil;
+    set _chor_paused= 0;
     leds_turn_off; // shut off all leds at start (or should it be in the chor ?)
-    run_set_state chorCmdRun i0;
+    run_set_state chorCmdRun cb_args;
     0;;
 
-fun chor_end_msg i0=
-    set chor_next_time=nil;
+/**
+ * Start a list of choreographies
+ * chor_list: the list of choreography data
+ * cb: the callback to call at the end of the choreography (can be nil)
+ * cb_args: arguments to pass to the callback
+ */
+fun chor_start_list chor_list cb cb_args=
+    chor_start_ex (strcatlist chor_list) cb cb_args;;
+
+/**
+ * Callback called at the end of a choreography
+ * cb: the callback to call at the end of the choreography (can be nil)
+ */
+fun chor_end_cb unused cb=
+    set chor_processing_status = 0;
+    ears_set_wait_and_detect_mode;
+    run_set_state idleRun;
+    if cb != nil then call cb [];
+    0;;
+
+/**
+ * Start a choreography with a callback restoring the state to idle
+ * chor_data: the choreography data
+ * cb: the callback to call at the end of the choreography (can be nil)
+ * cb_args: arguments to pass to the callback
+ */
+fun chor_start chor_data cb cb_args=
+    set _chor_test_value=((rand & 255) * 30) >> 8;
+    set _chor_motor_dir={0 0};
+    ears_set_wait_only_mode;
+    set chor_processing_status = 1; // block all trames during taichi
+    chor_start_ex chor_data (fixarg2 #chor_end_cb cb) cb_args;
+    0;;
+
+/**
+ * End the current choreography
+ * cb_args: arguments to pass to the callback
+ */
+fun _chor_end cb_args=
+    set _chor_next_ms=nil;
     // call the callback
-    if (chor_end_cb != nil) then call chor_end_cb [i0];
+    if (_chor_end_cb != nil) then
+        call _chor_end_cb [cb_args];
     0;;
 
 fun chor_run_cmd i0=
-    //  Secho "chor_run_cmd i:";Iecho chor_index; Secho " t:";Iecholn chor_next_time;
-    // Manage buffering and pauses
+    //  Secho "chor_run_cmd i:";Iecho _chor_index; Secho " t:";Iecholn _chor_next_ms;
 
-    if (!chor_paused && audiolib_wav_buffering) then (
+    // Manage buffering and pauses
+    if (!_chor_paused && audiolib_wav_buffering) then (
         // start pause
-        set chor_paused_since = time_ms;
-        set chor_paused = 1
-    ) else if (chor_paused && !audiolib_wav_buffering) then (
+        set _chor_paused_since = time_ms;
+        set _chor_paused = 1
+    ) else if (_chor_paused && !audiolib_wav_buffering) then (
         // end pause
-        set chor_paused = 0;
-        // increment paused_dur
-        set chor_paused_dur = chor_paused_dur + (time_ms - chor_paused_since)
+        set _chor_paused = 0;
+        // increment _chor_paused_ms
+        set _chro_paused_ms = _chro_paused_ms + (time_ms - _chor_paused_since)
     );
 
-    if (!chor_paused) then
-    if time_ms-chor_paused_dur >= chor_next_time then
+    if (!_chor_paused) && (time_ms-_chro_paused_ms >= _chor_next_ms) then
     (
-        if chor_index>=strlen chor_data then chor_end_msg i0
-        else let strget chor_data chor_index -> code in
-        set chor_index=chor_index+2+
+        if _chor_index>=strlen _chor_data then _chor_end i0
+        else let strget _chor_data _chor_index -> code in
+        set _chor_index=_chor_index+2+
         if code==CH_FRAME_DURATION then
         (
-            set chor_timescale=10*strget chor_data chor_index+1;
+            // Set frame duration
+            set _chor_timescale=10*strget _chor_data _chor_index+1;
             1   //nb de paramètres
         )
         else if code==CH_SET_MOTOR then
         (
-            ears_go (strget chor_data chor_index+1) (strget chor_data chor_index+2) (strget chor_data chor_index+3);
+            // Absolute position of one ear
+            let (strget _chor_data _chor_index+1) -> ear in
+            let (strget _chor_data _chor_index+2) -> pos in
+            let (strget _chor_data _chor_index+3) -> dir in
+            ears_go ear pos dir;
             3
         )
         else if code==CH_SET_LED_COLOR then
         (
-//          Secho "set_led_color ";
-            //led 4-strget chor_data chor_index+1 ((strget chor_data chor_index+2)<<16)+((strget chor_data chor_index+3)<<8)+(strget chor_data chor_index+4); // v16 start
-            let 4-strget chor_data chor_index+1 -> iled in
-            let strget chor_data chor_index+2 -> ired in
-            let strget chor_data chor_index+3 -> igreen in
-            let strget chor_data chor_index+4 -> iblue in
-            (
-                //Iecho iled; Secho ",r=";Iecho ired; Secho ",g=";Iecho igreen; Secho ",b=";Iecho iblue; Secholn ".";
-                led iled (ired<<16)+(igreen<<8)+iblue
-            ); // v16 end
+            // Change color of one LED
+            let 4-strget _chor_data _chor_index+1 -> iled in
+            let strget _chor_data _chor_index+2 -> ired in
+            let strget _chor_data _chor_index+3 -> igreen in
+            let strget _chor_data _chor_index+4 -> iblue in
+            led iled (ired<<16)+(igreen<<8)+iblue;
             6
         )
-        else if code==CH_SET_LEDS_COLOR then // v16 start
+        else if code==CH_SET_LEDS_COLOR then
         (
-            //Secho "set_leds_color ";
-            let strget chor_data chor_index+1 -> ired in
-            let strget chor_data chor_index+2 -> igreen in
-            let strget chor_data chor_index+3 -> iblue in
+            // Change color of all LEDs
+            let strget _chor_data _chor_index+1 -> ired in
+            let strget _chor_data _chor_index+2 -> igreen in
+            let strget _chor_data _chor_index+3 -> iblue in
             let (ired<<16)+(igreen<<8)+iblue -> col in
-            (
-                //Secho "leds "; Secho ",r=";Iecho ired; Secho ",g=";Iecho igreen; Secho ",b=";Iecho iblue; Secholn ".";
-                leds_set_all col
-            );
+            leds_set_all col;
             3
-        ) // v16 end
+        )
         else if code==CH_SET_LED_PALETTE then
         (
-//          Secholn "set_led_palette ";
-            led 4-strget chor_data chor_index+1 palette_current.(7&strget chor_data chor_index+2);
+            // Set one LED to a color from the current palette
+            let 4-strget _chor_data _chor_index+1 -> iled in
+            let 7&strget _chor_data _chor_index+2 -> pindex in
+            led iled palette_current.pindex;
             2
         )
-        // v17
-        else if code== CH_SET_LED_OFF then
+        else if code==CH_SET_LED_OFF then
         (
-            //Secholn "CH_SET_LED_OFF ";
-            led 4-strget chor_data chor_index+1 0;
+            // Turn off one LED
+            let 4-strget _chor_data _chor_index+1 -> iled in
+            led iled 0;
             1
         )
         else if code==CH_RAND_MIDI then
         (
-            //Secholn "randmidi";
+            // Play a random midi note
             midi_play_random_note;
             0
         )
         else if code==CH_AVANCE then
         (
-            //Secholn "avance";
-            let (strget chor_data chor_index+1) -> motor in // v16 start
-            let (strget chor_data chor_index+2) -> delta in
-            let chor_motor_dir.motor -> dir in
+            // Move ear by delta
+            let (strget _chor_data _chor_index+1) -> motor in
+            let (strget _chor_data _chor_index+2) -> delta in
+            let _chor_motor_dir.motor -> dir in
             ears_go motor (ears_target motor)+if dir then -delta else delta dir;
             2
         )
         else if code==CH_SET_MOTOR_DIR then
         (
-            //Secholn "setmotordir";
-            let (strget chor_data chor_index+1) -> motor in
-            let (strget chor_data chor_index+2) -> dir in
-            set chor_motor_dir=
-            if  motor == 0 then {dir chor_motor_dir.1} else {chor_motor_dir.0 dir}; // v16 end
+            // Set ear direction
+            let (strget _chor_data _chor_index+1) -> motor in
+            let (strget _chor_data _chor_index+2) -> dir in
+            set _chor_motor_dir=if motor == 0 then {dir _chor_motor_dir.1} else {_chor_motor_dir.0 dir};
             2
         )
         else if code==CH_IFNE then
         (
-            //Secho "ifne ";Iecholn chor_random;
-            if chor_random==(Iecholn strget chor_data chor_index+1) then 3
-            else 3+((strget chor_data chor_index+2)<<8)+(strget chor_data chor_index+3)
+            // Jump if not equal (relative jump)
+            let strget _chor_data _chor_index+1 -> test_value in
+            let strget _chor_data _chor_index+2 -> hi in
+            let strget _chor_data _chor_index+3 -> lo in
+            let ((hi<<8)+lo) -> _chor_index_offset in
+            if _chor_test_value==test_value then 3
+            else 3+_chor_index_offset
         )
         else if code==CH_ATTEND then
         (
-            //Secholn "attend";
+            // Wait for ears and audio to finish
             if ears_finished_moving && audiolib_wav_running==0 then 0
             else -2
         )
         else
         (
-            chor_end_msg i0;
+            _chor_end i0;
             0
         );
-        if chor_next_time!=nil then
+        if _chor_next_ms!=nil then
         (
-            set chor_next_time=chor_next_time+(strget chor_data chor_index-1)*chor_timescale;
+            set _chor_next_ms=_chor_next_ms+(strget _chor_data _chor_index-1)*_chor_timescale;
             chor_run_cmd i0
         )
     );;
 
-/**
- * Callback called at the end of a TaiChi choreography
- * cb: the callback to call at the end of the choreography (can be nil)
- */
-fun chor_taichi_end_cb unused cb=
-    set chor_processing_status = 0;
-    ears_set_wait_and_detect_mode;
-    run_set_state idleRun;
-#ifdef CHOR_DEBUG
-    Secholn "taichi end";
-#endif
-    if cb != nil then call cb [];
-    0;;
-
-/**
- * Start a TaiChi choreography
- */
-fun chor_taichi_start cb=
-    set chor_random=((rand & 255) * 30) >> 8;
-    set chor_motor_dir={0 0};
-    ears_set_wait_only_mode;
-    set chor_processing_status = 1; // block all trames during taichi
-    chor_start_msg CHOR_TAICHI::nil (fixarg2 #chor_taichi_end_cb cb) nil;
-    0;;
-
-fun chor_do_taichi_now=
-    if info_taichi && (info_taichi != nil) && (!sleep_is_sleeping) then let (if chor_next_taichi!=nil then (time>chor_next_taichi) else 0) -> now in (
-        if now || chor_next_taichi==nil then // compute chor_next_taichi
-        let if (info_taichi == 40) then 255 else if (info_taichi == 255) then 40 else 80 -> correctedTaichi in // etait inversé
-        let ((correctedTaichi*60*((rand&127)+64))>>7) -> delaye in (
-#ifdef CHOR_DEBUG
-            Secho "taichi in "; Iecho delaye; Secholn "s";
-#endif
-            set chor_next_taichi=time+delaye
-        );
-        now
-    ) else (
-        set chor_next_taichi=nil;
-        0
+/*
+fun chor_decompile _chor_data=
+    let nil -> result in (
+    let strlen _chor_data -> len in
+    let nil -> code in
+    let 4+1 -> index in  // skip header
+    while (index<= len) do (
+        set code = strget _chor_data index;
+        // Iecho index; Secho ": ";
+        set index=index+2+
+        if code==CH_FRAME_DURATION then
+        (
+            // Set frame duration
+            // +------+-------+
+            // | 0x01 | tempo |
+            // +------+-------+
+            set result = " ch-tempo\n" :: (itoa strget _chor_data index+1) :: result;
+            1   //nb de paramètres
+        )
+        else if code==CH_SET_LED_COLOR then
+        (
+            // Change color of one LED
+            // +------+-----+---+---+---+---+---+
+            // | 0x07 | led | r | g | b | 0 | 0 |
+            // +------+-----+---+---+---+---+---+
+            let 4-strget _chor_data index+1 -> iled in
+            let strget _chor_data index+2 -> ired in
+            let strget _chor_data index+3 -> igreen in
+            let strget _chor_data index+4 -> iblue in
+            let (ired<<16)+(igreen<<8)+iblue -> color in
+            set result = " ch-led\n" :: (itoa iled) :: " " :: (itoa ired) :: " " :: (itoa igreen) :: " " :: (itoa iblue) :: result;
+            6
+        )
+        else if code==CH_SET_MOTOR then
+        (
+            // Absolute position of one ear
+            // +------+-----+-----+-----+
+            // | 0x08 | ear | pos | dir |
+            // +------+-----+-----+-----+
+            let (strget _chor_data index+1) -> ear in
+            let (strget _chor_data index+2) -> pos in
+            let (strget _chor_data index+3) -> dir in
+            set result = " ch-move-ear\n" :: (itoa ear) :: " " :: (itoa pos) :: " " :: (itoa dir) :: result;
+            3
+        )
+        else if code==CH_SET_LEDS_COLOR then
+        (
+            // Change color of all LEDs
+            // +------+---+---+---+
+            // | 0x09 | r | g | b |
+            // +------+---+---+---+
+            let strget _chor_data index+1 -> ired in
+            let strget _chor_data index+2 -> igreen in
+            let strget _chor_data index+3 -> iblue in
+            let (ired<<16)+(igreen<<8)+iblue -> col in
+            set result = " ch-all-leds\n" :: (itoa ired) :: " " :: (itoa igreen) :: " " :: (itoa iblue) :: result;
+            3
+        )
+        else if code==CH_SET_LED_OFF then
+        (
+            // Turn off one LED
+            // +------+-----+
+            // | 0x0A | led |
+            // +------+-----+
+            let 4-strget _chor_data index+1 -> iled in
+            set result = " ch-led-off\n" :: (itoa iled) :: result;
+            1
+        )
+        else if code==CH_SET_LED_PALETTE then
+        (
+            // Set one LED to a color from the current palette
+            // +------+-----+-------+
+            // | 0x0E | led | index |
+            // +------+-----+-------+
+            let 4-strget _chor_data index+1 -> iled in
+            let 7&strget _chor_data index+2 -> pindex in
+            set result = " ch-led-palette\n" :: (itoa iled) :: " " :: (itoa pindex) :: result;
+            2
+        )
+        else if code==CH_RAND_MIDI then
+        (
+            // Play a random midi note
+            // +------+
+            // | 0x10 |
+            // +------+
+            set result = "ch-rand-midi\n" :: result;
+            0
+        )
+        else if code==CH_AVANCE then
+        (
+            // Move ear by delta
+            // +------+-------+-------+
+            // | 0x11 | ear   | delta |
+            // +------+-------+-------+
+            let (strget _chor_data index+1) -> motor in
+            let (strget _chor_data index+2) -> delta in
+            let _chor_motor_dir.motor -> dir in
+            set result = " ch-advance-ear\n" :: (itoa motor) :: " " :: (itoa delta) :: result;
+            2
+        )
+        else if code==CH_IFNE then
+        (
+            // Jump if not equal (relative jump)
+            // +------+-------+-------+-------+
+            // | 0x12 | val   | hi    | lo    |
+            // +------+-------+-------+-------+
+            let strget _chor_data index+1 -> test_value in
+            let strget _chor_data index+2 -> hi in
+            let strget _chor_data index+3 -> lo in
+            let ((hi<<8)+lo) -> index in
+            set result = " ch-ifne\n" :: (itoa test_value) :: " " :: (itoa index) :: result;
+            3
+        )
+        else if code==CH_ATTEND then
+        (
+            // Wait for ears and audio to finish
+            // +------+
+            // | 0x13 |
+            // +------+
+            set result = "ch-wait\n" :: result;
+            0
+        )
+        else if code==CH_SET_MOTOR_DIR then
+        (
+            // Set ear direction
+            // +------+-------+-------+
+            // | 0x14 | ear   | dir   |
+            // +------+-------+-------+
+            let (strget _chor_data index+1) -> motor in
+            let (strget _chor_data index+2) -> dir in
+            set result = " ch-set-motor-dir\n" :: (itoa motor) :: " " :: (itoa dir) :: result;
+            2
+        )
+        else
+        (
+            // Secho "unknown code ";Iecholn code;
+            0
+        )
+    );
+    // rev result nil;
+    strcatlist (rev result nil)
     );;
+
+fun main=
+    Secholn chor_decompile CHOR_INTERACTIVE_ERROR
+    0;;
+*/

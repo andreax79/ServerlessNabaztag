@@ -25,6 +25,7 @@ fun forth_init_dictionary=
         [ [str: "r>"               ] [func:#forth_r_from]] ::
         [ [str: "r@"               ] [func:#forth_r_fetch]] ::
         [ [str: "rdrop"            ] [func:#forth_rdrop]] ::
+        [ [str: "rdepth"           ] [func:#forth_rdepth]] ::
         [ [str: "2>r"              ] [func:#forth_two_to_r]] ::
         [ [str: "2r>"              ] [func:#forth_two_r_from]] ::
         [ [str: "2r@"              ] [func:#forth_two_r_fetch]] ::
@@ -153,9 +154,9 @@ fun forth_init_dictionary=
         [ [str:"random"            ] [ func:#forth_random ]] ::
         [ [str:"volume"            ] [ func:#forth_volume ]] ::
         [ [str:"clear-info"        ] [ func:#forth_clear_info ]] ::
-        [ [str:"taichi"            ] [ func:#forth_taichi      flag:FORTH_ASYNC]] ::
         [ [str:"play-url"          ] [ func:#forth_play_url ]] ::
         [ [str:"play-midi"         ] [ func:#forth_play_midi ]] ::
+        [ [str:"play-chor"         ] [ func:#forth_play_chor   flag:FORTH_ASYNC]] ::
         [ [str:"gc"                ] [ func:#forth_gc ]] ::
         [ [str:"eval-trame"        ] [ func:#forth_eval_trame]] ::
         [ [str:"revision"          ] [ func:#forth_revision ]] ::
@@ -177,6 +178,7 @@ fun forth_init_dictionary=
         [ [str:"info-traffic"      ] [ code:{[int:FORTH_MEMORY_INFO_TRAFFIC]} ]] ::
         [ [str:"info-mail"         ] [ code:{[int:FORTH_MEMORY_INFO_MAIL]} ]] ::
         [ [str:"info-pollution"    ] [ code:{[int:FORTH_MEMORY_INFO_POLLUTION]} ]] ::
+        [ [str:"info-taichi"       ] [ code:{[int:FORTH_MEMORY_INFO_TAICHI]} ]] ::
         nil -> d in
             set forth_dictionary = [dict:d];
 #ifdef FORTH_DEBUG

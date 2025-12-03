@@ -68,8 +68,8 @@ fun _interactive_control_sound Type =
 // Play a start or stop chor
 fun _interactive_control_chor Type =
     match Type with
-    (intchorDefaultStart ->   chor_start_msg CHOR_START_INTERACTIVE::nil #_interactive_continue_start_cb nil )|  // On joue le chor par defaut
-    (intchorDefaultStop ->    chor_start_msg CHOR_START_INTERACTIVE::nil #_interactive_continue_stop_cb nil )|   // On joue le chor par defaut
+    (intchorDefaultStart ->   chor_start_ex CHOR_START_INTERACTIVE #_interactive_continue_start_cb nil )|  // On joue le chor par defaut
+    (intchorDefaultStop ->    chor_start_ex CHOR_START_INTERACTIVE #_interactive_continue_stop_cb nil )|   // On joue le chor par defaut
     (intchorStartNone ->      _interactive_continue_start_cb nil )|                                              // On ne joue pas de chor
     (intchorStopNone ->       _interactive_continue_stop_cb nil )|                                               // On ne joue pas de chor
 #ifdef INTERACTIVE_DEBUG
@@ -123,7 +123,7 @@ fun interactive_error=
 #ifdef INTERACTIVE_DEBUG
     _interactive_debug "interactive_error";
 #endif
-    chor_start_msg CHOR_INTERACTIVE_ERROR::nil #_interactive_continue_error_cb nil;
+    chor_start_ex CHOR_INTERACTIVE_ERROR #_interactive_continue_error_cb nil;
     0;;
 
 fun _interactive_continue_error_cb unused=

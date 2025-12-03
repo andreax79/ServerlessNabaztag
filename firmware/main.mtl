@@ -20,10 +20,11 @@ proto main 0;;
 // #define HTTP_DEBUG
 // #define EARS_DEBUG
 // #define XMPP_DEBUG
-#define TRAME_DEBUG
+// #define TRAME_DEBUG
 // #define AUDIOLIB_DEBUG
 // #define INTERACTIVE_DEBUG
 // #define CHOR_DEBUG
+// #define FORTH_DEBUG
 
 // #define WIFI_MASTER_MODE;; // Enable master mode (access point)
 #define WIFI_REBOOT_ON_LOST

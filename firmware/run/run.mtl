@@ -168,17 +168,12 @@ fun _run_idle =
 #endif
     (
         set chor_processing_status = 0;
-        if chor_do_taichi_now then (
-            chor_taichi_start nil
-        ) else (
 #ifdef PING
-            ping_run_start
+        ping_run_start
 #else
-            0
+        0
 #endif
-        )
-    );
-    0;;
+    );;
 
 
 fun _run_parse_config_cb _ res=

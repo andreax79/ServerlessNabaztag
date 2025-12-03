@@ -13,11 +13,14 @@ fun forth_nil f=
 
 /**
  * :: ( list x -- list' )
- * Construct a new list by prepending an element
+ * Add an element to the front of a list
  */
 fun forth_colon_colon f=
     let forth_pop f -> x in
-    let forth_pop f -> list in forth_push f [list:(x :: list.list)];;
+    let hd f.stack -> list in
+    set list.list = x :: list.list;
+    nil;;
+    // let forth_pop f -> list in forth_push f [list:(x :: list.list)];;
 
 /**
  * HD ( list -- list x )

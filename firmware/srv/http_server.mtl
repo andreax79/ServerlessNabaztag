@@ -308,7 +308,7 @@ fun http_get_say sock args=
 fun http_get_taichi sock args=
     let _http_arg_int args 'v' -> v in
         if v == 1000 && !sleep_is_sleeping then
-            chor_taichi_start nil
+            forth_interpreter WORD_TAICHI
         else
             set info_taichi = v;
     http_send_header_and_close HTTP_204 nil sock;;

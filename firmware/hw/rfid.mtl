@@ -62,7 +62,7 @@ fun rfid_control=
 			midi_play MIDI_RFID_OK;
 
 			// lancer l'animation (v19)
-			chor_start_msg CHOR_RFID_OK::nil #_rfid_end_chor nil;
+			chor_start_ex CHOR_RFID_OK #_rfid_end_chor nil;
 
 			hook_rfid rfid #_rfid_http_cb
 		)

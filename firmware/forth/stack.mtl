@@ -196,6 +196,14 @@ fun forth_rdrop f=
     nil;;
 
 /**
+ * RDEPTH ( -- count )
+ * Count number of items on return stack
+ */
+fun forth_rdepth f=
+    let listlen f.rstack -> l in
+    forth_push f [int:l];;
+
+/**
  * 2>R ( x1 x2 -- ) ( R: -- x1 x2 )
  * Move two items to return stack
  */

@@ -446,7 +446,7 @@ fun streaming_run_eval_one_cmd i0=
     else if !strcmp key "CH" then
     (
         Secholn "exec CH : "; Secho val;
-        chor_start_msg (listswitchstr streaming_rsc_loaded val) #_streaming_go_next_cmd i0;
+        chor_start_list (listswitchstr streaming_rsc_loaded val) #_streaming_go_next_cmd i0;
         0
     )
     else if !strcmp key "IS" then
