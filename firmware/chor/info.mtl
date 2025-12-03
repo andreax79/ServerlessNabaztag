@@ -173,8 +173,7 @@ fun info_json=
     strcatlist
         "{\n"::
             _info_src_json ::
-            (json_int "messages" info_messages) :: ",\n" ::
-            (json_int "taichi" info_taichi) :: "\n" ::
+            (json_int "messages" info_messages) :: "\n" ::
         "}" :: nil;;
 
 fun info_run=

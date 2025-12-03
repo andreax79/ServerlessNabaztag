@@ -26,7 +26,7 @@ play-chor
 ;
 
 : taichi-calculate-next-time ( -- ) \ calculate next taichi time
-info-taici @
+taici-freq @
 case
 255 of 255 endof
  40 of  40 endof

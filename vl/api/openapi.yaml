@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Serverless Nabaztag API
   description: An OpenAPI specification for controlling a Serverless Nabaztag smart rabbit.
-  version: 1.0.0
+  version: 1.0.1
   contact:
     url: https://github.com/andreax79/ServerlessNabaztag
 servers:
@@ -15,20 +15,9 @@ servers:
 paths:
   /taichi:
     get:
-      summary: Control Taichi frequency
+      summary: Do Tai Chi
       tags: [Actions]
-      description: Sets the frequency of the Taichi ear movements or performs a one-shot movement.
-      parameters:
-        - name: v
-          in: query
-          required: true
-          description: >
-            The frequency or command for the Taichi movement.
-            - `0`: Off
-            - `255`: Maximum speed
-            - `1000`: Do Taichi now (one-shot)
-          schema:
-            type: integer
+      description: Do Tai Chi choreography.
       responses:
         '204':
           description: Command sent successfully.
@@ -341,6 +330,12 @@ paths:
             type: integer
             minimum: 0
             maximum: 23
+        - name: t
+          in: query
+          description: Tai Chi frequency.
+          schema:
+            type: integer
+            enum: [0, 40, 80, 255]
       responses:
         '204':
           description: Command sent successfully.

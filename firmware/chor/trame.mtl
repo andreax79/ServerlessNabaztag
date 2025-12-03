@@ -178,7 +178,7 @@ fun _trame_eval_info_update data=
         let 0 -> found in
         for i=0;(i<(min 16 len) && !found);i+2 do
         if ((strget data i) == 14) then (
-            set info_taichi = strget data i+1;
+            config_set_taichi_freq strget data i+1;
             set found = 1
         );
 
@@ -219,7 +219,7 @@ fun _trame_eval_info_update_v2 data=
                 else if key == INFO_WEATHER || key == INFO_STOCK || key == INFO_TRAFFIC || key == INFO_MAIL || key == INFO_POLLUTION then info_src_update key val
                 else if key == 4 then set newleft = val
                 else if key == 5 then set newright = val
-                else if key == 14 then set info_taichi = val
+                // else if key == 14 then config_set_taichi_freq strget data i+1
                 else (
 #ifdef TRAME_DEBUG
                     Secho "ERROR info_update_v2 unknown key="; Iecholn key;

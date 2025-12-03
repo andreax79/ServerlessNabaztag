@@ -18,7 +18,8 @@ const CONF_PROXYPORT=161;;	    //2     Proxy port
 const CONF_LANGUAGE=163;;       //3     Language (string)
 const CONF_DST=166;;            //1     Daylight Saving Time
 const CONF_CITY=167;;           //4     City code
-// 171 - 174 --- free ---
+const CONF_TAICHI_FREQ=171;;    //1     Tai Chi frequency
+// 172 - 174 --- free ---
 const CONF_WIFIPMK=175;;		//32    WiFi PMK (Pairwise Master Key)
 const CONF_MAGIC=207;;		    //1
 const CONF_LATITUDE=208;;	    //8     Latitude (string)
@@ -127,6 +128,10 @@ fun config_get_wake_up =
 fun config_get_go_to_bed =
     strget _config_get CONF_GO_TO_BED 1 0;;
 
+// Get Tai Chi frequency
+fun config_get_taichi_freq =
+    strget _config_get CONF_TAICHI_FREQ 1 0;;
+
 // Set the server URL
 fun config_set_server_url server_url =
     _config_set_str CONF_SERVERURL server_url 40;;
@@ -158,3 +163,7 @@ fun config_set_wake_up val =
 // Set go to bed at (hour)
 fun config_set_go_to_bed val =
     strset _config_data CONF_GO_TO_BED val;;
+
+// Set Tai Chi frequency
+fun config_set_taichi_freq val =
+    strset _config_data CONF_TAICHI_FREQ val;;

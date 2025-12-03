@@ -169,6 +169,7 @@ fun forth_init_dictionary=
         [ [str:"longitude"         ] [ code:{[int:FORTH_MEMORY_LONGITUDE]} ]] ::
         [ [str:"wake-up-at"        ] [ code:{[int:FORTH_MEMORY_WAKE_UP]} ]] ::
         [ [str:"go-to-bed-at"      ] [ code:{[int:FORTH_MEMORY_GO_TO_BED]} ]] ::
+        [ [str:"taichi-freq"       ] [ code:{[int:FORTH_MEMORY_TAICHI_FREQ]} ]] ::
         [ [str:"ntp-server"        ] [ code:{[int:FORTH_MEMORY_NTP_SERVER]} ]] ::
         [ [str:"md5-password"      ] [ code:{[int:FORTH_MEMORY_MD5_PASSWORD]} ]] ::
         [ [str:"bottom-color"      ] [ code:{[int:FORTH_MEMORY_BOTTOM_COLOR]} ]] ::
@@ -178,7 +179,6 @@ fun forth_init_dictionary=
         [ [str:"info-traffic"      ] [ code:{[int:FORTH_MEMORY_INFO_TRAFFIC]} ]] ::
         [ [str:"info-mail"         ] [ code:{[int:FORTH_MEMORY_INFO_MAIL]} ]] ::
         [ [str:"info-pollution"    ] [ code:{[int:FORTH_MEMORY_INFO_POLLUTION]} ]] ::
-        [ [str:"info-taichi"       ] [ code:{[int:FORTH_MEMORY_INFO_TAICHI]} ]] ::
         nil -> d in
             set forth_dictionary = [dict:d];
 #ifdef FORTH_DEBUG

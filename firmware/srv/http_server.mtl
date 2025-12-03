@@ -146,6 +146,7 @@ fun http_get_json_status sock args=
             (json_str "longitude" config_get_longitude) :: ",\n" ::
             (json_int "wake_up" config_get_wake_up) :: ",\n" ::
             (json_int "go_to_bed" config_get_go_to_bed) :: ",\n" ::
+            (json_int "taichi_freq" config_get_taichi_freq) :: ",\n" ::
             (json_int "sleep_state" sleep_is_sleeping) :: ",\n" ::
             (json_int "streaming_state" streaming_status) :: ",\n" ::
             (json_int "processing_state" chor_processing_status) :: ",\n" ::
@@ -306,11 +307,8 @@ fun http_get_say sock args=
     http_send_header_and_close HTTP_204 nil sock;;
 
 fun http_get_taichi sock args=
-    let _http_arg_int args 'v' -> v in
-        if v == 1000 && !sleep_is_sleeping then
-            forth_interpreter WORD_TAICHI
-        else
-            set info_taichi = v;
+    if !sleep_is_sleeping then
+        forth_interpreter WORD_TAICHI;
     http_send_header_and_close HTTP_204 nil sock;;
 
 fun http_get_mp3 sock args=
@@ -397,6 +395,7 @@ fun http_get_setup sock args=
     config_set_longitude _http_arg_str args 'k';       // set longitude
     config_set_wake_up atoi _http_arg_str args 'w';    // set wake up time
     config_set_go_to_bed atoi _http_arg_str args 'b';  // set go to bed time
+    config_set_taichi_freq atoi _http_arg_str args 't';// set taichi frequency
     config_save;
     forth_interpreter WORD_UPDATE_WEATHER;
     http_send_header_and_close HTTP_204 nil sock;;

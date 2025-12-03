@@ -12,9 +12,6 @@ var info_src;;
 // nombre de messages utilisateur en attente (0, 1, 2 et +)
 var info_messages = 0;;
 
-// valeur de frequence du taichi (40: peu fréquent, 80: normal, 255: très fréquent)
-var info_taichi = 0;;
-
 const INFO_WEATHER = 1;;
 const INFO_STOCK = 2;;
 const INFO_TRAFFIC = 3;;

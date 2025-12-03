@@ -26,7 +26,7 @@ const FORTH_MEMORY_INFO_STOCK = (1<<29) + 29;;
 const FORTH_MEMORY_INFO_TRAFFIC = (1<<29) + 30;;
 const FORTH_MEMORY_INFO_MAIL = (1<<29) + 31;;
 const FORTH_MEMORY_INFO_POLLUTION = (1<<29) + 32;;
-const FORTH_MEMORY_INFO_TAICHI = (1<<29) + 33;;
+const FORTH_MEMORY_TAICHI_FREQ = (1<<29) + 33;;
 
 type MemoryBlock = [
     memory_block_size   // size of the memory block
@@ -156,8 +156,8 @@ fun _forth_memory_get_special f addr=
         [int:info_src_get INFO_MAIL]
     else if addr == FORTH_MEMORY_INFO_POLLUTION then
         [int:info_src_get INFO_POLLUTION]
-    else if addr == FORTH_MEMORY_INFO_TAICHI then
-        [int:info_taichi]
+    else if addr == FORTH_MEMORY_TAICHI_FREQ then
+        [int:config_get_taichi_freq]
     else
         nil;;
 
@@ -206,9 +206,8 @@ fun _forth_memory_set_special f addr value=
     else if addr == FORTH_MEMORY_INFO_POLLUTION then (
         info_src_update INFO_POLLUTION value.int; nil
     )
-    else if addr == FORTH_MEMORY_INFO_TAICHI then (
-        set info_taichi = value.int; nil
-    )
+    else if addr == FORTH_MEMORY_TAICHI_FREQ then
+        config_set_taichi_freq value.int
     else
         nil;;
 
