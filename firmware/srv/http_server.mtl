@@ -180,14 +180,6 @@ fun http_get_timezones sock args =
 
 //--------------------------------------------------------------------------------------------------
 
-fun http_index=
-        strreplace "
-#include srv/www/index.html
-        " "{SERVER_URL}" config_get_server_url
-;;
-
-//--------------------------------------------------------------------------------------------------
-
 fun filterplus s=
     let strlen s -> n in
     for i=0;i<n do if (strget s i)=='+' then strset s i 32;
@@ -420,27 +412,48 @@ fun forth_http_post_req sock args=
     let _http_arg_str args 'c' -> code in
     forth_interpreter_ex code nil nil nil (fixarg2 #_forth_http_cb sock);;
 
-fun http_get_index sock args=
-    sock_send sock (http_header HTTP_200 "text/html" (strlen http_index)); // header
-    sock_send_and_close sock http_index;;
-
+/**
+ * Send a 404 Not Found response.
+ */
 fun http_not_found sock args=
     let "Not found" -> res in (
         sock_send sock (http_header HTTP_404 "text/plain" (strlen res)); // header
         sock_send_and_close sock res
     );;
 
-fun _http_get_openapi_yaml_cb http res sock=
+fun _http_get_index_cb http res sock=
     if res == nil then
         http_not_found sock nil
     else (
-        let strreplace (http_get_content res) "192.168.1.100" (ip_to_str netip) -> yaml in ( // adjust server URL
-            sock_send sock (http_header HTTP_200 "application/yaml" (strlen yaml)); // header
-            sock_send_and_close sock yaml;
+        let strreplace (http_get_content res) "{SERVER_URL}" config_get_server_url -> content in (
+            sock_send sock (http_header HTTP_200 "text/html" (strlen content)); // header
+            sock_send_and_close sock content;
             nil
         )
     );;
 
+/**
+ * Serve the index.html page, replacing {SERVER_URL} with the actual server URL.
+ */
+fun http_get_index sock args=
+    let strcatlist "http://" :: config_get_server_url :: "/index.html" :: nil -> url in
+        http_request "GET" url nil (fixarg3 #_http_get_index_cb sock) HTTP_NORMAL;
+    nil;;
+
+fun _http_get_openapi_yaml_cb http res sock=
+    if res == nil then
+        http_not_found sock nil
+    else (
+        let strreplace (http_get_content res) "192.168.1.100" (ip_to_str netip) -> content in ( // adjust server URL
+            sock_send sock (http_header HTTP_200 "application/yaml" (strlen content)); // header
+            sock_send_and_close sock content;
+            nil
+        )
+    );;
+
+/**
+ * Serve the OpenAPI YAML specification, adjusting the server URL.
+ */
 fun http_get_openapi_yaml sock args=
     let strcatlist "http://" :: config_get_server_url :: "/api/openapi.yaml" :: nil -> url in
         http_request "GET" url nil (fixarg3 #_http_get_openapi_yaml_cb sock) HTTP_NORMAL;
