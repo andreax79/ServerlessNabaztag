@@ -316,17 +316,12 @@ fun _run_step_match=
         leds_nose_animation;
         streaming_run_wait_cmd i;
         RUN_PROGRAM_WAIT )|
-    ( earResetWaitRun cb ->
-        RUN_NONE) |
-    ( recordRun ->
-        record_run )|
-    ( recordStartRun ->
-        record_start_run )|
     ( interactiveReqWaitRun http ->
         leds_bottom_animation;
         leds_nose_animation;
         interactive_request_wait http;
-        RUN_WAIT );;
+        RUN_WAIT ) |
+    ( _ -> RUN_NONE);;
 
 fun run_task task=
     let _run_step_match -> keymanager in (

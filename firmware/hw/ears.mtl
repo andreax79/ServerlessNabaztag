@@ -317,15 +317,8 @@ fun ears_stop force =
 	_ears_debug (strcatlist "ears_stop " :: (itoa force) :: nil);
 #endif
 	if (_ears_initialized && (ears_mode!=EARS_MODE_RESET || force)) then
-    (
         for i=0;i<2 do
-            _ears_motor_set_direction ears.i 0
-    ) else (
-#ifdef EARS_DEBUG
-        _ears_debug "ears not inited yet";
-#endif
-        0
-    );
+            _ears_motor_set_direction ears.i 0;
 	0;;
 
 fun ears_target i=

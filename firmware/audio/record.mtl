@@ -23,8 +23,41 @@ fun record_abort=
     set _record_data=nil;
     set _record_req=nil;;
 
-fun record_start_run =
-    // wait for the end of the starting sound
+/**
+ * Start recording
+ */
+fun record_control mode=
+    leds_turn_off;
+    audiolib_wav_stop;
+    ears_stop 1;
+    audiolib_force_vol 64;
+    audiolib_wav_start_local_ex MP3_START_RECORD::nil 100;
+    set _record_mode = mode;
+    run_set_state recordStartRun;
+    0;;
+
+fun _record_cb_http http res=
+    // record upload done
+    set _record_data=nil;
+    set _record_req=nil;
+    leds_turn_off;
+    if _record_play_end!=nil then
+    (
+        set _record_play_end=nil;
+        midi_play MIDI_END_RECORD
+    );
+    run_set_state idleRun;
+    0;;
+
+fun _record_interactive_send_upload =
+    set _record_req = http_request "POST" (interactive_url_reco interactive_app record_last_wav_bytes streaming_audio_cmd_index) _record_data #interactive_req_cb_http HTTP_NORMAL;
+    run_set_state interactiveReqWaitRun _record_req;
+    0;;
+
+/**
+ * Wait for the end of the starting sound before starting recording
+ */
+fun _record_start_run =
     if !audiolib_wav_running then
     (
         led LED_NOSE RGB_RED;
@@ -35,32 +68,10 @@ fun record_start_run =
     );
     0;;
 
-fun record_control mode=
-    leds_turn_off;
-    audiolib_wav_stop;
-    motorset 0 0;
-    motorset 1 0;
-    audiolib_force_vol 64;
-    audiolib_wav_start_local_ex MP3_START_RECORD::nil 100;
-    set _record_mode=mode;
-    run_set_state recordStartRun;
-    0;;
-
-fun _record_cb_http http res=
-    // record upload done
-    set _record_data=nil;
-    set _record_req=nil;
-    Secholn res;
-    leds_turn_off;
-    if _record_play_end!=nil then
-    (
-        set _record_play_end=nil;
-        midi_play MIDI_END_RECORD
-    );
-    run_set_state idleRun;
-    0;;
-
-fun record_upload_timeout_task task=
+/**
+ * Check upload timeout and retry if needed
+ */
+fun _record_check_upload_timeout=
     if record_is_uploading then
     (
         if _record_play_end!=nil && ((_record_play_end-time_ms)<0) then
@@ -78,7 +89,7 @@ fun record_upload_timeout_task task=
                 // retry
                 set _record_retry=_record_retry-1;
                 if (!interactive_status) then (
-                    set _record_req=http_request "POST" Secholn url_record _record_mode _record_data #_record_cb_http HTTP_NORMAL;0
+                    set _record_req=http_request "POST" url_record _record_mode _record_data #_record_cb_http HTTP_NORMAL;0
                 ) else (
                     _record_interactive_send_upload
                 );
@@ -96,12 +107,13 @@ fun record_upload_timeout_task task=
                 )
             )
         )
-    );
-    TaskRun;;
+    );;
 
-
-fun record_run=
-    if !button2 || ((time_ms-_record_time_start)>RECORD_MAX_RECORDING_TIME)then
+/**
+ * Stop recording if button released or max time reached
+ */
+fun _record_check_end=
+    if !button2 || ((time_ms-_record_time_start)>RECORD_MAX_RECORDING_TIME) then
     (
         reclib_rec_stop;
         leds_turn_off;
@@ -111,23 +123,28 @@ fun record_run=
             set _record_retry=3;
             set _record_play_end=time_ms+400;
             if (!interactive_status) then (
-                set _record_req=http_request "POST" Secholn url_record _record_mode _record_data #_record_cb_http HTTP_NORMAL;
+                set _record_req=http_request "POST" url_record _record_mode _record_data #_record_cb_http HTTP_NORMAL;
                 run_set_state idleRun;
                 0
             ) else (
                 _record_interactive_send_upload
             )
         )
-    );
-    0;;
+    );;
 
-fun _record_interactive_send_upload =
-    set _record_req = http_request "POST" (interactive_url_reco interactive_app record_last_wav_bytes streaming_audio_cmd_index) _record_data #interactive_req_cb_http HTTP_NORMAL;
-    run_set_state interactiveReqWaitRun _record_req;
-    0;;
+/**
+ * Record task
+ */
+fun record_task task=
+    match run_get_state with
+    ( recordRun -> _record_check_end )|
+    ( recordStartRun -> _record_start_run );
+    // Check upload timeout
+    _record_check_upload_timeout;
+    TaskRun;;
 
 /**
  * Initialize the record task
  */
 fun record_init=
-    task_start "record_upload_timeout" #record_upload_timeout_task;;
+    task_start "record" #record_task;;
