@@ -31,13 +31,14 @@ firmware:
 	@rm -f nominal.mtl
 	@cp bootcode.bin vl/bc.jsp
 	@echo "Firmware copied to $$PWD/vl/bc.jsp"
+	@./scripts/extract_words.py firmware/forth/*.mtl > vl/words.txt
 
 deploy: firmware
 	@if [ -z "$(DEPLOY_TARGET)" ]; then \
 		echo "Please set the DEPLOY_TARGET variable in .env file"; \
 		exit 1; \
 	fi
-	scp vl/bc.jsp vl/*.forth $(DEPLOY_TARGET)
+	scp vl/bc.jsp vl/*.forth vl/index.html vl/words.txt $(DEPLOY_TARGET)
 
 run-sim:
 	@./scripts/make_nominal.sh -D SIMU
