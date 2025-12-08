@@ -2,6 +2,7 @@ proto ears_complete 0 ;;
 proto ears_detecting 0 ;;
 proto ears_finished_moving 0 ;;
 proto ears_get_event 0 ;;
+proto ears_get_position 1 ;;
 proto ears_go 3 ;;
 proto ears_go_to_ref_pos 0 ;;
 proto ears_init 0 ;;
@@ -12,10 +13,10 @@ proto ears_resetting 0 ;;
 proto ears_set_wait_and_detect_mode 0 ;;
 proto ears_start_reset 0 ;;
 
-const EARSMODE_RESET=0;; // ears go to ref pos
-const EARSMODE_WAIT=1;;
-const EARSMODE_WAITANDDETECT=2;;
-const EARSMODE_DETECT=3;;
+const EARS_MODE_RESET=0;; // ears go to ref pos
+const EARS_MODE_WAIT=1;;
+const EARS_MODE_WAIT_AND_DETECT=2;;
+const EARS_MODE_DETECT=3;;
 
 const EARS_HOLES=17;; // number of holes in the ear that can help us track the moves
 const EARS_TIMEOUT=2000;; // delay (in ms) to wait when detecting ear movement (if there is no move for EARS_TIMEOUT ms, then consider the move done and do whatever there is to do)

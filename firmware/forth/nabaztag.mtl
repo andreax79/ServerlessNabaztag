@@ -28,37 +28,22 @@ fun forth_wake_up f=
     nil;;
 
 /**
- * LEFT-EAR-POSITION ( -- pos )
- * Return the current position of the left ear
+ * EARS ( -- left-pos right-pos )
+ * Return the current ears positions
  */
-fun forth_left_ear_position f=
-    forth_push f [int:ears_target_position.EARS_LEFT];;
+fun forth_ears f=
+    forth_push f [int:ears_get_position EARS_LEFT];
+    forth_push f [int:ears_get_position EARS_RIGHT];;
 
 /**
- * MOVE-LEFT-EAR ( dir pos -- )
- * Move the left ear in direction dir (0=left, 1=right) to position pos (0..16)
+ * MOVE-EAR ( ear dir pos -- )
+ * Move an ear (0=left, 1=right) ear in direction dir (0=left, 1=right) to position pos (0..16)
  */
-fun forth_move_left_ear f=
+fun forth_move_ear f=
+    let forth_pop f -> ear in
     let forth_pop f -> pos in
     let forth_pop f -> dir in
-    ears_go EARS_LEFT dir.int pos.int;
-    nil;;
-
-/**
- * RIGHT-EAR-POSITION ( -- pos )
- * Return the current position of the right ear
- */
-fun forth_right_ear_position f=
-    forth_push f [int:ears_target_position.EARS_RIGHT];;
-
-/**
- * MOVE-RIGHT-EAR ( dir pos -- )
- * Move the left ear in direction dir (0=left, 1=right) to position pos (0..16)
- */
-fun forth_move_right_ear f=
-    let forth_pop f -> pos in
-    let forth_pop f -> dir in
-    ears_go EARS_RIGHT dir.int pos.int;
+    ears_go ear.int pos.int dir.int;
     nil;;
 
 /**

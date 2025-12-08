@@ -162,7 +162,7 @@ fun forth_depth f=
 
 /**
  * >R ( x -- ) ( R: -- x )
- * Move top item to ‘return stack” for temporary storage
+ * Move top item to return stack for temporary storage
  */
 fun forth_to_r f=
     if f.stack==nil then nil

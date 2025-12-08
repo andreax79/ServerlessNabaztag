@@ -22,7 +22,7 @@ fun forth_less_eq f=
     let forth_compare_words n1 n2 -> c in
     if c <= 0 then forth_true f else forth_false f;;
 
-/** ( n -- flag )
+/**
  * = ( n1 n2 -- flag ) True if top two words equal
  */
 fun forth_eq f=

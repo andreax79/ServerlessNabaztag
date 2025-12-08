@@ -147,10 +147,8 @@ fun forth_init_dictionary=
         [ [str:"sleeping?"         ] [ func:#forth_sleeping ]] ::
         [ [str:"sleep"             ] [ func:#forth_sleep       flag:FORTH_ASYNC ]] ::
         [ [str:"wake-up"           ] [ func:#forth_wake_up     flag:FORTH_ASYNC ]] ::
-        [ [str:"left-ear-position" ] [ func:#forth_left_ear_position ]] ::
-        [ [str:"move-left-ear"     ] [ func:#forth_move_left_ear ]] ::
-        [ [str:"right-ear-position"] [ func:#forth_right_ear_position ]] ::
-        [ [str:"move-right-ear"    ] [ func:#forth_move_right_ear ]] ::
+        [ [str:"ears"              ] [ func:#forth_ears ]] ::
+        [ [str:"move-ear"          ] [ func:#forth_move_ear ]] ::
         [ [str:"random"            ] [ func:#forth_random ]] ::
         [ [str:"volume"            ] [ func:#forth_volume ]] ::
         [ [str:"clear-info"        ] [ func:#forth_clear_info ]] ::
