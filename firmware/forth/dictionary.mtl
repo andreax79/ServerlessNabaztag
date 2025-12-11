@@ -88,6 +88,8 @@ fun forth_init_dictionary=
         [ [str: "pad-left"         ] [func:#forth_pad_left ]] ::
         [ [str: "lower"            ] [func:#forth_lower ]] ::
         [ [str: "upper"            ] [func:#forth_upper ]] ::
+        [ [str: "url-encode"       ] [func:#forth_url_encode ]] ::
+        [ [str: "url-decode"       ] [func:#forth_url_decode ]] ::
         // [ [str: "$replace"         ] [func:#forth_dollar_replace ]] ::
         // [ [str: "itoa"             ] [func:#forth_itoa ]] ::
         [ [str: ">number"          ] [func:#forth_to_number ]] ::

@@ -72,3 +72,19 @@ fun forth_str_to_int base s=
 fun forth_to_number f=
     let forth_pop f -> s in
     forth_push f forth_str_to_int nil s.str;;
+
+/**
+ * URL-ENCODE ( s -- s )
+ * URL encode string s
+ */
+fun forth_url_encode f=
+    let forth_pop f -> s in
+    forth_push f [str:url_encode s.str];;
+
+/**
+ * URL-DECODE ( s -- s )
+ * URL decode string s
+ */
+fun forth_url_decode f=
+    let forth_pop f -> s in
+    forth_push f [str:url_decode s.str];;

@@ -109,6 +109,8 @@ UNTIL          (immediate) ( x -- )                     End a loop Compile a con
 UPDATE-TIME    ( -- )                                   Update the system time from the time server
 UPPER          ( s -- s )                               Convert string s to uppercase
 UPTIME         ( -- s )                                 Push the system uptime in seconds onto the stack
+URL-DECODE     ( s -- s )                               URL decode string s
+URL-ENCODE     ( s -- s )                               URL encode string s
 UTC>STRING     ( -- str )                               Push the current UTC time and date as a string onto the stack
 VARIABLE       (immediate) ( -- addr )                  Define a variable and allocate a word for it.
 VOLUME         ( -- vol )                               Get the audio volume
