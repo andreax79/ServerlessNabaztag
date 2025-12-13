@@ -13,3 +13,4 @@ const WORD_ON_HALFTIME = "on-halftime";;
 const WORD_UPDATE_WEATHER = "update-weather";;
 const WORD_SURPRISE = "surprise";;
 const WORD_TAICHI = "taichi";;
+const WORD_SAY = "say";;

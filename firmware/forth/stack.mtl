@@ -12,6 +12,13 @@ fun forth_push f x=
     nil;;
 
 /**
+ * Push a string value onto the stack
+ */
+fun forth_push_str f x=
+    forth_push f [ str:x ];
+    0;;
+
+/**
  * Pop a value from the stack
  */
 fun forth_pop f=

@@ -144,16 +144,23 @@ fun _run_control_play =
     )
     ;;
 
+
+fun _run_control_play_or_inter =
+    if !interactive_status then
+        _run_control_play
+    else
+        _run_control_inter;;
+
+
 /*
     Utilise dans le cas ou on execute un programme et qu'on est en train
   d'executer une commande "WT". En gros on a un comportement normal
   sauf qu'on lit les rfid en plus
 */
 fun _run_control_program_wait =
-    (if (!interactive_status) then _run_control_play else _run_control_inter) ;
+    _run_control_play_or_inter;
     rfid_control
 ;;
-
 
 
 fun _run_idle =
@@ -328,13 +335,10 @@ fun run_task task=
         if keymanager == RUN_WAIT then
             _run_control_wait
         else if keymanager == RUN_PLAY then
-            if !interactive_status then
-                _run_control_play
-            else
-                _run_control_inter
+            _run_control_play_or_inter
         else if keymanager == RUN_PROGRAM_WAIT then
             _run_control_program_wait
         else
-            button_get_event
+            button_clear_event
     );
     TaskRun;;

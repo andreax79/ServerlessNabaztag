@@ -24,10 +24,8 @@ def format_line(line: str, name_width: int = 14, effect_width: int = 40) -> str:
     desc = desc.strip()
 
     # Formatting with padding
-    name_field = name.ljust(name_width)
-    effect_field = effects_str.ljust(effect_width)
-
-    return f"{name_field} {effect_field} {desc}"
+    tmp = name.upper().ljust(name_width) + " " + effects_str
+    return (tmp.ljust(effect_width + 1 + name_width) + " " + desc).strip()
 
 
 def format_comment(line: str) -> str:
@@ -42,9 +40,17 @@ def extract_comments(files: list[str]) -> list[str]:
     result: list[str] = []
     for file_path in files:
         with open(file_path, "r", encoding="utf-8") as f:
-            for match in COMMENT_RE.findall(f.read()):
-                if "--" in match:  # Include only comments containing a -- (doble minus)
-                    result.append(match)
+            # get file extension
+            file_extension = file_path.split(".")[-1].lower()
+            if file_extension == "mtl":
+                for match in COMMENT_RE.findall(f.read()):
+                    if "--" in match:  # Include only comments containing a -- (doble minus)
+                        result.append(format_comment(match))
+            elif file_extension == "forth":
+                for line in f.readlines():
+                    if line.strip().startswith(": ") and "--" in line:
+                        line = line[2:].strip().replace('\\', '')  # Remove leading ": " and backslashes
+                        result.append(format_line(line))
     return result
 
 
@@ -54,8 +60,7 @@ def main():
         sys.exit(1)
 
     files = sys.argv[1:]
-    comments = extract_comments(files)
-    words = sorted([format_comment(c) for c in comments])
+    words = sorted(extract_comments(files))
     print("\n".join(words))
 
 if __name__ == "__main__":

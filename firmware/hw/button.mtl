@@ -12,29 +12,23 @@ var _button_clic;;
  */
 fun button_task task=
     let button2 -> b in
-    if b!=_button_last then
+    if b != _button_last then // Button state changed
     (
-        set _button_last=b;
-        if b then
+        set _button_last = b;
+        if _button_last then // Button pressed
         (
-            if _button_time==nil then
-            (
-                set _button_clic=1;
-                set _button_time=time_ms
-            )
-            else
-            (
-                set _button_clic=_button_clic+1;
-                set _button_time=time_ms
-            )
+            set _button_clic = if _button_time==nil then 1 else _button_clic + 1;  // Increment click count
+            set _button_time = time_ms
         )
-        else if _button_time!=nil then set _button_time=time_ms
+        else if _button_time!=nil
+            then set _button_time=time_ms
     )
-    else if (_button_time!=nil) then
+    else if _button_time != nil then
     (
         if ((time_ms-_button_time)>=BUTTON_T_LCLIC) then
         (
-            if _button_last then set _button_event=if _button_clic==1 then BUTTON_LCLIC else BUTTON_DLCLIC;
+            if _button_last then
+                set _button_event=if _button_clic==1 then BUTTON_LCLIC else BUTTON_DLCLIC;
             set _button_time=nil
         )
         else if ((time_ms-_button_time)>=BUTTON_T_DCLIC)&&!_button_last then
@@ -44,6 +38,12 @@ fun button_task task=
         )
     );
     TaskRun;;
+
+/**
+ * Clear the last button event
+ */
+fun button_clear_event=
+    set _button_event=nil;;
 
 /**
  * Get the last button event

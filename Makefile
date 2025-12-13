@@ -19,20 +19,27 @@ help:
 	@echo "- make run-sim      Run the simulator"
 	@echo "- make clean        Cleanup"
 
+.PHONY: compiler
 compiler:
 	@$(MAKE) -C compiler
 
+.PHONY: clean
 clean:
 	@$(MAKE) -C compiler clean
 
-firmware:
+.PHONY: words
+words:
+	@./scripts/extract_words.py firmware/forth/*.mtl vl/*.forth > vl/words.txt
+
+.PHONY: firmware
+firmware: words
 	@./scripts/make_nominal.sh
 	@$(COMPILER) -s "nominal.mtl" "bootcode.bin"
 	@rm -f nominal.mtl
 	@cp bootcode.bin vl/bc.jsp
 	@echo "Firmware copied to $$PWD/vl/bc.jsp"
-	@./scripts/extract_words.py firmware/forth/*.mtl > vl/words.txt
 
+.PHONY: deploy
 deploy: firmware
 	@if [ -z "$(DEPLOY_TARGET)" ]; then \
 		echo "Please set the DEPLOY_TARGET variable in .env file"; \
@@ -40,6 +47,7 @@ deploy: firmware
 	fi
 	scp vl/bc.jsp vl/*.forth vl/index.html vl/words.txt $(DEPLOY_TARGET)
 
+.PHONY: run-sim
 run-sim:
 	@./scripts/make_nominal.sh -D SIMU
 	@$(SIMULATOR) --mac $(MAC) --logs $(LOGS) --source "nominal.mtl" --http_server_path $(HTTP_SERVER_PATH) --http_server_port $(HTTP_SERVER_PORT) || true

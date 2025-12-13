@@ -1,7 +1,7 @@
 // Main loop states
 type Run =
-    configstartRun |
-    configwaitRun _ |
+    configstartRun |            // Get the configuration from the server
+    configwaitRun _ |           // Wait for the configuration to be downloaded
     interactiveReqWaitRun _ |
 #ifdef PING
     pingstartRun |
@@ -19,8 +19,8 @@ type Run =
     streamCmdRun _ |
     waitCmdRun _ |
     cmdEvalOne _ |
-    idleRun |
-    sleepRun |
+    idleRun |                   // Idle (normal) mode
+    sleepRun |                  // Sleep mode
     recordRun |
     recordStartRun |
     earResetWaitRun _;;

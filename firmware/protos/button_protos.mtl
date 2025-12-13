@@ -9,3 +9,6 @@ const MASK_BUTTON = 1;;
 const MASK_EAR_LEFT = 2;;
 const MASK_EAR_RIGHT = 4;;
 const MASK_RFID = 8;;
+
+proto button_clear_event 0;;
+proto button_get_event 0;;

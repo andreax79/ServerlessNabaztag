@@ -11,8 +11,12 @@ $REPEAT        ( s n -- s )                             Repeat string s n times
 2+             ( n -- n+2 )                             Increments top of stack by 2
 2-             ( n -- n-2 )                             Decrements top of stack by 2
 2>R            ( x1 x2 -- ) ( R: -- x1 x2 )             Move two items to return stack
+2DROP          ( x1 x2 -- )
+2DUP           ( x1 x2 -- x1 x2 x1 x2 )
+2OVER          ( x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2 )
 2R>            ( -- x1 x2 ) ( r: x1 x2 -- )             Retrieve two items from return stack
 2R@            ( -- x1 x2 ) ( r: x1 x2 -- x1 x2 )       Copy two items from return stack to data stack
+2SWAP          ( x1 x2 x3 x4 -- x3 x4 x1 x2 )
 ::             ( list x -- list' )                      Add an element to the front of a list
 <              ( n1 n2 -- flag )                        True if second word less than top word
 <0             ( n -- flag )                            True if top number less than zero
@@ -33,12 +37,17 @@ ABS            ( n -- abs(n)                            Absolute value  )
 ALLOCATE-CELL  ( -- addr )                              Allocate a cell from memory and return its address.
 AND            ( n1 n2 -- flag )                        Logical AND
 BEGIN          (immediate) ( -- )                       Begin a loop Store the current position in the return stack
+BETWEEN        ( n low high -- flag )
 BL             ( -- char )                              Character value for a space
+CALC-SURPRISE  ( -- )                                   calculate next surprise time
+CALC-TAICHI    ( -- )                                   Calculate next taichi time
 CASE           (immediate) ( -- )                       Begin a case statement
 CLEAR-INFO     ( -- )                                   Clear all information
 CONSTANT       (immediate) ( x "<spaces>name" -- )      Define a constant with the given name and value
 COUNT          ( list/str -- n )                        Get the length of a list or a string
 CR             ( -- )                                   Display CR
+CRONTAB        ( -- )                                   Crontab
+DAYTIME        ( -- )
 DEFINED?       (immediate) ( "<spaces>name" -- flag )   Check if a word is defined in the dictionary
 DEPTH          ( -- count )                             Count number of items on stack
 DROP           ( n --  )                                Discard top of stack
@@ -51,28 +60,41 @@ ENDOF          (immediate) ( -- )                       End a case option
 EVAL-TRAME     ( str -- )                               Evaluate a trame
 EVALUATE       ( str -- )                               Evaluate a string as Forth code
 EXIT           ( -- )                                   Return control to the caller
-FALSE          ( -- false )                             
+FALSE          ( -- false )
 FREE-CELL      ( addr -- )                              Free a cell in memory at the given address.
 GC             ( -- mem% )                              Perform garbage collection and return the memory usage percentage
+GET-HOUR       ( -- hour )
+GET-MINUTE     ( -- minute )
 HD             ( list -- list x )                       Get the head of a list
+HELP           ( -- )
 HTTP-GET       ( url -- content header )                Perform an HTTP GET request and return the content as a string HTTPS is not supported
 HTTP-POST      ( payload url -- content header )        Perform an HTTP POST request and return the content as a string HTTPS is not supported
 IF             (immediate) ( cond -- )                  Begin a conditional Compile a conditional jump to the matching ELSE or THEN
+INTERPRETER    ( -- )
 INVERT         ( n -- flag )                            Logical NOT
 IP             ( -- ip )                                Push the IP address of the WIFI interface onto the stack
 JMP            ( addr -- )                              Unconditional jump
 JSON-GET       ( w path -- x ) (e.g., "daily.weathercode[0]") Get an element from a dictionary or list by path
 JSON-PARSE     ( str -- list/dict )                     Parse a JSON string into a list or dictionary
+LOAD-SRV       ( filename -- )
 LOCAL>STRING   ( -- str )                               Push the current local time and date as a string onto the stack
+LOGIN          ( logged line -- logged )
 LOWER          ( s -- s )                               Convert string s to lowercase
 MAC            ( -- mac )                               Push the MAC address of the WIFI interface onto the stack
 MD5            ( str -- hash )                          Compute the MD5 hash of a string
+METEO>INFO     ( n -- n )                               Convert weather code to info code
 MOVE-EAR       ( ear dir pos -- ) (0=left, 1=right) (0=left, 1=right) (0..16) Move an ear  ear in direction dir  to position pos
 MS             ( delay -- )                             Sleep for the specified number of milliseconds
 NIL            ( -- list )                              Push empty list onto the stack
 NIP            ( n1 n2 -- n2 )                          Drop the first item below the top of stack
 NTH            ( list/str n -- x )                      Get the n-th element of a list or the n-th character of a string
 OF             (immediate) ( value -- )                 Begin a case option
+ON-CLICK       ( -- )                                   click hook
+ON-CONNECT     ( -- )
+ON-DBL-CLICK   ( -- )                                   double click hook
+ON-EARS        ( -- )                                   ears hook
+ON-HALFTIME    ( -- )
+ON-TIME        ( -- )
 OR             ( n1 n2 -- flag )                        Logical OR
 OVER           ( n1 n2 -- n1 n2 n1 )                    Make copy of second item on top
 PAD_LEFT       ( s n c -- s )                           Pad string s on the left to length n with character c
@@ -80,33 +102,42 @@ PAD_RIGHT      ( s n c -- s )                           Pad string s on the righ
 PLAY-CHOR      ( chor_data -- )                         Play a choreography
 PLAY-MIDI      ( i -- ) (i-100)                         Play a MIDI sound/note If i>=100, play note  If 0<=i<100, play sound i If i<0, play a random note
 PLAY-URL       ( url -- )                               Play a WAV file from an HTTP URL HTTPS is not supported
+PROMPT         ( -- )
 R>             ( -- x ) ( R: x -- )                     Retrieve item from return stack
 R@             ( -- x ) ( R: x -- x )                   Copy top of return stack onto data stack
 RANDOM         ( max -- n )                             Return a pseudo-random number n between 0 and max-1
 RDEPTH         ( -- count )                             Count number of items on return stack
 RDROP          ( n --  )                                Discard top of return stack
 READ-LINE      ( -- line )                              Read a line from the current socket
+RELOAD-INIT    ( -- )
 RESUME-TASK    ( task-id -- flag )                      Resume the task with the given task id.
 REVISION       ( -- str )                               Push the revision string onto the stack
 ROT            ( n1 n2 n3 -- n2 n3 n1 )                 Rotate third item to top
+SAY            ( text --  )                             text-to-speech
 SLEEP          ( -- )                                   Put the Nabaztag into sleep mode
+SLEEPING-TIME? ( -- flag )
 SLEEPING?      ( -- flag)                               Return true if the Nabaztag is in sleep mode
 SPACE          ( -- )                                   Display space
 START-TASK     ( text delay name -- )                   Start a new task with the given name, delay, and text to execute.
 STOP-TASK      ( task-id -- flag )                      Stop the task with the given task id.
 STR-JOIN       ( list -- str )                          Join a list of strings into a single string
+SURPRISE       ( -- )                                   Surprise
+SURPRISE-TIME? ( -- flag )                              Check if it's time for a surprise
 SUSPEND-TASK   ( task-id -- flag )                      Suspend the task with the given task id.
 SWAP           ( n1 n2 -- n2 n1 )                       Exchange top two stack items
+TAICHI         ( -- )                                   Do Tai Chi exercise
+TAICHI-TIME?   ( -- flag )                              check if it's time for taichi
 TCP-LISTEN     ( text port name -- )                    Start a TCP server listening on the given port with the given name
 THEN           (immediate) ( -- )                       End a conditional Update the previous conditional jump or unconditional jump to point to the instruction after THEN
 TIME&DATE      ( -- sec min hour day month year)        Push the current time and date onto the stack
 TIME-MS        ( -- ms )                                Push the current time in milliseconds onto the stack
 TIME?          ( -- flag )                              Check if the system time has been received from the time server
 TL             ( list -- list' )                        Get the tail of a list
-TRUE           ( -- true )                              
+TRUE           ( -- true )
 TUCK           ( n1 n2 -- n1 n2 n1 ) (top)              Copy the first  stack item below the second stack item
 UNTIL          (immediate) ( x -- )                     End a loop Compile a conditional jump back to the matching BEGIN
 UPDATE-TIME    ( -- )                                   Update the system time from the time server
+UPDATE-WEATHER ( -- )                                   Update weather information
 UPPER          ( s -- s )                               Convert string s to uppercase
 UPTIME         ( -- s )                                 Push the system uptime in seconds onto the stack
 URL-DECODE     ( s -- s )                               URL decode string s

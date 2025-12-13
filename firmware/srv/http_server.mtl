@@ -278,7 +278,7 @@ fun http_get_surprise sock args=
     http_send_header_and_close HTTP_204 nil sock;;
 
 /**
- * Play a sound
+ * Play a sound from the MIDI library
  */
 fun http_get_play_midi midi sock args=
     if !sleep_is_sleeping then (
@@ -286,18 +286,31 @@ fun http_get_play_midi midi sock args=
     );
     http_send_header_and_close HTTP_204 nil sock;;
 
+/**
+ * Play a WAV/MP3 from a given URL
+ */
 fun http_get_play sock args=
     if !sleep_is_sleeping then (
         audiolib_start_http _http_arg_str args 'u' #streaming_wav_error
     );
     http_send_header_and_close HTTP_204 nil sock;;
 
+/**
+ * Text to speech
+ */
 fun http_get_say sock args=
     if !sleep_is_sleeping then (
-        audiolib_start_http (strcatlist "http://translate.google.com/translate_tts?ie=UTF-8&total=1&idx=0&textlen=32&client=tw-ob&tl=En-gb&q="::(strreplace (_http_arg_str args 't') " " "+")::nil) #streaming_wav_error
+        let _http_arg_str args 't' -> text in
+        let forth_new_state -> f in (
+            forth_push_str f text;
+            forth_interpreter_ex WORD_SAY f nil nil nil
+        )
     );
     http_send_header_and_close HTTP_204 nil sock;;
 
+/**
+ * Perform Tai Chi exercise
+ */
 fun http_get_taichi sock args=
     if !sleep_is_sleeping then
         forth_interpreter WORD_TAICHI;

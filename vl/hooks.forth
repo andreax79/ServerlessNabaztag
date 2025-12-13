@@ -1,20 +1,17 @@
-: on-click ( -- )
-\ click hook
+: on-click ( -- )  \ click hook
 nil "time=" :: time-ms :: str-join  \ payload
 nil server-url @ :: "/hooks/click.php" :: str-join  \ url
 http-post
 drop drop ;
 
-: on-dbl-click ( -- )
-\ double click url
+: on-dbl-click ( -- )  \ double click hook
 play-midi-ack
 nil "time=" :: time-ms :: str-join  \ payload
 nil server-url @ :: "/hooks/dblclick.php" :: str-join  \ url
 http-post
 drop drop ;
 
-: on-ears ( -- )
-\ ears hook
+: on-ears ( -- )  \ ears hook
 play-midi-acquired
 nil "left=" :: left-ear-position :: "&right=" :: right-ear-position :: str-join  \ payload
 nil server-url @ :: "/hooks/ears.php" :: str-join  \ url
@@ -30,5 +27,12 @@ then ;
 : on-halftime ( -- )
 sleeping? invert if  \ if not sleeping
 nil server-url @ :: "/config/clockall/" :: language @ :: "/" :: 12 random 1 + :: ".mp3" :: str-join  \ url
+play-url
+then ;
+
+: say ( text --  )  \ text-to-speech
+sleeping? invert if  \ if not sleeping
+url-encode >r
+nil "http://translate.google.com/translate_tts?ie=UTF-8&total=1&idx=0&textlen=32&client=tw-ob&tl=" :: language @ :: "&q=" :: r> :: str-join \ url
 play-url
 then ;

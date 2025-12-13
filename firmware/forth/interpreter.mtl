@@ -148,6 +148,21 @@ fun forth_interpreter_resume f=
     );;
 
 /**
+ * Create a new Forth interpreter state.
+ */
+fun forth_new_state=
+    [
+        stack:nil // data stack
+        rstack:nil // return stack
+        pc:0 // program counter
+        state:FORTH_STATE_NORMAL // normal (not compilation) state
+        forth_sock: nil // socket
+        forth_task: nil // task
+        // istack: inter :: nil // interpreter state
+        istack:nil // interpreter state stack
+    ];;
+
+/**
  * Initialize a new Forth interpreter state or reuse an existing one.
  * text: input Forth code as a string
  * f: existing Forth interpreter state or nil to create a new one
@@ -167,20 +182,16 @@ fun forth_interpreter_setup text f sock task cb=
         token:nil
         inter_cb:cb
     ] -> inter in
-    if f == nil then (
-        // Secho "Creating new Forth interpreter\n";
-        // Secholn if sock != nil then "with socket" else "without socket";
-        [
-            stack:nil // data stack
-            rstack:nil // return stack
-            pc:0 // program counter
-            state:FORTH_STATE_NORMAL // normal (not compilation) state
-            forth_sock: sock // socket
-            forth_task: task // task
-            istack: inter :: nil // interpreter state
-        ]
+    if f == nil then
+        let forth_new_state -> nf in (
+        set nf.forth_sock = sock;
+        set nf.forth_task = task;
+        set nf.istack = inter :: nil;
+        nf
     ) else (
         set f.istack = inter :: f.istack;
+        if f.forth_sock == nil then set f.forth_sock = sock;
+        if f.forth_task == nil then set f.forth_task = task;
         f
     );;
 
