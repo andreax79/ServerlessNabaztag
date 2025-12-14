@@ -47,7 +47,6 @@ proto XmppSessionRequestResource 1;;
 #include utils/config.mtl
 #include utils/word.mtl
 #include utils/url.mtl
-#include utils/hooks.mtl
 #include utils/sleep.mtl
 #ifdef XMPP
 #include utils/b64.mtl

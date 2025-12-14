@@ -1,8 +1,0 @@
-#include protos/http_protos.mtl
-
-//--------------------------------------------------------------------------------------------------
-// Hooks
-//--------------------------------------------------------------------------------------------------
-
-fun hook_rfid tag cb=
-	http_request "POST" url_hook_rfid (strcatlist "tag="::(webmac tag)::nil) cb HTTP_NORMAL;;

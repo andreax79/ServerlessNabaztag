@@ -1,10 +1,9 @@
 #include protos/trame_protos.mtl
-#include protos/hooks_protos.mtl
 #include protos/http_protos.mtl
 #include protos/chor_protos.mtl
 #include protos/run_protos.mtl
 #include protos/midi_protos.mtl
-#include protos/midi_protos.mtl
+#include protos/forth_protos.mtl
 
 // ********** RFID **********************
 // v19 Amélioration de la lecteure RFID
@@ -64,7 +63,11 @@ fun rfid_control=
 			// lancer l'animation (v19)
 			chor_start_ex CHOR_RFID_OK #_rfid_end_chor nil;
 
-			hook_rfid rfid #_rfid_http_cb
+            // RFID hook
+            let forth_new_state -> f in (
+                forth_push_str f webmac rfid;
+                forth_interpreter_ex WORD_ON_RFID f nil nil nil
+            )
 		)
 	);
 	0;;

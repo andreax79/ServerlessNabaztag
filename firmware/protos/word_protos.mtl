@@ -10,6 +10,7 @@ const WORD_ON_CLICK = "on-click";;
 const WORD_ON_DBL_CLICK = "on-dbl-click";;
 const WORD_ON_TIME = "on-time";;
 const WORD_ON_HALFTIME = "on-halftime";;
+const WORD_ON_RFID = "on-rfid";;
 const WORD_UPDATE_WEATHER = "update-weather";;
 const WORD_SURPRISE = "surprise";;
 const WORD_TAICHI = "taichi";;

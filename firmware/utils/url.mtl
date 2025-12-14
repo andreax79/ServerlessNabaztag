@@ -10,9 +10,6 @@ fun url_config=
 fun url_record mode=
     strcatlist "http://"::config_get_server_url::"/hooks/record.php"::nil;;
 
-fun url_rfid tag=
-    strcatlist url_ping_server::"/vl/rfid.jsp?sn="::(webmac netMac)::"&v="::(URL_BYTECODE_REVISION)::"&h="::(URL_HARDWARE)::"&t="::(webmac tag)::nil;;
-
 fun url_interactive application=
     strcatlist url_ping_server::"/vl/itmode.jsp?sn="::(webmac netMac)::"&v="::(URL_BYTECODE_REVISION)::"&h="::(URL_HARDWARE)::"&a="::application::nil;;
 

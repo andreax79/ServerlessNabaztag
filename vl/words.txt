@@ -94,6 +94,7 @@ ON-CONNECT     ( -- )
 ON-DBL-CLICK   ( -- )                                   double click hook
 ON-EARS        ( -- )                                   ears hook
 ON-HALFTIME    ( -- )
+ON-RFID        ( rfid -- )                              rfid hook
 ON-TIME        ( -- )
 OR             ( n1 n2 -- flag )                        Logical OR
 OVER           ( n1 n2 -- n1 n2 n1 )                    Make copy of second item on top
