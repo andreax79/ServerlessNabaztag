@@ -39,47 +39,50 @@ fun _http_handle_tmp_redirect cnx httpreq =
 	else
 		// reconstruire toute la chaine de réponse, elle ne doit pas être bien longue
 		let strcatlist rev httpreq.inputH nil -> reponse in
-		(
-			let strstr reponse "\13\nLocation: " 0 -> i in
-				if nil == i then // pas de location -> erreur
-					(
+        let strstr reponse "\13\nLocation: " 0 -> i in (
+            if nil == i then ( // pas de location -> erreur
 #ifdef HTTP_DEBUG
-						_http_debug "HTTP - Could not follow redirection, no 'Location:' found.";
+                    _http_debug "HTTP - Could not follow redirection, no 'Location:' found.";
 #endif
-						call httpreq.http_req_cb [httpreq nil] ;
-						nil
-					)
-				else
-					let strstr reponse "\13\n" (i+2) -> finloc in
-					(
-					let strsub reponse (i+12) (finloc-i-11) -> newurl in
-					// ici on a l'url vers laquelle on veut rediriger dans newurl.
-					(
+                    call httpreq.http_req_cb [httpreq nil] ;
+                    nil
+            ) else
+                let strstr reponse "\13\n" (i+2) -> finloc in
+                let strsub reponse (i+12) (finloc-i-11) -> newurl in
+                // ici on a l'url vers laquelle on veut rediriger dans newurl.
+                let http_request "GET" newurl nil httpreq.http_req_cb httpreq.typeH -> newReq in (
 #ifdef HTTP_DEBUG
-						_http_debug "HTTP - Following redirection. new url [" ; _http_debug newurl; _http_debug "]";
+                    _http_debug "HTTP - Following redirection. new url [" ; _http_debug newurl; _http_debug "]";
 #endif
-						let http_request "GET" newurl nil httpreq.http_req_cb httpreq.typeH -> newReq in
-						(
-							set newReq.http_req_redir_depth = httpreq.http_req_redir_depth + 1;
-							set httpreq.sonH = newReq;
-							set httpreq.http_req_cb = nil
-						);
-					nil
-					)
-					)
+                    set newReq.http_req_redir_depth = httpreq.http_req_redir_depth + 1;
+                    set httpreq.sonH = newReq;
+                    set httpreq.http_req_cb = nil;
+                    nil
+                )
 		);
-nil;;
+    nil;;
+
+/**
+ * Retrieve a specific field from the HTTP header.
+ * header: full HTTP header string
+ * field: field name to retrieve, lowercase (e.g., "content-length")
+ */
+fun http_get_header_field header field=
+    let strstr to_lower header field 0 -> i in
+    if i==nil then
+        nil
+    else
+        let strlen field -> field_len in
+        let strstr header HTTP_CONTENT_END i -> j in
+        let if j!=nil then j else strlen header -> j in
+        strsub header i+field_len j-i-field_len;;
 
 /**
  * Extract the Date header from a HTTP response
  * res: the full HTTP response
  */
 fun _http_get_date_from_header res=
-    let to_lower http_get_header res -> header in
-    let strstr header HTTP_DATE 0 -> i in
-    let if i!=nil then (strlen HTTP_DATE) + (strstr header HTTP_DATE i) -> j in
-    if i==nil then nil
-    else strsub header j 25;;
+    http_get_header_field (http_get_header res) HTTP_DATE;;
 
 // callback de lecture sur la socket d'une requête
 fun _http_tcp_read cnx input httpreq=
@@ -298,3 +301,41 @@ fun http_split_header_content res=
     let strstr res HTTP_HEADER_SEP 0 -> i in
     if i==nil then [res nil]
     else [strsub res 0 i+strlen HTTP_HEADER_SEP strsub res i+strlen HTTP_HEADER_SEP strlen res];;
+
+/**
+ * Extract HTTP request arguments from a URL-encoded string.
+ * urlencoded: URL-encoded argument string (e.g., "key1=value1&key2=value2")
+ * i: starting index to parse from
+ */
+fun http_extract_args urlencoded i=
+    let strstr urlencoded "=" i-> j in
+    if j!=nil then let strstr urlencoded "&" j-> k in
+    let if k==nil then strlen urlencoded else k -> k in
+    let strsub urlencoded j+1 k-j-1 -> v in
+    [(strget urlencoded i) url_decode v]::http_extract_args urlencoded k+1;;
+
+/**
+ * Get a string value from the args by the key
+ * args: list of [key value] pairs
+ * key: key to search for
+ */
+fun http_arg_str args key =
+    let nil -> value in (
+        for l=args; (l!=nil) && (value==nil); tl l do
+            let hd l->[n v] in
+                if n==key then set value=v;
+        value
+    );;
+
+/**
+ * Get an integer value from the args by the key
+ * args: list of [key value] pairs
+ * key: key to search for
+ */
+fun http_arg_int args key =
+    let nil -> value in (
+        for l=args; (l!=nil) && (value==nil); tl l do
+            let hd l->[n v] in
+                if n==key then set value=atoi v;
+        value
+    );;

@@ -30,6 +30,13 @@ nil server-url @ :: "/config/clockall/" :: language @ :: "/" :: 12 random 1 + ::
 play-url
 then ;
 
+: on-rfid ( rfid -- )  \ rfid hook
+>r
+nil "tag=" :: >r :: str-join  \ payload
+nil server-url @ :: "/hooks/rfid.php" :: str-join  \ url
+http-post
+drop drop ;
+
 : say ( text --  )  \ text-to-speech
 sleeping? invert if  \ if not sleeping
 url-encode >r

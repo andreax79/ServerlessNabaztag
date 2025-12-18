@@ -1349,7 +1349,7 @@ fun Sasl_response_value xSession authstring=
 fun Sasl_processChallenge xSession challengeText=
     let nil -> xmlpacket in (
     if challengeText != nil then
-    let B64toS challengeText -> decoded in if decoded != nil then // realm="somerealm",nonce="OA6MG9tEQGm2hh",qop="auth",charset=utf-8,algorithm=md5-sess
+    let b64_decode challengeText -> decoded in if decoded != nil then // realm="somerealm",nonce="OA6MG9tEQGm2hh",qop="auth",charset=utf-8,algorithm=md5-sess
     let Sasl_challengeStr2List decoded -> decodedList in if decodedList != nil then (
         // Step One of http://www.ietf.org/rfc/rfc2831.txt
 
@@ -1433,7 +1433,7 @@ fun Sasl_processChallenge xSession challengeText=
 #ifdef XMPP_DEBUG
                         _xmpp_debug "snd response"; // ='"; Secho response; Secho "'";
 #endif
-                        set response = StoB64 response;
+                        set response = b64_encode response;
                         // send response
                         set xmlpacket = strcatlist "<response xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"::response::"</response>"::nil;
                         0
@@ -2460,7 +2460,7 @@ fun XmppSessionProcess xSession PaquetXml =
                             let Xml_GetElementAttribute packet "ttl" -> ttl in
                             let (Xmp_GetTextContent packet) -> data_64 in if (data_64 != nil) then
                             // decode trame
-                            let B64toS data_64 -> ping_trame in (
+                            let b64_decode data_64 -> ping_trame in (
                                 //_xmpp_debug "ping_trame_64="; _xmpp_debug data_64;
                                 _xmpp_process_incoming_trame ping_trame resourceName ttl
                             );
@@ -2655,7 +2655,7 @@ fun XmppSessionProcess xSession PaquetXml =
                         let Xml_GetElementAttribute packet "format" -> format in if (!strcmp format "1.0") then
                         let Xml_GetElementAttribute packet "ttl" -> ttl in
                         let (Xmp_GetTextContent packet) -> data_64 in if (data_64 != nil) then
-                        let B64toS data_64 -> ping_trame in
+                        let b64_decode data_64 -> ping_trame in
                             _xmpp_process_incoming_trame ping_trame resourceName ttl    // EXECUTION DE LA TRAME
                     );
 
@@ -2827,7 +2827,7 @@ fun XmppSessionProcessHandleStanzaIqSet xSession xmlStanza =
                     "<command xmlns='http://jabber.org/protocol/commands' node='getconfig' status='completed'>"
                     :: "<x xmlns='jabber:x:data' type='result'><item>"
                     :: "<field var='bytecode_revision'><value>" :: URL_BYTECODE_REVISION :: "</value></field>"
-                    :: "<field var='wifi_ssid'><value>" :: (StoB64 config_get_wifi_ssid) :: "</value></field>"
+                    :: "<field var='wifi_ssid'><value>" :: (b64_encode config_get_wifi_ssid) :: "</value></field>"
                     :: "<field var='wifi_crypt'><value>" :: (itoa config_get_wifi_crypt) :: "</value></field>"
                     :: "<field var='net_dhcp'><value>" :: (itoa config_get_dhcp) :: "</value></field>"
                     :: "<field var='net_ip'><value>" :: (ip_to_str config_get_net_ip) :: "</value></field>"
@@ -2886,7 +2886,7 @@ fun XmppSessionProcessHandleStanzaIqSet xSession xmlStanza =
                         let Xml_GetElementAttribute packet "ttl" -> ttl in
                         let (Xmp_GetTextContent packet) -> data_64 in
                         if (data_64 != nil) then (
-                            let B64toS data_64 -> ping_trame in
+                            let b64_decode data_64 -> ping_trame in
                              (_xmpp_process_incoming_trame ping_trame resourceName ttl ; nil)
                         )
                     )

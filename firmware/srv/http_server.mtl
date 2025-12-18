@@ -10,12 +10,18 @@
 #include protos/info_protos.mtl
 #include protos/ntp_protos.mtl
 
+// debug
+#ifdef HTTP_SERVER_DEBUG
+fun _http_server_debug str= Secholn strcatlist "[http-server] " :: str :: nil; nil;;
+#endif
+
 //--------------------------------------------------------------------------------------------------
 // HTTP Server
 //--------------------------------------------------------------------------------------------------
 
 const HTTP_200 = "200 OK";;
 const HTTP_204 = "204 No Content";;
+const HTTP_401 = "401 Unauthorized";;
 const HTTP_404 = "404 Not Found";;
 
 proto http_server_process_request 2;;
@@ -32,6 +38,7 @@ fun http_header http_status content_type content_length=
         (if content_length!=nil then (strcat "\13\10Content-Length: " (itoa content_length)) else "")::
         "\13\10Date: " :: time_date_utc ::
         "\13\10Cache-Control: max-age=0, no-cache, no-store" ::
+        (if config_md5_password!=nil then "\13\10WWW-Authenticate: Basic realm=\"Nabaztag\", charset=\"UTF-8\"" else "") ::
         "\13\10Pragma: no-cache" ::
         "\13\10Connection: close"::
         "\13\10\13\10"::nil
@@ -178,69 +185,6 @@ fun http_get_json_arp_table sock args =
 fun http_get_timezones sock args =
     http_send_content_and_close sock "application/json" timezones_json;;
 
-//--------------------------------------------------------------------------------------------------
-
-fun filterplus s=
-    let strlen s -> n in
-    for i=0;i<n do if (strget s i)=='+' then strset s i 32;
-    s;;
-
-fun filterpercent s i0=
-    let strstr s "%" i0 -> i in
-    if i==nil then (strsub s i0 nil)::nil
-    else (strsub s i0 i-i0)::(ctoa htoi strsub s i+1 2)::(filterpercent s i+3);;
-
-fun extractargs urlencoded i=
-    let strstr urlencoded "=" i-> j in
-    if j!=nil then let strstr urlencoded "&" j-> k in
-    let if k==nil then strlen urlencoded else k -> k in
-    [(strget urlencoded i) strcatlist filterpercent filterplus strsub urlencoded j+1 k-j-1 0]::extractargs urlencoded k+1
-    ;;
-
-/**
- * Extract the verb, path and args from the HTTP request line.
- * req: full HTTP request string
- */
-fun _http_server_parse_req req=
-    let nil -> args in
-    let strstr req " " 0 -> i in
-    let strstr req " " i+1 -> j in
-    let strsub req 0 i -> verb in
-    let strsub req i+1 j-i-1 -> path in (
-        if !strcmp verb "POST" then
-            // For POST requests, extract arguments from the body
-            set args = extractargs req ((strstr req HTTP_HEADER_SEP 0) + (strlen HTTP_HEADER_SEP))
-        else
-            // For GET requests, extract arguments from the path
-            let strstr path "?" 0 -> i in
-                if i!=nil then (
-                    set args=(extractargs path i+1);
-                    set path=(strsub path 0 i);
-                    nil
-                );
-    [verb path args]
-    );;
-
-// Get a string value from the args by the key
-fun _http_arg_str args key =
-    let nil -> value in (
-        for l=args; l!=nil; tl l do
-            let hd l->[n v] in
-                if n==key then set value=v;
-        value
-    )
-    ;;
-
-// Get an integer value from the args by the key
-fun _http_arg_int args key =
-    let nil -> value in (
-        for l=args; l!=nil; tl l do
-            let hd l->[n v] in
-                if n==key then set value=atoi v;
-        value
-    )
-    ;;
-
 /**
  * Get time from the time server
  */
@@ -291,7 +235,7 @@ fun http_get_play_midi midi sock args=
  */
 fun http_get_play sock args=
     if !sleep_is_sleeping then (
-        audiolib_start_http _http_arg_str args 'u' #streaming_wav_error
+        audiolib_start_http http_arg_str args 'u' #streaming_wav_error
     );
     http_send_header_and_close HTTP_204 nil sock;;
 
@@ -300,7 +244,7 @@ fun http_get_play sock args=
  */
 fun http_get_say sock args=
     if !sleep_is_sleeping then (
-        let _http_arg_str args 't' -> text in
+        let http_arg_str args 't' -> text in
         let forth_new_state -> f in (
             forth_push_str f text;
             forth_interpreter_ex WORD_SAY f nil nil nil
@@ -317,7 +261,7 @@ fun http_get_taichi sock args=
     http_send_header_and_close HTTP_204 nil sock;;
 
 fun http_get_mp3 sock args=
-    audiolib_start_http _http_arg_str args 'v' #streaming_wav_error;
+    audiolib_start_http http_arg_str args 'v' #streaming_wav_error;
     http_send_header_and_close HTTP_204 nil sock;;
 
 fun http_get_sleep sock args=
@@ -330,47 +274,47 @@ fun http_get_wakeup sock args=
 
 fun http_get_left sock args=
     if !sleep_is_sleeping then (
-        ears_go EARS_LEFT _http_arg_int args 'p' _http_arg_int args 'd'
+        ears_go EARS_LEFT http_arg_int args 'p' http_arg_int args 'd'
     );
     http_send_header_and_close HTTP_204 nil sock;;
 
 fun http_get_right sock args=
     if !sleep_is_sleeping then (
-        ears_go EARS_RIGHT _http_arg_int args 'p' _http_arg_int args 'd'
+        ears_go EARS_RIGHT http_arg_int args 'p' http_arg_int args 'd'
     );
     http_send_header_and_close HTTP_204 nil sock;;
 
 fun http_get_nose sock args=
-    set info_messages = _http_arg_int args 'v';
+    set info_messages = http_arg_int args 'v';
     http_send_header_and_close HTTP_204 nil sock;;
 
 fun http_get_weather sock args=
     if !sleep_is_sleeping then (
-        info_src_update INFO_WEATHER _http_arg_int args 'v'
+        info_src_update INFO_WEATHER http_arg_int args 'v'
     );
     http_send_header_and_close HTTP_204 nil sock;;
 
 fun http_get_stock sock args=
     if !sleep_is_sleeping then (
-        info_src_update INFO_STOCK _http_arg_int args 'v'
+        info_src_update INFO_STOCK http_arg_int args 'v'
     );
     http_send_header_and_close HTTP_204 nil sock;;
 
 fun http_get_traffic sock args=
     if !sleep_is_sleeping then (
-        info_src_update INFO_TRAFFIC _http_arg_int args 'v'
+        info_src_update INFO_TRAFFIC http_arg_int args 'v'
     );
     http_send_header_and_close HTTP_204 nil sock;;
 
 fun http_get_mail sock args=
     if !sleep_is_sleeping then (
-        info_src_update INFO_MAIL _http_arg_int args 'v'
+        info_src_update INFO_MAIL http_arg_int args 'v'
     );
     http_send_header_and_close HTTP_204 nil sock;;
 
 fun http_get_pollution sock args=
     if !sleep_is_sleeping then (
-        info_src_update INFO_POLLUTION _http_arg_int args 'v'
+        info_src_update INFO_POLLUTION http_arg_int args 'v'
     );
     http_send_header_and_close HTTP_204 nil sock;;
 
@@ -389,18 +333,18 @@ fun _http_get_dns_cb ip sock=
  * args: d=domain name
  */
 fun http_get_dns sock args=
-    let _http_arg_str args 'd' -> domain in
+    let http_arg_str args 'd' -> domain in
         dnsreq domain fixarg2 #_http_get_dns_cb sock;;
 
 fun http_get_setup sock args=
-    config_set_lang _http_arg_str args 'l';            // set language
-    config_set_city _http_arg_str args 'c';            // set city code
-    config_set_dst atoi _http_arg_str args 'd';        // set Daylight Saving Time
-    config_set_latitude _http_arg_str args 'j';        // set latitude
-    config_set_longitude _http_arg_str args 'k';       // set longitude
-    config_set_wake_up atoi _http_arg_str args 'w';    // set wake up time
-    config_set_go_to_bed atoi _http_arg_str args 'b';  // set go to bed time
-    config_set_taichi_freq atoi _http_arg_str args 't';// set taichi frequency
+    config_set_lang http_arg_str args 'l';            // set language
+    config_set_city http_arg_str args 'c';            // set city code
+    config_set_dst http_arg_int args 'd';             // set Daylight Saving Time
+    config_set_latitude http_arg_str args 'j';        // set latitude
+    config_set_longitude http_arg_str args 'k';       // set longitude
+    config_set_wake_up http_arg_int args 'w';         // set wake up time
+    config_set_go_to_bed http_arg_int args 'b';       // set go to bed time
+    config_set_taichi_freq http_arg_int args 't';     // set taichi frequency
     config_save;
     forth_interpreter WORD_UPDATE_WEATHER;
     http_send_header_and_close HTTP_204 nil sock;;
@@ -422,7 +366,7 @@ fun _forth_http_cb f sock=
  * args: HTTP request arguments
  */
 fun forth_http_post_req sock args=
-    let _http_arg_str args 'c' -> code in
+    let http_arg_str args 'c' -> code in
     forth_interpreter_ex code nil nil nil (fixarg2 #_forth_http_cb sock);;
 
 /**
@@ -473,14 +417,84 @@ fun http_get_openapi_yaml sock args=
     nil;;
 
 /**
+ * Check HTTP Basic Authentication.
+ * header: HTTP header
+ * Returns 0 if authentication fails, 1 if it succeeds or is not required.
+ */
+fun _http_check_auth header=
+    if config_md5_password==nil then
+        1
+    else
+        let http_get_header_field header HTTP_AUTHORIZATION -> auth in
+        let strlen HTTP_BASIC -> basic_len in (
+#ifdef HTTP_SERVER_DEBUG
+            _http_server_debug strcat "Authorization: " auth;
+#endif
+            if strcmp (strsub auth 0 basic_len) HTTP_BASIC then (
+#ifdef HTTP_SERVER_DEBUG
+                _http_server_debug "No basic auth";
+#endif
+                0
+            ) else
+                let base64_decode strsub auth basic_len+1 (strlen auth) - basic_len -1 -> cred in
+                let strstr cred "\0" 0 -> i in
+                let if i==nil then cred else strsub cred 0 i -> cred in  // remove trailing nulls
+                let strstr cred ":" 0 -> i in  // find separator
+                let strsub cred 0 i -> user in
+                let strsub cred i+1 (strlen cred) - i -1 -> pass in (
+#ifdef HTTP_SERVER_DEBUG
+                    _http_server_debug strcatlist "user: " :: user :: " password: " :: pass :: nil;
+#endif
+                    (!strcmp user config_user) && (!strcmp (md5 pass) config_md5_password)
+                )
+        );;
+
+/**
+ * Extract the verb, path and args from the HTTP request line.
+ * req: full HTTP request string
+ */
+fun _http_server_parse_req req=
+    let nil -> args in
+    let 1 -> auth in
+    let strstr req " " 0 -> i in
+    let strstr req " " i+1 -> j in
+    let strsub req 0 i -> verb in
+    let http_server_get_header req -> header in
+    let strsub req i+1 j-i-1 -> path in (
+        if !_http_check_auth header then (
+            // Skip parsing the request if authorization fails
+#ifdef HTTP_SERVER_DEBUG
+            _http_server_debug "Authorization failed";
+#endif
+            set auth = 0;
+            nil
+        ) else if !strcmp verb "POST" then (
+            // For POST requests, extract arguments from the body
+            set args = http_extract_args req ((strstr req HTTP_HEADER_SEP 0) + (strlen HTTP_HEADER_SEP));
+            nil
+        ) else (
+            // For GET requests, extract arguments from the path
+            let strstr path "?" 0 -> i in
+                if i!=nil then (
+                    set args=(http_extract_args path i+1);
+                    set path=(strsub path 0 i);
+                    nil
+                )
+        );
+        [verb path args auth]
+    );;
+
+/**
  * Process an HTTP request and generate the response
  */
 fun http_server_process_request req sock=
-    let _http_server_parse_req req -> [verb path args] in
+    let _http_server_parse_req req -> [verb path args auth] in
     (
-        Secho "verb: "; Secho verb; Secho " path: "; Secholn path;
-
-        if !strcmp path "/update-time" then http_get_update_time sock args // get time from time server
+#ifdef HTTP_SERVER_DEBUG
+        _http_server_debug strcatlist "HTTP request verb: " :: verb :: " path: " :: path :: " auth: " :: (itoa auth) :: nil;
+#endif
+        if auth==0 then http_send_header_and_close HTTP_401 nil sock // unauthorized
+        else if !strcmp path "/update-time" then http_get_update_time sock args // get time from time server
         else if !strcmp path "/update-weather" then http_get_update_weather sock args  // get weather from weather server
         else if !strcmp path "/stop" then http_get_stop sock args // stop
         else if !strcmp path "/reboot" then http_get_reboot sock args // reboot

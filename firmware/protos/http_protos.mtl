@@ -1,9 +1,11 @@
 proto http_abort 1;;
 proto http_enable 2;;
-proto http_is_enabled 1;;
+proto http_extract_args 2;;
 proto http_get_content 1;;
 proto http_get_header 1;;
+proto http_get_header_field 2;;
 proto http_inactive 1;;
+proto http_is_enabled 1;;
 proto http_request 5;;
 proto http_split_header_content 1;;
 
@@ -19,4 +21,6 @@ const HTTP_DEF_PROTO="http://";;	// en-tête normal (mais ici facultatif) d'une 
 const HTTP_HEADER_SEP = "\13\n\13\n";; // HTTP header separator
 const HTTP_CONTENT_END = "\13\n";;
 const HTTP_CONTENT_LENGTH = "content-length: ";; // lowerrcase
+const HTTP_AUTHORIZATION = "authorization: ";; // lowerrcase
 const HTTP_DATE = "date: ";; // lowerrcase
+const HTTP_BASIC = "Basic";;

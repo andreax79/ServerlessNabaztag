@@ -5,7 +5,7 @@
 const Base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";;
 
 // Fonction permettant d'encoder en B64
-fun StoB64 String =
+fun b64_encode String =
 	let "" -> B64Result in
 	let 0 -> B64Len in
 	let 0 -> B64Num in
@@ -49,9 +49,8 @@ fun StoB64 String =
 			 truncated
 	);;
 
-
 // Fonction permettant de décoder du B64
-fun B64toS String =
+fun base64_decode String =
 	let "" -> B64Result in
 	let 0 -> B64Len in
 	let 0 -> B64Num in
