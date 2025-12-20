@@ -13,9 +13,6 @@ fun url_record mode=
 fun url_interactive application=
     strcatlist url_ping_server::"/vl/itmode.jsp?sn="::(webmac netMac)::"&v="::(URL_BYTECODE_REVISION)::"&h="::(URL_HARDWARE)::"&a="::application::nil;;
 
-fun url_hook_rfid=
-	strcatlist "http://"::config_get_server_url::"/hooks/rfid.php"::nil;;
-
 #ifdef PING
 fun url_ping senddata=
     strcatlist url_ping_server::"/vl/p4.jsp?sn="::(webmac netMac)::"&v="::(URL_BYTECODE_REVISION)::"&st=1&sd="::(itoh senddata)::"&h="::(URL_HARDWARE)::nil;;

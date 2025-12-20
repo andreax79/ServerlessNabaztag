@@ -179,7 +179,7 @@ fun forth_init_dictionary=
         [ [str:"info-traffic"      ] [ code:{[int:FORTH_MEMORY_INFO_TRAFFIC]} ]] ::
         [ [str:"info-mail"         ] [ code:{[int:FORTH_MEMORY_INFO_MAIL]} ]] ::
         [ [str:"info-pollution"    ] [ code:{[int:FORTH_MEMORY_INFO_POLLUTION]} ]] ::
-        [ [str:"user"              ] [ code:{[int:FORTH_MEMORY_USER]} ]] ::
+        [ [str:"username"          ] [ code:{[int:FORTH_MEMORY_USERNAME]} ]] ::
         nil -> d in
             set forth_dictionary = [dict:d];
 #ifdef FORTH_DEBUG

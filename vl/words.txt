@@ -47,7 +47,7 @@ CONSTANT       (immediate) ( x "<spaces>name" -- )      Define a constant with t
 COUNT          ( list/str -- n )                        Get the length of a list or a string
 CR             ( -- )                                   Display CR
 CRONTAB        ( -- )                                   Crontab
-DAYTIME        ( -- )
+DAYTIME        ( -- ) (UTC)                             Display the current time
 DEFINED?       (immediate) ( "<spaces>name" -- flag )   Check if a word is defined in the dictionary
 DEPTH          ( -- count )                             Count number of items on stack
 DROP           ( n --  )                                Discard top of stack
@@ -63,22 +63,22 @@ EXIT           ( -- )                                   Return control to the ca
 FALSE          ( -- false )
 FREE-CELL      ( addr -- )                              Free a cell in memory at the given address.
 GC             ( -- mem% )                              Perform garbage collection and return the memory usage percentage
-GET-HOUR       ( -- hour )
-GET-MINUTE     ( -- minute )
+GET-HOUR       ( -- hour )                              Get the current hour
+GET-MINUTE     ( -- minute )                            Get the current minute
 HD             ( list -- list x )                       Get the head of a list
 HELP           ( -- )
 HTTP-GET       ( url -- content header )                Perform an HTTP GET request and return the content as a string HTTPS is not supported
 HTTP-POST      ( payload url -- content header )        Perform an HTTP POST request and return the content as a string HTTPS is not supported
 IF             (immediate) ( cond -- )                  Begin a conditional Compile a conditional jump to the matching ELSE or THEN
-INTERPRETER    ( -- )
+INTERPRETER    ( -- )                                   Interactive Forth interpreter
 INVERT         ( n -- flag )                            Logical NOT
 IP             ( -- ip )                                Push the IP address of the WIFI interface onto the stack
 JMP            ( addr -- )                              Unconditional jump
 JSON-GET       ( w path -- x ) (e.g., "daily.weathercode[0]") Get an element from a dictionary or list by path
 JSON-PARSE     ( str -- list/dict )                     Parse a JSON string into a list or dictionary
-LOAD-SRV       ( filename -- )
+LOAD-SRV       ( filename -- )                          Load a forth file from the server
 LOCAL>STRING   ( -- str )                               Push the current local time and date as a string onto the stack
-LOGIN          ( logged line -- logged )
+LOGIN          ( -- )                                   Login
 LOWER          ( s -- s )                               Convert string s to lowercase
 MAC            ( -- mac )                               Push the MAC address of the WIFI interface onto the stack
 MD5            ( str -- hash )                          Compute the MD5 hash of a string
@@ -89,13 +89,13 @@ NIL            ( -- list )                              Push empty list onto the
 NIP            ( n1 n2 -- n2 )                          Drop the first item below the top of stack
 NTH            ( list/str n -- x )                      Get the n-th element of a list or the n-th character of a string
 OF             (immediate) ( value -- )                 Begin a case option
-ON-CLICK       ( -- )                                   click hook
+ON-CLICK       ( -- )                                   Click hook
 ON-CONNECT     ( -- )
-ON-DBL-CLICK   ( -- )                                   double click hook
-ON-EARS        ( -- )                                   ears hook
-ON-HALFTIME    ( -- )
-ON-RFID        ( rfid -- )                              rfid hook
-ON-TIME        ( -- )
+ON-DBL-CLICK   ( -- )                                   Double click hook
+ON-EARS        ( -- )                                   Ears hook
+ON-HALFTIME    ( -- )                                   Half-hour hook
+ON-RFID        ( rfid -- )                              RFID hook
+ON-TIME        ( -- )                                   Hour hook
 OR             ( n1 n2 -- flag )                        Logical OR
 OVER           ( n1 n2 -- n1 n2 n1 )                    Make copy of second item on top
 PAD_LEFT       ( s n c -- s )                           Pad string s on the left to length n with character c
@@ -103,20 +103,20 @@ PAD_RIGHT      ( s n c -- s )                           Pad string s on the righ
 PLAY-CHOR      ( chor_data -- )                         Play a choreography
 PLAY-MIDI      ( i -- ) (i-100)                         Play a MIDI sound/note If i>=100, play note  If 0<=i<100, play sound i If i<0, play a random note
 PLAY-URL       ( url -- )                               Play a WAV file from an HTTP URL HTTPS is not supported
-PROMPT         ( -- )
+PROMPT         ( -- )                                   Display the Forth interpreter prompt
 R>             ( -- x ) ( R: x -- )                     Retrieve item from return stack
 R@             ( -- x ) ( R: x -- x )                   Copy top of return stack onto data stack
 RANDOM         ( max -- n )                             Return a pseudo-random number n between 0 and max-1
 RDEPTH         ( -- count )                             Count number of items on return stack
 RDROP          ( n --  )                                Discard top of return stack
 READ-LINE      ( -- line )                              Read a line from the current socket
-RELOAD-INIT    ( -- )
+RELOAD-INIT    ( -- )                                   Reload init.forth
 RESUME-TASK    ( task-id -- flag )                      Resume the task with the given task id.
 REVISION       ( -- str )                               Push the revision string onto the stack
 ROT            ( n1 n2 n3 -- n2 n3 n1 )                 Rotate third item to top
-SAY            ( text --  )                             text-to-speech
+SAY            ( text --  )                             Text to speech
 SLEEP          ( -- )                                   Put the Nabaztag into sleep mode
-SLEEPING-TIME? ( -- flag )
+SLEEPING-TIME? ( -- flag )                              Check if sleeping
 SLEEPING?      ( -- flag)                               Return true if the Nabaztag is in sleep mode
 SPACE          ( -- )                                   Display space
 START-TASK     ( text delay name -- )                   Start a new task with the given name, delay, and text to execute.

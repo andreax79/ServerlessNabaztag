@@ -1,8 +1,15 @@
-: login ( logged line -- logged )
-md5 md5-password @ = if "logged" . else "Please login" . then cr ;
+: login ( -- )  \ Login
+md5-password @ nil = invert if
+  cr "Please login" . cr cr
+  begin
+    "Username: " . read-line username @ =
+    "Password: " . read-line md5 md5-password @ =
+    and
+    dup invert if "Invalid login" . cr cr then
+  until
+then ;
 
-: prompt ( -- )
-\ forth interpreter prompt
+: prompt ( -- )  \ Display the Forth interpreter prompt
 nil "[" :: depth 1 - :: "] > " :: str-join . ;
 
 : help ( -- )
@@ -12,12 +19,13 @@ Type 'quit'  to exit the interpreter.
 
 " . ;
 
-: interpreter ( -- )
-\ interactive forth interpreter
+: interpreter ( -- )  \ Interactive Forth interpreter
 "
 *** ServerlessNabaztag ***
 " . revision . "
-
+" .
+login
+"
 Welcome to the interactive Forth system.
 " .
 help

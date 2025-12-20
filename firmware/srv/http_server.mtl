@@ -445,7 +445,7 @@ fun _http_check_auth header=
 #ifdef HTTP_SERVER_DEBUG
                     _http_server_debug strcatlist "user: " :: user :: " password: " :: pass :: nil;
 #endif
-                    (!strcmp user config_user) && (!strcmp (md5 pass) config_md5_password)
+                    (!strcmp user config_username) && (!strcmp (md5 pass) config_md5_password)
                 )
         );;
 

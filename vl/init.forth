@@ -13,28 +13,25 @@ over over ;
 : 2swap ( x1 x2 x3 x4 -- x3 x4 x1 x2 )
 rot >r rot r> ;
 
-: load-srv ( filename -- )
-\ load a forth file from the server
+: load-srv ( filename -- )  \ Load a forth file from the server
 >r nil server-url @ :: "/" :: r> :: str-join http-get
 drop \ drop header
 evaluate ; \ evaluate the content
 
-: reload-init ( -- )
-\ reload init.forth
+: reload-init ( -- )  \ Reload init.forth
 "init.forth" load-srv ;
 
 : play-midi-acquired 0 play-midi ;
 
 : play-midi-ack 4 play-midi ;
 
-: get-hour ( -- hour )
-\ get the current hour
+: get-hour ( -- hour )  \ Get the current hour
 time&date drop drop drop swap drop swap drop ;
 
-: get-minute ( -- minute )
+: get-minute ( -- minute )  \ Get the current minute
 time&date drop drop drop drop swap drop ;
 
-: sleeping-time? ( -- flag )
+: sleeping-time? ( -- flag )  \ Check if sleeping
 get-hour
 dup \ dup hour
 wake-up-at @ <
@@ -42,7 +39,7 @@ swap \ swap hour and flag
 go-to-bed-at @ >=
 or ;
 
-: daytime ( -- )
+: daytime ( -- )  \ Display the current time (UTC)
 utc>string . cr ;
 
 "config.forth" load-srv

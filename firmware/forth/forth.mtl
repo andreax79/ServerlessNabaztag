@@ -64,8 +64,8 @@ fun forth_word_list_to_array words =
 
 #ifdef FORTH_DEBUG
 fun forth_debug_word w=
-    if w.func!=nil then strcat "[func] " w.str
-    else if w.code!=nil then "[code]"
+    if w.func != nil then strcat "[func] " w.str
+    else if w.code != nil then "[code]"
     else if w.int != nil then strcat "[int]  " itoa w.int
     else if w.str != nil then strcat "[str]  " w.str
     else if w.list != nil then strcat "[list] #" itoa listlen w.list
@@ -75,6 +75,9 @@ fun forth_debug_word w=
 fun forth_print_word w=
     Secholn forth_debug_word w;;
 #endif
+
+fun forth_is_nil w=
+    if w.int == nil && w.str == nil && w.list == nil && w.dict == nil && w.code == nil && w.func == nil then -1 else 0;;
 
 /**
  * Compare two Words.
@@ -88,6 +91,8 @@ fun forth_compare_words w1 w2=
         else 1 // w1 greater than w2
     else if w1.str != nil && w2.str != nil then
         str_compare w1.str w2.str
+    else if (forth_is_nil w1) != 0 && (forth_is_nil w2) != 0 then
+        0  // both nil
     else
         nil;;
 
