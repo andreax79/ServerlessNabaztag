@@ -52,6 +52,7 @@ DEFINED?       (immediate) ( "<spaces>name" -- flag )   Check if a word is defin
 DEPTH          ( -- count )                             Count number of items on stack
 DROP           ( n --  )                                Discard top of stack
 DUP            ( n -- n n )                             Duplicate top of stack
+EAIQ>INFO      ( n -- n ) (AQI)                         Convert European Air Quality Index
 EARS           ( -- left-pos right-pos )                Return the current ears positions
 ELSE           (immediate) ( -- )                       Begin the else part of a conditional Compile an unconditional jump to the matching THEN Update the previous conditional jump to point to the instruction after the ELSE
 EMIT           ( char -- )                              Emit character
@@ -138,7 +139,7 @@ TRUE           ( -- true )
 TUCK           ( n1 n2 -- n1 n2 n1 ) (top)              Copy the first  stack item below the second stack item
 UNTIL          (immediate) ( x -- )                     End a loop Compile a conditional jump back to the matching BEGIN
 UPDATE-TIME    ( -- )                                   Update the system time from the time server
-UPDATE-WEATHER ( -- )                                   Update weather information
+UPDATE-WEATHER ( -- )                                   Update weather and air quality information
 UPPER          ( s -- s )                               Convert string s to uppercase
 UPTIME         ( -- s )                                 Push the system uptime in seconds onto the stack
 URL-DECODE     ( s -- s )                               URL decode string s

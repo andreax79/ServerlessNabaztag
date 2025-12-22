@@ -1,6 +1,7 @@
 WMO Weather interpretation codes (WW)
 
 Code         Info Code Description
+----         ---- ---- -----------
 0            sun   0   Clear sky
 1, 2, 3      cloud 1   Mainly clear, partly cloudy, and overcast
 45, 48       fog   2   Fog and depositing rime fog
@@ -14,3 +15,14 @@ Code         Info Code Description
 85, 86       snow  4   Snow showers slight and heavy
 95           storm 5   Thunderstorm: Slight or moderate
 96, 99       storm 5   Thunderstorm with slight and heavy hail
+
+European Air Quality Index (EAQI)
+
+EAIQ        Description
+----        -----------
+ 0-20       Good
+21-40       Fair
+41-60       Moderate
+61-80       Poor
+81-100      Very Poor
+  >100      Extremely Poor

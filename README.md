@@ -47,7 +47,7 @@ Firmware features
 * Simple password protection for Web and Telnet access
 * Built-in Forth interpreter accessible from the Web interface and via Telnet
 * Fetch the current time from NTP and play the corresponding sound every hour
-* Fetch weather from [open-meteo](https://open-meteo.com)
+* Fetch weather and air quality from [open-meteo](https://open-meteo.com)
 * Autonomously wake up and go to sleep
 * Respond to ICMP pings
 
@@ -127,7 +127,7 @@ Most of the Nabaztag's functionality can be customized by editing the Forth file
 * [vl/config.forth](vl/config.forth) - Configuration settings
 * [vl/crontab.forth](vl/crontab.forth) - Scheduled tasks
 * [vl/hooks.forth](vl/hooks.forth) - Event handlers (clicks, RFID, etc.)
-* [vl/weather.forth](vl/weather.forth) - Weather-related functions
+* [vl/weather.forth](vl/weather.forth) - Weather and air quality
 
 Development
 -----------
