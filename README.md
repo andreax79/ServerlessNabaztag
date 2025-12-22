@@ -16,7 +16,7 @@ All the commands can be called with a single HTTP request from an external progr
 $ curl http://nabaztag/wakeup
 ```
 
-In [examples/check_mail.py](examples/check_mail.py), there is a script that turns on the nose when you have unread email and changes the light color according to the weather forecast.
+In [examples/check_mail.py](examples/check_mail.py), there is a script that turns on the nose when you have unread email.
 
 Configure the rabbit 
 --------------------
@@ -64,7 +64,21 @@ You can access the Forth interpreter in two ways:
 * **Web Interface**: Available at http://\<YOURNABAZTAGIP\>/
 * **Telnet**: Connect to your Nabaztag via Telnet on port 22
   ```
-  $ telnet <YOURNABAZTAGIP>
+  $ telnet 192.168.79.15
+  Trying 192.168.79.15...
+  Connected to 192.168.79.15.
+  Escape character is '^]'.
+  
+  *** ServerlessNabaztag ***
+  $Rev: 2025-12-20T07:44:49$
+  
+  Welcome to the interactive Forth system.
+  
+  Type 'words' to see available words.
+  Type 'quit'  to exit the interpreter.
+  
+  [0] > taichi
+  [0] >
   ```
 
 ### Available Words
