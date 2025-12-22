@@ -1,5 +1,5 @@
-variable weather-code
-variable eaiq
+variable weather-code  \ Weather code
+variable eaiq  \ European Air Quality Index
 
 60 60 * 1000 * constant weather-time-delay \ 1 hour
 

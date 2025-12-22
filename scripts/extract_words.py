@@ -3,7 +3,9 @@
 import sys
 import re
 
-COMMENT_RE = re.compile(r"/\*\*.*?\*/", re.DOTALL)
+MTL_COMMENT_RE = re.compile(r"/\*\*.*?\*/", re.DOTALL)
+MTL_VAR_RE = re.compile(r'str:"([^"]+)"\s*.*?FORTH_MEMORY.*?//\s*(.+)$')
+FORTH_VAR_RE  = re.compile(r'^variable\s+([A-Za-z0-9\-]+)\s+\\\s*(.+)$')
 STACK_RE = re.compile(r"\([^)]*\)")
 
 def format_line(line: str, name_width: int = 14, effect_width: int = 40) -> str:
@@ -36,22 +38,40 @@ def format_comment(line: str) -> str:
     return format_line(line)
 
 
-def extract_comments(files: list[str]) -> list[str]:
-    result: list[str] = []
+def format_variable(name: str, comment: str, name_width: int = 55) -> str:
+   name = name.upper().ljust(name_width)
+   return f"{name} {comment.strip()}"
+
+
+def extract_words(files: list[str]) -> tuple[list[str], list[str]]:
+    words: list[str] = []
+    variables: list[str] = []
     for file_path in files:
         with open(file_path, "r", encoding="utf-8") as f:
-            # get file extension
+            # Get the file extension
             file_extension = file_path.split(".")[-1].lower()
             if file_extension == "mtl":
-                for match in COMMENT_RE.findall(f.read()):
+                # Get the comments
+                for match in MTL_COMMENT_RE.findall(f.read()):
                     if "--" in match:  # Include only comments containing a -- (doble minus)
-                        result.append(format_comment(match))
+                        words.append(format_comment(match))
+                f.seek(0)
+                # Get the variables
+                for line in f.readlines():
+                    match = MTL_VAR_RE.search(line)
+                    if match:
+                        variables.append(format_variable(match.group(1), match.group(2)))
             elif file_extension == "forth":
                 for line in f.readlines():
                     if line.strip().startswith(": ") and "--" in line:
                         line = line[2:].strip().replace('\\', '')  # Remove leading ": " and backslashes
-                        result.append(format_line(line))
-    return result
+                        words.append(format_line(line))
+                    match = FORTH_VAR_RE.search(line)
+                    if match:
+                        variables.append(format_variable(match.group(1), match.group(2)))
+    words = sorted(words)
+    variables = sorted(variables)
+    return (words, variables)
 
 
 def main():
@@ -60,8 +80,10 @@ def main():
         sys.exit(1)
 
     files = sys.argv[1:]
-    words = sorted(extract_comments(files))
+    words, variables = extract_words(files)
     print("\n".join(words))
+    print("\nVariables\n---------\n")
+    print("\n".join(variables))
 
 if __name__ == "__main__":
     main()

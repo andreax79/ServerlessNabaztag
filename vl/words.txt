@@ -150,3 +150,31 @@ VOLUME         ( -- vol )                               Get the audio volume
 WAKE-UP        ( -- )                                   Wake up the Nabaztag from sleep mode
 WORDS          ( -- )                                   List the words in the dictionary
 XOR            ( n1 n2 -- flag )                        Logical XOR
+
+Variables
+---------
+
+BOTTOM-COLOR                                            Bottom LED base color
+CITY-CODE                                               City code (timezone)
+CRONTAB-LAST-MINUTE                                     Crontab last checked minute
+DST                                                     Daylight Saving Time
+EAIQ                                                    European Air Quality Index
+GO-TO-BED-AT                                            Go to bed at (hour)
+INFO-MAIL                                               Info mail
+INFO-PALETTE                                            Info LED palette (16 cells)
+INFO-POLLUTION                                          Info pollution
+INFO-STOCK                                              Info stock
+INFO-TRAFFIC                                            Info traffic
+INFO-WEATHER                                            Info weather
+LANGUAGE                                                Language
+LATITUDE                                                Latitude (weather/air quality)
+LONGITUDE                                               Longitude (weather/air quality)
+MD5-PASSWORD                                            Login password (MD5 hashed)
+NTP-SERVER                                              NTP server
+SERVER-URL                                              Server URL
+SURPRISE-NEXT-TIME                                      Next surprise time
+TAICHI-FREQ                                             Tai Chi frequency
+TAICHI-NEXT-TIME                                        Next taichi time
+USERNAME                                                Login username
+WAKE-UP-AT                                              Wake up at (hour)
+WEATHER-CODE                                            Weather code

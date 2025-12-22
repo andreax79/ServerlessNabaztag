@@ -1,7 +1,7 @@
-variable crontab-last-minute  \ store the last checked minute
-variable surprise-next-time  \ store the next surprise time
-120 60 * constant surprise-delay \ average delay, in seconds (delay= surprise-delay/2 + random*surprise-delay)
-variable taichi-next-time  \ store the next taichi time
+variable crontab-last-minute  \ Crontab last checked minute
+variable surprise-next-time  \ Next surprise time
+120 60 * constant surprise-delay \ Surprise average delay, in seconds (delay= surprise-delay/2 + random*surprise-delay)
+variable taichi-next-time  \ Next taichi time
 
 : surprise ( -- )  \ Surprise
 sleeping? invert if  \ if not sleeping
