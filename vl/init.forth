@@ -31,13 +31,17 @@ time&date drop drop drop swap drop swap drop ;
 : get-minute ( -- minute )  \ Get the current minute
 time&date drop drop drop drop swap drop ;
 
-: sleeping-time? ( -- flag )  \ Check if sleeping
-get-hour
-dup \ dup hour
-wake-up-at @ <
-swap \ swap hour and flag
-go-to-bed-at @ >=
-or ;
+: sleeping-time? ( -- flag )  \ Check if current hour is in the sleep interval
+wake-up-at @ go-to-bed-at @ = if  \ always awake if equal
+  false
+else
+  get-hour
+  dup \ dup hour
+  wake-up-at @ <
+  swap \ swap hour and flag
+  go-to-bed-at @ >=
+  or
+then ;
 
 : daytime ( -- )  \ Display the current time (UTC)
 utc>string . cr ;

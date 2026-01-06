@@ -117,7 +117,7 @@ REVISION       ( -- str )                               Push the revision string
 ROT            ( n1 n2 n3 -- n2 n3 n1 )                 Rotate third item to top
 SAY            ( text --  )                             Text to speech
 SLEEP          ( -- )                                   Put the Nabaztag into sleep mode
-SLEEPING-TIME? ( -- flag )                              Check if sleeping
+SLEEPING-TIME? ( -- flag )                              Check if current hour is in the sleep interval
 SLEEPING?      ( -- flag)                               Return true if the Nabaztag is in sleep mode
 SPACE          ( -- )                                   Display space
 START-TASK     ( text delay name -- )                   Start a new task with the given name, delay, and text to execute.
