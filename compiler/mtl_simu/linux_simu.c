@@ -352,9 +352,23 @@ void simuSetLed(int i,int val)
 	for (i=0; i<NBLED/3; ++i)
 		{
 			my_printf(LOG_SIMULEDS, " [%3d %3d %3d]", diodeval[3*i], diodeval[3*i+1], diodeval[3*i+2]);
+			// my_printf(LOG_SIMULEDS, "\033[48;2;%d;%d;%dm \033[39m\033[49m", diodeval[3*i], diodeval[3*i+1], diodeval[3*i+2]);
 		}
 	my_printf(LOG_SIMULEDS, "\n");
-	
+
+    // Save cursor position and move to top-left corner
+    printf("\033[s\033[1;1H");
+    // Show LED colors
+	printf("  \033[48;2;%d;%d;%dm \033[39m\033[49m  \n", diodeval[3*0], diodeval[3*0+1], diodeval[3*0+2]);
+    printf("\033[48;2;%d;%d;%dm \033[39m\033[49m \033[48;2;%d;%d;%dm \033[39m\033[49m \033[48;2;%d;%d;%dm \033[39m\033[49m\n",
+            diodeval[3*1], diodeval[3*1+1], diodeval[3*1+2],
+            diodeval[3*2], diodeval[3*2+1], diodeval[3*2+2],
+            diodeval[3*3], diodeval[3*3+1], diodeval[3*3+2]);
+	printf("  \033[48;2;%d;%d;%dm \033[39m\033[49m  \n", diodeval[3*4], diodeval[3*4+1], diodeval[3*4+2]);
+    // Restore cursor position and flush output
+    printf("\033[u");
+    fflush(stdout);
+
 #ifdef USE_GLUT
 	glutPostRedisplay();
 #endif	
