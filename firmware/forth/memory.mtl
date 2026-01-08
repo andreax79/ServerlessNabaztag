@@ -17,8 +17,8 @@ const FORTH_MEMORY_LONGITUDE = (1<<29) + 6;;
 const FORTH_MEMORY_WAKE_UP = (1<<29) + 7;;
 const FORTH_MEMORY_GO_TO_BED = (1<<29) + 8;;
 const FORTH_MEMORY_NTP_SERVER = (1<<29) + 9;;
-const FORTH_MEMORY_MD5_PASSWORD = (1<<29) + 10;;
-const FORTH_MEMORY_BOTTOM_COLOR = (1<<29) + 11;;
+const FORTH_MEMORY_USERNAME = (1<<29) + 10;;
+const FORTH_MEMORY_MD5_PASSWORD = (1<<29) + 11;;
 const FORTH_MEMORY_INFO_PALETTE = (1<<29) + 12;;  // 16 cells
 const FORTH_MEMORY_INFO_PALETTE_SIZE = 16;;
 const FORTH_MEMORY_INFO_WEATHER = (1<<29) + 28;;
@@ -26,8 +26,15 @@ const FORTH_MEMORY_INFO_STOCK = (1<<29) + 29;;
 const FORTH_MEMORY_INFO_TRAFFIC = (1<<29) + 30;;
 const FORTH_MEMORY_INFO_MAIL = (1<<29) + 31;;
 const FORTH_MEMORY_INFO_POLLUTION = (1<<29) + 32;;
-const FORTH_MEMORY_TAICHI_FREQ = (1<<29) + 33;;
-const FORTH_MEMORY_USERNAME = (1<<29) + 34;;
+const FORTH_MEMORY_INFO_MESSAGES = (1<<29) + 33;;
+const FORTH_MEMORY_BOTTOM_COLOR = (1<<29) + 34;;
+const FORTH_MEMORY_LEDS_OVERRIDE = (1<<29) + 35;;  // 5 cells (nose, left, center, right, bottom)
+const FORTH_MEMORY_LEDS_OVERRIDE_NOSE = (1<<29) + 35 + 0;;
+const FORTH_MEMORY_LEDS_OVERRIDE_LEFT = (1<<29) + 35 + 1;;
+const FORTH_MEMORY_LEDS_OVERRIDE_CENTER = (1<<29) + 35 + 2;;
+const FORTH_MEMORY_LEDS_OVERRIDE_RIGHT = (1<<29) + 35 + 3;;
+const FORTH_MEMORY_LEDS_OVERRIDE_BOTTOM = (1<<29) + 35 + 4;;
+const FORTH_MEMORY_TAICHI_FREQ = (1<<29) + 40;;
 
 type MemoryBlock = [
     memory_block_size   // size of the memory block
@@ -157,10 +164,14 @@ fun _forth_memory_get_special f addr=
         [int:info_src_get INFO_MAIL]
     else if addr == FORTH_MEMORY_INFO_POLLUTION then
         [int:info_src_get INFO_POLLUTION]
+    else if addr == FORTH_MEMORY_INFO_MESSAGES then
+        [int:info_src_get INFO_MESSAGES]
     else if addr == FORTH_MEMORY_TAICHI_FREQ then
         [int:config_get_taichi_freq]
     else if addr == FORTH_MEMORY_USERNAME then
         [str:config_username]
+    else if addr >= FORTH_MEMORY_LEDS_OVERRIDE && addr < FORTH_MEMORY_LEDS_OVERRIDE + 5 then
+        [int:leds_override.(addr - FORTH_MEMORY_LEDS_OVERRIDE)]
     else
         nil;;
 
@@ -209,11 +220,17 @@ fun _forth_memory_set_special f addr value=
     else if addr == FORTH_MEMORY_INFO_POLLUTION then (
         info_src_update INFO_POLLUTION value.int; nil
     )
+    else if addr == FORTH_MEMORY_INFO_MESSAGES then (
+        info_src_update INFO_MESSAGES value.int; nil
+    )
     else if addr == FORTH_MEMORY_TAICHI_FREQ then
         config_set_taichi_freq value.int
     else if addr == FORTH_MEMORY_USERNAME then
         set config_username = value.str
-    else
+    else if addr >= FORTH_MEMORY_LEDS_OVERRIDE && addr < FORTH_MEMORY_LEDS_OVERRIDE + 5 then (
+        set leds_override.(addr - FORTH_MEMORY_LEDS_OVERRIDE) =
+            if value.int != nil then value.int else parse_color value.str; nil
+    ) else
         nil;;
 
 /**

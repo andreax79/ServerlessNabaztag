@@ -114,6 +114,9 @@ daytime
 
 \ Say something (text-to-speech)
 "Hello World" say
+
+\ Override the left LED to red color
+"#ff0000" led-left !
 ```
 
 ### Configuration

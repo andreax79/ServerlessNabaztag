@@ -48,6 +48,7 @@ fun _time_calculate_datetime offset=
     let ((hh % 153) / 5) + 1 -> day in
     let ((hh / 153) + 2) % 12 + 1 -> month in
     let (ee / 1461) + 1900 + ((14 - month) / 12) -> year in
+    let if (time_of_the_day < 0) then 0 else time_of_the_day -> time_of_the_day in
         [
             year
             if (month > 0) then month else 1

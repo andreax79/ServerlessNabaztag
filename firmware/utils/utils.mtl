@@ -1,4 +1,5 @@
-//fun strcmp a b = vstrcmp a 0 b 0 nil;;
+#include protos/ascii_protos.mtl
+
 fun strstr s p i=strfind s i p 0 nil;;
 fun itoanil l=if l==nil then '0'::nil else l;;
 fun listlen l=if l==nil then 0 else 1+listlen tl l;;
@@ -411,3 +412,14 @@ fun str_pad_left s l ch=
     if d>0 then
         strcat s (str_repeat ch d)
     else s;;
+
+/**
+ * Parse a color string which can be either a decimal or hexadecimal (prefixed with #)
+ */
+fun parse_color color_str=
+    if color_str==nil then
+        nil
+    else if (strget color_str 0) == ASCII_NUM then
+        htoi strsub color_str 1 strlen color_str
+    else
+        atoi color_str;;

@@ -8,7 +8,7 @@ fun _reclib_rec_cb s=
 	let 255-((vol*vol)>>8) -> vol in
 	let vol<<16 -> vol in
 	(
-		led LED_BODY_LEFT vol; led LED_BODY_MIDDLE vol; led LED_BODY_RIGHT vol
+		leds_set_color LED_BODY_LEFT vol; leds_set_color LED_BODY_MIDDLE vol; leds_set_color LED_BODY_RIGHT vol
 	);
 	set _reclib_lrec=s::_reclib_lrec;
 	0;;

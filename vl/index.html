@@ -31,122 +31,250 @@ input, select, textarea {
     </div>
   </div>
 
+  <h3 class="title">Info</h3>
+
   <div class="row">
     <div class="column">
-      <h2>Info</h2>
-      <ul>
-      <li><a href="/clear">Info off</a></li>
-      </ul>
+      <form action="/weather" method="GET">
+        <fieldset>
+            <label for="weatherField">Weather</label>
+            <select name="v" id="weatherField" onchange="this.form.submit()">
+            <option value="-1"></option>
+            <option value="0">Sun</option>
+            <option value="1">Clouds</option>
+            <option value="2">Fog</option>
+            <option value="3">Rain</option>
+            <option value="4">Snow</option>
+            <option value="5">Storm</option>
+            </select>
+        </fieldset>
+      </form>
     </div>
     <div class="column">
-      <h2>Nose</h2>
-      <ul>
-      <li><a href="/nose?v=0">Off</a></li>
-      <li><a href="/nose?v=1">On</a></li>
-      <li><a href="/nose?v=2">Todo</a></li>
-      <li><a href="/nose?v=3">Urgent</a></li>
-      <li><a href="/nose?v=4">Panic</a></li>
-      </ul>
+      <form action="/pollution" method="GET">
+        <fieldset>
+            <label for="pollutionField">Pollution</label>
+            <select name="v" id="pollutionField" onchange="this.form.submit()">
+            <option value="-1"></option>
+            <option value="0">Good</option>
+            <option value="1">Good-Fair</option>
+            <option value="2">Fair</option>
+            <option value="3">Fair-Moderate</option>
+            <option value="4">Moderate</option>
+            <option value="5">Moderate-Poor</option>
+            <option value="6">Poor</option>
+            <option value="7">Poor-very poor</option>
+            <option value="8">Very poor</option>
+            <option value="9">Very-extremly poor</option>
+            <option value="10">Extremly poor</option>
+            </select>
+        </fieldset>
+      </form>
+    </div>
+    <div class="column">
+      <form action="/traffic" method="GET">
+        <fieldset>
+            <label for="trafficField">Traffic</label>
+            <select name="v" id="trafficField" onchange="this.form.submit()">
+            <option value="-1"></option>
+            <option value="0">Free</option>
+            <option value="1">Okay</option>
+            <option value="2">Moderate</option>
+            <option value="3">Normal</option>
+            <option value="4">Heavy</option>
+            <option value="5">Congested</option>
+            <option value="6">Extreme</option>
+            </select>
+        </fieldset>
+      </form>
+    </div>
+    <div class="column">
+      <form action="/stock" method="GET">
+        <fieldset>
+            <label for="stockField">Stock</label>
+            <select name="v" id="stockField" onchange="this.form.submit()">
+            <option value="-1"></option>
+            <option value="0">---</option>
+            <option value="1">--</option>
+            <option value="2">-</option>
+            <option value="3">0</option>
+            <option value="4">+</option>
+            <option value="5">++</option>
+            <option value="6">+++</option>
+            </select>
+        </fieldset>
+      </form>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="column column-25">
+      <form action="/mail" method="GET">
+        <fieldset>
+            <label for="emailsField">E-mail</label>
+            <select name="v" id="emailsField" onchange="this.form.submit()">
+            <option value="-1"></option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            </select>
+        </fieldset>
+      </form>
+    </div>
+    <div class="column column-25">
+      <form action="/nose" method="GET">
+        <fieldset>
+            <label for="noseField">Messages (nose)</label>
+            <select name="v" id="noseField" onchange="this.form.submit()">
+            <option value="0">Off</option>
+            <option value="1">On</option>
+            <option value="2">Todo</option>
+            <option value="3">Urgent</option>
+            <option value="4">Panic</option>
+            </select>
+        </fieldset>
+      </form>
     </div>
     <div class="column column-50">
-      <h2>Ears</h2>
-      Set <strong>left</strong> ear position:<br/>
-      <a href="/left?p=0&d=0">0</a>
-      <a href="/left?p=1&d=0">1</a>
-      <a href="/left?p=2&d=0">2</a>
-      <a href="/left?p=3&d=0">3</a>
-      <a href="/left?p=4&d=0">4</a>
-      <a href="/left?p=5&d=0">5</a>
-      <a href="/left?p=6&d=0">6</a>
-      <a href="/left?p=7&d=0">7</a>
-      <a href="/left?p=8&d=0">8</a>
-      <a href="/left?p=9&d=0">9</a>
-      <a href="/left?p=10&d=0">10</a>
-      <a href="/left?p=11&d=0">11</a>
-      <a href="/left?p=12&d=0">12</a>
-      <a href="/left?p=13&d=0">13</a>
-      <a href="/left?p=14&d=0">14</a>
-      <a href="/left?p=15&d=0">15</a>
-      <a href="/left?p=16&d=0">16</a>
-      <br/>
-      Set <strong>right</strong> ear position:<br/>
-      <a href="/right?p=0&d=0">0</a>
-      <a href="/right?p=1&d=0">1</a>
-      <a href="/right?p=2&d=0">2</a>
-      <a href="/right?p=3&d=0">3</a>
-      <a href="/right?p=4&d=0">4</a>
-      <a href="/right?p=5&d=0">5</a>
-      <a href="/right?p=6&d=0">6</a>
-      <a href="/right?p=7&d=0">7</a>
-      <a href="/right?p=8&d=0">8</a>
-      <a href="/right?p=9&d=0">9</a>
-      <a href="/right?p=10&d=0">10</a>
-      <a href="/right?p=11&d=0">11</a>
-      <a href="/right?p=12&d=0">12</a>
-      <a href="/right?p=13&d=0">13</a>
-      <a href="/right?p=14&d=0">14</a>
-      <a href="/right?p=15&d=0">15</a>
-      <a href="/right?p=16&d=0">16</a>
+        <label>&nbsp;</label>
+        <button type="button" class="button button-outline" onclick="clearInfo()">Clear all info</button>
+        <button type="button" class="button button-outline" onclick="fetch('update-weather');">Update weather/pollution info</button>
     </div>
   </div>
 
-  <div class="row">
-    <div class="column">
-      <h3>Weather</h3>
-      <ul>
-      <li><a href="/weather?v=0">Sun</a></li>
-      <li><a href="/weather?v=1">Clouds</a></li>
-      <li><a href="/weather?v=2">Fog</a></li>
-      <li><a href="/weather?v=3">Rain</a></li>
-      <li><a href="/weather?v=4">Snow</a></li>
-      <li><a href="/weather?v=5">Storm</a></li>
-      </ul>
-    </div>
-    <div class="column">
-      <h3>Stock</h3>
-      <ul>
-      <li><a href="/stock?v=0">---</a></li>
-      <li><a href="/stock?v=1">--</a></li>
-      <li><a href="/stock?v=2">-</a></li>
-      <li><a href="/stock?v=3">0</a></li>
-      <li><a href="/stock?v=4">+</a></li>
-      <li><a href="/stock?v=5">++</a></li>
-      <li><a href="/stock?v=6">+++</a></li>
-      </ul>
-    </div>
-    <div class="column">
-      <h3>Traffic</h3>
-      <ul>
-      <li><a href="/traffic?v=0">Free</a></li>
-      <li><a href="/traffic?v=1">Okay</a></li>
-      <li><a href="/traffic?v=2">Moderate</a></li>
-      <li><a href="/traffic?v=3">Normal</a></li>
-      <li><a href="/traffic?v=4">Heavy</a></li>
-      <li><a href="/traffic?v=5">Congested</a></li>
-      <li><a href="/traffic?v=6">Extreme</a></li>
-      </ul>
-    </div>
-    <div class="column">
-      <h3>Pollution</h3>
-      <ul>
-      <li><a href="/pollution?v=0">0</a></li>
-      <li><a href="/pollution?v=1">1</a></li>
-      <li><a href="/pollution?v=2">2</a></li>
-      <li><a href="/pollution?v=3">3</a></li>
-      <li><a href="/pollution?v=4">4</a></li>
-      <li><a href="/pollution?v=5">5</a></li>
-      <li><a href="/pollution?v=6">6</a></li>
-      <li><a href="/pollution?v=7">7</a></li>
-      <li><a href="/pollution?v=8">8</a></li>
-      <li><a href="/pollution?v=9">9</a></li>
-      <li><a href="/pollution?v=10">10</a></li>
-      </ul>
-    </div>
-  </div>
+  <h3 class="title">Ears</h3>
+
+  <form action="/left" method="GET">
+      <fieldset>
+          <div class="row">
+              <div class="column column-25">
+                  <label for="leftEarPositionField">Left ear position</label>
+                  <select name="p" id="leftEarPositionField">
+                      <option value="0">0</option>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                      <option value="5">5</option>
+                      <option value="6">6</option>
+                      <option value="7">7</option>
+                      <option value="8">8</option>
+                      <option value="9">9</option>
+                      <option value="10">10</option>
+                      <option value="11">11</option>
+                      <option value="12">12</option>
+                      <option value="13">13</option>
+                      <option value="14">14</option>
+                      <option value="15">15</option>
+                      <option value="16">16</option>
+                  </select>
+              </div>
+              <div class="column column-25">
+                  <label for="leftEarDirectionField">Direction</label>
+                  <select name="d" id="leftEarDirectionField">
+                      <option value="0">Forward</option>
+                      <option value="1">Backward</option>
+                  </select>
+              </div>
+              <div class="column column-25">
+                  <label>&nbsp;</label>
+                  <button class="button" style="width: 100%" onclick="this.form.submit()">Set left ear position</button>
+              </div>
+          </div>
+      </fieldset>
+  </form>
+
+  <form action="/right" method="GET">
+      <fieldset>
+          <div class="row">
+              <div class="column column-25">
+                  <label for="rightEarPositionField">Right ear position</label>
+                  <select name="p" id="rightEarPositionField">
+                      <option value="0">0</option>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                      <option value="5">5</option>
+                      <option value="6">6</option>
+                      <option value="7">7</option>
+                      <option value="8">8</option>
+                      <option value="9">9</option>
+                      <option value="10">10</option>
+                      <option value="11">11</option>
+                      <option value="12">12</option>
+                      <option value="13">13</option>
+                      <option value="14">14</option>
+                      <option value="15">15</option>
+                      <option value="16">16</option>
+                  </select>
+              </div>
+              <div class="column column-25">
+                  <label for="rightEarDirectionField">Direction</label>
+                  <select name="d" id="rightEarDirectionField">
+                      <option value="0">Forward</option>
+                      <option value="1">Backward</option>
+                  </select>
+              </div>
+              <div class="column column-25">
+                  <label>&nbsp;</label>
+                  <button class="button" style="width: 100%" onclick="this.form.submit()">Set right ear position</button>
+              </div>
+          </div>
+      </fieldset>
+  </form>
+
+  <h3 class="title">Leds</h3>
 
   <div class="row">
     <div class="column">
-      <h2>Play sound</h2>
+      <form action="/leds" method="POST">
+        <fieldset>
+            <label for="ledNoseField">Nose</label>
+            <input type="color" name="n" id="ledNoseField" value="" placeholder="#RRGGBB" />
+            <button type="button" class="button" onclick="this.form.submit();">Set</button>
+            <button type="button" class="button button-outline" onclick="this.form.ledNoseField.value=-1; fetch('/leds?n=-1');">Clear</button>
+        </fieldset>
+      </form>
+    </div>
+    <div class="column">
+      <form action="/leds" method="POST">
+        <fieldset>
+            <label for="ledLeftField">Left</label>
+            <input type="color" name="l" id="ledLeftField" value="" placeholder="#RRGGBB" />
+            <button type="button" class="button" onclick="this.form.submit();">Set</button>
+            <button type="button" class="button button-outline" onclick="this.form.ledLeftField.value=-1; fetch('/leds?l=-1');">Clear</button>
+        </fieldset>
+      </form>
+    </div>
+    <div class="column">
+      <form action="/leds" method="POST">
+        <fieldset>
+            <label for="ledMiddleField">Middle</label>
+            <input type="color" name="c" id="ledMiddleField" value="" placeholder="#RRGGBB" />
+            <button type="button" class="button" onclick="this.form.submit();">Set</button>
+            <button type="button" class="button button-outline" onclick="this.form.ledMiddleField.value=-1; fetch('/leds?c=-1');">Clear</button>
+        </fieldset>
+      </form>
+    </div>
+    <div class="column">
+      <form action="/leds" method="POST">
+        <fieldset>
+            <label for="ledRightField">Right</label>
+            <input type="color" name="r" id="ledRightField" value="" placeholder="#RRGGBB" />
+            <button type="button" class="button" onclick="this.form.submit();">Set</button>
+            <button type="button" class="button button-outline" onclick="this.form.ledRightField.value=-1; fetch('/leds?r=-1');">Clear</button>
+        </fieldset>
+      </form>
+    </div>
+  </div>
+
+  <h3 class="title">Sound</h3>
+
+  <div class="row">
+    <div class="column">
+      <label>Play MIDI</label>
       <ul>
       <li><a href="/communication">Communication</a></li>
       <li><a href="/ack">Ack</a></li>
@@ -155,20 +283,19 @@ input, select, textarea {
       </ul>
     </div>
     <div class="column column-75">
-      <h2>&nbsp;</h2>
       <form action="/play" method="GET">
         <fieldset>
           <label for="mp3uriField">Play MP3 file</label>
           (http only, https is not supported)
           <input type="text" name="u" id="mp3uriField" placeholder="http://ia800304.us.archive.org/14/items/SadTrombone/73581__benboncan__sad-trombone.mp3" />
-          <input class="button-primary" type="submit" value="Play">
+          <input class="button" type="submit" value="Play">
       </fieldset>
       </form>
       <form action="/say" method="GET">
         <fieldset>
           <label for="textToSpeachField">Text to speach</label>
           <input type="text" name="t" id="textToSpeachField" />
-          <input class="button-primary" type="submit" value="Say">
+          <input class="button" type="submit" value="Say">
       </fieldset>
       </form>
     </div>
@@ -176,7 +303,7 @@ input, select, textarea {
 
   <div class="row">
     <div class="column">
-      <h2>Util</h2>
+      <h3>Util</h3>
       <ul>
       <li><a href="/taichi">Tai Chi</a></li>
       <li><a href="/surprise">Surprise</a></li>
@@ -184,29 +311,25 @@ input, select, textarea {
       </ul>
     </div>
     <div class="column">
-      <h2>Sleep</h2>
+      <h3>Sleep</h3>
       <ul>
       <li><a href="/sleep">Sleep</a></li>
       <li><a href="/wakeup">Wake up</a></li>
       </ul>
     </div>
     <div class="column column-50">
-      <h2>System</h2>
+      <h3>System</h3>
       <p>MAC Address: <strong id="macAddress"></strong></p>
       <ul>
       <li><a href="/status">Get status as JSON</a></li>
       <li><a href="/update-time">Update time from timeserver</a></li>
-      <li><a href="/update-weather">Update weather info</a></li>
       <li><a href="/reboot">Reboot</a></li>
       </ul>
     </div>
   </div>
 
-  <div class="row">
-    <div class="column">
-      <h2>Setup</h2>
-    </div>
-  </div>
+  <h3 class="title">Setup</h3>
+
   <form action="/setup" method="GET">
     <fieldset>
       <div class="row">
@@ -242,7 +365,7 @@ input, select, textarea {
         <div class="column">
             <label for="cityCodeField">City (Timezone)</label>
             <select name="c" id="cityCodeField"></select>
-            <input class="button-primary" type="submit" value="Set">
+            <input class="button" type="submit" value="Set">
         </div>
         <div class="column">
             <label for="dstField">Daylight Saving Time</label>
@@ -263,14 +386,15 @@ input, select, textarea {
     </fieldset>
   </form>
 
+  <h3 class="title">Forth</h3>
+
   <div class="row">
     <div class="column">
-      <h2>Forth</h2>
       <form action="/forth" method="POST">
         <fieldset>
           <label for="codeField">Forth code</label>
           <textarea name="c" id="codeField">words</textarea>
-          <input class="button-primary" type="submit" value="Play">
+          <input class="button" type="submit" value="Play">
       </fieldset>
       </form>
     </div>
@@ -296,38 +420,52 @@ async function loadTimezones(city_code) {
         select.appendChild(option);
     });
 
-    let cityCodeOption = document.querySelector('#cityCodeField option[value="' + city_code + '"]');
-    if (cityCodeOption){
-        cityCodeOption.setAttribute('selected', 'selected');
-    }
+    // Set the selected value
+    document.querySelector('#cityCodeField').value = city_code;
+}
+
+async function clearInfo() {
+    fetch('/clear');
+    document.querySelector('#weatherField').value=-1;
+    document.querySelector('#stockField').value=-1;
+    document.querySelector('#trafficField').value=-1;
+    document.querySelector('#pollutionField').value=-1;
+    document.querySelector('#emailsField').value=-1;
+    document.querySelector('#noseField').value=0;
+}
+
+function formatColor(c) {
+    if (c == -1)
+        return -1;
+    return "#" + Number(c).toString(16).padStart(6, '0');
 }
 
 async function onLoad() {
     const response = await fetch('/status');
     const status = await response.json();
-    console.log(status);
     document.getElementById("macAddress").innerHTML = status.wifi.mac;
     document.getElementById("revision").innerHTML = status.rev;
 
-    let langOption = document.querySelector('#langField option[value="' + status.language + '"]');
-    if (langOption){
-        langOption.setAttribute('selected', 'selected');
-    }
-
-    let taichiOption = document.querySelector('#taichiField option[value="' + status.taichi_freq + '"]');
-    if (taichiOption){
-        taichiOption.setAttribute('selected', 'selected');
-    }
-
-    let dstOption = document.querySelector('#dstField option[value="' + status.time.dst + '"]');
-    if (dstOption){
-        dstOption.setAttribute('selected', 'selected');
-    }
+    document.querySelector('#langField').value = status.language;
+    document.querySelector('#taichiField').value = status.taichi_freq;
+    document.querySelector('#dstField').value = status.time.dst;
 
     document.getElementById("latitudeField").value = status.latitude;
     document.getElementById("longitudeField").value = status.longitude;
     document.getElementById("wakeUpField").value = status.wake_up;
     document.getElementById("goToBedField").value = status.go_to_bed;
+
+    document.querySelector('#weatherField').value = status.info.weather;
+    document.querySelector('#stockField').value = status.info.stock;
+    document.querySelector('#trafficField').value = status.info.traffic;
+    document.querySelector('#pollutionField').value = status.info.pollution;
+    document.querySelector('#emailsField').value = status.info.emails;
+    document.querySelector('#noseField').value = status.info.messages;
+
+    document.getElementById("ledNoseField").value = formatColor(status.leds.overrides.nose);
+    document.getElementById("ledLeftField").value = formatColor(status.leds.overrides.left);
+    document.getElementById("ledMiddleField").value = formatColor(status.leds.overrides.middle);
+    document.getElementById("ledRightField").value = formatColor(status.leds.overrides.right);
 
     document.getElementById("openAPI").href += "?openapi_url=http%3A%2F%2F" + window.location.host + "%2Fopenapi.yaml";
     loadTimezones(status.time.city_code);

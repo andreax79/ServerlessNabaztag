@@ -52,7 +52,7 @@ DEFINED?       (immediate) ( "<spaces>name" -- flag )   Check if a word is defin
 DEPTH          ( -- count )                             Count number of items on stack
 DROP           ( n --  )                                Discard top of stack
 DUP            ( n -- n n )                             Duplicate top of stack
-EAIQ>INFO      ( n -- n ) (AQI)                         Convert European Air Quality Index
+EAIQ>INFO      ( n -- n )                               Convert European Air Quality Index to info code
 EARS           ( -- left-pos right-pos )                Return the current ears positions
 ELSE           (immediate) ( -- )                       Begin the else part of a conditional Compile an unconditional jump to the matching THEN Update the previous conditional jump to point to the instruction after the ELSE
 EMIT           ( char -- )                              Emit character
@@ -161,6 +161,7 @@ DST                                                     Daylight Saving Time
 EAIQ                                                    European Air Quality Index
 GO-TO-BED-AT                                            Go to bed at (hour)
 INFO-MAIL                                               Info mail
+INFO-MESSAGES                                           Info messages
 INFO-PALETTE                                            Info LED palette (16 cells)
 INFO-POLLUTION                                          Info pollution
 INFO-STOCK                                              Info stock
@@ -168,6 +169,10 @@ INFO-TRAFFIC                                            Info traffic
 INFO-WEATHER                                            Info weather
 LANGUAGE                                                Language
 LATITUDE                                                Latitude (weather/air quality)
+LED-CENTER                                              Center LED color override
+LED-LEFT                                                Left LED color override
+LED-NOSE                                                Nose LED color override
+LED-RIGHT                                               Right LED color override
 LONGITUDE                                               Longitude (weather/air quality)
 MD5-PASSWORD                                            Login password (MD5 hashed)
 NTP-SERVER                                              NTP server

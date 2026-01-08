@@ -160,6 +160,7 @@ fun http_get_json_status sock args=
             (json_obj "interactive" interactive_json) :: ",\n" ::
             (json_obj "time" time_json) :: ",\n" ::
             (json_obj "ears" ears_json) :: ",\n" ::
+            (json_obj "leds" leds_json) :: ",\n" ::
             (json_obj "info" info_json) :: ",\n" ::
             (json_obj "network" net_json) :: ",\n" ::
             (json_obj "wifi" wifi_json) :: ",\n" ::
@@ -284,44 +285,59 @@ fun http_get_right sock args=
     );
     http_send_header_and_close HTTP_204 nil sock;;
 
+/**
+ * Set the number of pending messages.
+ * args: v=value
+ */
 fun http_get_nose sock args=
     set info_messages = http_arg_int args 'v';
     http_send_header_and_close HTTP_204 nil sock;;
 
+/**
+ * Set weather status.
+ * args: v=value
+ */
 fun http_get_weather sock args=
-    if !sleep_is_sleeping then (
-        info_src_update INFO_WEATHER http_arg_int args 'v'
-    );
+    info_src_update INFO_WEATHER http_arg_int args 'v';
     http_send_header_and_close HTTP_204 nil sock;;
 
+/**
+ * Set stock status.
+ * args: v=value
+ */
 fun http_get_stock sock args=
-    if !sleep_is_sleeping then (
-        info_src_update INFO_STOCK http_arg_int args 'v'
-    );
+    info_src_update INFO_STOCK http_arg_int args 'v';
     http_send_header_and_close HTTP_204 nil sock;;
 
+/**
+ * Set traffic status.
+ * args: v=value
+ */
 fun http_get_traffic sock args=
-    if !sleep_is_sleeping then (
-        info_src_update INFO_TRAFFIC http_arg_int args 'v'
-    );
+    info_src_update INFO_TRAFFIC http_arg_int args 'v';
     http_send_header_and_close HTTP_204 nil sock;;
 
+/**
+ * Set mail status.
+ * args: v=value
+ */
 fun http_get_mail sock args=
-    if !sleep_is_sleeping then (
-        info_src_update INFO_MAIL http_arg_int args 'v'
-    );
+    info_src_update INFO_MAIL http_arg_int args 'v';
     http_send_header_and_close HTTP_204 nil sock;;
 
+/**
+ * Set pollution status.
+ * args: v=value
+ */
 fun http_get_pollution sock args=
-    if !sleep_is_sleeping then (
-        info_src_update INFO_POLLUTION http_arg_int args 'v'
-    );
+    info_src_update INFO_POLLUTION http_arg_int args 'v';
     http_send_header_and_close HTTP_204 nil sock;;
 
+/**
+ * Clear all info sources.
+ */
 fun http_get_clear sock args=
-    for i=1;i<=8 do (
-        info_src_update 0 i
-    );
+    info_clear_all;
     http_send_header_and_close HTTP_204 nil sock;;
 
 fun _http_get_dns_cb ip sock=
@@ -336,6 +352,25 @@ fun http_get_dns sock args=
     let http_arg_str args 'd' -> domain in
         dnsreq domain fixarg2 #_http_get_dns_cb sock;;
 
+/**
+ * Set LED colors override.
+ * sock: http socket
+ * args: n=nose color, l=left color, c=center color, r=right color
+ */
+fun http_post_leds sock args=
+    let parse_color http_arg_str args 'n' -> nose in
+        if nose != nil then set leds_override.LED_NOSE=nose;
+    let parse_color http_arg_str args 'l' -> left in
+        if left != nil then set leds_override.LED_BODY_LEFT=left;
+    let parse_color http_arg_str args 'c' -> center in
+        if center != nil then set leds_override.LED_BODY_MIDDLE=center;
+    let parse_color http_arg_str args 'r' -> right in
+        if right != nil then set leds_override.LED_BODY_RIGHT=right;
+    http_send_header_and_close HTTP_204 nil sock;;
+
+/**
+ * Set up configuration parameters from HTTP request arguments.
+ */
 fun http_get_setup sock args=
     config_set_lang http_arg_str args 'l';            // set language
     config_set_city http_arg_str args 'c';            // set city code
@@ -350,13 +385,26 @@ fun http_get_setup sock args=
     http_send_header_and_close HTTP_204 nil sock;;
 
 /**
+ * Format a list of words to a string
+ */
+fun _http_forth_stack_json list=
+    let nil -> t in (
+        for l=list; l!=nil; tl l do (
+            set t = (forth_word_fmt (hd l)) :: t;
+            if (nil != tl l) then set t = "," :: t
+        );
+        strcatlist t
+    );;
+
+/**
  * Handle HTTP callback for Forth interpreter. Return the output as JSON.
  */
 fun _forth_http_cb f sock=
     http_send_content_and_close sock "application/json"
     strcatlist
         "{\n" ::
-            (json_str "output" (strcatlist (rev f.output nil))) ::
+            (json_str "output" (strcatlist (rev f.output nil))) :: ",\n" ::
+            (json_str "stack" (forth_list_to_str f.stack " ")) ::
         "\n}" ::
         nil;;
 
@@ -365,7 +413,7 @@ fun _forth_http_cb f sock=
  * sock: http socket
  * args: HTTP request arguments
  */
-fun forth_http_post_req sock args=
+fun http_post_forth sock args=
     let http_arg_str args 'c' -> code in
     forth_interpreter_ex code nil nil nil (fixarg2 #_forth_http_cb sock);;
 
@@ -523,8 +571,9 @@ fun http_server_process_request req sock=
         else if !strcmp path "/pollution" then http_get_pollution sock args // v=value
         else if !strcmp path "/clear" then http_get_clear sock args // clear all infosrc
         else if !strcmp path "/dns" then http_get_dns sock args // d=domain name
+        else if !strcmp path "/leds" then http_post_leds sock args // leds override, l=left, c=center, r=right
         else if !strcmp path "/setup" then http_get_setup sock args // setup parameters
-        else if !strcmp path "/forth" then forth_http_post_req sock args // forth command
+        else if !strcmp path "/forth" then http_post_forth sock args // forth command, c=code
         else if !strcmp path "/openapi.yaml" then http_get_openapi_yaml sock args // openapi spec
         else if !strcmp path "/" then http_get_index sock args // index page
         else http_not_found sock args;

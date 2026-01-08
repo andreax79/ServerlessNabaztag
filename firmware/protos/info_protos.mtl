@@ -1,3 +1,4 @@
+proto info_clear_all 0;;
 proto info_json 0;;
 proto info_run 0;;
 proto info_src_del 1;;
@@ -17,3 +18,4 @@ const INFO_STOCK = 2;;
 const INFO_TRAFFIC = 3;;
 const INFO_MAIL = 6;;
 const INFO_POLLUTION = 7;;
+const INFO_MESSAGES = 8;;

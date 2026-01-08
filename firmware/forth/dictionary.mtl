@@ -160,7 +160,7 @@ fun forth_init_dictionary=
         [ [str:"gc"                ] [ func:#forth_gc ]] ::
         [ [str:"eval-trame"        ] [ func:#forth_eval_trame]] ::
         [ [str:"revision"          ] [ func:#forth_revision ]] ::
-        // Config variables
+        // Variables
         [ [str:"server-url"        ] [ code:{[int:FORTH_MEMORY_SERVER_URL]} ]] ::       // Server URL
         [ [str:"language"          ] [ code:{[int:FORTH_MEMORY_LANGUAGE]} ]] ::         // Language
         [ [str:"city-code"         ] [ code:{[int:FORTH_MEMORY_CITY_CODE]} ]] ::        // City code (timezone)
@@ -171,6 +171,7 @@ fun forth_init_dictionary=
         [ [str:"go-to-bed-at"      ] [ code:{[int:FORTH_MEMORY_GO_TO_BED]} ]] ::        // Go to bed at (hour)
         [ [str:"taichi-freq"       ] [ code:{[int:FORTH_MEMORY_TAICHI_FREQ]} ]] ::      // Tai Chi frequency
         [ [str:"ntp-server"        ] [ code:{[int:FORTH_MEMORY_NTP_SERVER]} ]] ::       // NTP server
+        [ [str:"username"          ] [ code:{[int:FORTH_MEMORY_USERNAME]} ]] ::         // Login username
         [ [str:"md5-password"      ] [ code:{[int:FORTH_MEMORY_MD5_PASSWORD]} ]] ::     // Login password (MD5 hashed)
         [ [str:"bottom-color"      ] [ code:{[int:FORTH_MEMORY_BOTTOM_COLOR]} ]] ::     // Bottom LED base color
         [ [str:"info-palette"      ] [ code:{[int:FORTH_MEMORY_INFO_PALETTE]} ]] ::     // Info LED palette (16 cells)
@@ -179,7 +180,11 @@ fun forth_init_dictionary=
         [ [str:"info-traffic"      ] [ code:{[int:FORTH_MEMORY_INFO_TRAFFIC]} ]] ::     // Info traffic
         [ [str:"info-mail"         ] [ code:{[int:FORTH_MEMORY_INFO_MAIL]} ]] ::        // Info mail
         [ [str:"info-pollution"    ] [ code:{[int:FORTH_MEMORY_INFO_POLLUTION]} ]] ::   // Info pollution
-        [ [str:"username"          ] [ code:{[int:FORTH_MEMORY_USERNAME]} ]] ::         // Login username
+        [ [str:"info-messages"     ] [ code:{[int:FORTH_MEMORY_INFO_MESSAGES]} ]] ::    // Info messages
+        [ [str:"led-nose"          ] [ code:{[int:FORTH_MEMORY_LEDS_OVERRIDE_NOSE]} ]] ::   // Nose LED color override
+        [ [str:"led-left"          ] [ code:{[int:FORTH_MEMORY_LEDS_OVERRIDE_LEFT]} ]] ::   // Left LED color override
+        [ [str:"led-center"        ] [ code:{[int:FORTH_MEMORY_LEDS_OVERRIDE_CENTER]} ]] :: // Center LED color override
+        [ [str:"led-right"         ] [ code:{[int:FORTH_MEMORY_LEDS_OVERRIDE_RIGHT]} ]] ::  // Right LED color override
         nil -> d in
             set forth_dictionary = [dict:d];
 #ifdef FORTH_DEBUG

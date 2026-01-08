@@ -40,6 +40,7 @@ proto forth_interpreter_setup 5;;
 proto forth_list_to_str 2;;
 proto forth_new_state 0;;
 proto forth_push_str 2;;
+proto forth_word_fmt 1;;
 proto forth_word_list_to_array 1;;
 
 const FORTH_TRUE = -1;;

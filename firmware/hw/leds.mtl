@@ -5,6 +5,7 @@
 #include protos/audiolib_protos.mtl
 #include protos/info_protos.mtl
 #include protos/interactive_protos.mtl
+#include protos/json_protos.mtl
 #include protos/leds_protos.mtl
 
 var _leds_net_activity = 0;;
@@ -33,13 +34,13 @@ fun leds_bottom_animation=
         let (leds_bottom_base_color >> 16) * v / 255 * 0x010000 +
             ((leds_bottom_base_color >> 8) & 0xFF) * v / 255 * 0x000100 +
             (leds_bottom_base_color & 0xFF) * v / 255 -> color in
-            led LED_BASE color;
+            leds_set_color LED_BASE color;
     0;;
 
 /**
  * Check if there is network activity
  */
-fun _leds_netactivity=
+fun _leds_check_net_activity=
     record_is_uploading ||
     match run_get_state with
         (rscLoadWaitRun _-> 1)|
@@ -52,36 +53,78 @@ fun _leds_netactivity=
 fun leds_nose_animation=
     if !ears_detecting then (
         // led tete clignote if netactivity or audiolib_wav_buffering //
-        if (_leds_netactivity) then (
-            led LED_NOSE (if time_ms&256 then RGB_BLUE else RGB_BLACK);
+        if (_leds_check_net_activity) then (
+            leds_set_color LED_NOSE (if time_ms&256 then RGB_BLUE else RGB_BLACK);
             set _leds_net_activity = 1
         ) else if (audiolib_wav_buffering) then (
-            led LED_NOSE (if time_ms&128 then RGB_VIOLET else RGB_BLACK);
+            leds_set_color LED_NOSE (if time_ms&128 then RGB_VIOLET else RGB_BLACK);
             set _leds_net_activity = 1
         ) else if (_leds_net_activity) then (
             // show off the light
-            led LED_NOSE RGB_BLACK;
+            leds_set_color LED_NOSE RGB_BLACK;
             set _leds_net_activity = 0
         );
         if !sleep_is_sleeping && !interactive_status then // no info while sleeping and while in interactive mode
-            // Allumage de la tête en verde si message(s) en attente (info_messages)
-            let (time_ms>>8)&7 -> t in
-            let if (((info_messages>3) && (t==7)) ||
-                    ((info_messages>2) && (t==5)) ||
-                    ((info_messages>1) && (t==3)) ||
-                    ((info_messages>0) && (t==1))) then RGB_GREEN else RGB_BLACK -> color in
-                led LED_NOSE color
+            if leds_override.LED_NOSE != -1 then
+                leds_set_color LED_NOSE leds_override.LED_NOSE
+            else
+                // Allumage de la tête en verde si message(s) en attente (info_messages)
+                let (time_ms>>8)&7 -> t in
+                let if (((info_messages>3) && (t==7)) ||
+                        ((info_messages>2) && (t==5)) ||
+                        ((info_messages>1) && (t==3)) ||
+                        ((info_messages>0) && (t==1))) then RGB_GREEN else RGB_BLACK -> color in
+                    leds_set_color LED_NOSE color
     );
     0;;
+
+/**
+ * Set led i to the color rgbCode
+ */
+fun leds_set_color i col=
+    led i col;;
+
+/**
+ * Set led i to the color rgbCode, with override
+ */
+fun leds_set_color_override i col=
+    leds_set_color i (if leds_override.i != -1 then leds_override.i else col);;
 
 /**
  * Set all the leds to the color rgbCode
  */
 fun leds_set_all col=
-    for i=0;i<5 do led i col;;
+    for i=0;i<5 do leds_set_color i col;;
 
 /**
  * Turn off all the leds
  */
 fun leds_turn_off=
     leds_set_all RGB_BLACK;;
+
+/**
+ * Return LEDs overrides as JSON
+ */
+fun _leds_overrides_json=
+    strcatlist
+        "{\n"::
+            (json_int "nose" leds_override.LED_NOSE ) :: ",\n" ::
+            (json_int "left" leds_override.LED_BODY_LEFT ) :: ",\n" ::
+            (json_int "middle" leds_override.LED_BODY_MIDDLE ) :: ",\n" ::
+            (json_int "right" leds_override.LED_BODY_RIGHT ) :: "\n" ::
+        "}" :: nil;;
+
+/**
+ * Return leds status as JSON
+ */
+fun leds_json=
+    strcatlist
+        "{\n"::
+            (json_obj "overrides" _leds_overrides_json) :: "\n" ::
+        "}" :: nil;;
+
+/**
+ * Initialize the leds
+ */
+fun leds_init=
+    set leds_override=tabnew -1 5;;

@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Serverless Nabaztag API
   description: An OpenAPI specification for controlling a Serverless Nabaztag smart rabbit.
-  version: 1.0.1
+  version: 1.0.2
   contact:
     url: https://github.com/andreax79/ServerlessNabaztag
 servers:
@@ -54,7 +54,7 @@ paths:
         - name: d
           in: query
           required: true
-          description: Direction parameter (`0` front, `1` back).
+          description: Direction parameter (`0` forward, `1` backward).
           schema:
             type: integer
             enum: [0, 1]
@@ -78,7 +78,7 @@ paths:
         - name: d
           in: query
           required: true
-          description: Direction parameter (`0` front, `1` back).
+          description: Direction parameter (`0` forward, `1` backward).
           schema:
             type: integer
             enum: [0, 1]
@@ -95,7 +95,7 @@ paths:
           description: Command sent successfully.
   /weather:
     get:
-      summary: Display weather status
+      summary: Set weather status
       tags: [Leds]
       description: Sets the LEDs to show a specific weather condition.
       parameters:
@@ -111,7 +111,7 @@ paths:
           description: Command sent successfully.
   /stock:
     get:
-      summary: Display stock market status
+      summary: Set stock market trend
       tags: [Leds]
       description: Sets the LEDs to show a stock market trend.
       parameters:
@@ -127,7 +127,7 @@ paths:
           description: Command sent successfully.
   /traffic:
     get:
-      summary: Display traffic status
+      summary: Set traffic condition
       tags: [Leds]
       description: Sets the LEDs to show the current traffic condition.
       parameters:
@@ -143,7 +143,7 @@ paths:
           description: Command sent successfully.
   /pollution:
     get:
-      summary: Display air pollution level
+      summary: Set pollution level
       tags: [Leds]
       description: Sets the LEDs to show the air pollution level.
       parameters:
@@ -155,6 +155,60 @@ paths:
             type: integer
             minimum: 0
             maximum: 10
+      responses:
+        '204':
+          description: Command sent successfully.
+  /mail:
+    get:
+      summary: Set mail status
+      tags: [Leds]
+      description: Sets the LEDs to show mail status.
+      parameters:
+        - name: v
+          in: query
+          required: true
+          description: The mail status to display.
+          schema:
+            type: integer
+            enum: [0, 1, 2, 3]
+      responses:
+        '204':
+          description: Command sent successfully.
+  /leds:
+    post:
+      summary: Set LED colors override
+      tags: [Leds]
+      description: |
+        Sets nose (n), left (l), center (c), and right (r) LED colors.
+        Each parameter accepts a hex color in the form `#rrggbb`
+        or `-1` to disable the LED override.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                n:
+                  type: string
+                  description: Nose LED color override
+                  pattern: '^(-1|#[0-9A-Fa-f]{6})$'
+                  example: "-1"
+                l:
+                  type: string
+                  description: Left LED color override
+                  pattern: '^(-1|#[0-9A-Fa-f]{6})$'
+                  example: "#ff0000"
+                c:
+                  type: string
+                  description: Center LED color override
+                  pattern: '^(-1|#[0-9A-Fa-f]{6})$'
+                  example: "#00ff00"
+                r:
+                  type: string
+                  description: Right LED color override
+                  pattern: '^(-1|#[0-9A-Fa-f]{6})$'
+                  example: "-1"
       responses:
         '204':
           description: Command sent successfully.
@@ -347,6 +401,31 @@ paths:
       responses:
         '200':
           description: A JSON object with the tasks status.
+          content:
+            application/json:
+              schema:
+                type: object
+  /forth:
+    post:
+      summary: Execute Forth code
+      tags: [Forth]
+      description: Executes the provided Forth code on the device.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - c
+              properties:
+                c:
+                  type: string
+                  description: Forth code to be executed
+                  example: "left-ear forward 10 move-ear"
+      responses:
+        '200':
+          description: Forth code executed.
           content:
             application/json:
               schema:

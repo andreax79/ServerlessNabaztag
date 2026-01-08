@@ -15,7 +15,7 @@ dup 85 86 between if drop 4 exit then
 dup 95 99 between if drop 5 exit then
 drop nil ;
 
-: eaiq>info ( n -- n )  \ Convert European Air Quality Index (AQI)
+: eaiq>info ( n -- n )  \ Convert European Air Quality Index to info code
   10 /
   10 min
 ;

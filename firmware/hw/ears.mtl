@@ -133,10 +133,10 @@ fun ears_start_detect=
 #ifdef EARS_DEBUG
 	_ears_debug "ears_start_detect";
 #endif
-	led LED_NOSE RGB_RED;
-	led LED_BODY_LEFT RGB_VIOLET;
-	led LED_BODY_MIDDLE RGB_BLACK;
-	led LED_BODY_RIGHT RGB_VIOLET;
+	leds_set_color LED_NOSE RGB_RED;
+	leds_set_color LED_BODY_LEFT RGB_VIOLET;
+	leds_set_color LED_BODY_MIDDLE RGB_BLACK;
+	leds_set_color LED_BODY_RIGHT RGB_VIOLET;
 	set ears_mode=EARS_MODE_DETECT;
 	set _ears_last_move_time=time_ms;
 	set _ears_last_move=(motorget 0)+(motorget 1);;

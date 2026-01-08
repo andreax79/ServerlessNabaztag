@@ -190,9 +190,9 @@ fun info_run=
         let anims._info_current_val ->[dur anime] in
         if anime!=nil then
         (
-            led LED_BODY_LEFT info_palette.(anime._info_current_color_index);
-            led LED_BODY_MIDDLE info_palette.(anime.(1+_info_current_color_index));
-            led LED_BODY_RIGHT info_palette.(anime.(2+_info_current_color_index));
+            leds_set_color_override LED_BODY_LEFT info_palette.(anime._info_current_color_index);
+            leds_set_color_override LED_BODY_MIDDLE info_palette.(anime.(1+_info_current_color_index));
+            leds_set_color_override LED_BODY_RIGHT info_palette.(anime.(2+_info_current_color_index));
             if (time_ms-_info_start_ms >= _info_color_duration) then
             (
                 // next colors
@@ -204,9 +204,9 @@ fun info_run=
         )
         else
         (
-            led LED_BODY_LEFT RGB_BLACK;
-            led LED_BODY_MIDDLE RGB_BLACK;
-            led LED_BODY_RIGHT RGB_BLACK
+            leds_set_color_override LED_BODY_LEFT RGB_BLACK;
+            leds_set_color_override LED_BODY_MIDDLE RGB_BLACK;
+            leds_set_color_override LED_BODY_RIGHT RGB_BLACK
         )
     );;
 
@@ -232,20 +232,24 @@ fun __info_src_del key i=
 
 /**
  * Delete info source
- * key: 1=weather, 2=stock, 3=traffic, 6=emails, 7=pollution
+ * key: 1=weather, 2=stock, 3=traffic, 6=emails, 7=pollution, 8=messages
  */
 fun info_src_del key=
-    __info_src_del key 0;;
+    if key == INFO_MESSAGES then
+        set info_messages = 0
+    else
+        __info_src_del key 0;;
 
 /**
  * Update info source
- * key: 1=weather, 2=stock, 3=traffic, 6=emails, 7=pollution
- * val: value of the source (or key to delete if key=0)
+ * key: 1=weather, 2=stock, 3=traffic, 6=emails, 7=pollution, 8=messages
+ * val: value of the source (or -1 to delete the source)
  */
 fun info_src_update key val=
-    // allow for deletion
-    if key == 0 then
-        info_src_del val
+    if val == -1 then
+        info_src_del key
+    else if key == INFO_MESSAGES then
+        set info_messages = val
     else
         let nil -> res in
             for i=0;(i<16)&&(res==nil);i+2 do
@@ -261,13 +265,25 @@ fun info_src_update key val=
                 );;
 
 /**
+ * Clear all info sources
+ */
+fun info_clear_all=
+    for i=0;i<8 do (
+        info_src_del i
+    );
+    set info_messages = 0;;
+
+/**
  * Get info source value
- * key: 1=weather, 2=stock, 3=traffic, 6=emails, 7=pollution
+ * key: 1=weather, 2=stock, 3=traffic, 6=emails, 7=pollution, 8=messages
  */
 fun info_src_get key=
-    let nil -> res in (
-        for i=0;(i<16)&&(res==nil);i+2 do
-            if info_src.i == key then
-                set res = info_src.(i+1);
-        res
-    );;
+    if key == INFO_MESSAGES then
+        info_messages
+    else
+        let nil -> res in (
+            for i=0;(i<16)&&(res==nil);i+2 do
+                if info_src.i == key then
+                    set res = info_src.(i+1);
+            res
+        );;

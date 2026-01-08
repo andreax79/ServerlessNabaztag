@@ -109,7 +109,10 @@ fun main=
     audiolib_init;
     button_init;
     record_init;
+    // Initialize the ears
     ears_init;
+    // Initialize the leds
+    leds_init;
     // Initialize interactive mode (set defaults and start the interactive ears task)
     interactive_init;
     // Start the main loop

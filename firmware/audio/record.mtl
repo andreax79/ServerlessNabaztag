@@ -60,7 +60,7 @@ fun _record_interactive_send_upload =
 fun _record_start_run =
     if !audiolib_wav_running then
     (
-        led LED_NOSE RGB_RED;
+        leds_set_color LED_NOSE RGB_RED;
         audiolib_unforce_vol;
         reclib_rec_start;
         set _record_time_start=time_ms;
