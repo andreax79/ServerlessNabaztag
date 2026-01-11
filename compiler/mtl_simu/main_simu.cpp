@@ -10,6 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <signal.h>
 extern "C" {
 #include"vmem.h"
 #include"vloader.h"
@@ -111,8 +112,48 @@ void idle(int dummy) {
 	VPULL();
 }
 
+/**
+ * Restores the terminal to its original state
+ */
+static void handle_signal(int sig) {
+    // Reset scrolling region
+    printf("\033[r");
+    // Move cursor to bottom
+    printf("\033[999;1H");
+    fflush(stdout);
+    _exit(128 + sig);
+}
+
+/**
+ * Sets up signal handlers
+ */
+static void setup_signal_handlers() {
+    struct sigaction sa;
+    sa.sa_handler = handle_signal;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+
+    sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
+    sigaction(SIGQUIT, &sa, NULL);
+}
+
+/**
+ * Sets up the terminal
+ */
+static void terminal_setup() {
+    // Set scrolling region from line 4 to bottom
+    printf("\033[4;r");
+    fflush(stdout);
+}
+
 int main(int argc,char **argv)
 {
+#ifndef USE_GLUT
+    setup_signal_handlers();
+    terminal_setup();
+#endif
+
 	PropLoad("config.txt");
 
 	if (!handle_options(argc, argv))
