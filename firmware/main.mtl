@@ -35,8 +35,6 @@ const BYTECODE_REVISION_STR = "$Rev: __DATE__$";;
 const STD_NET_TIMEOUT = 10000;;
 const LED_TIMEOUT = 600;; // 10 minutes
 
-proto XmppSessionRequestResource 1;;
-
 #include hw/leds.mtl
 #include hw/ears.mtl
 #include hw/button.mtl
@@ -72,9 +70,6 @@ proto XmppSessionRequestResource 1;;
 
 #ifdef XMPP
 #include run/xmpp.mtl
-#else
-fun XmppSessionRequestResource newRes = 0 ;;
-fun XmppSessionSendButtonMsg btn withEvent eventValue = 0 ;;
 #endif
 
 #ifdef PING
@@ -94,6 +89,8 @@ fun XmppSessionSendButtonMsg btn withEvent eventValue = 0 ;;
 fun main=
     // Set the loop callback
     loopcb #task_scheduler;
+    // Initialize the ears
+    ears_init;
     // Load the configuration
     config_load;
     // Init the wifi and start the wifi job
@@ -109,8 +106,6 @@ fun main=
     audiolib_init;
     button_init;
     record_init;
-    // Initialize the ears
-    ears_init;
     // Initialize the leds
     leds_init;
     // Initialize interactive mode (set defaults and start the interactive ears task)

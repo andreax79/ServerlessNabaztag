@@ -48,7 +48,7 @@ fun _run_to_str run=
 
 // Set main loop state
 fun run_set_state r =
-    // Secho "run_set_state "; Secholn _run_to_str r;
+    Secho "run_set_state "; Secholn _run_to_str r;
     let run -> old_run in (
         set run = r;
         old_run

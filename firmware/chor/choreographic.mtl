@@ -59,7 +59,7 @@ fun chor_start_list chor_list cb cb_args=
  */
 fun chor_end_cb unused cb=
     set chor_processing_status = 0;
-    ears_set_wait_and_detect_mode;
+    ears_set_mode_wait_and_detect;
     run_set_state idleRun;
     if cb != nil then call cb [];
     0;;
@@ -73,7 +73,7 @@ fun chor_end_cb unused cb=
 fun chor_start chor_data cb cb_args=
     set _chor_test_value=((rand & 255) * 30) >> 8;
     set _chor_motor_dir={0 0};
-    ears_set_wait_only_mode;
+    ears_set_mode_wait;
     set chor_processing_status = 1; // block all trames during taichi
     chor_start_ex chor_data (fixarg2 #chor_end_cb cb) cb_args;
     0;;

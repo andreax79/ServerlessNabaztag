@@ -10,7 +10,7 @@ proto ears_is_initialized 0;;
 proto ears_json 0 ;;
 proto ears_ready 0 ;;
 proto ears_resetting 0 ;;
-proto ears_set_wait_and_detect_mode 0 ;;
+proto ears_set_mode_wait_and_detect 0 ;;
 proto ears_start_reset 0 ;;
 
 const EARS_MODE_RESET=0;; // ears go to ref pos

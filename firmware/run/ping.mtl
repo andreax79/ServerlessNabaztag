@@ -43,7 +43,7 @@ fun runidlewait=
 	// check timeout (oreille bloquÈe)
 	if ears_ready then
 	(
-		ears_start_detect;
+		ears_set_mode_detect;
 		leds_turn_off;
 		ears_go EARS_LEFT ears_target_position.EARS_LEFT 0;
 		ears_go EARS_RIGHT ears_target_position.EARS_RIGHT 0;
