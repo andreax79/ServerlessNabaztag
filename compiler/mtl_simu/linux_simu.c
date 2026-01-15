@@ -154,6 +154,21 @@ int getButton() { return 0; }
 // fonction d'affichage des diodes
 int simuDisplay(int* intensity)
 {
+#ifndef USE_GLUT
+    // Save cursor position and move to top-left corner
+    printf("\033[s\033[1;1H");
+    // Show LED colors
+	printf("\033[2K%2d \033[48;2;%d;%d;%dm \033[39m\033[49m %2d\n", (motorval[0]>>MOTORSCALE), diodeval[3*0], diodeval[3*0+1], diodeval[3*0+2], (motorval[1]>>MOTORSCALE));
+    printf("\033[2K \033[48;2;%d;%d;%dm \033[39m\033[49m \033[48;2;%d;%d;%dm \033[39m\033[49m \033[48;2;%d;%d;%dm \033[39m\033[49m\n",
+            diodeval[3*1], diodeval[3*1+1], diodeval[3*1+2],
+            diodeval[3*2], diodeval[3*2+1], diodeval[3*2+2],
+            diodeval[3*3], diodeval[3*3+1], diodeval[3*3+2]);
+	printf("\033[2K   \033[48;2;%d;%d;%dm \033[39m\033[49m  \n", diodeval[3*4], diodeval[3*4+1], diodeval[3*4+2]);
+    // Restore cursor position and flush output
+    printf("\033[u");
+    fflush(stdout);
+#endif
+
 	// TODO afficher l'état du lapin
 	return 0;
 }
@@ -321,7 +336,8 @@ vsd simuDoLoop()
 		if (1) motorval[i]+=motordir[i];
 		if (motorval[i]<0) motorval[i]+=(MAXMOTORVAL<<MOTORSCALE);
 		if (motorval[i]>=(MAXMOTORVAL<<MOTORSCALE)) motorval[i]-=(MAXMOTORVAL<<MOTORSCALE);
-		if (last<motorwheel[motorval[i]]) motorcount[i]++;
+		// if (last<motorwheel[motorval[i]]) motorcount[i]++;
+        if (last < motorwheel[motorval[i]>>MOTORSCALE]) motorcount[i]++;
 	}
 #endif
 	simuDisplay(diodeval);
@@ -358,19 +374,6 @@ void simuSetLed(int i,int val)
 
 #ifdef USE_GLUT
 	glutPostRedisplay();
-#else
-    // Save cursor position and move to top-left corner
-    printf("\033[s\033[1;1H");
-    // Show LED colors
-	printf("\033[2K   \033[48;2;%d;%d;%dm \033[39m\033[49m  \n", diodeval[3*0], diodeval[3*0+1], diodeval[3*0+2]);
-    printf("\033[2K \033[48;2;%d;%d;%dm \033[39m\033[49m \033[48;2;%d;%d;%dm \033[39m\033[49m \033[48;2;%d;%d;%dm \033[39m\033[49m\n",
-            diodeval[3*1], diodeval[3*1+1], diodeval[3*1+2],
-            diodeval[3*2], diodeval[3*2+1], diodeval[3*2+2],
-            diodeval[3*3], diodeval[3*3+1], diodeval[3*3+2]);
-	printf("\033[2K   \033[48;2;%d;%d;%dm \033[39m\033[49m  \n", diodeval[3*4], diodeval[3*4+1], diodeval[3*4+2]);
-    // Restore cursor position and flush output
-    printf("\033[u");
-    fflush(stdout);
 #endif
 }
 
@@ -383,7 +386,7 @@ void set_motor_dir(int num_motor, int sens)
 	tmp_sens = (sens==0)?0:((sens==1)?1:-1);
 	motordir[tmp_num]=tmp_sens;
 
-	my_printf(LOG_SIMUMOTORS, "Setting motor %d, direction %d (pos: %d)\n", tmp_num, tmp_sens);
+	my_printf(LOG_SIMUMOTORS, "Setting motor %d, direction %d\n", tmp_num, tmp_sens);
 }
 
 int get_motor_val(int i)
