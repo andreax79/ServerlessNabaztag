@@ -173,7 +173,6 @@ fun forth_init_dictionary=
         [ [str:"ntp-server"        ] [ code:{[int:FORTH_MEMORY_NTP_SERVER]} ]] ::       // NTP server
         [ [str:"username"          ] [ code:{[int:FORTH_MEMORY_USERNAME]} ]] ::         // Login username
         [ [str:"md5-password"      ] [ code:{[int:FORTH_MEMORY_MD5_PASSWORD]} ]] ::     // Login password (MD5 hashed)
-        [ [str:"bottom-color"      ] [ code:{[int:FORTH_MEMORY_BOTTOM_COLOR]} ]] ::     // Bottom LED base color
         [ [str:"info-palette"      ] [ code:{[int:FORTH_MEMORY_INFO_PALETTE]} ]] ::     // Info LED palette (16 cells)
         [ [str:"info-weather"      ] [ code:{[int:FORTH_MEMORY_INFO_WEATHER]} ]] ::     // Info weather
         [ [str:"info-stock"        ] [ code:{[int:FORTH_MEMORY_INFO_STOCK]} ]] ::       // Info stock
@@ -185,6 +184,8 @@ fun forth_init_dictionary=
         [ [str:"led-left"          ] [ code:{[int:FORTH_MEMORY_LEDS_OVERRIDE_LEFT]} ]] ::   // Left LED color override
         [ [str:"led-center"        ] [ code:{[int:FORTH_MEMORY_LEDS_OVERRIDE_CENTER]} ]] :: // Center LED color override
         [ [str:"led-right"         ] [ code:{[int:FORTH_MEMORY_LEDS_OVERRIDE_RIGHT]} ]] ::  // Right LED color override
+        [ [str:"led-base"          ] [ code:{[int:FORTH_MEMORY_LEDS_OVERRIDE_BASE]} ]] ::   // Base LED color override
+        [ [str:"led-base-breathing"] [ code:{[int:FORTH_MEMORY_LEDS_BASE_BREATHING]} ]] ::  // Base LED breathing effect
         nil -> d in
             set forth_dictionary = [dict:d];
 #ifdef FORTH_DEBUG

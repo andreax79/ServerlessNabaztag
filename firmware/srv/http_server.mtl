@@ -355,7 +355,7 @@ fun http_get_dns sock args=
 /**
  * Set LED colors override.
  * sock: http socket
- * args: n=nose color, l=left color, c=center color, r=right color
+ * args: n=nose color, l=left color, c=center color, r=right color, b=base color, t=base breathing
  */
 fun http_post_leds sock args=
     let parse_color http_arg_str args 'n' -> nose in
@@ -366,6 +366,10 @@ fun http_post_leds sock args=
         if center != nil then set leds_override.LED_BODY_MIDDLE=center;
     let parse_color http_arg_str args 'r' -> right in
         if right != nil then set leds_override.LED_BODY_RIGHT=right;
+    let parse_color http_arg_str args 'b' -> base in
+        if base != nil then set leds_override.LED_BASE=base;
+    let http_arg_int args 't' -> base_breathing in
+        if base_breathing != nil then set leds_base_breathing=base_breathing;
     http_send_header_and_close HTTP_204 nil sock;;
 
 /**

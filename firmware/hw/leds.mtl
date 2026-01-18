@@ -6,6 +6,7 @@
 #include protos/info_protos.mtl
 #include protos/interactive_protos.mtl
 #include protos/json_protos.mtl
+#include protos/task_protos.mtl
 #include protos/leds_protos.mtl
 
 var _leds_net_activity = 0;;
@@ -26,15 +27,19 @@ fun _leds_osc x=
     else LEDS_OSC.(255-x);;
 
 /**
- * Run bottom led animation
+ * Run base led animation
  */
-fun leds_bottom_animation=
+fun _leds_base_animation=
     if !sleep_is_sleeping && !ears_detecting then
-        let _leds_osc time_ms>>4 -> v in
-        let (leds_bottom_base_color >> 16) * v / 255 * 0x010000 +
-            ((leds_bottom_base_color >> 8) & 0xFF) * v / 255 * 0x000100 +
-            (leds_bottom_base_color & 0xFF) * v / 255 -> color in
-            leds_set_color LED_BASE color;
+        let if leds_override.LED_BASE != -1 then leds_override.LED_BASE else RGB_GREEN -> base_color in
+        if leds_base_breathing then
+            let _leds_osc time_ms>>4 -> v in
+            let (base_color >> 16) * v / 255 * 0x010000 +
+                ((base_color >> 8) & 0xFF) * v / 255 * 0x000100 +
+                (base_color & 0xFF) * v / 255 -> color in
+                leds_set_color LED_BASE color
+        else
+            leds_set_color LED_BASE base_color;
     0;;
 
 /**
@@ -43,14 +48,16 @@ fun leds_bottom_animation=
 fun _leds_check_net_activity=
     record_is_uploading ||
     match run_get_state with
-        (rscLoadWaitRun _-> 1)|
-        (interactiveReqWaitRun _->1)|
-        (_->0);;
+        ( configstartRun -> 1 )|
+        ( configwaitRun _ -> 1 )|
+        ( rscLoadWaitRun _-> 1 )|
+        ( interactiveReqWaitRun _-> 1 )|
+        ( _->0 );;
 
 /**
  * Run nose led animation
  */
-fun leds_nose_animation=
+fun _leds_nose_animation=
     if !ears_detecting then (
         // led tete clignote if netactivity or audiolib_wav_buffering //
         if (_leds_check_net_activity) then (
@@ -111,7 +118,8 @@ fun _leds_overrides_json=
             (json_int "nose" leds_override.LED_NOSE ) :: ",\n" ::
             (json_int "left" leds_override.LED_BODY_LEFT ) :: ",\n" ::
             (json_int "middle" leds_override.LED_BODY_MIDDLE ) :: ",\n" ::
-            (json_int "right" leds_override.LED_BODY_RIGHT ) :: "\n" ::
+            (json_int "right" leds_override.LED_BODY_RIGHT ) :: ",\n" ::
+            (json_int "base" leds_override.LED_BASE ) :: "\n" ::
         "}" :: nil;;
 
 /**
@@ -120,11 +128,40 @@ fun _leds_overrides_json=
 fun leds_json=
     strcatlist
         "{\n"::
+            (json_int "base_breathing" leds_base_breathing) :: ",\n" ::
             (json_obj "overrides" _leds_overrides_json) :: "\n" ::
         "}" :: nil;;
+
+/**
+ * Base led task
+ */
+fun leds_base_task task=
+    _leds_base_animation;
+    TaskRun;;
+
+/**
+ * Nose led task
+ */
+fun leds_nose_task task=
+    match run_get_state with
+    // No nose led animation for the following states
+    ( sleepRun ->           nil )|
+    ( cmdEvalOne _ ->       nil )|
+#ifdef XMPP
+    ( xmppLoginRun ->       nil )|
+    ( xmppReconnectRun _ -> nil )|
+#endif
+#ifdef PING
+    ( pingstartRun ->       nil )|
+#endif
+    // Nose animation
+    ( _ ->                  _leds_nose_animation );
+    TaskRun;;
 
 /**
  * Initialize the leds
  */
 fun leds_init=
-    set leds_override=tabnew -1 5;;
+    set leds_override = tabnew -1 5;
+    task_start "nose-led" #leds_nose_task;
+    task_start "base-led" #leds_base_task;;

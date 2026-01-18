@@ -27,14 +27,14 @@ const FORTH_MEMORY_INFO_TRAFFIC = (1<<29) + 30;;
 const FORTH_MEMORY_INFO_MAIL = (1<<29) + 31;;
 const FORTH_MEMORY_INFO_POLLUTION = (1<<29) + 32;;
 const FORTH_MEMORY_INFO_MESSAGES = (1<<29) + 33;;
-const FORTH_MEMORY_BOTTOM_COLOR = (1<<29) + 34;;
-const FORTH_MEMORY_LEDS_OVERRIDE = (1<<29) + 35;;  // 5 cells (nose, left, center, right, bottom)
+const FORTH_MEMORY_TAICHI_FREQ = (1<<29) + 34;;
+const FORTH_MEMORY_LEDS_OVERRIDE = (1<<29) + 35;;  // 5 cells (nose, left, center, right, base)
 const FORTH_MEMORY_LEDS_OVERRIDE_NOSE = (1<<29) + 35 + 0;;
 const FORTH_MEMORY_LEDS_OVERRIDE_LEFT = (1<<29) + 35 + 1;;
 const FORTH_MEMORY_LEDS_OVERRIDE_CENTER = (1<<29) + 35 + 2;;
 const FORTH_MEMORY_LEDS_OVERRIDE_RIGHT = (1<<29) + 35 + 3;;
-const FORTH_MEMORY_LEDS_OVERRIDE_BOTTOM = (1<<29) + 35 + 4;;
-const FORTH_MEMORY_TAICHI_FREQ = (1<<29) + 40;;
+const FORTH_MEMORY_LEDS_OVERRIDE_BASE = (1<<29) + 35 + 4;;
+const FORTH_MEMORY_LEDS_BASE_BREATHING = (1<<29) + 40;;
 
 type MemoryBlock = [
     memory_block_size   // size of the memory block
@@ -150,8 +150,8 @@ fun _forth_memory_get_special f addr=
         [str:ntp_server]
     else if addr == FORTH_MEMORY_MD5_PASSWORD then
         [str:config_md5_password]
-    else if addr == FORTH_MEMORY_BOTTOM_COLOR then
-        [int:leds_bottom_base_color]
+    else if addr == FORTH_MEMORY_LEDS_BASE_BREATHING then
+        [int:leds_base_breathing]
     else if addr >= FORTH_MEMORY_INFO_PALETTE && addr < FORTH_MEMORY_INFO_PALETTE + 16 then
         [int:info_palette.(addr - FORTH_MEMORY_INFO_PALETTE)]
     else if addr == FORTH_MEMORY_INFO_WEATHER then
@@ -199,8 +199,8 @@ fun _forth_memory_set_special f addr value=
         set ntp_server = value.str
     else if addr == FORTH_MEMORY_MD5_PASSWORD then
         set config_md5_password = value.str
-    else if addr == FORTH_MEMORY_BOTTOM_COLOR then (
-        set leds_bottom_base_color = value.int; nil
+    else if addr == FORTH_MEMORY_LEDS_BASE_BREATHING then (
+        set leds_base_breathing = value.int; nil
     )
     else if addr >= FORTH_MEMORY_INFO_PALETTE && addr < FORTH_MEMORY_INFO_PALETTE + 16 then (
         set info_palette.(addr - FORTH_MEMORY_INFO_PALETTE) = value.int; nil

@@ -270,6 +270,30 @@ input, select, textarea {
     </div>
   </div>
 
+  <div class="row">
+    <div class="column column-25">
+      <form action="/leds" method="POST">
+        <fieldset>
+            <label for="ledBaseField">Base</label>
+            <input type="color" name="b" id="ledBaseField" value="" placeholder="#RRGGBB" />
+            <button type="button" class="button" onclick="this.form.submit();">Set</button>
+            <button type="button" class="button button-outline" onclick="this.form.ledBaseField.value=-1; fetch('/leds?b=-1');">Clear</button>
+        </fieldset>
+      </form>
+    </div>
+    <div class="column column-25">
+      <form action="/leds" method="POST">
+        <fieldset>
+            <label for="ledBaseBreathingField">Base Breathing</label>
+            <select name="t" id="ledBaseBreathingField" onchange="this.form.submit()">
+                <option value="0">Off</option>
+                <option value="1">On</option>
+            </select>
+        </fieldset>
+      </form>
+    </div>
+  </div>
+
   <h3 class="title">Sound</h3>
 
   <div class="row">
@@ -466,6 +490,8 @@ async function onLoad() {
     document.getElementById("ledLeftField").value = formatColor(status.leds.overrides.left);
     document.getElementById("ledMiddleField").value = formatColor(status.leds.overrides.middle);
     document.getElementById("ledRightField").value = formatColor(status.leds.overrides.right);
+    document.getElementById("ledBaseField").value = formatColor(status.leds.overrides.base);
+    document.getElementById("ledBaseBreathingField").value = status.leds.base_breathing ? 1 : 0;
 
     document.getElementById("openAPI").href += "?openapi_url=http%3A%2F%2F" + window.location.host + "%2Fopenapi.yaml";
     loadTimezones(status.time.city_code);

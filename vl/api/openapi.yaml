@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Serverless Nabaztag API
   description: An OpenAPI specification for controlling a Serverless Nabaztag smart rabbit.
-  version: 1.0.2
+  version: 1.0.3
   contact:
     url: https://github.com/andreax79/ServerlessNabaztag
 servers:
@@ -89,7 +89,7 @@ paths:
     get:
       summary: Turn off info LEDs
       tags: [Leds]
-      description: Clears the state of all informational LEDs (e.g., weather, traffic).
+      description: Clears the state of all informational LEDs (e.g. weather, traffic).
       responses:
         '204':
           description: Command sent successfully.
@@ -179,7 +179,7 @@ paths:
       summary: Set LED colors override
       tags: [Leds]
       description: |
-        Sets nose (n), left (l), center (c), and right (r) LED colors.
+        Sets nose (n), left (l), center (c), right (r), and base (b) LED colors.
         Each parameter accepts a hex color in the form `#rrggbb`
         or `-1` to disable the LED override.
       requestBody:
@@ -207,6 +207,11 @@ paths:
                 r:
                   type: string
                   description: Right LED color override
+                  pattern: '^(-1|#[0-9A-Fa-f]{6})$'
+                  example: "-1"
+                b:
+                  type: string
+                  description: Base LED color override
                   pattern: '^(-1|#[0-9A-Fa-f]{6})$'
                   example: "-1"
       responses:

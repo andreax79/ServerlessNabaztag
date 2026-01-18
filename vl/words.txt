@@ -154,7 +154,6 @@ XOR            ( n1 n2 -- flag )                        Logical XOR
 Variables
 ---------
 
-BOTTOM-COLOR                                            Bottom LED base color
 CITY-CODE                                               City code (timezone)
 CRONTAB-LAST-MINUTE                                     Crontab last checked minute
 DST                                                     Daylight Saving Time
@@ -169,6 +168,8 @@ INFO-TRAFFIC                                            Info traffic
 INFO-WEATHER                                            Info weather
 LANGUAGE                                                Language
 LATITUDE                                                Latitude (weather/air quality)
+LED-BASE                                                Base LED color override
+LED-BASE-BREATHING                                      Base LED breathing effect
 LED-CENTER                                              Center LED color override
 LED-LEFT                                                Left LED color override
 LED-NOSE                                                Nose LED color override
