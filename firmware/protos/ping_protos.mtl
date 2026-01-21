@@ -1,6 +1,5 @@
 #ifdef PING
 
-var ping_current_trame_id = 0;;
 var ping_delay = 10;;
 
 #endif

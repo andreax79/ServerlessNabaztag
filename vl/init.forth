@@ -25,6 +25,12 @@ evaluate ; \ evaluate the content
 
 : play-midi-ack 4 play-midi ;
 
+: load-info-animation ( filename anim_num -- ) \ Load info animation from the server
+>r >r nil server-url @ :: "/" :: r> :: str-join
+http-get drop json-parse
+r> set-info-animation
+;
+
 : get-hour ( -- hour )  \ Get the current hour
 time&date drop drop drop swap drop swap drop ;
 
@@ -60,6 +66,13 @@ utc>string . cr ;
 "daytime" 21 "daytime" tcp-listen  \ start daytime server
 "update-weather" weather-time-delay "weather" task-start \ start weather update
 "crontab" 59000 "crontab" task-start  \ start crontab
+
+"config/animation/weather.json" 0 load-info-animation
+"config/animation/stock.json" 1 load-info-animation
+"config/animation/traffic.json" 2 load-info-animation
+"config/animation/mail.json" 5 load-info-animation
+"config/animation/pollution.json" 6 load-info-animation
+
 crontab
 update-weather
 sleeping-time? if sleep else wake-up then

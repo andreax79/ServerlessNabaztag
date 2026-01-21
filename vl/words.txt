@@ -77,6 +77,7 @@ IP             ( -- ip )                                Push the IP address of t
 JMP            ( addr -- )                              Unconditional jump
 JSON-GET       ( w path -- x ) (e.g., "daily.weathercode[0]") Get an element from a dictionary or list by path
 JSON-PARSE     ( str -- list/dict )                     Parse a JSON string into a list or dictionary
+LOAD-INFO-ANIMATION ( filename anim_num -- )            Load info animation from the server
 LOAD-SRV       ( filename -- )                          Load a forth file from the server
 LOCAL>STRING   ( -- str )                               Push the current local time and date as a string onto the stack
 LOGIN          ( -- )                                   Login
@@ -116,6 +117,7 @@ RESUME-TASK    ( task-id -- flag )                      Resume the task with the
 REVISION       ( -- str )                               Push the revision string onto the stack
 ROT            ( n1 n2 n3 -- n2 n3 n1 )                 Rotate third item to top
 SAY            ( text --  )                             Text to speech
+SET-INFO-ANIMATION ( data n -- )                        Set info animation n from json
 SLEEP          ( -- )                                   Put the Nabaztag into sleep mode
 SLEEPING-TIME? ( -- flag )                              Check if current hour is in the sleep interval
 SLEEPING?      ( -- flag)                               Return true if the Nabaztag is in sleep mode
@@ -159,6 +161,7 @@ CRONTAB-LAST-MINUTE                                     Crontab last checked min
 DST                                                     Daylight Saving Time
 EAIQ                                                    European Air Quality Index
 GO-TO-BED-AT                                            Go to bed at (hour)
+INFO-DURATION                                           Info display duration (seconds)
 INFO-MAIL                                               Info mail
 INFO-MESSAGES                                           Info messages
 INFO-PALETTE                                            Info LED palette (16 cells)

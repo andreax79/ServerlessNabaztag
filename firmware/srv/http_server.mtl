@@ -298,7 +298,7 @@ fun http_get_nose sock args=
  * args: v=value
  */
 fun http_get_weather sock args=
-    info_src_update INFO_WEATHER http_arg_int args 'v';
+    info_service_update INFO_WEATHER http_arg_int args 'v';
     http_send_header_and_close HTTP_204 nil sock;;
 
 /**
@@ -306,7 +306,7 @@ fun http_get_weather sock args=
  * args: v=value
  */
 fun http_get_stock sock args=
-    info_src_update INFO_STOCK http_arg_int args 'v';
+    info_service_update INFO_STOCK http_arg_int args 'v';
     http_send_header_and_close HTTP_204 nil sock;;
 
 /**
@@ -314,7 +314,7 @@ fun http_get_stock sock args=
  * args: v=value
  */
 fun http_get_traffic sock args=
-    info_src_update INFO_TRAFFIC http_arg_int args 'v';
+    info_service_update INFO_TRAFFIC http_arg_int args 'v';
     http_send_header_and_close HTTP_204 nil sock;;
 
 /**
@@ -322,7 +322,7 @@ fun http_get_traffic sock args=
  * args: v=value
  */
 fun http_get_mail sock args=
-    info_src_update INFO_MAIL http_arg_int args 'v';
+    info_service_update INFO_MAIL http_arg_int args 'v';
     http_send_header_and_close HTTP_204 nil sock;;
 
 /**
@@ -330,7 +330,7 @@ fun http_get_mail sock args=
  * args: v=value
  */
 fun http_get_pollution sock args=
-    info_src_update INFO_POLLUTION http_arg_int args 'v';
+    info_service_update INFO_POLLUTION http_arg_int args 'v';
     http_send_header_and_close HTTP_204 nil sock;;
 
 /**

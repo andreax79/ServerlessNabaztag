@@ -215,9 +215,8 @@ fun _trame_eval_info_update_v2 data=
                 Secho "key:"; Iecho key; Secho "="; Iecho val; Secho ",";
 #endif
                 if key == INFO_MESSAGES then set info_messages = val
-                else if key == 0 then info_src_del val
-                else if key == INFO_WEATHER || key == INFO_STOCK || key == INFO_TRAFFIC || key == INFO_MAIL || key == INFO_POLLUTION then
-                info_src_update key val
+                else if key == 0 then info_service_remove val
+                else if key == INFO_WEATHER || key == INFO_STOCK || key == INFO_TRAFFIC || key == INFO_MAIL || key == INFO_POLLUTION then info_service_update key val
                 else if key == 4 then set newleft = val
                 else if key == 5 then set newright = val
                 // else if key == 14 then config_set_taichi_freq strget data i+1

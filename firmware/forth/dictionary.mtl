@@ -154,6 +154,7 @@ fun forth_init_dictionary=
         [ [str:"random"            ] [ func:#forth_random ]] ::
         [ [str:"volume"            ] [ func:#forth_volume ]] ::
         [ [str:"clear-info"        ] [ func:#forth_clear_info ]] ::
+        [ [str:"set-info-animation"] [ func:#forth_set_info_animation ]] ::
         [ [str:"play-url"          ] [ func:#forth_play_url ]] ::
         [ [str:"play-midi"         ] [ func:#forth_play_midi ]] ::
         [ [str:"play-chor"         ] [ func:#forth_play_chor   flag:FORTH_ASYNC]] ::
@@ -173,6 +174,7 @@ fun forth_init_dictionary=
         [ [str:"ntp-server"        ] [ code:{[int:FORTH_MEMORY_NTP_SERVER]} ]] ::       // NTP server
         [ [str:"username"          ] [ code:{[int:FORTH_MEMORY_USERNAME]} ]] ::         // Login username
         [ [str:"md5-password"      ] [ code:{[int:FORTH_MEMORY_MD5_PASSWORD]} ]] ::     // Login password (MD5 hashed)
+        [ [str:"info-duration"     ] [ code:{[int:FORTH_MEMORY_INFO_DURATION]} ]] ::    // Info display duration (seconds)
         [ [str:"info-palette"      ] [ code:{[int:FORTH_MEMORY_INFO_PALETTE]} ]] ::     // Info LED palette (16 cells)
         [ [str:"info-weather"      ] [ code:{[int:FORTH_MEMORY_INFO_WEATHER]} ]] ::     // Info weather
         [ [str:"info-stock"        ] [ code:{[int:FORTH_MEMORY_INFO_STOCK]} ]] ::       // Info stock

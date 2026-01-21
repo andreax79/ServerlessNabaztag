@@ -2,72 +2,71 @@
 #include protos/sleep_protos.mtl
 #include protos/midi_protos.mtl
 #include protos/task_protos.mtl
+#include protos/http_protos.mtl
+#include protos/forth_protos.mtl
 #include protos/info_protos.mtl
 
 // gestion des services
 
-// _info_data : les definitions des animations visuelles des services (meteo, traffic, etc..)
+// _info_animations : les definitions des animations visuelles des services (meteo, traffic, etc..)
 // Table de animations { <animation_service_0> <animation_service_1> ... <animation_service_N> }
 // animations = tableau de N animations, une par valeur du service. Animation = tuple = [tempo <couleurs>]
 // couleurs = X fois 3 couleurs pour les 3 leds du ventre (led 1, 2, 3)
 // couleur = index dans le tableau 'info_palette'
 // tempo = 0.5*log2 du nombre d'itérations à durer sur la couleur courante (ex : tempo = 3, durée = 16 itérations)
-var _info_data = {
+var _info_animations = nil;;
 // 0 meteo
-{
-    [40 {0 3 0 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3}] // 0: sun
-    [125 {0 3 8 0 8 8 8 8 0 8 3 8 0 8 8 8 8 0 8 3 0}] // 1: clouds
-    [200 {8 4 4 8 8 4 4 8 8 4 4 8 4 4 4 4 4 4}] // 2: fog
-    [20 {0 0 0 0 4 0 4 0 4 0 0 0 0 0 4 4 0 0 0 0 0 0 4 0 0 0 4}] // 3: rain
-    [40 {7 0 0 0 0 0 0 0 7 0 0 0 0 6 0 0 0 0 0 0 6 0 0 0 0 7 0 0 0 0 6 0 0 0 0 0}] // 4: snow
-    [25 {0 4 3 0 0 0 0 0 0 0 0 0 0 0 0 4 3 0 0 4 3 0 0 0 0 0 0 0 3 4 3 4 0}] // 5: storm
-}
+// {
+//     [40 {0 3 0 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3}] // 0: sun
+//     [125 {0 3 8 0 8 8 8 8 0 8 3 8 0 8 8 8 8 0 8 3 0}] // 1: clouds
+//     [200 {8 4 4 8 8 4 4 8 8 4 4 8 4 4 4 4 4 4}] // 2: fog
+//     [20 {0 0 0 0 4 0 4 0 4 0 0 0 0 0 4 4 0 0 0 0 0 0 4 0 0 0 4}] // 3: rain
+//     [40 {7 0 0 0 0 0 0 0 7 0 0 0 0 6 0 0 0 0 0 0 6 0 0 0 0 7 0 0 0 0 6 0 0 0 0 0}] // 4: snow
+//     [25 {0 4 3 0 0 0 0 0 0 0 0 0 0 0 0 4 3 0 0 4 3 0 0 0 0 0 0 0 3 4 3 4 0}] // 5: storm
+// }
 // 1 bourse
-{
-    [7 {0 0 11 0 11 0 11 0 0 0 0 0 0 0 0 0 0 0}]
-    [14 {0 0 11 0 11 0 11 0 0 0 0 0}]
-    [28 {0 0 11 0 11 0 11 0 0 0 0 0}]
-    [28 {0 11 0 0 0 0}]
-    [28 {11 0 0 0 11 0 0 0 11 0 0 0}]
-    [14 {11 0 0 0 11 0 0 0 11 0 0 0}]
-    [7 {11 0 0 0 11 0 0 0 11 0 0 0 0 0 0 0 0 0}]
-}
+// {
+//     [7 {0 0 11 0 11 0 11 0 0 0 0 0 0 0 0 0 0 0}]
+//     [14 {0 0 11 0 11 0 11 0 0 0 0 0}]
+//     [28 {0 0 11 0 11 0 11 0 0 0 0 0}]
+//     [28 {0 11 0 0 0 0}]
+//     [28 {11 0 0 0 11 0 0 0 11 0 0 0}]
+//     [14 {11 0 0 0 11 0 0 0 11 0 0 0}]
+//     [7 {11 0 0 0 11 0 0 0 11 0 0 0 0 0 0 0 0 0}]
+// }
 // 2 traffic
-{
-    [100 {1 0 1 1 0 1 1 0 1 0 0 0 0 0 0 0 0 0}]
-    [100 {0 1 0 1 0 1 0 0 0 0 0 0 0 0 0}]
-    [50 {0 1 0 1 0 1 0 0 0 0 0 0 0 0 0}]
-    [25 {0 1 0 1 0 1 0 0 0 0 0 0 0 0 0}]
-    [12 {0 1 0 1 0 1 0 0 0 0 0 0 0 0 0}]
-    [8 {0 1 0 1 0 1 0 0 0 0 0 0 0 0 0}]
-    [4 {0 1 0 1 0 1 0 1 0 1 0 1 0 0 0 0 0 0}]
-}
-// 3 nil
-nil
-// 4 nil
-nil
+// {
+//     [100 {1 0 1 1 0 1 1 0 1 0 0 0 0 0 0 0 0 0}]
+//     [100 {0 1 0 1 0 1 0 0 0 0 0 0 0 0 0}]
+//     [50 {0 1 0 1 0 1 0 0 0 0 0 0 0 0 0}]
+//     [25 {0 1 0 1 0 1 0 0 0 0 0 0 0 0 0}]
+//     [12 {0 1 0 1 0 1 0 0 0 0 0 0 0 0 0}]
+//     [8 {0 1 0 1 0 1 0 0 0 0 0 0 0 0 0}]
+//     [4 {0 1 0 1 0 1 0 1 0 1 0 1 0 0 0 0 0 0}]
+// }
+// 3 spare1
+// 4 spare2
 // 5 mails
-{
-    [70 {5 0 0 0 5 0 0 0 5 0 5 0}]
-    [56 {0 5 0 0 0 0}]
-    [56 {5 0 5 0 0 0}]
-    [56 {5 5 5 0 0 0}]
-}
+// {
+//     [70 {5 0 0 0 5 0 0 0 5 0 5 0}]
+//     [56 {0 5 0 0 0 0}]
+//     [56 {5 0 5 0 0 0}]
+//     [56 {5 5 5 0 0 0}]
+// }
 // 6 pollution
-{
-    [42 {6 6 6 6 6 6 6 6 6 0 0 0}]  // 0: good
-    [42 {6 6 6 6 6 6 6 6 6 0 0 0}]
-    [42 {6 6 6 6 6 6 6 6 6 0 0 0}]  // 2: fair
-    [42 {6 6 6 6 6 6 6 6 6 0 0 0}]
-    [42 {6 6 6 6 6 6 6 6 6 0 0 0}]  // 4: moderate
-    [14 {0 6 6 6 6 0 6 6 6 6 6 6 6 6 6 6 6 6 6 0 6 0 0 6 0 0 0 0 6 0 0 6 6 6 6 6 6 6 6 6 6 6 6 6 0 6 0 6 0 6 6}]
-    [14 {0 6 6 6 6 0 6 6 6 6 6 6 6 6 6 6 6 6 6 0 6 0 0 6 0 0 0 0 6 0 0 6 6 6 6 6 6 6 6 6 6 6 6 6 0 6 0 6 0 6 6}] // 6: poor
-    [14 {0 6 6 6 6 0 6 6 6 6 6 6 6 6 6 6 6 6 6 0 6 0 0 6 0 0 0 0 6 0 0 6 6 6 6 6 6 6 6 6 6 6 6 6 0 6 0 6 0 6 6}]
-    [14 {0 6 0 0 6 6 6 6 6 6 0 0 0 0 0 0 6 0 0 6 6 0 0 0 6 6 0 6 6 6 0 0 6 6 0 0 0 6 0 0 0 0 6 0 6 0 6 0}] // 8: very poor
-    [14 {0 6 0 0 6 6 6 6 6 6 0 0 0 0 0 0 6 0 0 6 6 0 0 0 6 6 0 6 6 6 0 0 6 6 0 0 0 6 0 0 0 0 6 0 6 0 6 0}]
-    [14 {0 6 0 0 6 6 6 6 6 6 0 0 0 0 0 0 6 0 0 6 6 0 0 0 6 6 0 6 6 6 0 0 6 6 0 0 0 6 0 0 0 0 6 0 6 0 6 0}] // 10: extremly poor
-}
-};;
+// {
+//     [42 {6 6 6 6 6 6 6 6 6 0 0 0}]  // 0: good
+//     [42 {6 6 6 6 6 6 6 6 6 0 0 0}]
+//     [42 {6 6 6 6 6 6 6 6 6 0 0 0}]  // 2: fair
+//     [42 {6 6 6 6 6 6 6 6 6 0 0 0}]
+//     [42 {6 6 6 6 6 6 6 6 6 0 0 0}]  // 4: moderate
+//     [14 {0 6 6 6 6 0 6 6 6 6 6 6 6 6 6 6 6 6 6 0 6 0 0 6 0 0 0 0 6 0 0 6 6 6 6 6 6 6 6 6 6 6 6 6 0 6 0 6 0 6 6}]
+//     [14 {0 6 6 6 6 0 6 6 6 6 6 6 6 6 6 6 6 6 6 0 6 0 0 6 0 0 0 0 6 0 0 6 6 6 6 6 6 6 6 6 6 6 6 6 0 6 0 6 0 6 6}] // 6: poor
+//     [14 {0 6 6 6 6 0 6 6 6 6 6 6 6 6 6 6 6 6 6 0 6 0 0 6 0 0 0 0 6 0 0 6 6 6 6 6 6 6 6 6 6 6 6 6 0 6 0 6 0 6 6}]
+//     [14 {0 6 0 0 6 6 6 6 6 6 0 0 0 0 0 0 6 0 0 6 6 0 0 0 6 6 0 6 6 6 0 0 6 6 0 0 0 6 0 0 0 0 6 0 6 0 6 0}] // 8: very poor
+//     [14 {0 6 0 0 6 6 6 6 6 6 0 0 0 0 0 0 6 0 0 6 6 0 0 0 6 6 0 6 6 6 0 0 6 6 0 0 0 6 0 0 0 0 6 0 6 0 6 0}]
+//     [14 {0 6 0 0 6 6 6 6 6 6 0 0 0 0 0 0 6 0 0 6 6 0 0 0 6 6 0 6 6 6 0 0 6 6 0 0 0 6 0 0 0 0 6 0 6 0 6 0}] // 10: extremly poor
+// }
 
 // v21 : changé couleur jaune clair (11) de 0xffff80 à 0xffcc00 (bug 197)
 var info_palette={
@@ -77,76 +76,104 @@ var info_palette={
     0x808080 0xff8080 0x80ff80 0xffcc00 0x8080ff 0xff80ff 0x80ffff 0xff8000
 };;
 
-// heure de démarrage du service courant
+// Current service animation start time
 var _info_start_time;;
-// index du service courant (dans info_src)
+// Index of the current service (in info_src)
 var _info_index=0;;
-// type du service courant
-var info_type;;
-// valeur du service courant
+// Current info service
+var _info_current_service;;
+// Value of the current service
 var _info_current_val;;
-// index de la couleur dans le tableau des couleurs de l'animation courante
+// Index of the current color in the animations of the current service
 var _info_current_color_index;;
-// Date de démarrage de la couleur..
+// Animation start time (ms)
 var _info_start_ms;;
-// durée de la couleur...
-var _info_color_duration;;
+// Animation color duration (ms)
+var _info_color_duration_ms;;
 
-// durée d'affichage d'un service, en secondes
-const INFO_TIMEOUT=15;;
+// Number of info services
+const INFO_SERVICES=8;; // 1=weather, 2=stock, 3=traffic, 6=emails, 7=pollution, 8=messages
 
-/**
- * Info task
- */
-fun info_task task=
-    match run_get_state with
-    ( idleRun -> info_run )|
-#ifdef PING
-    ( pingwaitRun _ -> if ping_current_trame_id != RUN_MSG_ASLEEP then info_run )|
-    ( stdWaitRun _ -> if ping_current_trame_id != RUN_MSG_ASLEEP then info_run )|
-#endif
-#ifdef XMPP
-    ( xmppReconnectRun params -> info_run )|
-#endif
-    ( rscLoadNextRun -> info_run )|
-    ( rscLoadWaitRun _ -> info_run )|
-    ( interactiveReqWaitRun http -> info_run );
-    TaskRun;;
+fun _info_echo_anim anims =
+    for a=0; a<tablen anims do (
+        let anims.a -> [tempo colors] in (
+            Secho "["; Iecho tempo; Secho " {";
+            for i=0;i<tablen colors do (
+                Iecho colors.i; Secho " "
+            );
+            Secholn "}]"
+        )
+    );;
 
 /**
- * Initialize and start the info task
+ * Parse animation colors from json
+ * colors: json list of colors
+ * return: animation table
  */
-fun info_init=
-    set info_src=tabnew 0 16; // 8 services [type,val] x 8
-    // Start the info task
-    task_start "info" #info_task;;
+fun _info_load_parse_anim colors=
+    let 0 -> i in
+    let listlen colors -> anim_len in
+    let tabnew 0 anim_len*3 -> anim_table in (
+        for q=colors;q!=nil;tl q do (
+            let hd q -> citem in
+            let hd citem.list -> c0 in
+            let hd tl citem.list -> c1 in
+            let hd tl tl citem.list -> c2 in (
+                set anim_table.(i*3) = c0.int;
+                set anim_table.(i*3+1) = c1.int;
+                set anim_table.(i*3+2) = c2.int
+            );
+            set i = i + 1
+        );
+        anim_table
+    );;
 
 /**
- * Get animations for info type
+ * Set info animation data from json
+ * service: 1=weather, 2=stock, 3=traffic, 6=emails, 7=pollution, 8=messages
+ * data: json data (a dict with "tempo" and "colors")
  */
-fun _info_get_animations info_type=
-    _info_data.info_type;;
+fun info_set_animation_from_json service data=
+    let 0 -> i in
+    let tabnew nil listlen data.list -> anims in (
+        for p=data.list;p!=nil;tl p do (
+            let hd p -> item in
+            let word_get_int item "tempo" -> tempo in
+            let word_get_list item "colors" -> colors in
+            set anims.i = [tempo _info_load_parse_anim colors];
+            set i = i + 1;
+            nil
+        );
+        set _info_animations.service = anims;
+        _info_echo_anim anims
+    );;
 
-// retourne le prochain index utile (info_type non nul)
-fun _info_next_index i=
+/**
+ * Get animations for info service
+ * service: 1=weather, 2=stock, 3=traffic, 6=emails, 7=pollution, 8=messages
+ */
+fun _info_get_animations service=
+    _info_animations.service;;
+
+/**
+ * Get next not empty service index
+ */
+fun _info_get_next_index i=
     let i+2-> i in
-    if i>=16 then 0 else if info_src.i then i else _info_next_index i;;
+    if i>=(2*INFO_SERVICES) then 0 else if info_src.i then i else _info_get_next_index i;;
 
 // le service suivant
-fun _info_start_one i=
-    set _info_index= i;
-    set info_type=(info_src.(_info_index))-1;
+fun _info_start_animation=
+    set _info_current_service=(info_src.(_info_index))-1;
     set _info_current_val=info_src.(_info_index+1);
     set _info_start_time=time;
     set _info_current_color_index=0;
     set _info_start_ms=time_ms;
-    let _info_get_animations info_type -> anims in
-    if anims==nil then set _info_start_time=nil
-    else let anims._info_current_val ->[dur _] in set _info_color_duration= dur*10;
-    0;;
-
-fun _info_next=
-    _info_start_one (_info_next_index _info_index);
+    let _info_get_animations _info_current_service -> anims in
+    if anims==nil then
+        set _info_start_time=nil
+    else
+        let anims._info_current_val ->[dur _] in set _info_color_duration_ms=dur*10;
     0;;
 
 /**
@@ -154,14 +181,16 @@ fun _info_next=
  */
 fun _info_src_json=
     let nil -> result in (
-        for i=0;i<16 do
-            let info_src.(i*2) -> key in
+        for i=0;i<(2*INFO_SERVICES) do
+            let info_src.(i*2) -> service in
             let info_src.(i*2+1) -> val in (
-                if key == INFO_WEATHER then set result = (json_int "weather" val) :: ",\n" :: result
-                else if key == INFO_STOCK then set result = (json_int "stock" val) :: ",\n" :: result
-                else if key == INFO_TRAFFIC then set result = (json_int "traffic" val) :: ",\n" :: result
-                else if key == INFO_MAIL then set result = (json_int "emails" val) :: ",\n" :: result
-                else if key == INFO_POLLUTION then set result = (json_int "pollution" val) :: ",\n" :: result
+                if service == INFO_WEATHER then set result = (json_int "weather" val) :: ",\n" :: result
+                else if service == INFO_STOCK then set result = (json_int "stock" val) :: ",\n" :: result
+                else if service == INFO_TRAFFIC then set result = (json_int "traffic" val) :: ",\n" :: result
+                else if service == INFO_MAIL then set result = (json_int "emails" val) :: ",\n" :: result
+                else if service == INFO_POLLUTION then set result = (json_int "pollution" val) :: ",\n" :: result
+                else if service == INFO_SPARE1 then set result = (json_int "spare1" val) :: ",\n" :: result
+                else if service == INFO_SPARE2 then set result = (json_int "spare2" val) :: ",\n" :: result
             );
         strcatlist result
     );;
@@ -176,29 +205,132 @@ fun info_json=
             (json_int "messages" info_messages) :: "\n" ::
         "}" :: nil;;
 
-fun info_run=
-    if (!sleep_is_sleeping && !interactive_status && !ears_detecting) then // no info while sleeping and while in interactive mode
+
+// util : slide tableau pour effacer case vide
+fun _info_service_slide i=
+    if (i == (2*INFO_SERVICES)-2) then (
+        set info_src.i = 0;
+        set info_src.(i+1) = 0
+    ) else (
+        set info_src.i = info_src.(i+2);
+        set info_src.(i+1) = info_src.(i+3);
+        // recurse
+        if (info_src.i > 0) then _info_service_slide i+2
+    );;
+
+// enlève cette source de la liste
+fun _info_service_remove service i=
+    if (i < (2*INFO_SERVICES)) then
+    if (info_src.i == service) then (
+        // delete
+        _info_service_slide i
+    ) else _info_service_remove service i+2;;
+
+/**
+ * Delete service value
+ * service: 1=weather, 2=stock, 3=traffic, 6=emails, 7=pollution, 8=messages
+ */
+fun info_service_remove service=
+    if service == INFO_MESSAGES then
+        set info_messages = 0
+    else
+        _info_service_remove service 0;;
+
+/**
+ * Update service value
+ * service: 1=weather, 2=stock, 3=traffic, 6=emails, 7=pollution, 8=messages
+ * val: value of the service (or -1 to delete the service value)
+ */
+fun info_service_update service val=
+    if val == -1 then
+        info_service_remove service
+    else if service == INFO_MESSAGES then
+        set info_messages = val
+    else
+        let nil -> res in
+            for i=0;(i<(2*INFO_SERVICES))&&(res==nil);i+2 do
+                if (info_src.i == 0 || info_src.i == service) then (
+                    set res = i;
+                    set info_src.(i+1) = val;
+                    if (info_src.i == 0) then (
+                        // add
+                        set info_src.i = service;
+                        // set lapin to play this new one now
+                        set _info_index = i;
+                        _info_start_animation
+                    )
+                );;
+
+/**
+ * Clear all info sources
+ */
+fun info_clear_all=
+    for i=0;i<INFO_SERVICES do
+        info_service_remove i;
+    set info_messages = 0;;
+
+/**
+ * Get info source value
+ * service: 1=weather, 2=stock, 3=traffic, 6=emails, 7=pollution, 8=messages
+ */
+fun info_service_get service=
+    if service == INFO_MESSAGES then
+        info_messages
+    else
+        let nil -> res in (
+            for i=0;(i<(2*INFO_SERVICES))&&(res==nil);i+2 do
+                if info_src.i == service then
+                    set res = info_src.(i+1);
+            res
+        );;
+
+/**
+ * Check if we can run info task
+ */
+fun _info_run=
+    match run_get_state with
+    ( idleRun -> 1 )|
+#ifdef PING
+    ( pingwaitRun _ -> 1 )|
+    ( stdWaitRun _ -> 1 )|
+#endif
+#ifdef XMPP
+    ( xmppReconnectRun params -> 1 )|
+#endif
+    ( rscLoadNextRun -> 1 )|
+    ( rscLoadWaitRun _ -> 1 )|
+    ( interactiveReqWaitRun http -> 1 )|
+    ( _ -> 0 );;
+
+/**
+ * Info task
+ */
+fun info_task task=
+    if (_info_run && !sleep_is_sleeping && !interactive_status && !ears_detecting) then // no info while sleeping and while in interactive mode
     (
         // passage au service suivant ?
-        set info_type=(info_src.(_info_index))-1;
-        if _info_start_time==nil || (time-_info_start_time>INFO_TIMEOUT) || info_type<0 then _info_next;
+        set _info_current_service=(info_src.(_info_index))-1;
+        if _info_start_time==nil || (time-_info_start_time>info_duration) || _info_current_service<0 then (
+            // Start next service
+            set _info_index=_info_get_next_index _info_index;
+            _info_start_animation
+        );
 
         // couleurs des 3 leds du ventre (service courant/animation courante/couleur courante)
-        set info_type=(info_src.(_info_index))-1;
         set _info_current_val=info_src.(_info_index+1);
-        let _info_get_animations info_type -> anims in
+        let _info_get_animations _info_current_service -> anims in
         let anims._info_current_val ->[dur anime] in
         if anime!=nil then
         (
             leds_set_color_override LED_BODY_LEFT info_palette.(anime._info_current_color_index);
             leds_set_color_override LED_BODY_MIDDLE info_palette.(anime.(1+_info_current_color_index));
             leds_set_color_override LED_BODY_RIGHT info_palette.(anime.(2+_info_current_color_index));
-            if (time_ms-_info_start_ms >= _info_color_duration) then
+            if (time_ms-_info_start_ms >= _info_color_duration_ms) then
             (
                 // next colors
                 set _info_current_color_index=_info_current_color_index+3;
                 set _info_start_ms=time_ms;
-                set _info_color_duration=dur*10;
+                set _info_color_duration_ms=dur*10;
                 if _info_current_color_index>=tablen anime then set _info_current_color_index=0
             )
         )
@@ -208,82 +340,14 @@ fun info_run=
             leds_set_color_override LED_BODY_MIDDLE RGB_BLACK;
             leds_set_color_override LED_BODY_RIGHT RGB_BLACK
         )
-    );;
-
-// util : slide tableau pour effacer case vide
-fun _info_slide i=
-    if (i == 16-2) then (
-        set info_src.i = 0;
-        set info_src.(i+1) = 0
-    ) else (
-        set info_src.i = info_src.(i+2);
-        set info_src.(i+1) = info_src.(i+3);
-        // recurse
-        if (info_src.i > 0) then _info_slide i+2
-    );;
-
-// enlève cette source de la liste
-fun __info_src_del key i=
-    if (i < 16) then
-    if (info_src.i == key) then (
-        // delete
-        _info_slide i
-    ) else __info_src_del key i+2;;
-
-/**
- * Delete info source
- * key: 1=weather, 2=stock, 3=traffic, 6=emails, 7=pollution, 8=messages
- */
-fun info_src_del key=
-    if key == INFO_MESSAGES then
-        set info_messages = 0
-    else
-        __info_src_del key 0;;
-
-/**
- * Update info source
- * key: 1=weather, 2=stock, 3=traffic, 6=emails, 7=pollution, 8=messages
- * val: value of the source (or -1 to delete the source)
- */
-fun info_src_update key val=
-    if val == -1 then
-        info_src_del key
-    else if key == INFO_MESSAGES then
-        set info_messages = val
-    else
-        let nil -> res in
-            for i=0;(i<16)&&(res==nil);i+2 do
-                if (info_src.i == 0 || info_src.i == key) then (
-                    set res = i;
-                    set info_src.(i+1) = val;
-                    if (info_src.i == 0) then (
-                        // add
-                        set info_src.i = key;
-                        // set lapin to play this new one now
-                        _info_start_one i
-                    )
-                );;
-
-/**
- * Clear all info sources
- */
-fun info_clear_all=
-    for i=0;i<8 do (
-        info_src_del i
     );
-    set info_messages = 0;;
+    TaskRun;;
 
 /**
- * Get info source value
- * key: 1=weather, 2=stock, 3=traffic, 6=emails, 7=pollution, 8=messages
+ * Initialize and start the info task
  */
-fun info_src_get key=
-    if key == INFO_MESSAGES then
-        info_messages
-    else
-        let nil -> res in (
-            for i=0;(i<16)&&(res==nil);i+2 do
-                if info_src.i == key then
-                    set res = info_src.(i+1);
-            res
-        );;
+fun info_init=
+    set info_src=tabnew 0 (2*INFO_SERVICES);  // 8 services [service num,val] x 8
+    set _info_animations=tabnew nil INFO_SERVICES;
+    // Start the info task
+    task_start "info" #info_task;;

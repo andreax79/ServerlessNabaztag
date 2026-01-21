@@ -71,6 +71,16 @@ fun forth_clear_info f=
     nil;;
 
 /**
+ * SET-INFO-ANIMATION ( data n -- )
+ * Set info animation n from json
+ */
+fun forth_set_info_animation f=
+    let forth_pop f -> anim_num in
+    let forth_pop f -> data in
+    info_set_animation_from_json anim_num.int data;
+    nil;;
+
+/**
  * PLAY-URL ( url -- )
  * Play a WAV file from an HTTP URL
  * HTTPS is not supported
