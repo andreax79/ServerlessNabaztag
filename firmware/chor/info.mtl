@@ -44,10 +44,17 @@ var _info_animations = {
     [8 {0 1 0 1 0 1 0 0 0 0 0 0 0 0 0}]
     [4 {0 1 0 1 0 1 0 1 0 1 0 1 0 0 0 0 0 0}]
 }
-// 3 nil
-nil
-// 4 nil
-nil
+// 3 generic service 4
+{
+    [100 {1 0 1 0 1 0}]
+    [100 {2 0 2 0 2 0}]
+    [100 {3 0 3 0 3 0}]
+}
+// 4 generic service 5
+{
+    [20 {9 0 9 0 9 0}]
+    [20 {10 0 10 0 10 0}]
+}
 // 5 mails
 {
     [70 {5 0 0 0 5 0 0 0 5 0 5 0}]
@@ -95,7 +102,7 @@ var _info_start_ms;;
 var _info_color_duration_ms;;
 
 // Number of info services
-const INFO_SERVICES=8;; // 1=weather, 2=stock, 3=traffic, 6=emails, 7=pollution, 8=messages
+const INFO_SERVICES=8;; // 1=weather, 2=stock, 3=traffic, 4=service 4, 5=service 5, 6=emails, 7=pollution, 8=messages
 
 #ifdef DEBUG_INFO
 fun _info_echo_anim anims =
@@ -135,7 +142,7 @@ fun _info_load_parse_anim colors=
 
 /**
  * Set info animation data from json
- * service: 1=weather, 2=stock, 3=traffic, 6=emails, 7=pollution, 8=messages
+ * service: 1=weather, 2=stock, 3=traffic, 4=service 4, 5=service 5, 6=emails, 7=pollution, 8=messages
  * data: json data (a dict with "tempo" and "colors")
  */
 fun info_set_animation_from_json service data=
@@ -158,7 +165,7 @@ fun info_set_animation_from_json service data=
 
 /**
  * Get animations for info service
- * service: 1=weather, 2=stock, 3=traffic, 6=emails, 7=pollution, 8=messages
+ * service: 1=weather, 2=stock, 3=traffic, 4=service 4, 5=service 5, 6=emails, 7=pollution, 8=messages
  */
 fun _info_get_animations service=
     _info_animations.service;;
@@ -197,8 +204,8 @@ fun _info_src_json=
                 else if service == INFO_TRAFFIC then set result = (json_int "traffic" val) :: ",\n" :: result
                 else if service == INFO_MAIL then set result = (json_int "emails" val) :: ",\n" :: result
                 else if service == INFO_POLLUTION then set result = (json_int "pollution" val) :: ",\n" :: result
-                else if service == INFO_SPARE1 then set result = (json_int "spare1" val) :: ",\n" :: result
-                else if service == INFO_SPARE2 then set result = (json_int "spare2" val) :: ",\n" :: result
+                else if service == INFO_SERVICE4 then set result = (json_int "service4" val) :: ",\n" :: result
+                else if service == INFO_SERVICE5 then set result = (json_int "service5" val) :: ",\n" :: result
             );
         strcatlist result
     );;
@@ -236,7 +243,7 @@ fun _info_service_remove service i=
 
 /**
  * Delete service value
- * service: 1=weather, 2=stock, 3=traffic, 6=emails, 7=pollution, 8=messages
+ * service: 1=weather, 2=stock, 3=traffic, 4=service 4, 5=service 5, 6=emails, 7=pollution, 8=messages
  */
 fun info_service_remove service=
     if service == INFO_MESSAGES then
@@ -246,7 +253,7 @@ fun info_service_remove service=
 
 /**
  * Update service value
- * service: 1=weather, 2=stock, 3=traffic, 6=emails, 7=pollution, 8=messages
+ * service: 1=weather, 2=stock, 3=traffic, 4=service 4, 5=service 5, 6=emails, 7=pollution, 8=messages
  * val: value of the service (or -1 to delete the service value)
  */
 fun info_service_update service val=
@@ -279,7 +286,7 @@ fun info_clear_all=
 
 /**
  * Get info source value
- * service: 1=weather, 2=stock, 3=traffic, 6=emails, 7=pollution, 8=messages
+ * service: 1=weather, 2=stock, 3=traffic, 4=service 4, 5=service 5, 6=emails, 7=pollution, 8=messages
  */
 fun info_service_get service=
     if service == INFO_MESSAGES then

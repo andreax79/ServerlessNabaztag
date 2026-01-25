@@ -180,6 +180,8 @@ fun forth_init_dictionary=
         [ [str:"info-stock"        ] [ code:{[int:FORTH_MEMORY_INFO_STOCK]} ]] ::       // Info stock
         [ [str:"info-traffic"      ] [ code:{[int:FORTH_MEMORY_INFO_TRAFFIC]} ]] ::     // Info traffic
         [ [str:"info-mail"         ] [ code:{[int:FORTH_MEMORY_INFO_MAIL]} ]] ::        // Info mail
+        [ [str:"info-service4"     ] [ code:{[int:FORTH_MEMORY_INFO_SERVICE4]} ]] ::    // Info service 4
+        [ [str:"info-service5"     ] [ code:{[int:FORTH_MEMORY_INFO_SERVICE5]} ]] ::    // Info service 5
         [ [str:"info-pollution"    ] [ code:{[int:FORTH_MEMORY_INFO_POLLUTION]} ]] ::   // Info pollution
         [ [str:"info-messages"     ] [ code:{[int:FORTH_MEMORY_INFO_MESSAGES]} ]] ::    // Info messages
         [ [str:"led-nose"          ] [ code:{[int:FORTH_MEMORY_LEDS_OVERRIDE_NOSE]} ]] ::   // Nose LED color override

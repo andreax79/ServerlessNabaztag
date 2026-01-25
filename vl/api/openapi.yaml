@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Serverless Nabaztag API
   description: An OpenAPI specification for controlling a Serverless Nabaztag smart rabbit.
-  version: 1.0.3
+  version: 1.0.4
   contact:
     url: https://github.com/andreax79/ServerlessNabaztag
 servers:
@@ -155,6 +155,36 @@ paths:
             type: integer
             minimum: 0
             maximum: 10
+      responses:
+        '204':
+          description: Command sent successfully.
+  /service4:
+    get:
+      summary: Set generic service 4 status
+      tags: [Leds]
+      description: Sets the LEDs to show the status of the generic service 4.
+      parameters:
+        - name: v
+          in: query
+          required: true
+          description: The generic service 4 status to display.
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Command sent successfully.
+  /service5:
+    get:
+      summary: Set generic service 5 status
+      tags: [Leds]
+      description: Sets the LEDs to show the status of the generic service 5.
+      parameters:
+        - name: v
+          in: query
+          required: true
+          description: The generic service 5 status to display.
+          schema:
+            type: integer
       responses:
         '204':
           description: Command sent successfully.

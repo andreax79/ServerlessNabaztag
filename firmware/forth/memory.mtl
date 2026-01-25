@@ -22,20 +22,23 @@ const FORTH_MEMORY_MD5_PASSWORD = (1<<29) + 11;;
 const FORTH_MEMORY_INFO_DURATION = (1<<29) + 12;;
 const FORTH_MEMORY_INFO_PALETTE = (1<<29) + 13;;  // 16 cells
 const FORTH_MEMORY_INFO_PALETTE_SIZE = 16;;
-const FORTH_MEMORY_INFO_WEATHER = (1<<29) + 29;;
-const FORTH_MEMORY_INFO_STOCK = (1<<29) + 30;;
-const FORTH_MEMORY_INFO_TRAFFIC = (1<<29) + 31;;
-const FORTH_MEMORY_INFO_MAIL = (1<<29) + 32;;
-const FORTH_MEMORY_INFO_POLLUTION = (1<<29) + 33;;
-const FORTH_MEMORY_INFO_MESSAGES = (1<<29) + 34;;
-const FORTH_MEMORY_TAICHI_FREQ = (1<<29) + 35;;
-const FORTH_MEMORY_LEDS_OVERRIDE = (1<<29) + 36;;  // 5 cells (nose, left, center, right, base)
-const FORTH_MEMORY_LEDS_OVERRIDE_NOSE = (1<<29) + 36 + 0;;
-const FORTH_MEMORY_LEDS_OVERRIDE_LEFT = (1<<29) + 36 + 1;;
-const FORTH_MEMORY_LEDS_OVERRIDE_CENTER = (1<<29) + 36 + 2;;
-const FORTH_MEMORY_LEDS_OVERRIDE_RIGHT = (1<<29) + 36 + 3;;
-const FORTH_MEMORY_LEDS_OVERRIDE_BASE = (1<<29) + 36 + 4;;
-const FORTH_MEMORY_LEDS_BASE_BREATHING = (1<<29) + 41;;
+const FORTH_MEMORY_INFO_WEATHER = (1<<29) + 28 + 1;;
+const FORTH_MEMORY_INFO_STOCK = (1<<29) + 28 + 2;;
+const FORTH_MEMORY_INFO_TRAFFIC = (1<<29) + 28 + 3;;
+const FORTH_MEMORY_INFO_SERVICE4 = (1<<29) + 28 + 4;;
+const FORTH_MEMORY_INFO_SERVICE5 = (1<<29) + 28 + 5;;
+const FORTH_MEMORY_INFO_MAIL = (1<<29) + 28 + 6;;
+const FORTH_MEMORY_INFO_POLLUTION = (1<<29) + 28 + 7;;
+const FORTH_MEMORY_INFO_MESSAGES = (1<<29) + 28 + 8;;
+const FORTH_MEMORY_INFO_SIZE = 8;;
+const FORTH_MEMORY_TAICHI_FREQ = (1<<29) + 37;;
+const FORTH_MEMORY_LEDS_OVERRIDE = (1<<29) + 38;;  // 5 cells (nose, left, center, right, base)
+const FORTH_MEMORY_LEDS_OVERRIDE_NOSE = (1<<29) + 38 + 0;;
+const FORTH_MEMORY_LEDS_OVERRIDE_LEFT = (1<<29) + 38 + 1;;
+const FORTH_MEMORY_LEDS_OVERRIDE_CENTER = (1<<29) + 38 + 2;;
+const FORTH_MEMORY_LEDS_OVERRIDE_RIGHT = (1<<29) + 38 + 3;;
+const FORTH_MEMORY_LEDS_OVERRIDE_BASE = (1<<29) + 38 + 4;;
+const FORTH_MEMORY_LEDS_BASE_BREATHING = (1<<29) + 43;;
 
 type MemoryBlock = [
     memory_block_size   // size of the memory block
@@ -155,20 +158,10 @@ fun _forth_memory_get_special f addr=
         [int:leds_base_breathing]
     else if addr == FORTH_MEMORY_INFO_DURATION then
         [int:info_duration]
-    else if addr >= FORTH_MEMORY_INFO_PALETTE && addr < FORTH_MEMORY_INFO_PALETTE + 16 then
+    else if addr >= FORTH_MEMORY_INFO_PALETTE && addr < FORTH_MEMORY_INFO_PALETTE + FORTH_MEMORY_INFO_PALETTE_SIZE then
         [int:info_palette.(addr - FORTH_MEMORY_INFO_PALETTE)]
-    else if addr == FORTH_MEMORY_INFO_WEATHER then
-        [int:info_service_get INFO_WEATHER]
-    else if addr == FORTH_MEMORY_INFO_STOCK then
-        [int:info_service_get INFO_STOCK]
-    else if addr == FORTH_MEMORY_INFO_TRAFFIC then
-        [int:info_service_get INFO_TRAFFIC]
-    else if addr == FORTH_MEMORY_INFO_MAIL then
-        [int:info_service_get INFO_MAIL]
-    else if addr == FORTH_MEMORY_INFO_POLLUTION then
-        [int:info_service_get INFO_POLLUTION]
-    else if addr == FORTH_MEMORY_INFO_MESSAGES then
-        [int:info_service_get INFO_MESSAGES]
+    else if addr >= FORTH_MEMORY_INFO_WEATHER && addr < FORTH_MEMORY_INFO_WEATHER + FORTH_MEMORY_INFO_SIZE then
+        [int:info_service_get (addr - FORTH_MEMORY_INFO_WEATHER + 1)]
     else if addr == FORTH_MEMORY_TAICHI_FREQ then
         [int:config_get_taichi_freq]
     else if addr == FORTH_MEMORY_USERNAME then
@@ -211,23 +204,8 @@ fun _forth_memory_set_special f addr value=
     else if addr >= FORTH_MEMORY_INFO_PALETTE && addr < FORTH_MEMORY_INFO_PALETTE + 16 then (
         set info_palette.(addr - FORTH_MEMORY_INFO_PALETTE) = value.int; nil
     )
-    else if addr == FORTH_MEMORY_INFO_WEATHER then (
-        info_service_update INFO_WEATHER value.int; nil
-    )
-    else if addr == FORTH_MEMORY_INFO_STOCK then (
-        info_service_update INFO_STOCK value.int; nil
-    )
-    else if addr == FORTH_MEMORY_INFO_TRAFFIC then (
-        info_service_update INFO_TRAFFIC value.int; nil
-    )
-    else if addr == FORTH_MEMORY_INFO_MAIL then (
-        info_service_update INFO_MAIL value.int; nil
-    )
-    else if addr == FORTH_MEMORY_INFO_POLLUTION then (
-        info_service_update INFO_POLLUTION value.int; nil
-    )
-    else if addr == FORTH_MEMORY_INFO_MESSAGES then (
-        info_service_update INFO_MESSAGES value.int; nil
+    else if addr >= FORTH_MEMORY_INFO_WEATHER && addr < FORTH_MEMORY_INFO_WEATHER + FORTH_MEMORY_INFO_SIZE then (
+        info_service_update (addr - FORTH_MEMORY_INFO_WEATHER + 1) value.int; nil
     )
     else if addr == FORTH_MEMORY_TAICHI_FREQ then
         config_set_taichi_freq value.int

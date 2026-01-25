@@ -318,6 +318,22 @@ fun http_get_traffic sock args=
     http_send_header_and_close HTTP_204 nil sock;;
 
 /**
+ * Set generic service 4 status.
+ * args: v=value
+ */
+fun http_get_service4 sock args=
+    info_service_update INFO_SERVICE4 http_arg_int args 'v';
+    http_send_header_and_close HTTP_204 nil sock;;
+
+/**
+ * Set generic service 5 status.
+ * args: v=value
+ */
+fun http_get_service5 sock args=
+    info_service_update INFO_SERVICE5 http_arg_int args 'v';
+    http_send_header_and_close HTTP_204 nil sock;;
+
+/**
  * Set mail status.
  * args: v=value
  */
@@ -571,6 +587,8 @@ fun http_server_process_request req sock=
         else if !strcmp path "/weather" then http_get_weather sock args // v=value
         else if !strcmp path "/stock" then http_get_stock sock args // v=value
         else if !strcmp path "/traffic" then http_get_traffic sock args // v=value
+        else if !strcmp path "/service4" then http_get_service4 sock args // v=value
+        else if !strcmp path "/service5" then http_get_service5 sock args // v=value
         else if !strcmp path "/mail" then http_get_mail sock args // v=value
         else if !strcmp path "/pollution" then http_get_pollution sock args // v=value
         else if !strcmp path "/clear" then http_get_clear sock args // clear all infosrc

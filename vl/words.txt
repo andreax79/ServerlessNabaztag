@@ -168,6 +168,8 @@ INFO-MAIL                                               Info mail
 INFO-MESSAGES                                           Info messages
 INFO-PALETTE                                            Info LED palette (16 cells)
 INFO-POLLUTION                                          Info pollution
+INFO-SERVICE4                                           Info service 4
+INFO-SERVICE5                                           Info service 5
 INFO-STOCK                                              Info stock
 INFO-TRAFFIC                                            Info traffic
 INFO-WEATHER                                            Info weather
