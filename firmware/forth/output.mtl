@@ -22,21 +22,29 @@ fun forth_write f s=
         nil
     );;
 
-fun forth_write_cell f cell=
-    forth_write f
-        if cell.int != nil then (itoa cell.int)
-        else if cell.str != nil then cell.str
-        else if cell.list != nil then (forth_list_to_str cell.list " ")
-        else "?";;
-
 /**
  * Format a cell as string
  */
 fun forth_word_fmt cell=
     if cell.int != nil then itoa cell.int
     else if cell.str != nil then cell.str
-    else if cell.list != nil then (forth_list_to_str cell.list " ")
+    else if cell.list != nil then strcatlist "[" :: (forth_list_to_str cell.list " ") :: "]" :: nil
+    else if cell.dict != nil then strcatlist "{" :: (forth_dict_to_str cell.dict " ") :: "}" :: nil
+    else if cell.func != nil then "<func>"
     else "?";;
+
+/**
+ * Format a dictionary to a string
+ */
+fun forth_dict_to_str dict separator=
+    let nil -> t in (
+        for i=dict; i!=nil; tl i do
+            let hd i -> [k v] in (
+            set t = (forth_word_fmt k) :: "=" :: (forth_word_fmt v) :: t;
+            if (nil != tl i) then set t = separator :: t
+        );
+        strcatlist t
+    );;
 
 /**
  * Format a list of words to a string

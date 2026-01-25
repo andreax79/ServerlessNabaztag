@@ -128,8 +128,10 @@ Most of the Nabaztag's functionality can be customized by editing the Forth file
 
 * [vl/init.forth](vl/init.forth) - Initialization script
 * [vl/config.forth](vl/config.forth) - Configuration settings
+* [vl/consts.forth](vl/consts.forth) - Constant definitions
 * [vl/crontab.forth](vl/crontab.forth) - Scheduled tasks
 * [vl/hooks.forth](vl/hooks.forth) - Event handlers (clicks, RFID, etc.)
+* [vl/telnet.forth](vl/telnet.forth) - Telnet server
 * [vl/weather.forth](vl/weather.forth) - Weather and air quality
 
 Development

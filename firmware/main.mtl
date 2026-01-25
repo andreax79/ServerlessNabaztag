@@ -25,6 +25,7 @@ proto main 0;;
 // #define AUDIOLIB_DEBUG
 // #define INTERACTIVE_DEBUG
 // #define CHOR_DEBUG
+// #define INFO_DEBUG
 // #define FORTH_DEBUG
 
 // #define WIFI_MASTER_MODE;; // Enable master mode (access point)

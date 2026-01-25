@@ -27,6 +27,7 @@ type Forth=[
 ];;
 
 proto forth_compare_words 2;;
+proto forth_dict_to_str 2;;
 proto forth_execute_code 2;;
 proto forth_get_word 1;;
 proto forth_init 0;;

@@ -78,6 +78,8 @@ JMP            ( addr -- )                              Unconditional jump
 JSON-GET       ( w path -- x ) (e.g., "daily.weathercode[0]") Get an element from a dictionary or list by path
 JSON-PARSE     ( str -- list/dict )                     Parse a JSON string into a list or dictionary
 LOAD-INFO-ANIMATION ( filename anim_num -- )            Load info animation from the server
+LOAD-INFO-ANIMATION ( filename anim_num -- )            Load info animation from the server
+LOAD-INFO-ANIMATIONS ( -- )                             Load info animations from the server
 LOAD-SRV       ( filename -- )                          Load a forth file from the server
 LOCAL>STRING   ( -- str )                               Push the current local time and date as a string onto the stack
 LOGIN          ( -- )                                   Login
