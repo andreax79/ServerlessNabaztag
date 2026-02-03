@@ -350,11 +350,14 @@ fun http_get_pollution sock args=
     http_send_header_and_close HTTP_204 nil sock;;
 
 /**
- * Clear all info sources.
+ * Clear the status of all services
  */
 fun http_get_clear sock args=
     info_clear_all;
     http_send_header_and_close HTTP_204 nil sock;;
+
+fun http_get_animations sock args=
+    http_send_content_and_close sock "application/json" info_animations_json;;
 
 fun _http_get_dns_cb ip sock=
     let strcatlist "{ " :: (json_str "ip" ip) :: " }" :: nil -> res in
@@ -592,6 +595,7 @@ fun http_server_process_request req sock=
         else if !strcmp path "/mail" then http_get_mail sock args // v=value
         else if !strcmp path "/pollution" then http_get_pollution sock args // v=value
         else if !strcmp path "/clear" then http_get_clear sock args // clear all infosrc
+        else if !strcmp path "/animations" then http_get_animations sock args
         else if !strcmp path "/dns" then http_get_dns sock args // d=domain name
         else if !strcmp path "/leds" then http_post_leds sock args // leds override, l=left, c=center, r=right
         else if !strcmp path "/setup" then http_get_setup sock args // setup parameters

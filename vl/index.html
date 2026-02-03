@@ -31,7 +31,7 @@ input, select, textarea {
     </div>
   </div>
 
-  <h3 class="title">Info</h3>
+  <h3 class="title">Services</h3>
 
   <div class="row">
     <div class="column">
@@ -89,6 +89,49 @@ input, select, textarea {
       </form>
     </div>
     <div class="column">
+      <form action="/service4" method="GET">
+        <fieldset>
+            <label for="service4Field">Generic Service 4</label>
+            <select name="v" id="service4Field" onchange="this.form.submit()">
+            <option value="-1"></option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            </select>
+        </fieldset>
+      </form>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="column">
+      <form action="/service5" method="GET">
+        <fieldset>
+            <label for="service5Field">Generic Service 5</label>
+            <select name="v" id="service5Field" onchange="this.form.submit()">
+            <option value="-1"></option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            </select>
+        </fieldset>
+      </form>
+    </div>
+    <div class="column">
       <form action="/stock" method="GET">
         <fieldset>
             <label for="stockField">Stock</label>
@@ -105,10 +148,7 @@ input, select, textarea {
         </fieldset>
       </form>
     </div>
-  </div>
-
-  <div class="row">
-    <div class="column column-25">
+    <div class="column">
       <form action="/mail" method="GET">
         <fieldset>
             <label for="emailsField">E-mail</label>
@@ -122,7 +162,7 @@ input, select, textarea {
         </fieldset>
       </form>
     </div>
-    <div class="column column-25">
+    <div class="column">
       <form action="/nose" method="GET">
         <fieldset>
             <label for="noseField">Messages (nose)</label>
@@ -136,10 +176,13 @@ input, select, textarea {
         </fieldset>
       </form>
     </div>
-    <div class="column column-50">
+  </div>
+
+  <div class="row">
+    <div class="column">
+        <button type="button" class="button button-outline" onclick="clearInfo()">Clear service status</button>
+        <button type="button" class="button button-outline" onclick="fetch('update-weather');">Update weather/pollution status</button>
         <label>&nbsp;</label>
-        <button type="button" class="button button-outline" onclick="clearInfo()">Clear all info</button>
-        <button type="button" class="button button-outline" onclick="fetch('update-weather');">Update weather/pollution info</button>
     </div>
   </div>
 
@@ -345,7 +388,9 @@ input, select, textarea {
       <h3>System</h3>
       <p>MAC Address: <strong id="macAddress"></strong></p>
       <ul>
-      <li><a href="/status">Get status as JSON</a></li>
+      <li><a href="/status">Get status</a></li>
+      <li><a href="/tasks">Get task status</a></li>
+      <li><a href="/animations">Get service animations</a></li>
       <li><a href="/update-time">Update time from timeserver</a></li>
       <li><a href="/reboot">Reboot</a></li>
       </ul>
@@ -451,9 +496,11 @@ async function loadTimezones(city_code) {
 async function clearInfo() {
     fetch('/clear');
     document.querySelector('#weatherField').value=-1;
-    document.querySelector('#stockField').value=-1;
-    document.querySelector('#trafficField').value=-1;
     document.querySelector('#pollutionField').value=-1;
+    document.querySelector('#trafficField').value=-1;
+    document.querySelector('#service4Field').value=-1;
+    document.querySelector('#service5Field').value=-1;
+    document.querySelector('#stockField').value=-1;
     document.querySelector('#emailsField').value=-1;
     document.querySelector('#noseField').value=0;
 }
@@ -480,9 +527,11 @@ async function onLoad() {
     document.getElementById("goToBedField").value = status.go_to_bed;
 
     document.querySelector('#weatherField').value = status.info.weather;
-    document.querySelector('#stockField').value = status.info.stock;
-    document.querySelector('#trafficField').value = status.info.traffic;
     document.querySelector('#pollutionField').value = status.info.pollution;
+    document.querySelector('#trafficField').value = status.info.traffic;
+    document.querySelector('#service4Field').value = status.info.service4;
+    document.querySelector('#service5Field').value = status.info.service5;
+    document.querySelector('#stockField').value = status.info.stock;
     document.querySelector('#emailsField').value = status.info.emails;
     document.querySelector('#noseField').value = status.info.messages;
 

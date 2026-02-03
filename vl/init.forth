@@ -58,8 +58,8 @@ utc>string . cr ;
 "weather.forth" load-srv
 "telnet.forth" load-srv
 "crontab.forth" load-srv
+"choreography.forth" load-srv
 \ "palette.forth" load-srv
-\ "choreography.forth" load-srv
 
 : on-connect ( -- )
 "interpreter" 23 "telnet" tcp-listen  \ start telnet server

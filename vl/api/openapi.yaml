@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Serverless Nabaztag API
   description: An OpenAPI specification for controlling a Serverless Nabaztag smart rabbit.
-  version: 1.0.4
+  version: 1.0.5
   contact:
     url: https://github.com/andreax79/ServerlessNabaztag
 servers:
@@ -24,7 +24,7 @@ paths:
   /nose:
     get:
       summary: Control the nose LED
-      tags: [Leds]
+      tags: [Services]
       description: Sets the color or state of the nose LED to indicate a status.
       parameters:
         - name: v
@@ -87,16 +87,16 @@ paths:
           description: Command sent successfully.
   /clear:
     get:
-      summary: Turn off info LEDs
-      tags: [Leds]
-      description: Clears the state of all informational LEDs (e.g. weather, traffic).
+      summary: Clear the status of all services
+      tags: [Services]
+      description: Clears the status of all the services, resetting the state of all informational LEDs (e.g. weather, traffic).
       responses:
         '204':
           description: Command sent successfully.
   /weather:
     get:
       summary: Set weather status
-      tags: [Leds]
+      tags: [Services]
       description: Sets the LEDs to show a specific weather condition.
       parameters:
         - name: v
@@ -112,7 +112,7 @@ paths:
   /stock:
     get:
       summary: Set stock market trend
-      tags: [Leds]
+      tags: [Services]
       description: Sets the LEDs to show a stock market trend.
       parameters:
         - name: v
@@ -128,7 +128,7 @@ paths:
   /traffic:
     get:
       summary: Set traffic condition
-      tags: [Leds]
+      tags: [Services]
       description: Sets the LEDs to show the current traffic condition.
       parameters:
         - name: v
@@ -144,7 +144,7 @@ paths:
   /pollution:
     get:
       summary: Set pollution level
-      tags: [Leds]
+      tags: [Services]
       description: Sets the LEDs to show the air pollution level.
       parameters:
         - name: v
@@ -161,7 +161,7 @@ paths:
   /service4:
     get:
       summary: Set generic service 4 status
-      tags: [Leds]
+      tags: [Services]
       description: Sets the LEDs to show the status of the generic service 4.
       parameters:
         - name: v
@@ -176,7 +176,7 @@ paths:
   /service5:
     get:
       summary: Set generic service 5 status
-      tags: [Leds]
+      tags: [Services]
       description: Sets the LEDs to show the status of the generic service 5.
       parameters:
         - name: v
@@ -191,7 +191,7 @@ paths:
   /mail:
     get:
       summary: Set mail status
-      tags: [Leds]
+      tags: [Services]
       description: Sets the LEDs to show mail status.
       parameters:
         - name: v
@@ -340,10 +340,22 @@ paths:
     get:
       summary: Get device status
       tags: [System]
-      description: Retrieves the current status of the Nabaztag as a JSON object.
+      description: Returns the current status of the Nabaztag as a JSON object.
       responses:
         '200':
           description: A JSON object with the device's status.
+          content:
+            application/json:
+              schema:
+                type: object
+  /animations:
+    get:
+      summary: Get service animations
+      tags: [Services]
+      description: Returns the available Nabaztag animations grouped by service.
+      responses:
+        '200':
+          description: Animations grouped by service
           content:
             application/json:
               schema:
@@ -432,7 +444,7 @@ paths:
     get:
       summary: Get tasks
       tags: [System]
-      description: Retrieves the tasks list as a JSON object.
+      description: Returns the tasks list as a JSON object.
       responses:
         '200':
           description: A JSON object with the tasks status.

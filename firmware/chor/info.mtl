@@ -15,7 +15,9 @@
 // couleur = index dans le tableau 'info_palette'
 // tempo = 0.5*log2 du nombre d'itérations à durer sur la couleur courante (ex : tempo = 3, durée = 16 itérations)
 var _info_animations = {
-// 0 meteo
+// #0 - no service
+{}
+// #1 - meteo
 {
     [40 {0 3 0 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3}] // 0: sun
     [125 {0 3 8 0 8 8 8 8 0 8 3 8 0 8 8 8 8 0 8 3 0}] // 1: clouds
@@ -24,7 +26,7 @@ var _info_animations = {
     [40 {7 0 0 0 0 0 0 0 7 0 0 0 0 6 0 0 0 0 0 0 6 0 0 0 0 7 0 0 0 0 6 0 0 0 0 0}] // 4: snow
     [25 {0 4 3 0 0 0 0 0 0 0 0 0 0 0 0 4 3 0 0 4 3 0 0 0 0 0 0 0 3 4 3 4 0}] // 5: storm
 }
-// 1 bourse
+// #2 - bourse
 {
     [7 {0 0 11 0 11 0 11 0 0 0 0 0 0 0 0 0 0 0}]
     [14 {0 0 11 0 11 0 11 0 0 0 0 0}]
@@ -34,7 +36,7 @@ var _info_animations = {
     [14 {11 0 0 0 11 0 0 0 11 0 0 0}]
     [7 {11 0 0 0 11 0 0 0 11 0 0 0 0 0 0 0 0 0}]
 }
-// 2 traffic
+// #3 - traffic
 {
     [100 {1 0 1 1 0 1 1 0 1 0 0 0 0 0 0 0 0 0}]
     [100 {0 1 0 1 0 1 0 0 0 0 0 0 0 0 0}]
@@ -44,25 +46,25 @@ var _info_animations = {
     [8 {0 1 0 1 0 1 0 0 0 0 0 0 0 0 0}]
     [4 {0 1 0 1 0 1 0 1 0 1 0 1 0 0 0 0 0 0}]
 }
-// 3 generic service 4
+// #4 - generic service 4
 {
     [100 {1 0 1 0 1 0}]
     [100 {2 0 2 0 2 0}]
     [100 {3 0 3 0 3 0}]
 }
-// 4 generic service 5
+// #5 - generic service 5
 {
     [20 {9 0 9 0 9 0}]
     [20 {10 0 10 0 10 0}]
 }
-// 5 mails
+// #6 - mails
 {
     [70 {5 0 0 0 5 0 0 0 5 0 5 0}]
     [56 {0 5 0 0 0 0}]
     [56 {5 0 5 0 0 0}]
     [56 {5 5 5 0 0 0}]
 }
-// 6 pollution
+// #7 - pollution
 {
     [42 {6 6 6 6 6 6 6 6 6 0 0 0}]  // 0: good
     [42 {6 6 6 6 6 6 6 6 6 0 0 0}]
@@ -92,8 +94,6 @@ var _info_start_time;;
 var _info_index=0;;
 // Current info service
 var _info_current_service;;
-// Value of the current service
-var _info_current_val;;
 // Index of the current color in the animations of the current service
 var _info_current_color_index;;
 // Animation start time (ms)
@@ -164,13 +164,6 @@ fun info_set_animation_from_json service data=
     );;
 
 /**
- * Get animations for info service
- * service: 1=weather, 2=stock, 3=traffic, 4=service 4, 5=service 5, 6=emails, 7=pollution, 8=messages
- */
-fun _info_get_animations service=
-    _info_animations.service;;
-
-/**
  * Get next not empty service index
  */
 fun _info_get_next_index i=
@@ -179,16 +172,17 @@ fun _info_get_next_index i=
 
 // le service suivant
 fun _info_start_animation=
-    set _info_current_service=(info_src.(_info_index))-1;
-    set _info_current_val=info_src.(_info_index+1);
+    set _info_current_service=info_src.(_info_index);
     set _info_start_time=time;
     set _info_current_color_index=0;
     set _info_start_ms=time_ms;
-    let _info_get_animations _info_current_service -> anims in
-    if anims==nil then
+    if _info_animations._info_current_service==nil then
         set _info_start_time=nil
     else
-        let anims._info_current_val ->[dur _] in set _info_color_duration_ms=dur*10;
+        let _info_animations._info_current_service -> anims in
+        let info_src.(_info_index+1) -> info_current_val in
+        let anims.info_current_val -> [dur _] in
+            set _info_color_duration_ms=dur*10;
     0;;
 
 /**
@@ -220,6 +214,61 @@ fun info_json=
             (json_int "messages" info_messages) :: "\n" ::
         "}" :: nil;;
 
+/**
+ * Return the JSON representation of animation colors
+ */
+fun _info_animation_service_colors_json colors=
+    let "[" :: nil -> result in (
+        for i=0;i<(tablen colors);i+3 do (
+            set result = "]" :: (itoa colors.(i+2)) :: "," :: (itoa colors.(i+1)) :: "," :: (itoa colors.i) :: "[" :: result;
+            if i<((tablen colors)-3) then set result = ", " :: result
+        );
+        set result = "]" :: result;
+        strcatlist (rev result nil)
+    );;
+
+/**
+ * Return the JSON representation of an animation
+ */
+fun _info_animation_service_anim_json anim=
+    let anim -> [tempo colors] in
+    let "[\n" :: nil -> result in (
+        for i=0;i<tablen colors do (
+            set result = (itoa colors.i) :: result;
+            if i<((tablen colors)-1) then set result = ", " :: result
+        );
+        set result = "]" :: result;
+        set result =
+            "    {"
+            :: (json_int "tempo" tempo) :: ", "
+            :: "\"colors\": " :: (_info_animation_service_colors_json colors) ::
+            "}" :: nil;
+        strcatlist result
+    );;
+
+/**
+ * Return the JSON representation of all animations for a service
+ */
+fun _info_animation_service_json service=
+    let _info_animations.service -> anims in
+    let "  [\n" :: nil -> result in (
+        for s=0;s<tablen anims do
+            if anims!=nil then
+                set result = (if s==((tablen anims)-1) then "\n" else ",\n") :: (_info_animation_service_anim_json anims.s) :: result;
+        set result = "  ]" :: result;
+        strcatlist (rev result nil)
+    );;
+
+/**
+ * Return all animations as JSON
+ */
+fun info_animations_json=
+    let "[\n" :: nil -> result in (
+        for s=0;s<INFO_SERVICES do
+            set result = (if s==(INFO_SERVICES-1) then "\n" else ",\n") :: (_info_animation_service_json s) :: result;
+        set result = "]\n" :: result;
+        strcatlist (rev result nil)
+    );;
 
 // util : slide tableau pour effacer case vide
 fun _info_service_slide i=
@@ -242,7 +291,7 @@ fun _info_service_remove service i=
     ) else _info_service_remove service i+2;;
 
 /**
- * Delete service value
+ * Remove service status
  * service: 1=weather, 2=stock, 3=traffic, 4=service 4, 5=service 5, 6=emails, 7=pollution, 8=messages
  */
 fun info_service_remove service=
@@ -252,9 +301,9 @@ fun info_service_remove service=
         _info_service_remove service 0;;
 
 /**
- * Update service value
+ * Update service status
  * service: 1=weather, 2=stock, 3=traffic, 4=service 4, 5=service 5, 6=emails, 7=pollution, 8=messages
- * val: value of the service (or -1 to delete the service value)
+ * val: status of the service (or -1 to delete the service status)
  */
 fun info_service_update service val=
     if val == -1 then
@@ -277,7 +326,7 @@ fun info_service_update service val=
                 );;
 
 /**
- * Clear all info sources
+ * Clear the status of all services
  */
 fun info_clear_all=
     for i=0;i<INFO_SERVICES do
@@ -285,7 +334,7 @@ fun info_clear_all=
     set info_messages = 0;;
 
 /**
- * Get info source value
+ * Get service status
  * service: 1=weather, 2=stock, 3=traffic, 4=service 4, 5=service 5, 6=emails, 7=pollution, 8=messages
  */
 fun info_service_get service=
@@ -324,17 +373,17 @@ fun info_task task=
     if (_info_run && !sleep_is_sleeping && !interactive_status && !ears_detecting) then // no info while sleeping and while in interactive mode
     (
         // passage au service suivant ?
-        set _info_current_service=(info_src.(_info_index))-1;
-        if _info_start_time==nil || (time-_info_start_time>info_duration) || _info_current_service<0 then (
+        set _info_current_service=info_src._info_index;
+        if _info_start_time==nil || (time-_info_start_time>info_duration) || _info_current_service<=0 then (
             // Start next service
             set _info_index=_info_get_next_index _info_index;
             _info_start_animation
         );
 
         // couleurs des 3 leds du ventre (service courant/animation courante/couleur courante)
-        set _info_current_val=info_src.(_info_index+1);
-        let _info_get_animations _info_current_service -> anims in
-        let anims._info_current_val ->[dur anime] in
+        let info_src.(_info_index+1) -> info_current_val in
+        let _info_animations._info_current_service -> anims in
+        let anims.info_current_val ->[dur anime] in
         if anime!=nil then
         (
             leds_set_color_override LED_BODY_LEFT info_palette.(anime._info_current_color_index);
