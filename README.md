@@ -49,6 +49,8 @@ Firmware features
 * Fetch the current time from NTP and play the corresponding sound every hour
 * Fetch weather and air quality from [open-meteo](https://open-meteo.com)
 * Autonomously wake up and go to sleep
+* Override the LEDs with custom colors and change the breathing LED color
+* Customize LEDs animation patterns
 * Respond to ICMP pings
 
 Forth Interpreter

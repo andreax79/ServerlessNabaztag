@@ -8,6 +8,18 @@
 
 // gestion des services
 
+var _info_service_names = {
+    ""          // no service
+    "weather"
+    "stock"
+    "traffic"
+    "service4"  // generic service 4
+    "service5"  // generic service 5
+    "mail"
+    "pollution"
+    "messages"  // not an animation service
+};;
+
 // _info_animations : les definitions des animations visuelles des services (meteo, traffic, etc..)
 // Table de animations { <animation_service_0> <animation_service_1> ... <animation_service_N> }
 // animations = tableau de N animations, une par valeur du service. Animation = tuple = [tempo <couleurs>]
@@ -263,10 +275,13 @@ fun _info_animation_service_json service=
  * Return all animations as JSON
  */
 fun info_animations_json=
-    let "[\n" :: nil -> result in (
-        for s=0;s<INFO_SERVICES do
-            set result = (if s==(INFO_SERVICES-1) then "\n" else ",\n") :: (_info_animation_service_json s) :: result;
-        set result = "]\n" :: result;
+    let "{\n" :: nil -> result in (
+        for s=1;s<INFO_SERVICES do
+            let json_quote_str _info_service_names.s -> key in
+            let _info_animation_service_json s -> value in
+            let if s==(INFO_SERVICES-1) then "\n" else ",\n" -> separator in
+            set result = separator :: value :: ":" :: key :: result;
+        set result = "}\n" :: result;
         strcatlist (rev result nil)
     );;
 
