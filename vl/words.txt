@@ -125,6 +125,7 @@ SLEEPING-TIME? ( -- flag )                              Check if current hour is
 SLEEPING?      ( -- flag)                               Return true if the Nabaztag is in sleep mode
 SPACE          ( -- )                                   Display space
 START-TASK     ( text delay name -- )                   Start a new task with the given name, delay, and text to execute.
+STOP-SCRIPT-TASKS ( -- )                                Stop stale Forth script tasks after init reloads
 STOP-TASK      ( task-id -- flag )                      Stop the task with the given task id.
 STR-JOIN       ( list -- str )                          Join a list of strings into a single string
 SURPRISE       ( -- )                                   Surprise

@@ -52,6 +52,16 @@ then ;
 : daytime ( -- )  \ Display the current time (UTC)
 utc>string . cr ;
 
+: stop-script-tasks ( -- ) \ Stop stale Forth script tasks after init reloads
+20 task-stop drop 21 task-stop drop
+22 task-stop drop 23 task-stop drop
+24 task-stop drop 25 task-stop drop
+26 task-stop drop 27 task-stop drop
+28 task-stop drop 29 task-stop drop
+30 task-stop drop 31 task-stop drop
+32 task-stop drop 33 task-stop drop
+34 task-stop drop 35 task-stop drop ;
+
 "config.forth" load-srv
 "consts.forth" load-srv
 "hooks.forth" load-srv
@@ -64,6 +74,7 @@ utc>string . cr ;
 : on-connect ( -- )
 "interpreter" 23 "telnet" tcp-listen  \ start telnet server
 "daytime" 21 "daytime" tcp-listen  \ start daytime server
+stop-script-tasks
 "update-weather" weather-time-delay "weather" task-start \ start weather update
 "crontab" 59000 "crontab" task-start  \ start crontab
 crontab

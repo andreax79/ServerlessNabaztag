@@ -25,10 +25,8 @@ play-url
 then ;
 
 : on-halftime ( -- )  \ Half-hour hook
-sleeping? invert if  \ if not sleeping
-nil server-url @ :: "/config/clockall/" :: language @ :: "/" :: 12 random 1 + :: ".mp3" :: str-join  \ url
-play-url
-then ;
+\ Disabled: there is no config/clockall/it directory in this resource set.
+nil ;
 
 : on-rfid ( rfid -- )  \ RFID hook
 >r
