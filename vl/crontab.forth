@@ -28,16 +28,15 @@ then ;
 
 : calc-taichi ( -- ) \ Calculate next taichi time
 taichi-freq @
-case
-  0 of   0 endof
-255 of 255 endof
- 40 of  40 endof
-  80 of  80 endof
-         0
-endcase
 dup 0 = if
   drop 0
 else
+  case
+  255 of 255 endof
+   40 of  40 endof
+   80 of  80 endof
+          80
+  endcase
   60 *
   127 random 64 + *
   128 /
