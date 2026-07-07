@@ -45,8 +45,9 @@ fun sleep_start f=
 #ifdef XMPP
     XmppSessionRequestResource "asleep";
 #endif
-    // Starts to sleep
-    if _sleep_is_sleeping == 0 then (
+    // Starts to sleep. The firmware can boot already marked as sleeping,
+    // before the ears have acquired a valid position.
+    if (_sleep_is_sleeping == 0) || (!ears_is_initialized) then (
         set _sleep_is_sleeping = 1;
         leds_set_all RGB_VIOLET;
         ears_start_reset // oreilles en haut
