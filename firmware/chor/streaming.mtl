@@ -278,7 +278,11 @@ fun _streaming_do_chor_stream=
 // boucle principale de la chorégraphie de streaming
 fun streaming_stop=
     // oreilles
-    ears_go_to_ref_pos;
+    if sleep_is_sleeping then (
+        ears_go EARS_LEFT 10 0;
+        ears_go EARS_RIGHT 10 0
+    ) else
+        ears_go_to_ref_pos;
     set streaming_status = 0;
     // which resource now ? Can only be interactive or idle
 #ifdef XMPP

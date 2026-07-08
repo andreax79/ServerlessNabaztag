@@ -27,20 +27,25 @@ play-chor
 then ;
 
 : calc-taichi ( -- ) \ Calculate next taichi time
-taici-freq @
-case
-255 of 255 endof
- 40 of  40 endof
-        80
-endcase
-60 *
-127 random 64 + *
-128 /
-uptime +
+taichi-freq @
+dup 0 = if
+  drop 0
+else
+  case
+  255 of 255 endof
+   40 of  40 endof
+   80 of  80 endof
+          80
+  endcase
+  60 *
+  127 random 64 + *
+  128 /
+  uptime +
+then
 taichi-next-time ! ;
 
 : taichi-time? ( -- flag ) \ check if it's time for taichi
-taichi-next-time @ uptime < ;
+taichi-freq @ 0<> taichi-next-time @ uptime < and ;
 
 : crontab ( -- )  \ Crontab
 time? if
@@ -48,18 +53,22 @@ time? if
   dup crontab-last-minute @ <> if
     dup crontab-last-minute ! \ update last checked minute
     sleeping? sleeping-time? invert and if wake-up then \ wake up
-    dup 0 = if on-time then \ on hour
-    30 = if on-halftime then \ on half hour
-    surprise-time? if
-      surprise
-      calc-surprise
+    sleeping-time? if
+      sleeping? invert if sleep then \ sleep before any hourly audio
+      drop
     else
-      taichi-time? if
-        taichi
-        calc-taichi
+      dup 0 = if on-time then \ on hour
+      30 = if on-halftime then \ on half hour
+      surprise-time? if
+        surprise
+        calc-surprise
+      else
+        taichi-time? if
+          taichi
+          calc-taichi
+        then
       then
     then
-    sleeping? invert sleeping-time? and if sleep then \ time to sleep
   else
     drop \ drop minute
   then

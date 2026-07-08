@@ -4,6 +4,7 @@
 #include protos/chor_protos.mtl
 #include protos/streaming_protos.mtl
 #include protos/midi_protos.mtl
+#include protos/sleep_protos.mtl
 #ifdef PING
 #include protos/ping_protos.mtl
 #endif
@@ -103,14 +104,21 @@ fun _run_control_inter =
 fun run_reset_to_idle =
     audiolib_wav_stop;
     streaming_stop;
-    ears_start_reset;
     set interactive_status = 0;
     set interactive_cookie = "";
     set interactive_app = nil;
     set chor_processing_status = 0;
     set streaming_status = 0;
     set streaming_current_program = nil;
-    run_set_state if !sleep_is_sleeping then idleRun else sleepRun;
+    if sleep_is_sleeping then (
+        sleep_start nil;
+        0
+    )
+    else (
+        ears_start_reset;
+        run_set_state idleRun;
+        0
+    );
     0
 ;;
 

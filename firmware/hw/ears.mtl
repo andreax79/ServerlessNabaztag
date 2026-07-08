@@ -241,6 +241,12 @@ fun _ears_detect_run=
 /**
  * Ears reset process
  */
+fun _ears_valid_reference_delay e d=
+	(nil!=e.ear_delay) &&
+	(d>EARS_REF_MIN_DELAY) &&
+	(d<EARS_REF_MAX_DELAY) &&
+	(d<e.ear_delay*EARS_REF_MAX_RATIO);;
+
 fun _ears_reset_run=
 	for i=0;i<2 do let ears.i -> e in
 	if e.ear_direction then
@@ -283,7 +289,7 @@ fun _ears_reset_run=
 		let time_ms -> t in
 		let t-e.ear_last_time -> d in
 		(	// moved and no target
-			if (d<10000) && (d>600) && (nil!=e.ear_delay) then
+			if _ears_valid_reference_delay e d then
 			(
 				/* if entering there, we know the ear is at position "zero",
 					because of the delay between two holes. */
@@ -377,6 +383,9 @@ fun ears_target i=
  */
 fun ears_get_position i=
     ears.(i).ear_last_position;;
+
+fun ears_has_broken=
+    (ears.(EARS_LEFT).ear_broken==1) || (ears.(EARS_RIGHT).ear_broken==1);;
 
 // oreille i doit aller à position p dans direction d
 // i==0 : droite, i==1 : gauche

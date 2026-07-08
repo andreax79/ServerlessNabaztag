@@ -4,18 +4,29 @@
 #include protos/sleep_protos.mtl
 
 var _sleep_is_sleeping = 1;;       // sleeping
+var _sleep_start_reset_retry = 0;;
 
 /**
  * Callback called when sleeping is finished
  */
 fun _sleep_start_cb f=
-    // oreilles arrivées en haut : eteindre tout + oreille basses
-    leds_turn_off;
-    ears_go EARS_LEFT 10 0; // sur le v2 c'est la position 10 qui est en bas
-    ears_go EARS_RIGHT 10 0;
-    // Resume forth interpreter if needed
-    if f!=nil then forth_interpreter_resume f;
-    run_set_state sleepRun;;
+    if ears_has_broken && (!_sleep_start_reset_retry) then
+    (
+        set _sleep_start_reset_retry = 1;
+        ears_start_reset;
+        run_set_state earResetWaitRun (fixarg1 #_sleep_start_cb f)
+    )
+    else
+    (
+        set _sleep_start_reset_retry = 0;
+        // oreilles arrivées en haut : eteindre tout + oreille basses
+        leds_turn_off;
+        ears_go EARS_LEFT 10 0; // sur le v2 c'est la position 10 qui est en bas
+        ears_go EARS_RIGHT 10 0;
+        // Resume forth interpreter if needed
+        if f!=nil then forth_interpreter_resume f;
+        run_set_state sleepRun
+    );;
 
 /**
  * Callback called when waking up is finished
@@ -45,8 +56,10 @@ fun sleep_start f=
 #ifdef XMPP
     XmppSessionRequestResource "asleep";
 #endif
-    // Starts to sleep
-    if _sleep_is_sleeping == 0 then (
+    set _sleep_start_reset_retry = 0;
+    // Starts to sleep. The firmware can boot already marked as sleeping,
+    // before the ears have acquired a valid position.
+    if (_sleep_is_sleeping == 0) || (!ears_is_initialized) then (
         set _sleep_is_sleeping = 1;
         leds_set_all RGB_VIOLET;
         ears_start_reset // oreilles en haut

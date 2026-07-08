@@ -4,6 +4,7 @@
 #include protos/json_protos.mtl
 #include protos/http_protos.mtl
 #include protos/midi_protos.mtl
+#include protos/sleep_protos.mtl
 #ifdef XMPP
 #include protos/xmpp_protos.mtl
 #endif
@@ -146,7 +147,11 @@ fun interactive_stop=
     set _interactive_chors = [intchorDefaultStart intchorDefaultStop]; // on remet le chor par default a la fin
 
     // oreilles
-    ears_go_to_ref_pos;
+    if sleep_is_sleeping then (
+        ears_go EARS_LEFT 10 0;
+        ears_go EARS_RIGHT 10 0
+    ) else
+        ears_go_to_ref_pos;
 
     // clean
     set interactive_cookie="";
@@ -390,4 +395,3 @@ fun interactive_json=
             (json_str "app" interactive_app) :: "\n" ::
         "}" :: nil
 ;;
-
