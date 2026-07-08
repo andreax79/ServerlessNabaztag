@@ -5,6 +5,7 @@ proto ears_get_event 0 ;;
 proto ears_get_position 1 ;;
 proto ears_go 3 ;;
 proto ears_go_to_ref_pos 0 ;;
+proto ears_has_broken 0 ;;
 proto ears_init 0 ;;
 proto ears_is_initialized 0;;
 proto ears_json 0 ;;

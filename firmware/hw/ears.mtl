@@ -378,6 +378,9 @@ fun ears_target i=
 fun ears_get_position i=
     ears.(i).ear_last_position;;
 
+fun ears_has_broken=
+    (ears.(EARS_LEFT).ear_broken==1) || (ears.(EARS_RIGHT).ear_broken==1);;
+
 // oreille i doit aller à position p dans direction d
 // i==0 : droite, i==1 : gauche
 // p = int quelconque, même > 17
