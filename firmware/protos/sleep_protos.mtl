@@ -1,3 +1,4 @@
 proto sleep_is_sleeping 0;;
+proto sleep_maintain_position 0;;
 proto sleep_start 1;;
 proto sleep_wake_up 1;;

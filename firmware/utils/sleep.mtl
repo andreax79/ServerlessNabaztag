@@ -1,6 +1,7 @@
 #include protos/streaming_protos.mtl
 #include protos/run_protos.mtl
 #include protos/chor_protos.mtl
+#include protos/ears_protos.mtl
 #include protos/sleep_protos.mtl
 
 var _sleep_is_sleeping = 1;;       // sleeping
@@ -47,6 +48,16 @@ fun _sleep_wake_up_cb f=
  */
 fun sleep_is_sleeping =
     _sleep_is_sleeping;;
+
+/**
+ * Keep sleep-mode ears in their resting position.
+ */
+fun sleep_maintain_position =
+    if sleep_is_sleeping && ears_ready then (
+        ears_go EARS_LEFT 10 0;
+        ears_go EARS_RIGHT 10 0
+    );
+    0;;
 
 /**
  * Put the Nabaztag into sleep mode

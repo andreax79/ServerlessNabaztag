@@ -288,6 +288,7 @@ fun run_task task=
         _run_idle;
         _run_control_wait ) |
     ( sleepRun ->
+        sleep_maintain_position;
         _run_idle;
         button_clear_event )|
     ( rscLoadNextRun ->
