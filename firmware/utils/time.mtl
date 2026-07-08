@@ -38,10 +38,11 @@ fun _time_calculate_datetime offset=
     let time_high -> h in
     let time_low -> l in
     let offset * 60 + time -> offset in
-    let if (l + offset) > 65536 then h + ((l + offset) >> 16) else h -> h in
-    let (l + offset) % 65536 -> l in
+    let l + offset -> l in
+    let if l >= 65536 then h + (l >> 16) else if l < 0 then h - 1 else h -> h in
+    let if l >= 65536 then l % 65536 else if l < 0 then l + 65536 else l -> l in
     let ((h % 675) * 65536 + l) % 86400 -> time_of_the_day in   // 675 is 86400 >> 7
-    let h * 512 / 675 -> days_since_epoch in
+    let (h * 512 + l / 128) / 675 -> days_since_epoch in
     let 4 * (days_since_epoch - 59) + 3 -> ee in
     let (ee % 1461) / 4 -> gg in
     let 5 * gg + 2 -> hh in
