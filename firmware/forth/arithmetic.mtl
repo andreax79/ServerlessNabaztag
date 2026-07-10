@@ -135,3 +135,11 @@ fun forth_max f=
 fun forth_abs f=
     let forth_pop f -> a in
     forth_push f [int:abs a.int];;
+
+/**
+ * RSHIFT Right shift ( n1 n2 - n1 >> n2 )
+ */
+fun forth_rshift f=
+    let forth_pop f -> a in
+    let forth_pop f -> b in
+    forth_push f [int:(b.int >> a.int)];;

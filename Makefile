@@ -18,6 +18,7 @@ help:
 	@echo "- make deploy       Build and deploy the firmware to the target server"
 	@echo "- make run-sim      Run the simulator"
 	@echo "- make clean        Cleanup"
+	@echo "- make test         Run the tests"
 
 .PHONY: compiler
 compiler:
@@ -51,4 +52,10 @@ deploy: firmware
 run-sim:
 	@./scripts/make_nominal.sh -D SIMU
 	@$(SIMULATOR) --mac $(MAC) --logs $(LOGS) --source "nominal.mtl" --http_server_path $(HTTP_SERVER_PATH) --http_server_port $(HTTP_SERVER_PORT) || true
+	@rm -f nominal.mtl foo.bin
+
+.PHONY: test
+test:
+	@./scripts/make_nominal.sh -D SIMU -D TEST
+	@$(SIMULATOR) --noleds --mac $(MAC) --logs vm --source "nominal.mtl" --http_server_path $(HTTP_SERVER_PATH) --http_server_port $(HTTP_SERVER_PORT) || true
 	@rm -f nominal.mtl foo.bin

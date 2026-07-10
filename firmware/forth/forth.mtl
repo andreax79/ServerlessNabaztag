@@ -16,6 +16,12 @@ fun _forth_debug str= Secho strcatlist "[forth] " :: str :: nil; nil;;
 proto forth_print_word 1;;
 #endif
 
+#ifdef TEST
+const FORTH_INIT = "/test.forth";;
+#else
+const FORTH_INIT = "/init.forth";;
+#endif
+
 type Interpreter=[
     start               // current token start
     end                 // current token end
@@ -49,6 +55,7 @@ var forth_memory = nil;; // list of allocated memory blocks
 #include forth/interpreter.mtl
 #include forth/memory.mtl
 #include forth/task.mtl
+#include forth/ttester.mtl
 #include forth/dictionary.mtl
 
 fun forth_word_list_to_array words =
@@ -160,7 +167,7 @@ fun _forth_init_cb _=
  */
 fun forth_init=
     if forth_dictionary==nil then forth_init_dictionary;
-    let strcat config_get_server_url "/init.forth" -> url in
+    let strcat config_get_server_url FORTH_INIT -> url in
         run_set_state configwaitRun forth_load url #_forth_init_cb;;
 
 // const FORTH_TEST = "5 2 + 10 * dup 1 + >";;

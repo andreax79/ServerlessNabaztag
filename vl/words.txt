@@ -1,6 +1,7 @@
 !              ( value addr -- )                        Store a value into memory at the given address.
 $REPEAT        ( s n -- s )                             Repeat string s n times
 +!             ( n addr -- )                            Adds a number to the contents of the address
+->             (immediate) ( --  )                      Record depth and contents of stack
 .              ( n -- )                                 Display n
 .S             ( -- )                                   Copy and display the values currently on the data stac
 .TASKS         ( -- )                                   List the words in the dictionary
@@ -114,6 +115,7 @@ RANDOM         ( max -- n )                             Return a pseudo-random n
 RDEPTH         ( -- count )                             Count number of items on return stack
 RDROP          ( n --  )                                Discard top of return stack
 READ-LINE      ( -- line )                              Read a line from the current socket
+REBOOT         ( -- )                                   Perform a reboot
 RELOAD-INIT    ( -- )                                   Reload init.forth
 RESUME-TASK    ( task-id -- flag )                      Resume the task with the given task id.
 REVISION       ( -- str )                               Push the revision string onto the stack
@@ -142,6 +144,8 @@ TIME?          ( -- flag )                              Check if the system time
 TL             ( list -- list' )                        Get the tail of a list
 TRUE           ( -- true )
 TUCK           ( n1 n2 -- n1 n2 n1 ) (top)              Copy the first  stack item below the second stack item
+T{             (immediate) ( --  )                      Records the current stack depth prior to the test code
+T}             (immediate) ( --  )                      Compare the expected stack with the actual stack contents
 UNTIL          (immediate) ( x -- )                     End a loop Compile a conditional jump back to the matching BEGIN
 UPDATE-TIME    ( -- )                                   Update the system time from the time server
 UPDATE-WEATHER ( -- )                                   Update weather and air quality information

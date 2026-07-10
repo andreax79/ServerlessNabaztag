@@ -36,7 +36,7 @@ fun forth_init_dictionary=
         [ [str: ">"                ] [func:#forth_more]] ::
         [ [str: ">="               ] [func:#forth_more_eq]] ::
         [ [str: "<>"               ] [func:#forth_ne]] ::
-        [ [str: "<0"               ] [func:#forth_zero_less]] ::
+        [ [str: "0<"               ] [func:#forth_zero_less]] ::
         [ [str: "0="               ] [func:#forth_zero_eq]] ::
         [ [str: ">0"               ] [func:#forth_zero_more]] ::
         [ [str: "0<>"              ] [func:#forth_zero_ne]] ::
@@ -56,6 +56,7 @@ fun forth_init_dictionary=
         [ [str: "max"              ] [func:#forth_max]] ::
         [ [str: "min"              ] [func:#forth_min]] ::
         [ [str: "abs"              ] [func:#forth_abs]] ::
+        [ [str: "rshift"           ] [func:#forth_rshift]] ::
         // Logical
         [ [str: "and"              ] [func:#forth_and ]] ::
         [ [str: "or"               ] [func:#forth_or ]] ::
@@ -145,6 +146,10 @@ fun forth_init_dictionary=
         [ [str: "task-suspend"     ] [ func:#forth_task_suspend]] ::
         [ [str: "task-resume"      ] [ func:#forth_task_resume]] ::
         [ [str: ".tasks"           ] [ func:#forth_dot_tasks]] ::
+        // TTester
+        [ [str: "t{"               ] [ func:#forth_t_open_brace  flag:FORTH_IMMEDIATE]] ::
+        [ [str: "->"               ] [ func:#forth_t_arrow       flag:FORTH_IMMEDIATE]] ::
+        [ [str: "}t"               ] [ func:#forth_t_close_brace flag:FORTH_IMMEDIATE]] ::
         // Nabaztag
         [ [str:"sleeping?"         ] [ func:#forth_sleeping ]] ::
         [ [str:"sleep"             ] [ func:#forth_sleep       flag:FORTH_ASYNC ]] ::
@@ -161,6 +166,7 @@ fun forth_init_dictionary=
         [ [str:"gc"                ] [ func:#forth_gc ]] ::
         [ [str:"eval-trame"        ] [ func:#forth_eval_trame]] ::
         [ [str:"revision"          ] [ func:#forth_revision ]] ::
+        [ [str:"reboot"            ] [ func:#forth_reboot ]] ::
         // Variables
         [ [str:"server-url"        ] [ code:{[int:FORTH_MEMORY_SERVER_URL]} ]] ::       // Server URL
         [ [str:"language"          ] [ code:{[int:FORTH_MEMORY_LANGUAGE]} ]] ::         // Language

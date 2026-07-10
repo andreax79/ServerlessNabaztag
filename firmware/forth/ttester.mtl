@@ -1,0 +1,59 @@
+/**
+ * Stack manipulation words for Forth interpreter
+ * Copyright (c) 2026 Andrea Bonomi
+ * This code is licensed under the MIT License
+ */
+
+/**
+ * T{ (immediate) ( --  )  Records the current stack depth prior to the test code
+ */
+fun forth_t_open_brace f=
+    // Push the current stack depth onto the compiler stack
+    let listlen f.stack -> l in forth_cpush f [int:l];;
+
+/**
+ * -> (immediate) ( --  )  Record depth and contents of stack
+ */
+fun forth_t_arrow f=
+    // Get the current stack depth
+    let listlen f.stack -> forth_test_actual_stack in
+    let forth_cpop f -> forth_test_start_depth in
+    let forth_test_actual_stack - forth_test_start_depth.int -> l in (
+        // Save the actual stack contents to the return stack
+        for i=0; i<l do
+            let forth_stack_at f (l - i - 1) -> v in
+                set f.rstack = v :: f.rstack;
+        // Remove the actual stack contents from the stack
+        for i=0; i<l do
+            forth_pop f;
+        // Push the initial stack depth onto the return stack
+        forth_cpush f forth_test_start_depth;
+        // Push the current stack depth onto the compiler stack
+        forth_cpush f [int:forth_test_actual_stack];
+        nil
+    );;
+
+/**
+ * T} (immediate) ( --  )  Compare the expected stack with the actual stack contents
+ */
+fun forth_t_close_brace f=
+    // Compare the actual deep with the expected depth
+    let forth_cpop f -> forth_test_actual_stack in
+    let forth_cpop f -> forth_test_start_depth in
+        if (listlen f.stack) != forth_test_actual_stack.int then (
+            forth_write f "[TEST-ERROR] Wrong number of results\n"
+        ) else (
+            let (listlen f.stack) - forth_test_start_depth.int -> l in
+                for i=0; i<l do
+                    let forth_pop f -> actual_value in
+                    let forth_rpop f -> expected_value in
+                    let forth_compare_words actual_value expected_value -> c in
+                    if c != 0 then
+                        forth_write f strcatlist
+                            "[TEST-ERROR] Incorrect result: " ::
+                            (forth_word_fmt actual_value) ::
+                            " expected: " ::
+                            (forth_word_fmt expected_value) :: "\n" :: nil;
+            nil
+        );
+    nil;;

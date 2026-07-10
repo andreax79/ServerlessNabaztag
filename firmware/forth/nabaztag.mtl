@@ -140,3 +140,10 @@ fun forth_gc f=
  */
 fun forth_revision f=
     forth_push f [str:BYTECODE_REVISION_STR];;
+
+/**
+ * REBOOT ( -- )
+ * Perform a reboot
+ */
+fun forth_reboot f=
+    reboot 0x0407FE58 0x13fb6754;;
