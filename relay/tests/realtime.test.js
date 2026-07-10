@@ -68,6 +68,45 @@ test("expires a parked tool turn after one minute", () => {
   assert.equal(manager.byPublicId.size, 0);
 });
 
+test("a new ask replaces a session stuck in an abandoned turn", async (t) => {
+  const manager = new RealtimeSessionManager({
+    apiKey: "test",
+    realtimeUrl: "wss://example.test",
+    ticketStore: {},
+    timeZone: "Europe/Rome",
+  });
+  let closed = false;
+  const stuck = {
+    rabbitId: "rabbit",
+    publicId: "stuck",
+    turn: { pending: { callId: "call_lost" } },
+    lastUsed: Date.now(),
+    ttlMs: 75_000,
+    close() { closed = true; },
+  };
+  manager.byRabbit.set(stuck.rabbitId, stuck);
+  manager.byPublicId.set(stuck.publicId, stuck);
+
+  const original = RealtimeSession.prototype.connect;
+  RealtimeSession.prototype.connect = async function stubConnect() { return this; };
+  t.after(() => { RealtimeSession.prototype.connect = original; });
+
+  const session = await manager.get({
+    rabbitId: "rabbit",
+    model: "gpt-realtime-2.1",
+    voice: "marin",
+    prompt: "",
+    language: "it",
+    tools: [],
+    ttlMs: 75_000,
+  });
+
+  assert.equal(closed, true, "the stuck session must be closed");
+  assert.notEqual(session.publicId, "stuck");
+  assert.equal(session.turn, null, "the fresh session must accept the new turn");
+  assert.equal(manager.byPublicId.has("stuck"), false);
+});
+
 test("turns never restrict the model's own tool choice", async () => {
   const { session, events } = stubSession([
     { name: "rabbit_status", description: "status", parameters: { type: "object" }, exec: "forth" },

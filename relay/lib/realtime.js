@@ -423,8 +423,15 @@ export class RealtimeSessionManager {
     };
     const signature = JSON.stringify({ model, voice, prompt, language, tools });
     let session = this.byRabbit.get(rabbitId);
+    if (session && session.turn) {
+      // The firmware always cancels its previous exchange before a new ask,
+      // so a busy session here has lost its waiter (impatient re-press,
+      // vanished rabbit, abandoned tool call). Replace it immediately
+      // instead of answering "busy" until the 60 s cleanup.
+      this.remove(session);
+      session = null;
+    }
     if (session && (session.closed || session.signature !== signature)) {
-      if (session.turn) throw new Error("cannot reconfigure a busy session");
       this.remove(session);
       session = null;
     }
