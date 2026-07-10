@@ -116,11 +116,13 @@ void idle(int dummy) {
  * Restores the terminal to its original state
  */
 static void handle_signal(int sig) {
-    // Reset scrolling region
-    printf("\033[r");
-    // Move cursor to bottom
-    printf("\033[999;1H");
-    fflush(stdout);
+    if (atoi(PropGet("DISPLAY_LEDS")) == 1) {
+        // Reset scrolling region
+        printf("\033[r");
+        // Move cursor to bottom
+        printf("\033[999;1H");
+        fflush(stdout);
+    }
     _exit(128 + sig);
 }
 
@@ -142,9 +144,11 @@ static void setup_signal_handlers() {
  * Sets up the terminal
  */
 static void terminal_setup() {
-    // Set scrolling region from line 4 to bottom
-    printf("\033[4;r");
-    fflush(stdout);
+    if (atoi(PropGet("DISPLAY_LEDS")) == 1) {
+        // Set scrolling region from line 4 to bottom
+        printf("\033[4;r");
+        fflush(stdout);
+    }
 }
 
 int main(int argc,char **argv)
@@ -155,6 +159,9 @@ int main(int argc,char **argv)
 #endif
 
 	PropLoad("config.txt");
+    if (strlen(PropGet("DISPLAY_LEDS")) == 0) {
+        PropSet("DISPLAY_LEDS", "1");
+    }
 
 	if (!handle_options(argc, argv))
 		return -1;
@@ -273,6 +280,10 @@ int handle_options(int argc, char **argv)
 			my_printf_set_max_log_time(atoi(argv[i]));
 		} else if (!strcmp(argv[i], "--dologtime")) {
 			my_printf_set_do_log_time(1);
+		} else if (!strcmp(argv[i], "--leds")) {
+            PropSet("DISPLAY_LEDS", "1");
+        } else if (!strcmp(argv[i], "--noleds")) {
+            PropSet("DISPLAY_LEDS", "0");
 		} else {
 			usage();
 			res=0;
@@ -301,5 +312,6 @@ void usage()
 				 "          --dologtime: specifie qu'on doit afficher sur chaque ligne de log le nombre de secondes ecoulees depuis le lancement du simulateur\n" \
                  "          --http_server_path <path>: embedded http server path\n" \
                  "          --http_server_port <port>: embedded http server port\n" \
+                 "          --leds/noleds: enable/disable leds simulation\n" \
 				 "Toutes les options sont prioritaires sur les valeurs contenues dans config.txt\n");
 }

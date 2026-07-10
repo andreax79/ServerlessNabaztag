@@ -57,6 +57,7 @@ void simuSetMotor(vub i,vub val){}
 
 #include "linux_simuaudio.h"
 #include "linux_simunet.h"
+#include"../properties.h"
 #include "../log.h"
 
 // définition de l'échelle d'affichage de la simulation
@@ -69,6 +70,7 @@ void simuSetMotor(vub i,vub val){}
 #define MAXMOTORVAL 100
 
 int motorwheel[256];
+int displayLeds=1;
 
 // gestion des couleurs
 // ---------------------
@@ -291,6 +293,7 @@ vsd simuInit()
 {
 	int i;
 	colortabInit();
+    displayLeds = atoi(PropGet("DISPLAY_LEDS")) == 1;
 
 	for(i=0;i<NBLED;i++) diodeval[i]=255;
 	srand(clock());
@@ -340,7 +343,9 @@ vsd simuDoLoop()
         if (last < motorwheel[motorval[i]>>MOTORSCALE]) motorcount[i]++;
 	}
 #endif
-	simuDisplay(diodeval);
+    if (displayLeds) {
+        simuDisplay(diodeval);
+    }
 	return 0;
 }
 
