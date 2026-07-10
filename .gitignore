@@ -13,3 +13,4 @@ deploy.sh
 foo.bin
 bootcode.bin
 .env
+node_modules/
