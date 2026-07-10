@@ -27,6 +27,7 @@ function sessionInstructions({ prompt, language, timeZone }) {
     "Rispondi in non più di due frasi, con stile naturale da parlato e senza Markdown.",
     "La parola di attivazione all'inizio dell'audio non fa parte della richiesta.",
     "Quando esprimi un gesto, un colore o un suono del corpo del coniglio, usa i tool fisici disponibili invece di limitarti a descriverlo. Non leggere ad alta voce le azioni tra asterischi.",
+    "Se l'utente chiede un'azione fisica o nomina esplicitamente un tool disponibile, DEVI chiamare quel tool prima di parlare. Non affermare mai che un'azione è avvenuta senza un risultato positivo del tool.",
   ].filter(Boolean).join("\n\n");
 }
 
@@ -204,6 +205,7 @@ export class RealtimeSession {
 
   async continueWithToolResult(callId, output, baseUrl) {
     if (!this.turn?.pending || this.turn.pending.callId !== callId) throw new Error("unknown or expired tool call");
+    this.lastUsed = Date.now();
     this.turn.deferred = deferred();
     this.turn.baseUrl = baseUrl || this.turn.baseUrl;
     this.turn.pending = null;
@@ -252,6 +254,7 @@ export class RealtimeSession {
     }
 
     this.turn.pending = { callId, name, args };
+    this.lastUsed = Date.now();
     this.resolvePayload({
       type: "call",
       sid: this.publicId,
@@ -288,7 +291,9 @@ export class RealtimeSession {
       this.resolvePayload({
         type: "answer",
         heard: this.turn.heard,
-        answer: this.turn.transcript,
+        // The HTTP response is released on the first audio delta; the final
+        // transcript is not available yet and the firmware does not need it.
+        answer: "",
         tts: this.ticketStore.urlFor(this.turn.ticket, this.turn.baseUrl),
       });
       return;
@@ -313,7 +318,7 @@ export class RealtimeSession {
           this.resolvePayload({
             type: "answer",
             heard: this.turn.heard,
-            answer: this.turn.transcript,
+            answer: "",
             tts: this.ticketStore.urlFor(this.turn.ticket, this.turn.baseUrl),
           });
         }
@@ -386,7 +391,10 @@ export class RealtimeSessionManager {
 
   cleanup(now = Date.now()) {
     for (const session of this.byRabbit.values()) {
-      if (!session.turn && now - session.lastUsed > session.ttlMs) this.remove(session);
+      // A rabbit can disappear while a Forth tool is parked. Bound active
+      // turns as well so one lost /tool-result never leaves a session busy.
+      const maxIdle = session.turn ? 60_000 : session.ttlMs;
+      if (now - session.lastUsed > maxIdle) this.remove(session);
     }
   }
 

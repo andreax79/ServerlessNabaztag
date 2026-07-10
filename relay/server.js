@@ -154,6 +154,7 @@ function publicError(error) {
 export function createRelayServer(overrides = {}) {
   const config = loadConfig(overrides);
   const fetchImpl = overrides.fetchImpl || fetch;
+  const logger = overrides.logger || console;
   const ticketStore = overrides.ticketStore || new TicketStore({
     secret: config.effectiveSigningSecret,
     publicBaseUrl: config.publicBaseUrl,
@@ -167,6 +168,10 @@ export function createRelayServer(overrides = {}) {
     timeZone: config.timeZone,
     defaultTtlMs: config.sessionTtlMs,
   });
+  // The MT-200 firmware has a very small TCP send window. Keep the long,
+  // editable personality prompt in the POST body of a separate config sync
+  // instead of repeating it in an HTTP header for every audio turn.
+  const promptsByRabbit = overrides.promptsByRabbit || new Map();
   const limiter = new SlidingRateLimiter();
 
   const server = http.createServer(async (req, res) => {
@@ -194,11 +199,25 @@ export function createRelayServer(overrides = {}) {
           connection: "close",
         });
         if (!ticket) res.end();
-        else ticket.subscribe(res);
+        else {
+          logger.info("[relay] signed TTS stream opened");
+          ticket.subscribe(res);
+        }
         return;
       }
 
       if (!config.apiKey || !config.signingSecret) throw new Error("relay secrets are not configured");
+
+      if (req.method === "POST" && url.pathname === "/v1/config") {
+        const rabbitId = header(req, "x-rabbit-id", 80);
+        if (!RABBIT_ID.test(rabbitId)) throw new Error("missing or invalid X-Rabbit-Id");
+        if (!limiter.take(`${rabbitId}:config`, 30, 60_000)) throw new Error("rate limit exceeded");
+        const prompt = (await readBody(req, 8192)).toString("utf8");
+        promptsByRabbit.set(rabbitId, prompt);
+        logger.info("[relay] non-secret rabbit configuration synced");
+        sendJson(res, { ok: 1 });
+        return;
+      }
 
       if (req.method === "POST" && url.pathname === "/v1/ask") {
         const rabbitId = header(req, "x-rabbit-id", 80);
@@ -226,9 +245,12 @@ export function createRelayServer(overrides = {}) {
         const voiceHeader = header(req, "x-voice", 24);
         const voice = VOICES.has(voiceHeader) ? voiceHeader : config.voice;
         const language = (url.searchParams.get("lang") || "it").slice(0, 8);
-        const prompt = header(req, "x-prompt", 8192);
+        const prompt = promptsByRabbit.has(rabbitId)
+          ? promptsByRabbit.get(rabbitId)
+          : decoded(header(req, "x-prompt", 8192));
         const toolsUrl = decoded(header(req, "x-tools-url", 2048)) || config.toolsUrl;
         const tools = await toolCache.get(toolsUrl);
+        logger.info(`[relay] accepted turn configuration with ${tools.length} enabled tools`);
         const ttlMs = clamp(header(req, "x-session-ttl", 8), 15, 300, config.sessionTtlMs / 1000) * 1000;
         const audio = text ? null : wavImaAdpcmToMuLaw(body);
 
@@ -239,6 +261,7 @@ export function createRelayServer(overrides = {}) {
           heard,
           baseUrl: requestBaseUrl(req),
         });
+        logger.info(`[relay] ${mode} turn produced ${payload.type || payload.reason || "an error"}`);
         sendJson(res, payload);
         return;
       }
@@ -250,6 +273,7 @@ export function createRelayServer(overrides = {}) {
         if (!session) throw new Error("unknown or expired session");
         const output = (await readBody(req, 64_000)).toString("utf8");
         const payload = await session.continueWithToolResult(callId, output, requestBaseUrl(req));
+        logger.info(`[relay] tool result produced ${payload.type || "an error"}`);
         sendJson(res, payload);
         return;
       }
@@ -280,7 +304,7 @@ export function createRelayServer(overrides = {}) {
     clearInterval(cleanup);
     sessions.close();
   });
-  return { server, config, sessions, ticketStore };
+  return { server, config, sessions, ticketStore, promptsByRabbit };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

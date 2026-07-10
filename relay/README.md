@@ -49,11 +49,27 @@ Restart=on-failure
 RestartSec=3
 User=nabaztag
 Group=nabaztag
+UMask=0077
 NoNewPrivileges=true
 PrivateTmp=true
+PrivateDevices=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/opt/nabaztag-relay
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+ProtectProc=invisible
+ProcSubset=pid
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallArchitectures=native
 
 [Install]
 WantedBy=multi-user.target
@@ -64,6 +80,7 @@ The default firmware relay address is `192.168.1.214:8787`. Keep port 8787 reach
 ## API contract
 
 - `GET /v1/health` — readiness and non-secret configuration state.
+- `POST /v1/config` — caches the rabbit's non-secret personality prompt from the request body. The firmware calls this before every turn so relay restarts and UI changes are handled automatically.
 - `POST /v1/ask?lang=it&mode=button|wake&wake=nabaztag` — WAV body or `t=` text; returns an answer ticket, a Forth tool call, or `{ok:0}`. All application outcomes use HTTP 200 for compatibility with the rabbit.
 - `POST /v1/tool-result?sid=...&call_id=...` — resumes a parked Realtime response after a Forth tool.
 - `GET /v1/tts?sid=...&exp=...&sig=...` — signed live MP3 stream.

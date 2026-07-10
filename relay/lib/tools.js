@@ -11,7 +11,7 @@ export function validateToolConfig(input) {
   if (input.tools.length > 32) throw new Error("at most 32 tools are allowed");
 
   const names = new Set();
-  const tools = input.tools.map((source) => {
+  const tools = input.tools.filter((source) => source?.enabled !== false).map((source) => {
     assertPlainObject(source, "tool");
     if (!TOOL_NAME.test(source.name || "")) throw new Error(`invalid tool name: ${source.name || "<empty>"}`);
     if (names.has(source.name)) throw new Error(`duplicate tool name: ${source.name}`);
