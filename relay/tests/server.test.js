@@ -1,79 +1,133 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildForcedToolArgs, chooseForcedTool, createRelayServer, transcribeAudio, verifyDeviceToolOutput } from "../server.js";
+import { createRelayServer, transcribeAudio } from "../server.js";
 
-test("classifies only explicit rabbit device intents", () => {
-  const tools = ["move_ears", "set_led", "play_sound", "rabbit_status"].map((name) => ({ name }));
-  assert.equal(chooseForcedTool("Muovi le orecchie alla posizione cinque", tools), "move_ears");
-  assert.equal(chooseForcedTool("Muovile entrambe", tools), "move_ears");
-  assert.equal(chooseForcedTool("Puoi muoverle per favore?", tools), "move_ears");
-  assert.equal(chooseForcedTool("Fammi vedere cosa sai fare con le orecchie", tools), "move_ears");
-  assert.equal(chooseForcedTool("Accendi la luce del naso di blu", tools), "set_led");
-  assert.equal(chooseForcedTool("Accendili di verde", tools), "set_led");
-  assert.equal(chooseForcedTool("Puoi attivare i LED?", tools), "set_led");
-  assert.equal(chooseForcedTool("Fai un suono di conferma", tools), "play_sound");
-  assert.equal(chooseForcedTool("Dimmi lo stato del coniglio e il meteo", tools), "rabbit_status");
-  assert.equal(chooseForcedTool("Dimmi lo stato corrente del coniglio", tools), "rabbit_status");
-  assert.equal(chooseForcedTool("Come sta il coniglio?", tools), "rabbit_status");
-  assert.equal(chooseForcedTool("Qual è lo stato delle orecchie?", tools), "rabbit_status");
-  assert.equal(chooseForcedTool("Come sono messe le orecchie?", tools), "rabbit_status");
-  assert.equal(chooseForcedTool("Qual è la posizione delle orecchie?", tools), "rabbit_status");
-  assert.equal(chooseForcedTool("Quanto fa due più due?", tools), "");
-  assert.equal(chooseForcedTool("Raccontami una storia sul coniglio", tools), "");
-  assert.deepEqual(buildForcedToolArgs("move_ears", "sinistro cinque, destro zero"), { left: 5, right: 0 });
-  assert.deepEqual(buildForcedToolArgs("move_ears", "muovi entrambe a sette"), { left: 7, right: 7 });
-  assert.deepEqual(buildForcedToolArgs("move_ears", "porta il sinistro a sei"), { left: 6, right: 0 });
-  assert.deepEqual(buildForcedToolArgs("move_ears", "porta il destro a quattro"), { left: 0, right: 4 });
-  assert.deepEqual(buildForcedToolArgs("move_ears", "muovi le orecchie"), { left: -1, right: -1 });
-  assert.deepEqual(buildForcedToolArgs("move_ears", "muovi l'orecchio sinistro"), { left: -1, right: -2 });
-  assert.deepEqual(buildForcedToolArgs("set_led", "accendi la luce del naso di verde"), { target: "nose", color: 0x00ff00 });
-});
+function makeImaWav(data) {
+  const fmtSize = 20;
+  const header = Buffer.alloc(12 + 8 + fmtSize + 8);
+  header.write("RIFF", 0);
+  header.writeUInt32LE(header.length + data.length - 8, 4);
+  header.write("WAVE", 8);
+  header.write("fmt ", 12);
+  header.writeUInt32LE(fmtSize, 16);
+  header.writeUInt16LE(0x11, 20);
+  header.writeUInt16LE(1, 22);
+  header.writeUInt32LE(8000, 24);
+  header.writeUInt32LE(4000, 28);
+  header.writeUInt16LE(data.length, 32);
+  header.writeUInt16LE(4, 34);
+  header.writeUInt16LE(2, 36);
+  header.writeUInt16LE((data.length - 4) * 2 + 1, 38);
+  header.write("data", 40);
+  header.writeUInt32LE(data.length, 44);
+  return Buffer.concat([header, data]);
+}
 
-test("biases Italian transcription toward rabbit device vocabulary", async () => {
+function testServer(t, overrides) {
+  const { server } = createRelayServer({
+    apiKey: "test-key",
+    signingSecret: "test-secret",
+    logger: { info() {} },
+    ...overrides,
+  });
+  return new Promise((resolve) => {
+    server.listen(0, "127.0.0.1", () => {
+      t.after(() => new Promise((done) => server.close(done)));
+      resolve(`http://127.0.0.1:${server.address().port}`);
+    });
+  });
+}
+
+test("transcription biases toward the configured wake word, not a fixed language", async () => {
   let submitted;
   const text = await transcribeAudio(
     Buffer.from("RIFF"),
     { transcribeModel: "gpt-4o-mini-transcribe", apiKey: "test" },
     async (_url, options) => {
       submitted = options.body;
-      return { ok: true, async json() { return { text: "Muovi le orecchie" }; } };
+      return { ok: true, async json() { return { text: "nabaztag quelle heure est-il" }; } };
     },
-    "it",
+    "fr",
+    "nabaztag",
   );
-  assert.equal(text, "Muovi le orecchie");
-  assert.equal(submitted.get("language"), "it");
-  assert.match(submitted.get("prompt"), /Nabaztag.*orecchie.*LED/i);
+  assert.equal(text, "nabaztag quelle heure est-il");
+  assert.equal(submitted.get("language"), "fr");
+  assert.equal(submitted.get("prompt"), "nabaztag");
 });
 
-test("verifies ear movement from the calling rabbit status endpoint", async () => {
-  let requestedUrl;
-  const result = await verifyDeviceToolOutput({
-    pending: { name: "move_ears", args: { left: 5, right: 12 } },
-    output: "started: richiesta sinistra=5 destra=12",
-    remoteAddress: "::ffff:192.168.1.57",
-    waitMs: 0,
-    async fetchImpl(url) {
-      requestedUrl = url;
+test("button turns never call the transcription API", async (t) => {
+  const turns = [];
+  const sessions = {
+    cleanup() {},
+    close() {},
+    async get(options) {
+      turns.push(options);
       return {
-        ok: true,
-        async json() {
-          return { ears: { left: { last_position: 5, broken: 0 }, right: { last_position: 12, broken: 0 } } };
+        async beginTurn({ audio }) {
+          assert.ok(audio && audio.length > 0, "audio must reach the realtime session");
+          return { ok: 1, type: "answer", tts: "http://example.test/audio" };
         },
       };
     },
+  };
+  const base = await testServer(t, {
+    sessions,
+    ticketStore: { cleanup() {}, getSigned() { return null; } },
+    toolCache: { async get() { return [{ name: "move_ears", exec: "forth" }]; } },
+    async fetchImpl(url) {
+      throw new Error(`unexpected upstream HTTP call: ${url}`);
+    },
   });
-  assert.equal(requestedUrl, "http://192.168.1.57/status");
-  assert.equal(result, "ok: posizione verificata sinistra=5 destra=12");
+  const response = await fetch(`${base}/v1/ask?lang=it&mode=button`, {
+    method: "POST",
+    headers: { "x-rabbit-id": "00:19:db:9e:8a:6c", "content-type": "audio/wav" },
+    body: makeImaWav(Buffer.from([0x00, 0x00, 0x00, 0x00, 0x11, 0x11])),
+  });
+  const payload = await response.json();
+  assert.deepEqual(payload, { ok: 1, type: "answer", tts: "http://example.test/audio" });
+  assert.equal(turns.length, 1);
+});
+
+test("wake mode still gates on the wake word", async (t) => {
+  const turns = [];
+  const sessions = {
+    cleanup() {},
+    close() {},
+    async get() {
+      return { async beginTurn(options) { turns.push(options); return { ok: 1, type: "answer", tts: "http://tts" }; } };
+    },
+  };
+  const base = await testServer(t, {
+    sessions,
+    ticketStore: { cleanup() {}, getSigned() { return null; } },
+    toolCache: { async get() { return []; } },
+    async fetchImpl(url) {
+      throw new Error(`unexpected upstream HTTP call: ${url}`);
+    },
+  });
+  const rejected = await fetch(`${base}/v1/ask?mode=wake&wake=nabaztag&t=${encodeURIComponent("what time is it")}`, {
+    method: "POST",
+    headers: { "x-rabbit-id": "wake-test" },
+  });
+  assert.deepEqual(await rejected.json(), { ok: 0, reason: "no-wake" });
+  assert.equal(turns.length, 0);
+
+  const accepted = await fetch(`${base}/v1/ask?mode=wake&wake=nabaztag&t=${encodeURIComponent("nabastag what time is it")}`, {
+    method: "POST",
+    headers: { "x-rabbit-id": "wake-test" },
+  });
+  assert.equal((await accepted.json()).ok, 1);
+  assert.equal(turns.length, 1);
 });
 
 test("health is plain HTTP 200 and reports missing secrets", async (t) => {
-  const sessions = { cleanup() {}, close() {} };
-  const ticketStore = { cleanup() {}, getSigned() { return null; } };
-  const { server } = createRelayServer({ apiKey: "", signingSecret: "", sessions, ticketStore });
-  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
-  t.after(() => new Promise((resolve) => server.close(resolve)));
-  const { port } = server.address();
-  const response = await fetch(`http://127.0.0.1:${port}/v1/health`, { redirect: "manual" });
+  const base = await testServer(t, {
+    apiKey: "",
+    signingSecret: "",
+    sessions: { cleanup() {}, close() {} },
+    ticketStore: { cleanup() {}, getSigned() { return null; } },
+  });
+  const response = await fetch(`${base}/v1/health`, { redirect: "manual" });
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("location"), null);
   const payload = await response.json();
@@ -92,20 +146,11 @@ test("syncs long prompts in a request body before starting a turn", async (t) =>
       return { async beginTurn() { return { ok: 1, type: "answer", tts: "http://example.test/audio" }; } };
     },
   };
-  const ticketStore = { cleanup() {}, getSigned() { return null; } };
-  const toolCache = { async get() { return []; } };
-  const { server } = createRelayServer({
-    apiKey: "test-key",
-    signingSecret: "test-secret",
+  const base = await testServer(t, {
     sessions,
-    ticketStore,
-    toolCache,
-    logger: { info() {} },
+    ticketStore: { cleanup() {}, getSigned() { return null; } },
+    toolCache: { async get() { return []; } },
   });
-  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
-  t.after(() => new Promise((resolve) => server.close(resolve)));
-  const { port } = server.address();
-  const base = `http://127.0.0.1:${port}`;
   const prompt = "Personalità italiana: " + "molto utile e amichevole. ".repeat(100);
 
   const sync = await fetch(`${base}/v1/config`, {

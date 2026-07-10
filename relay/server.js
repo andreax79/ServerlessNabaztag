@@ -1,5 +1,4 @@
 import http from "node:http";
-import { isIP } from "node:net";
 import { pathToFileURL } from "node:url";
 import { randomBytes } from "node:crypto";
 import { hasWakeWordAtStart, wavImaAdpcmToMuLaw } from "./lib/audio.js";
@@ -71,113 +70,6 @@ function decoded(value) {
   try { return decodeURIComponent(value); } catch { return value; }
 }
 
-function normalizedIntent(value) {
-  return String(value || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-}
-
-/** Select only explicit, reversible device intents; ordinary conversation uses no tools. */
-export function chooseForcedTool(utterance, tools) {
-  const text = normalizedIntent(utterance);
-  const available = new Set(tools.map((tool) => tool.name));
-  for (const name of available) {
-    if (text.includes(name) || text.includes(name.replaceAll("_", " "))) return name;
-  }
-
-  const ear = /(orecchi|\bear\b|\bears\b)/;
-  const earAction = /(muov|spost|porta|gira|ruota|alza|abbassa|posiziona|metti)/;
-  const earPronounAction = /\b(muovile|muoverle|spostale|spostarle|girale|girarle|ruotale|ruotarle|alzale|alzarle|abbassale|abbassarle|posizionale|posizionarle)\b|\b(muovi|sposta|gira|ruota|alza|abbassa) entrambe\b/;
-  const earDemonstration = /(fammi vedere|dimostra|mostra).{0,35}orecchi|(?:cosa|che cosa).{0,25}(?:puoi|sai).{0,25}fare.{0,25}orecchi|funzion.{0,25}orecchi/;
-  if (available.has("move_ears") && ((ear.test(text) && earAction.test(text)) || earPronounAction.test(text) || earDemonstration.test(text))) return "move_ears";
-
-  const light = /(\bled\b|luc[ei]|naso|pancia|base)/;
-  const lightAction = /(accend|speg|impost|cambia|color|illumina|lampegg|attiv|mostra)/;
-  const lightPronouns = /\b(accendili|accendile|spegnili|spegnile|illuminali|colorali|colorale|attivali|attivale)\b/;
-  const lightDemonstration = /(fammi vedere|dimostra|mostra).{0,35}(?:led|luc[ei])|(?:cosa|che cosa).{0,25}(?:puoi|sai).{0,25}fare.{0,25}(?:led|luc[ei])|funzion.{0,25}(?:led|luc[ei])/;
-  if (available.has("set_led") && ((light.test(text) && lightAction.test(text)) || lightPronouns.test(text) || lightDemonstration.test(text))) return "set_led";
-
-  const sound = /(suon|rumor|beep|midi|jingle)/;
-  const soundAction = /(suon|riproduc|emett|fai|avvia)/;
-  if (available.has("play_sound") && sound.test(text) && soundAction.test(text)) return "play_sound";
-
-  const liveStatus = /(stato (?:(?:corrente|attuale) )?(?:del |di )?(coniglio|nabaztag)|stato (?:attuale |corrente )?delle? orecchi|come (?:sono|stanno) (?:messe? )?(?:le |gli )?orecchi|dove (?:sono|stanno) (?:le |gli )?orecchi|come sta(?:i| il coniglio| nabaztag)|che ore|ora (locale|e)|meteo|prevision|piov|nev|temporale|dorm|sonno|sveglio|posizione.{0,30}orecchi)/;
-  if (available.has("rabbit_status") && liveStatus.test(text)) return "rabbit_status";
-  return "";
-}
-
-function withNumericWords(value) {
-  const numbers = {
-    zero: 0, uno: 1, una: 1, due: 2, tre: 3, quattro: 4, cinque: 5,
-    sei: 6, sette: 7, otto: 8, nove: 9, dieci: 10, undici: 11,
-    dodici: 12, tredici: 13, quattordici: 14, quindici: 15, sedici: 16,
-  };
-  return normalizedIntent(value).replace(/\b(zero|uno|una|due|tre|quattro|cinque|sei|sette|otto|nove|dieci|undici|dodici|tredici|quattordici|quindici|sedici)\b/g, (word) => String(numbers[word]));
-}
-
-function clampedPosition(value, fallback) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? Math.max(0, Math.min(16, Math.round(parsed))) : fallback;
-}
-
-/** Build conservative arguments for the four built-in reversible device tools. */
-export function buildForcedToolArgs(name, utterance) {
-  const text = withNumericWords(utterance);
-  if (name === "move_ears") {
-    const mentionsLeft = /sinistr[oa]/.test(text);
-    const mentionsRight = /destr[oa]/.test(text);
-    const leftAfter = text.match(/sinistr[oa][^\d,;]{0,16}(\d+)/);
-    const leftBefore = text.match(/(\d+)[^\d,;]{0,16}sinistr[oa]/);
-    const rightAfter = text.match(/destr[oa][^\d,;]{0,16}(\d+)/);
-    const rightBefore = text.match(/(\d+)[^\d,;]{0,16}destr[oa]/);
-    const all = [...text.matchAll(/\b(\d{1,2})\b/g)].map((match) => Number(match[1]));
-    let left = clampedPosition(leftAfter?.[1] ?? leftBefore?.[1], NaN);
-    let right = clampedPosition(rightAfter?.[1] ?? rightBefore?.[1], NaN);
-    if (!Number.isFinite(left) && !Number.isFinite(right)) {
-      if (all.length >= 2) [left, right] = [clampedPosition(all[0], 5), clampedPosition(all[1], 12)];
-      else if (all.length === 1) {
-        const position = clampedPosition(all[0], 5);
-        if (mentionsLeft && !mentionsRight) [left, right] = [position, 0];
-        else if (mentionsRight && !mentionsLeft) [left, right] = [0, position];
-        else left = right = position;
-      } else if (mentionsLeft && !mentionsRight) [left, right] = [5, 0];
-      else if (mentionsRight && !mentionsLeft) [left, right] = [0, 5];
-      else [left, right] = [5, 12];
-    } else {
-      if (!Number.isFinite(left)) left = 0;
-      if (!Number.isFinite(right)) right = 0;
-    }
-    if (all.length === 0) {
-      if (mentionsLeft && !mentionsRight) [left, right] = [-1, -2];
-      else if (mentionsRight && !mentionsLeft) [left, right] = [-2, -1];
-      else [left, right] = [-1, -1];
-    }
-    return { left, right };
-  }
-  if (name === "set_led") {
-    const target = /pancia|base/.test(text) ? "base"
-      : /centr/.test(text) ? "center"
-        : /sinistr/.test(text) ? "left"
-          : /destr/.test(text) ? "right" : "nose";
-    const colors = [
-      [/riprist|normal/, -1], [/speg|nero/, 0], [/ross/, 0xff0000], [/verd/, 0x00ff00],
-      [/blu/, 0x0000ff], [/giall/, 0xffff00], [/aranc/, 0xff8000], [/viola|violett/, 0x800080],
-      [/bianc/, 0xffffff], [/rosa/, 0xff00ff], [/ciano/, 0x00ffff],
-    ];
-    const matchedColor = colors.find(([pattern]) => pattern.test(text));
-    const numeric = text.match(/\b(\d{3,8})\b/);
-    return { target, color: matchedColor ? matchedColor[1] : Math.max(-1, Math.min(0xffffff, Number(numeric?.[1] ?? 0x0000ff))) };
-  }
-  if (name === "play_sound") {
-    const sound = /acquis|acquired/.test(text) ? "acquired"
-      : /abort|errore/.test(text) ? "abort"
-        : /casual|random/.test(text) ? "random" : "ack";
-    return { sound };
-  }
-  return {};
-}
-
 async function readBody(req, maxBytes) {
   const chunks = [];
   let length = 0;
@@ -204,51 +96,19 @@ function requestBaseUrl(req) {
   return `http://${req.headers.host || "127.0.0.1"}`;
 }
 
-function deviceStatusUrl(remoteAddress) {
-  let address = String(remoteAddress || "");
-  if (address.startsWith("::ffff:")) address = address.slice(7);
-  if (!isIP(address)) throw new Error("invalid rabbit network address");
-  return `http://${address.includes(":") ? `[${address}]` : address}/status`;
-}
-
-export async function verifyDeviceToolOutput({ pending, output, remoteAddress, fetchImpl, waitMs = 3_500 }) {
-  const raw = String(output || "");
-  if (pending?.name !== "move_ears" || !raw.startsWith("started:")) return raw;
-  const requested = raw.match(/richiesta sinistra=(\d{1,2}) destra=(\d{1,2})/);
-  if (!requested) return "error: il movimento non ha comunicato le posizioni richieste";
-  await new Promise((resolve) => setTimeout(resolve, waitMs));
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 3_000);
-  try {
-    const response = await fetchImpl(deviceStatusUrl(remoteAddress), { signal: controller.signal });
-    if (!response.ok) return `error: verifica orecchie fallita con HTTP ${response.status}`;
-    const status = await response.json();
-    const left = Number(status?.ears?.left?.last_position);
-    const right = Number(status?.ears?.right?.last_position);
-    const leftBroken = Number(status?.ears?.left?.broken) || 0;
-    const rightBroken = Number(status?.ears?.right?.broken) || 0;
-    const expectedLeft = Number(requested[1]);
-    const expectedRight = Number(requested[2]);
-    if (left === expectedLeft && right === expectedRight && !leftBroken && !rightBroken) {
-      return `ok: posizione verificata sinistra=${left} destra=${right}`;
-    }
-    return `error: richiesta sinistra=${expectedLeft} destra=${expectedRight}; raggiunta sinistra=${left} destra=${right}; guasto sinistra=${leftBroken} destra=${rightBroken}`;
-  } catch (error) {
-    return `error: verifica orecchie non disponibile (${error.message})`;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-export async function transcribeAudio(wav, config, fetchImpl, language = "") {
+/**
+ * Transcription is used only as the wake-word gate: it is cheaper than a
+ * Realtime turn on every loud noise. The conversation itself is audio to
+ * audio and never depends on this text. `prompt` biases the decoder toward
+ * the configured wake word, whatever the language.
+ */
+export async function transcribeAudio(wav, config, fetchImpl, language = "", prompt = "") {
   const form = new FormData();
   form.append("model", config.transcribeModel);
   form.append("file", new Blob([wav], { type: "audio/wav" }), "nabaztag.wav");
   const inputLanguage = /^[a-z]{2}$/i.test(language) ? language.toLowerCase() : "";
   if (inputLanguage) form.append("language", inputLanguage);
-  if (inputLanguage === "it") {
-    form.append("prompt", "Comando vocale rivolto a un coniglio Nabaztag. Parole possibili: orecchie, muovile, muoverle, LED, luci, naso, pancia, accendi, spegni, illumina, colore, stato.");
-  }
+  if (prompt) form.append("prompt", String(prompt).slice(0, 200));
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 20_000);
   try {
@@ -386,34 +246,28 @@ export function createRelayServer(overrides = {}) {
         const model = MODEL_NAME.test(modelHeader) ? modelHeader : config.realtimeModel;
         const voiceHeader = header(req, "x-voice", 24);
         const voice = VOICES.has(voiceHeader) ? voiceHeader : config.voice;
-        const language = (url.searchParams.get("lang") || "it").slice(0, 8);
+        const language = (url.searchParams.get("lang") || "").slice(0, 8);
         const prompt = promptsByRabbit.has(rabbitId)
           ? promptsByRabbit.get(rabbitId)
           : decoded(header(req, "x-prompt", 8192));
         const toolsUrl = decoded(header(req, "x-tools-url", 2048)) || config.toolsUrl;
         const tools = await toolCache.get(toolsUrl);
+
         let heard = text;
-        if (!text && (mode === "wake" || tools.length)) {
-          heard = await transcribeAudio(body, config, fetchImpl, language);
-        }
         if (mode === "wake") {
           const wake = (url.searchParams.get("wake") || "nabaztag").slice(0, 40);
+          if (!text) heard = await transcribeAudio(body, config, fetchImpl, language, wake);
           if (!hasWakeWordAtStart(heard, wake, 2)) {
             sendJson(res, { ok: 0, reason: "no-wake" });
             return;
           }
         }
-        const forcedTool = chooseForcedTool(heard, tools);
-        const forcedArgs = forcedTool ? buildForcedToolArgs(forcedTool, heard) : {};
-        logger.info(`[relay] accepted turn with ${tools.length} tools; forced=${forcedTool || "none"}`);
+        logger.info(`[relay] accepted ${mode} turn with ${tools.length} tools`);
         const ttlMs = clamp(header(req, "x-session-ttl", 8), 15, 300, config.sessionTtlMs / 1000) * 1000;
         const audio = text ? null : wavImaAdpcmToMuLaw(body);
 
         const session = await sessions.get({ rabbitId, model, voice, prompt, language, tools, ttlMs });
-        const turnOptions = { text, audio, heard, baseUrl: requestBaseUrl(req) };
-        const payload = forcedTool
-          ? await session.beginForcedTool({ ...turnOptions, name: forcedTool, args: forcedArgs })
-          : await session.beginTurn(turnOptions);
+        const payload = await session.beginTurn({ text, audio, heard, baseUrl: requestBaseUrl(req) });
         const outcome = payload.type === "call" ? `call:${payload.name}` : (payload.type || payload.reason || "an error");
         logger.info(`[relay] ${mode} turn produced ${outcome}`);
         sendJson(res, payload);
@@ -426,15 +280,10 @@ export function createRelayServer(overrides = {}) {
         const session = sessions.findByPublicId(sid);
         if (!session) throw new Error("unknown or expired session");
         const output = (await readBody(req, 64_000)).toString("utf8");
-        const verifiedOutput = await verifyDeviceToolOutput({
-          pending: session.pendingTool?.(),
-          output,
-          remoteAddress: req.socket.remoteAddress,
-          fetchImpl,
-        });
-        logger.info(`[relay] device tool output: ${JSON.stringify(verifiedOutput.slice(0, 500))}`);
-        const payload = await session.continueWithToolResult(callId, verifiedOutput, requestBaseUrl(req));
-        logger.info(`[relay] tool result produced ${payload.type || "an error"}`);
+        logger.info(`[relay] device tool output: ${JSON.stringify(output.slice(0, 500))}`);
+        const payload = await session.continueWithToolResult(callId, output, requestBaseUrl(req));
+        const outcome = payload.type === "call" ? `call:${payload.name}` : (payload.type || "an error");
+        logger.info(`[relay] tool result produced ${outcome}`);
         sendJson(res, payload);
         return;
       }

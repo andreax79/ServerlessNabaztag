@@ -14,30 +14,31 @@ function decodeHeader(value) {
   try { return decodeURIComponent(value); } catch { return value; }
 }
 
-function sessionInstructions({ prompt, language, timeZone }) {
-  const now = new Intl.DateTimeFormat(language === "it" ? "it-IT" : "en-GB", {
-    dateStyle: "full",
-    timeStyle: "long",
-    timeZone,
-  }).format(new Date());
-  return [
-    decodeHeader(prompt),
-    `Data e ora locali: ${now}.`,
-    `Lingua della conversazione: ${language || "it"}.`,
-    "Rispondi in non più di due frasi, con stile naturale da parlato e senza Markdown.",
-    "La parola di attivazione all'inizio dell'audio non fa parte della richiesta.",
-    "Quando esprimi un gesto, un colore o un suono del corpo del coniglio, usa i tool fisici disponibili invece di limitarti a descriverlo. Non leggere ad alta voce le azioni tra asterischi.",
-    "Se l'utente chiede un'azione fisica o nomina esplicitamente un tool disponibile, DEVI chiamare quel tool prima di parlare. Non affermare mai che un'azione è avvenuta senza un risultato positivo del tool.",
-  ].filter(Boolean).join("\n\n");
+function localeOf(language) {
+  return /^[a-z]{2}(-[A-Za-z]{2})?$/.test(String(language || "")) ? language : "en";
 }
 
-function toolResultInstructions(name, output) {
-  const result = String(output || "");
-  const success = /^ok(?::|$)/i.test(result);
-  if (success) {
-    return `Rispondi in italiano con una sola frase breve. Il tool ${name} ha appena confermato il successo dell'azione fisica. Conferma che l'azione è stata eseguita; non dire che non puoi eseguirla e non aggiungere azioni simulate tra asterischi.`;
+/**
+ * Session instructions are written in English on purpose: they are meta
+ * directives for the model, not user-facing text. The model answers in the
+ * language the user speaks; the configured language is only the default.
+ */
+function sessionInstructions({ prompt, language, timeZone }) {
+  const locale = localeOf(language);
+  let now;
+  try {
+    now = new Intl.DateTimeFormat(locale, { dateStyle: "full", timeStyle: "long", timeZone }).format(new Date());
+  } catch {
+    now = new Date().toISOString();
   }
-  return `Rispondi in italiano con una sola frase breve basata esclusivamente sul risultato del tool ${name}. Spiega il problema hardware concreto riportato, senza affermare genericamente che non puoi usare il tool e senza inventare un successo.`;
+  return [
+    decodeHeader(prompt),
+    `Current local date and time: ${now}.`,
+    `Default conversation language: ${locale}. Always answer in the language the user speaks.`,
+    "You are speaking through a physical Nabaztag rabbit. Keep every answer to at most two short sentences of natural speech, with no Markdown, no emoji and no stage directions.",
+    "If the audio begins with a wake word (the rabbit's name), it is not part of the request.",
+    "For any request to act with the rabbit's body (ears, lights, sounds) or to read its live status, call the matching tool before answering. Base your answer only on the tool result: never claim a physical action happened unless the tool confirmed it, and never claim you are unable to act without a failed tool result.",
+  ].filter(Boolean).join("\n\n");
 }
 
 function safeArguments(value) {
@@ -113,7 +114,9 @@ export class RealtimeSession {
           output_modalities: ["audio"],
           instructions: sessionInstructions(this),
           max_output_tokens: 512,
-          tool_choice: "none",
+          // The model decides on its own when a declared tool is needed, in
+          // any language. Never route intents relay-side.
+          tool_choice: "auto",
           tools: realtimeToolDefinitions(this.tools),
           audio: {
             input: {
@@ -158,13 +161,6 @@ export class RealtimeSession {
     this.ws.send(JSON.stringify(event));
   }
 
-  setToolChoice(toolChoice) {
-    this.send({
-      type: "session.update",
-      session: { type: "realtime", tool_choice: toolChoice },
-    });
-  }
-
   resolvePayload(payload) {
     if (!this.turn?.deferred || this.turn.deferred.settled) return;
     this.turn.deferred.settled = true;
@@ -183,19 +179,19 @@ export class RealtimeSession {
     this.turn = null;
   }
 
-  initializeTurn({ baseUrl, heard, state = "generating", callCount = 0, pending = null, deferredState = deferred() }) {
+  initializeTurn({ baseUrl, heard }) {
     this.lastUsed = Date.now();
     this.handledCalls.clear();
     this.turn = {
-      deferred: deferredState,
+      deferred: deferred(),
       baseUrl,
       heard,
       transcript: "",
       ticket: null,
-      callCount,
-      state,
+      callCount: 0,
+      state: "generating",
       responseHasAudio: false,
-      pending,
+      pending: null,
       toolName: "",
     };
   }
@@ -223,94 +219,54 @@ export class RealtimeSession {
     if (this.turn) throw new Error("rabbit session is busy");
     this.initializeTurn({ baseUrl, heard });
     const result = this.turn.deferred.promise;
-
-    const initialToolChoice = "none";
-    this.setToolChoice(initialToolChoice);
     this.appendUserInput(text, audio);
     this.send({
       type: "response.create",
-      response: {
-        output_modalities: ["audio"],
-        tool_choice: initialToolChoice,
-      },
+      response: { output_modalities: ["audio"] },
     });
     return result;
-  }
-
-  /**
-   * Park a deterministic, relay-created function call in the Realtime
-   * conversation. This avoids relying on model tool-choice compliance while
-   * keeping the user turn and verified tool output in conversation memory.
-   */
-  async beginForcedTool({ text, audio, baseUrl, heard = "", name, args }) {
-    await this.connect();
-    if (this.turn) throw new Error("rabbit session is busy");
-    if (!this.toolsByName.has(name)) throw new Error(`tool ${name} is not declared`);
-    const callId = `call_${randomBytes(12).toString("base64url")}`;
-    const argumentsJson = JSON.stringify(args || {});
-    const pending = { callId, name, args: argumentsJson };
-    this.initializeTurn({
-      baseUrl,
-      heard,
-      state: "handling-tool",
-      callCount: 1,
-      pending,
-      deferredState: null,
-    });
-    this.turn.toolName = name;
-    this.handledCalls.add(callId);
-    this.appendUserInput(text, audio);
-    this.send({
-      type: "conversation.item.create",
-      item: {
-        type: "function_call",
-        call_id: callId,
-        name,
-        arguments: argumentsJson,
-        status: "completed",
-      },
-    });
-    return {
-      ok: 1,
-      type: "call",
-      sid: this.publicId,
-      call_id: callId,
-      name,
-      args: args || {},
-      args_b64: Buffer.from(argumentsJson, "utf8").toString("base64"),
-    };
   }
 
   async continueWithToolResult(callId, output, baseUrl) {
     if (!this.turn?.pending || this.turn.pending.callId !== callId) throw new Error("unknown or expired tool call");
     this.lastUsed = Date.now();
-    const toolName = this.turn.pending.name;
     this.turn.deferred = deferred();
     this.turn.baseUrl = baseUrl || this.turn.baseUrl;
     this.turn.pending = null;
     const result = this.turn.deferred.promise;
-    this.sendToolOutput(callId, output, "none", toolResultInstructions(toolName, output));
+    this.sendToolOutput(callId, output);
     return result;
   }
 
-  pendingTool() {
-    if (!this.turn?.pending) return null;
-    return {
-      name: this.turn.pending.name,
-      args: safeArguments(this.turn.pending.args),
-    };
+  /**
+   * Drop any commentary audio buffered before a tool call so the follow-up
+   * response gets a fresh ticket and the rabbit never plays a half sentence
+   * about an action that has not happened yet.
+   */
+  discardTicket() {
+    if (this.turn?.ticket?.encoder?.stdin && !this.turn.ticket.encoder.stdin.destroyed) {
+      this.turn.ticket.encoder.stdin.end();
+    }
+    if (this.turn) {
+      this.turn.ticket = null;
+      this.turn.responseHasAudio = false;
+    }
   }
 
-  sendToolOutput(callId, output, toolChoice = "none", instructions = "") {
+  /**
+   * Return the tool output to the model and let it produce the next step:
+   * either the spoken answer or a further tool call (session tool_choice
+   * stays "auto"; the call-count guard bounds the chain).
+   */
+  sendToolOutput(callId, output, toolChoice = null) {
     this.turn.state = "generating";
-    this.turn.responseHasAudio = false;
+    this.discardTicket();
     this.send({
       type: "conversation.item.create",
       item: { type: "function_call_output", call_id: callId, output: String(output ?? "") },
     });
-    this.setToolChoice(toolChoice);
-    const response = { output_modalities: ["audio"], tool_choice: toolChoice };
-    if (instructions) response.instructions = instructions;
+    const response = { output_modalities: ["audio"] };
+    if (toolChoice) response.tool_choice = toolChoice;
     this.send({
       type: "response.create",
       response,
@@ -325,9 +281,11 @@ export class RealtimeSession {
     this.handledCalls.add(callId);
     this.turn.callCount += 1;
     this.turn.state = "handling-tool";
+    this.turn.toolName = name || "";
 
     if (this.turn.callCount > 4) {
-      this.failTurn(new Error("tool call limit exceeded"));
+      // Force a final spoken answer instead of killing the whole turn.
+      this.sendToolOutput(callId, "error: tool call limit reached for this request", "none");
       return;
     }
     const tool = this.toolsByName.get(name);
@@ -348,6 +306,7 @@ export class RealtimeSession {
 
     this.turn.pending = { callId, name, args };
     this.lastUsed = Date.now();
+    this.discardTicket();
     this.resolvePayload({
       type: "call",
       sid: this.publicId,
@@ -377,18 +336,14 @@ export class RealtimeSession {
       return;
     }
     if (event.type === "response.output_audio.delta" || event.type === "response.audio.delta") {
+      // Buffer the audio, but do not resolve the HTTP payload yet:
+      // gpt-realtime-2.1 often speaks a short commentary before emitting a
+      // function call in the same response, so only response.done (or a
+      // function call) can tell whether this turn is an answer or a call.
       if (!this.turn.ticket) this.turn.ticket = this.ticketStore.createPcmEncoder(24000);
       this.turn.responseHasAudio = true;
       const bytes = Buffer.from(event.delta || "", "base64");
       if (!this.turn.ticket.encoder.stdin.destroyed) this.turn.ticket.encoder.stdin.write(bytes);
-      this.resolvePayload({
-        type: "answer",
-        heard: this.turn.heard,
-        // The HTTP response is released on the first audio delta; the final
-        // transcript is not available yet and the firmware does not need it.
-        answer: "",
-        tts: this.ticketStore.urlFor(this.turn.ticket, this.turn.baseUrl),
-      });
       return;
     }
     if (event.type === "response.output_audio.done" || event.type === "response.audio.done") {
@@ -426,6 +381,8 @@ export class RealtimeSession {
         this.turn = null;
       } else if (event.response?.status === "failed" || event.response?.status === "cancelled") {
         this.failTurn(new Error(event.response?.status_details?.error?.message || `Realtime response ${event.response.status}`));
+      } else {
+        this.failTurn(new Error("Realtime response completed without audio or tool call"));
       }
     }
   }
