@@ -70,6 +70,104 @@ function decoded(value) {
   try { return decodeURIComponent(value); } catch { return value; }
 }
 
+function normalizedIntent(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+/** Select only explicit, reversible device intents; ordinary conversation stays automatic. */
+export function chooseForcedTool(utterance, tools) {
+  const text = normalizedIntent(utterance);
+  const available = new Set(tools.map((tool) => tool.name));
+  for (const name of available) {
+    if (text.includes(name) || text.includes(name.replaceAll("_", " "))) return name;
+  }
+
+  const ear = /(orecchi|\bear\b|\bears\b)/;
+  const earAction = /(muov|spost|porta|gira|ruota|alza|abbassa|posiziona|metti)/;
+  if (available.has("move_ears") && ear.test(text) && earAction.test(text)) return "move_ears";
+
+  const light = /(\bled\b|luc[ei]|naso|pancia|base)/;
+  const lightAction = /(accend|speg|impost|cambia|color|illumina|lampegg)/;
+  if (available.has("set_led") && light.test(text) && lightAction.test(text)) return "set_led";
+
+  const sound = /(suon|rumor|beep|midi|jingle)/;
+  const soundAction = /(suon|riproduc|emett|fai|avvia)/;
+  if (available.has("play_sound") && sound.test(text) && soundAction.test(text)) return "play_sound";
+
+  const liveStatus = /(stato (del |di )?(coniglio|nabaztag)|come stai|che ore|ora (locale|e)|meteo|prevision|piov|nev|temporale|dorm|sonno|sveglio|posizione.{0,30}orecchi)/;
+  if (available.has("rabbit_status") && liveStatus.test(text)) return "rabbit_status";
+  return "";
+}
+
+function withNumericWords(value) {
+  const numbers = {
+    zero: 0, uno: 1, una: 1, due: 2, tre: 3, quattro: 4, cinque: 5,
+    sei: 6, sette: 7, otto: 8, nove: 9, dieci: 10, undici: 11,
+    dodici: 12, tredici: 13, quattordici: 14, quindici: 15, sedici: 16,
+  };
+  return normalizedIntent(value).replace(/\b(zero|uno|una|due|tre|quattro|cinque|sei|sette|otto|nove|dieci|undici|dodici|tredici|quattordici|quindici|sedici)\b/g, (word) => String(numbers[word]));
+}
+
+function clampedPosition(value, fallback) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? Math.max(0, Math.min(16, Math.round(parsed))) : fallback;
+}
+
+/** Build conservative arguments for the four built-in reversible device tools. */
+export function buildForcedToolArgs(name, utterance) {
+  const text = withNumericWords(utterance);
+  if (name === "move_ears") {
+    const mentionsLeft = /sinistr[oa]/.test(text);
+    const mentionsRight = /destr[oa]/.test(text);
+    const leftAfter = text.match(/sinistr[oa][^\d,;]{0,16}(\d+)/);
+    const leftBefore = text.match(/(\d+)[^\d,;]{0,16}sinistr[oa]/);
+    const rightAfter = text.match(/destr[oa][^\d,;]{0,16}(\d+)/);
+    const rightBefore = text.match(/(\d+)[^\d,;]{0,16}destr[oa]/);
+    const all = [...text.matchAll(/\b(\d{1,2})\b/g)].map((match) => Number(match[1]));
+    let left = clampedPosition(leftAfter?.[1] ?? leftBefore?.[1], NaN);
+    let right = clampedPosition(rightAfter?.[1] ?? rightBefore?.[1], NaN);
+    if (!Number.isFinite(left) && !Number.isFinite(right)) {
+      if (all.length >= 2) [left, right] = [clampedPosition(all[0], 5), clampedPosition(all[1], 12)];
+      else if (all.length === 1) {
+        const position = clampedPosition(all[0], 5);
+        if (mentionsLeft && !mentionsRight) [left, right] = [position, 0];
+        else if (mentionsRight && !mentionsLeft) [left, right] = [0, position];
+        else left = right = position;
+      } else if (mentionsLeft && !mentionsRight) [left, right] = [5, 0];
+      else if (mentionsRight && !mentionsLeft) [left, right] = [0, 5];
+      else [left, right] = [5, 12];
+    } else {
+      if (!Number.isFinite(left)) left = 0;
+      if (!Number.isFinite(right)) right = 0;
+    }
+    return { left, right };
+  }
+  if (name === "set_led") {
+    const target = /pancia|base/.test(text) ? "base"
+      : /centr/.test(text) ? "center"
+        : /sinistr/.test(text) ? "left"
+          : /destr/.test(text) ? "right" : "nose";
+    const colors = [
+      [/riprist|normal/, -1], [/speg|nero/, 0], [/ross/, 0xff0000], [/verd/, 0x00ff00],
+      [/blu/, 0x0000ff], [/giall/, 0xffff00], [/aranc/, 0xff8000], [/viola|violett/, 0x800080],
+      [/bianc/, 0xffffff], [/rosa/, 0xff00ff], [/ciano/, 0x00ffff],
+    ];
+    const matchedColor = colors.find(([pattern]) => pattern.test(text));
+    const numeric = text.match(/\b(\d{3,8})\b/);
+    return { target, color: matchedColor ? matchedColor[1] : Math.max(-1, Math.min(0xffffff, Number(numeric?.[1] ?? 0x0000ff))) };
+  }
+  if (name === "play_sound") {
+    const sound = /acquis|acquired/.test(text) ? "acquired"
+      : /abort|errore/.test(text) ? "abort"
+        : /casual|random/.test(text) ? "random" : "ack";
+    return { sound };
+  }
+  return {};
+}
+
 async function readBody(req, maxBytes) {
   const chunks = [];
   let length = 0;
@@ -230,16 +328,6 @@ export function createRelayServer(overrides = {}) {
         const body = text ? Buffer.alloc(0) : await readBody(req, config.maxAudioBytes);
         if (!text && !body.length) throw new Error("audio body is empty");
 
-        let heard = "";
-        if (mode === "wake") {
-          heard = await transcribeAudio(body, config, fetchImpl);
-          const wake = (url.searchParams.get("wake") || "nabaztag").slice(0, 40);
-          if (!hasWakeWordAtStart(heard, wake, 2)) {
-            sendJson(res, { ok: 0, reason: "no-wake" });
-            return;
-          }
-        }
-
         const modelHeader = header(req, "x-model", 80);
         const model = MODEL_NAME.test(modelHeader) ? modelHeader : config.realtimeModel;
         const voiceHeader = header(req, "x-voice", 24);
@@ -250,18 +338,30 @@ export function createRelayServer(overrides = {}) {
           : decoded(header(req, "x-prompt", 8192));
         const toolsUrl = decoded(header(req, "x-tools-url", 2048)) || config.toolsUrl;
         const tools = await toolCache.get(toolsUrl);
-        logger.info(`[relay] accepted turn configuration with ${tools.length} enabled tools`);
+        let heard = text;
+        if (!text && (mode === "wake" || tools.length)) {
+          heard = await transcribeAudio(body, config, fetchImpl);
+        }
+        if (mode === "wake") {
+          const wake = (url.searchParams.get("wake") || "nabaztag").slice(0, 40);
+          if (!hasWakeWordAtStart(heard, wake, 2)) {
+            sendJson(res, { ok: 0, reason: "no-wake" });
+            return;
+          }
+        }
+        const forcedTool = chooseForcedTool(heard, tools);
+        const forcedArgs = forcedTool ? buildForcedToolArgs(forcedTool, heard) : {};
+        logger.info(`[relay] accepted turn with ${tools.length} tools; forced=${forcedTool || "auto"}`);
         const ttlMs = clamp(header(req, "x-session-ttl", 8), 15, 300, config.sessionTtlMs / 1000) * 1000;
         const audio = text ? null : wavImaAdpcmToMuLaw(body);
 
         const session = await sessions.get({ rabbitId, model, voice, prompt, language, tools, ttlMs });
-        const payload = await session.beginTurn({
-          text,
-          audio,
-          heard,
-          baseUrl: requestBaseUrl(req),
-        });
-        logger.info(`[relay] ${mode} turn produced ${payload.type || payload.reason || "an error"}`);
+        const turnOptions = { text, audio, heard, baseUrl: requestBaseUrl(req) };
+        const payload = forcedTool
+          ? await session.beginForcedTool({ ...turnOptions, name: forcedTool, args: forcedArgs })
+          : await session.beginTurn(turnOptions);
+        const outcome = payload.type === "call" ? `call:${payload.name}` : (payload.type || payload.reason || "an error");
+        logger.info(`[relay] ${mode} turn produced ${outcome}`);
         sendJson(res, payload);
         return;
       }

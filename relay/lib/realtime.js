@@ -148,6 +148,13 @@ export class RealtimeSession {
     this.ws.send(JSON.stringify(event));
   }
 
+  setToolChoice(toolChoice) {
+    this.send({
+      type: "session.update",
+      session: { type: "realtime", tool_choice: toolChoice },
+    });
+  }
+
   resolvePayload(payload) {
     if (!this.turn?.deferred || this.turn.deferred.settled) return;
     this.turn.deferred.settled = true;
@@ -166,24 +173,23 @@ export class RealtimeSession {
     this.turn = null;
   }
 
-  async beginTurn({ text, audio, baseUrl, heard = "" }) {
-    await this.connect();
-    if (this.turn) throw new Error("rabbit session is busy");
+  initializeTurn({ baseUrl, heard, state = "generating", callCount = 0, pending = null, deferredState = deferred() }) {
     this.lastUsed = Date.now();
     this.handledCalls.clear();
     this.turn = {
-      deferred: deferred(),
+      deferred: deferredState,
       baseUrl,
       heard,
       transcript: "",
       ticket: null,
-      callCount: 0,
-      state: "generating",
+      callCount,
+      state,
       responseHasAudio: false,
-      pending: null,
+      pending,
     };
-    const result = this.turn.deferred.promise;
+  }
 
+  appendUserInput(text, audio) {
     if (text) {
       this.send({
         type: "conversation.item.create",
@@ -199,8 +205,68 @@ export class RealtimeSession {
       }
       this.send({ type: "input_audio_buffer.commit" });
     }
-    this.send({ type: "response.create", response: { output_modalities: ["audio"] } });
+  }
+
+  async beginTurn({ text, audio, baseUrl, heard = "" }) {
+    await this.connect();
+    if (this.turn) throw new Error("rabbit session is busy");
+    this.initializeTurn({ baseUrl, heard });
+    const result = this.turn.deferred.promise;
+
+    const initialToolChoice = this.tools.length ? "auto" : "none";
+    this.setToolChoice(initialToolChoice);
+    this.appendUserInput(text, audio);
+    this.send({
+      type: "response.create",
+      response: {
+        output_modalities: ["audio"],
+        tool_choice: initialToolChoice,
+      },
+    });
     return result;
+  }
+
+  /**
+   * Park a deterministic, relay-created function call in the Realtime
+   * conversation. This avoids relying on model tool-choice compliance while
+   * keeping the user turn and verified tool output in conversation memory.
+   */
+  async beginForcedTool({ text, audio, baseUrl, heard = "", name, args }) {
+    await this.connect();
+    if (this.turn) throw new Error("rabbit session is busy");
+    if (!this.toolsByName.has(name)) throw new Error(`tool ${name} is not declared`);
+    const callId = `call_${randomBytes(12).toString("base64url")}`;
+    const argumentsJson = JSON.stringify(args || {});
+    const pending = { callId, name, args: argumentsJson };
+    this.initializeTurn({
+      baseUrl,
+      heard,
+      state: "handling-tool",
+      callCount: 1,
+      pending,
+      deferredState: null,
+    });
+    this.handledCalls.add(callId);
+    this.appendUserInput(text, audio);
+    this.send({
+      type: "conversation.item.create",
+      item: {
+        type: "function_call",
+        call_id: callId,
+        name,
+        arguments: argumentsJson,
+        status: "completed",
+      },
+    });
+    return {
+      ok: 1,
+      type: "call",
+      sid: this.publicId,
+      call_id: callId,
+      name,
+      args: args || {},
+      args_b64: Buffer.from(argumentsJson, "utf8").toString("base64"),
+    };
   }
 
   async continueWithToolResult(callId, output, baseUrl) {
@@ -210,18 +276,22 @@ export class RealtimeSession {
     this.turn.baseUrl = baseUrl || this.turn.baseUrl;
     this.turn.pending = null;
     const result = this.turn.deferred.promise;
-    this.sendToolOutput(callId, output);
+    this.sendToolOutput(callId, output, "auto");
     return result;
   }
 
-  sendToolOutput(callId, output) {
+  sendToolOutput(callId, output, toolChoice = "auto") {
     this.turn.state = "generating";
     this.turn.responseHasAudio = false;
     this.send({
       type: "conversation.item.create",
       item: { type: "function_call_output", call_id: callId, output: String(output ?? "") },
     });
-    this.send({ type: "response.create", response: { output_modalities: ["audio"] } });
+    this.setToolChoice(toolChoice);
+    this.send({
+      type: "response.create",
+      response: { output_modalities: ["audio"], tool_choice: toolChoice },
+    });
   }
 
   async handleFunctionCall(event) {

@@ -1,6 +1,21 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createRelayServer } from "../server.js";
+import { buildForcedToolArgs, chooseForcedTool, createRelayServer } from "../server.js";
+
+test("classifies only explicit rabbit device intents", () => {
+  const tools = ["move_ears", "set_led", "play_sound", "rabbit_status"].map((name) => ({ name }));
+  assert.equal(chooseForcedTool("Muovi le orecchie alla posizione cinque", tools), "move_ears");
+  assert.equal(chooseForcedTool("Accendi la luce del naso di blu", tools), "set_led");
+  assert.equal(chooseForcedTool("Fai un suono di conferma", tools), "play_sound");
+  assert.equal(chooseForcedTool("Dimmi lo stato del coniglio e il meteo", tools), "rabbit_status");
+  assert.equal(chooseForcedTool("Qual è la posizione delle orecchie?", tools), "rabbit_status");
+  assert.equal(chooseForcedTool("Quanto fa due più due?", tools), "");
+  assert.deepEqual(buildForcedToolArgs("move_ears", "sinistro cinque, destro zero"), { left: 5, right: 0 });
+  assert.deepEqual(buildForcedToolArgs("move_ears", "muovi entrambe a sette"), { left: 7, right: 7 });
+  assert.deepEqual(buildForcedToolArgs("move_ears", "porta il sinistro a sei"), { left: 6, right: 0 });
+  assert.deepEqual(buildForcedToolArgs("move_ears", "porta il destro a quattro"), { left: 0, right: 4 });
+  assert.deepEqual(buildForcedToolArgs("set_led", "accendi la luce del naso di verde"), { target: "nose", color: 0x00ff00 });
+});
 
 test("health is plain HTTP 200 and reports missing secrets", async (t) => {
   const sessions = { cleanup() {}, close() {} };

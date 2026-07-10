@@ -2,7 +2,7 @@
   "tools": [
     {
       "name": "move_ears",
-      "description": "Muove davvero le due orecchie del Nabaztag per esprimere un'emozione o accompagnare una risposta. Usa valori 0-16; 0 indica le orecchie dritte.",
+      "description": "OBBLIGATORIO per qualsiasi richiesta di muovere o posizionare le orecchie. Muove fisicamente le orecchie e verifica le posizioni raggiunte prima di restituire il risultato. Usa valori 0-16; 0 indica le orecchie dritte.",
       "parameters": {
         "type": "object",
         "properties": {
@@ -15,7 +15,7 @@
     },
     {
       "name": "set_led",
-      "description": "Cambia davvero una luce del Nabaztag. Scegli una luce e un colore RGB intero; usa -1 per restituire quella luce al controllo normale.",
+      "description": "OBBLIGATORIO per qualsiasi richiesta di accendere, spegnere o cambiare colore a una luce. Imposta fisicamente il LED e verifica l'override. Usa un colore RGB intero; -1 restituisce la luce al controllo normale.",
       "parameters": {
         "type": "object",
         "properties": {
@@ -28,7 +28,7 @@
     },
     {
       "name": "play_sound",
-      "description": "Riproduce una breve reazione sonora fisica del Nabaztag. Usala con moderazione, tipicamente prima o dopo una risposta.",
+      "description": "OBBLIGATORIO quando l'utente chiede al coniglio di emettere un suono. Riproduce una breve reazione sonora fisica del Nabaztag.",
       "parameters": {
         "type": "object",
         "properties": {
@@ -40,7 +40,7 @@
     },
     {
       "name": "rabbit_status",
-      "description": "Legge ora locale, stato di sonno, posizione delle orecchie e meteo memorizzato dal coniglio.",
+      "description": "OBBLIGATORIO per domande su ora locale, meteo, sonno, posizione delle orecchie o stato corrente del coniglio. Usalo anche come fallback innocuo quando nessun'altra azione fisica è richiesta. Restituisce dati live in forma testuale, non codici numerici grezzi.",
       "parameters": { "type": "object", "properties": {} },
       "exec": "forth"
     },

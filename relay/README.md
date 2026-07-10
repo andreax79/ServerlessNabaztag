@@ -88,6 +88,8 @@ The default firmware relay address is `192.168.1.214:8787`. Keep port 8787 reach
 
 The relay caps request sizes, applies per-rabbit rate limits, expires sessions automatically, signs MP3 URLs with HMAC-SHA256, limits each exchange to four tool calls, and places 10-second timeouts on HTTP tools.
 
+The relay transcribes button audio when device tools are enabled and classifies a small allow-list of explicit, reversible intents (ears, LEDs, sounds, and live rabbit status). It creates that exact function call in the Realtime conversation and waits for the rabbit's result before asking the model to answer; ordinary conversation remains `auto`. Forth tools return `ok` only after checking the resulting device state, otherwise an `error:` result is sent back to the model. This extra transcription adds some latency and cost, but prevents a physical request from being acknowledged without executing the corresponding tool.
+
 ## Tests
 
 ```sh
