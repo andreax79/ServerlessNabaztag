@@ -2,7 +2,7 @@
   "tools": [
     {
       "name": "move_ears",
-      "description": "OBBLIGATORIO per qualsiasi richiesta di muovere o posizionare le orecchie. Muove fisicamente le orecchie e verifica le posizioni raggiunte prima di restituire il risultato. Usa valori 0-16; 0 indica le orecchie dritte.",
+      "description": "OBBLIGATORIO per qualsiasi richiesta di muovere o posizionare le orecchie. Muove fisicamente entrambe le orecchie lungo il percorso più breve e verifica posizione e salute hardware prima di restituire il risultato. Usa valori 0-16; 0 indica le orecchie dritte.",
       "parameters": {
         "type": "object",
         "properties": {
@@ -40,7 +40,7 @@
     },
     {
       "name": "rabbit_status",
-      "description": "Usa solo quando l'utente chiede esplicitamente ora locale, meteo, sonno, posizione delle orecchie o stato corrente del coniglio. Non usare come passaggio preliminare o fallback. Restituisce dati live in forma testuale, non codici numerici grezzi.",
+      "description": "Usa solo quando l'utente chiede esplicitamente ora locale, meteo, sonno, posizione o salute delle orecchie, oppure stato corrente del coniglio. Non usare come passaggio preliminare o fallback. Restituisce dati live in forma testuale e segnala le letture hardware non affidabili.",
       "parameters": { "type": "object", "properties": {} },
       "exec": "forth"
     },

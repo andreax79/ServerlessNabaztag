@@ -87,7 +87,8 @@ export function chooseForcedTool(utterance, tools) {
 
   const ear = /(orecchi|\bear\b|\bears\b)/;
   const earAction = /(muov|spost|porta|gira|ruota|alza|abbassa|posiziona|metti)/;
-  if (available.has("move_ears") && ear.test(text) && earAction.test(text)) return "move_ears";
+  const earPronounAction = /\b(muovile|spostale|girale|ruotale|alzale|abbassale)\b|\b(muovi|sposta|gira|ruota|alza|abbassa) entrambe\b/;
+  if (available.has("move_ears") && ((ear.test(text) && earAction.test(text)) || earPronounAction.test(text))) return "move_ears";
 
   const light = /(\bled\b|luc[ei]|naso|pancia|base)/;
   const lightAction = /(accend|speg|impost|cambia|color|illumina|lampegg)/;
@@ -97,7 +98,7 @@ export function chooseForcedTool(utterance, tools) {
   const soundAction = /(suon|riproduc|emett|fai|avvia)/;
   if (available.has("play_sound") && sound.test(text) && soundAction.test(text)) return "play_sound";
 
-  const liveStatus = /(stato (?:(?:corrente|attuale) )?(?:del |di )?(coniglio|nabaztag)|come sta(?:i| il coniglio| nabaztag)|che ore|ora (locale|e)|meteo|prevision|piov|nev|temporale|dorm|sonno|sveglio|posizione.{0,30}orecchi)/;
+  const liveStatus = /(stato (?:(?:corrente|attuale) )?(?:del |di )?(coniglio|nabaztag)|stato (?:attuale |corrente )?delle? orecchi|come (?:sono|stanno) (?:messe? )?(?:le |gli )?orecchi|dove (?:sono|stanno) (?:le |gli )?orecchi|come sta(?:i| il coniglio| nabaztag)|che ore|ora (locale|e)|meteo|prevision|piov|nev|temporale|dorm|sonno|sveglio|posizione.{0,30}orecchi)/;
   if (available.has("rabbit_status") && liveStatus.test(text)) return "rabbit_status";
   return "";
 }

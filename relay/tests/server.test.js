@@ -5,11 +5,14 @@ import { buildForcedToolArgs, chooseForcedTool, createRelayServer } from "../ser
 test("classifies only explicit rabbit device intents", () => {
   const tools = ["move_ears", "set_led", "play_sound", "rabbit_status"].map((name) => ({ name }));
   assert.equal(chooseForcedTool("Muovi le orecchie alla posizione cinque", tools), "move_ears");
+  assert.equal(chooseForcedTool("Muovile entrambe", tools), "move_ears");
   assert.equal(chooseForcedTool("Accendi la luce del naso di blu", tools), "set_led");
   assert.equal(chooseForcedTool("Fai un suono di conferma", tools), "play_sound");
   assert.equal(chooseForcedTool("Dimmi lo stato del coniglio e il meteo", tools), "rabbit_status");
   assert.equal(chooseForcedTool("Dimmi lo stato corrente del coniglio", tools), "rabbit_status");
   assert.equal(chooseForcedTool("Come sta il coniglio?", tools), "rabbit_status");
+  assert.equal(chooseForcedTool("Qual è lo stato delle orecchie?", tools), "rabbit_status");
+  assert.equal(chooseForcedTool("Come sono messe le orecchie?", tools), "rabbit_status");
   assert.equal(chooseForcedTool("Qual è la posizione delle orecchie?", tools), "rabbit_status");
   assert.equal(chooseForcedTool("Quanto fa due più due?", tools), "");
   assert.equal(chooseForcedTool("Raccontami una storia sul coniglio", tools), "");
