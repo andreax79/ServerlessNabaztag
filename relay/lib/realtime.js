@@ -31,6 +31,15 @@ function sessionInstructions({ prompt, language, timeZone }) {
   ].filter(Boolean).join("\n\n");
 }
 
+function toolResultInstructions(name, output) {
+  const result = String(output || "");
+  const success = /^ok(?::|$)/i.test(result);
+  if (success) {
+    return `Rispondi in italiano con una sola frase breve. Il tool ${name} ha appena confermato il successo dell'azione fisica. Conferma che l'azione è stata eseguita; non dire che non puoi eseguirla e non aggiungere azioni simulate tra asterischi.`;
+  }
+  return `Rispondi in italiano con una sola frase breve basata esclusivamente sul risultato del tool ${name}. Spiega il problema hardware concreto riportato, senza affermare genericamente che non puoi usare il tool e senza inventare un successo.`;
+}
+
 function safeArguments(value) {
   try {
     const parsed = JSON.parse(value);
@@ -41,7 +50,7 @@ function safeArguments(value) {
 }
 
 export class RealtimeSession {
-  constructor({ rabbitId, apiKey, realtimeUrl, model, voice, prompt, language, timeZone, tools, ticketStore, ttlMs }) {
+  constructor({ rabbitId, apiKey, realtimeUrl, model, voice, prompt, language, timeZone, tools, ticketStore, ttlMs, onToolTranscript = null }) {
     this.rabbitId = rabbitId;
     this.publicId = randomBytes(18).toString("base64url");
     this.apiKey = apiKey;
@@ -55,6 +64,7 @@ export class RealtimeSession {
     this.toolsByName = new Map(tools.map((tool) => [tool.name, tool]));
     this.ticketStore = ticketStore;
     this.ttlMs = ttlMs;
+    this.onToolTranscript = onToolTranscript;
     this.lastUsed = Date.now();
     this.turn = null;
     this.ws = null;
@@ -186,6 +196,7 @@ export class RealtimeSession {
       state,
       responseHasAudio: false,
       pending,
+      toolName: "",
     };
   }
 
@@ -246,6 +257,7 @@ export class RealtimeSession {
       pending,
       deferredState: null,
     });
+    this.turn.toolName = name;
     this.handledCalls.add(callId);
     this.appendUserInput(text, audio);
     this.send({
@@ -272,15 +284,24 @@ export class RealtimeSession {
   async continueWithToolResult(callId, output, baseUrl) {
     if (!this.turn?.pending || this.turn.pending.callId !== callId) throw new Error("unknown or expired tool call");
     this.lastUsed = Date.now();
+    const toolName = this.turn.pending.name;
     this.turn.deferred = deferred();
     this.turn.baseUrl = baseUrl || this.turn.baseUrl;
     this.turn.pending = null;
     const result = this.turn.deferred.promise;
-    this.sendToolOutput(callId, output, "none");
+    this.sendToolOutput(callId, output, "none", toolResultInstructions(toolName, output));
     return result;
   }
 
-  sendToolOutput(callId, output, toolChoice = "none") {
+  pendingTool() {
+    if (!this.turn?.pending) return null;
+    return {
+      name: this.turn.pending.name,
+      args: safeArguments(this.turn.pending.args),
+    };
+  }
+
+  sendToolOutput(callId, output, toolChoice = "none", instructions = "") {
     this.turn.state = "generating";
     this.turn.responseHasAudio = false;
     this.send({
@@ -288,9 +309,11 @@ export class RealtimeSession {
       item: { type: "function_call_output", call_id: callId, output: String(output ?? "") },
     });
     this.setToolChoice(toolChoice);
+    const response = { output_modalities: ["audio"], tool_choice: toolChoice };
+    if (instructions) response.instructions = instructions;
     this.send({
       type: "response.create",
-      response: { output_modalities: ["audio"], tool_choice: toolChoice },
+      response,
     });
   }
 
@@ -392,6 +415,13 @@ export class RealtimeSession {
             tts: this.ticketStore.urlFor(this.turn.ticket, this.turn.baseUrl),
           });
         }
+        if (this.turn.toolName && this.turn.transcript && this.onToolTranscript) {
+          this.onToolTranscript({
+            rabbitId: this.rabbitId,
+            name: this.turn.toolName,
+            transcript: this.turn.transcript,
+          });
+        }
         this.lastUsed = Date.now();
         this.turn = null;
       } else if (event.response?.status === "failed" || event.response?.status === "cancelled") {
@@ -408,12 +438,13 @@ export class RealtimeSession {
 }
 
 export class RealtimeSessionManager {
-  constructor({ apiKey, realtimeUrl, ticketStore, timeZone, defaultTtlMs = 75_000 }) {
+  constructor({ apiKey, realtimeUrl, ticketStore, timeZone, defaultTtlMs = 75_000, onToolTranscript = null }) {
     this.apiKey = apiKey;
     this.realtimeUrl = realtimeUrl;
     this.ticketStore = ticketStore;
     this.timeZone = timeZone;
     this.defaultTtlMs = defaultTtlMs;
+    this.onToolTranscript = onToolTranscript;
     this.byRabbit = new Map();
     this.byPublicId = new Map();
   }
@@ -431,6 +462,7 @@ export class RealtimeSessionManager {
       tools,
       ticketStore: this.ticketStore,
       ttlMs: ttlMs || this.defaultTtlMs,
+      onToolTranscript: this.onToolTranscript,
     };
     const signature = JSON.stringify({ model, voice, prompt, language, tools });
     let session = this.byRabbit.get(rabbitId);

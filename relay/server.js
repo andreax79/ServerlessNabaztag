@@ -1,4 +1,5 @@
 import http from "node:http";
+import { isIP } from "node:net";
 import { pathToFileURL } from "node:url";
 import { randomBytes } from "node:crypto";
 import { hasWakeWordAtStart, wavImaAdpcmToMuLaw } from "./lib/audio.js";
@@ -87,12 +88,15 @@ export function chooseForcedTool(utterance, tools) {
 
   const ear = /(orecchi|\bear\b|\bears\b)/;
   const earAction = /(muov|spost|porta|gira|ruota|alza|abbassa|posiziona|metti)/;
-  const earPronounAction = /\b(muovile|spostale|girale|ruotale|alzale|abbassale)\b|\b(muovi|sposta|gira|ruota|alza|abbassa) entrambe\b/;
-  if (available.has("move_ears") && ((ear.test(text) && earAction.test(text)) || earPronounAction.test(text))) return "move_ears";
+  const earPronounAction = /\b(muovile|muoverle|spostale|spostarle|girale|girarle|ruotale|ruotarle|alzale|alzarle|abbassale|abbassarle|posizionale|posizionarle)\b|\b(muovi|sposta|gira|ruota|alza|abbassa) entrambe\b/;
+  const earDemonstration = /(fammi vedere|dimostra|mostra).{0,35}orecchi|(?:cosa|che cosa).{0,25}(?:puoi|sai).{0,25}fare.{0,25}orecchi|funzion.{0,25}orecchi/;
+  if (available.has("move_ears") && ((ear.test(text) && earAction.test(text)) || earPronounAction.test(text) || earDemonstration.test(text))) return "move_ears";
 
   const light = /(\bled\b|luc[ei]|naso|pancia|base)/;
-  const lightAction = /(accend|speg|impost|cambia|color|illumina|lampegg)/;
-  if (available.has("set_led") && light.test(text) && lightAction.test(text)) return "set_led";
+  const lightAction = /(accend|speg|impost|cambia|color|illumina|lampegg|attiv|mostra)/;
+  const lightPronouns = /\b(accendili|accendile|spegnili|spegnile|illuminali|colorali|colorale|attivali|attivale)\b/;
+  const lightDemonstration = /(fammi vedere|dimostra|mostra).{0,35}(?:led|luc[ei])|(?:cosa|che cosa).{0,25}(?:puoi|sai).{0,25}fare.{0,25}(?:led|luc[ei])|funzion.{0,25}(?:led|luc[ei])/;
+  if (available.has("set_led") && ((light.test(text) && lightAction.test(text)) || lightPronouns.test(text) || lightDemonstration.test(text))) return "set_led";
 
   const sound = /(suon|rumor|beep|midi|jingle)/;
   const soundAction = /(suon|riproduc|emett|fai|avvia)/;
@@ -143,6 +147,11 @@ export function buildForcedToolArgs(name, utterance) {
     } else {
       if (!Number.isFinite(left)) left = 0;
       if (!Number.isFinite(right)) right = 0;
+    }
+    if (all.length === 0) {
+      if (mentionsLeft && !mentionsRight) [left, right] = [-1, -2];
+      else if (mentionsRight && !mentionsLeft) [left, right] = [-2, -1];
+      else [left, right] = [-1, -1];
     }
     return { left, right };
   }
@@ -195,10 +204,51 @@ function requestBaseUrl(req) {
   return `http://${req.headers.host || "127.0.0.1"}`;
 }
 
-async function transcribeAudio(wav, config, fetchImpl) {
+function deviceStatusUrl(remoteAddress) {
+  let address = String(remoteAddress || "");
+  if (address.startsWith("::ffff:")) address = address.slice(7);
+  if (!isIP(address)) throw new Error("invalid rabbit network address");
+  return `http://${address.includes(":") ? `[${address}]` : address}/status`;
+}
+
+export async function verifyDeviceToolOutput({ pending, output, remoteAddress, fetchImpl, waitMs = 3_500 }) {
+  const raw = String(output || "");
+  if (pending?.name !== "move_ears" || !raw.startsWith("started:")) return raw;
+  const requested = raw.match(/richiesta sinistra=(\d{1,2}) destra=(\d{1,2})/);
+  if (!requested) return "error: il movimento non ha comunicato le posizioni richieste";
+  await new Promise((resolve) => setTimeout(resolve, waitMs));
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 3_000);
+  try {
+    const response = await fetchImpl(deviceStatusUrl(remoteAddress), { signal: controller.signal });
+    if (!response.ok) return `error: verifica orecchie fallita con HTTP ${response.status}`;
+    const status = await response.json();
+    const left = Number(status?.ears?.left?.last_position);
+    const right = Number(status?.ears?.right?.last_position);
+    const leftBroken = Number(status?.ears?.left?.broken) || 0;
+    const rightBroken = Number(status?.ears?.right?.broken) || 0;
+    const expectedLeft = Number(requested[1]);
+    const expectedRight = Number(requested[2]);
+    if (left === expectedLeft && right === expectedRight && !leftBroken && !rightBroken) {
+      return `ok: posizione verificata sinistra=${left} destra=${right}`;
+    }
+    return `error: richiesta sinistra=${expectedLeft} destra=${expectedRight}; raggiunta sinistra=${left} destra=${right}; guasto sinistra=${leftBroken} destra=${rightBroken}`;
+  } catch (error) {
+    return `error: verifica orecchie non disponibile (${error.message})`;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export async function transcribeAudio(wav, config, fetchImpl, language = "") {
   const form = new FormData();
   form.append("model", config.transcribeModel);
   form.append("file", new Blob([wav], { type: "audio/wav" }), "nabaztag.wav");
+  const inputLanguage = /^[a-z]{2}$/i.test(language) ? language.toLowerCase() : "";
+  if (inputLanguage) form.append("language", inputLanguage);
+  if (inputLanguage === "it") {
+    form.append("prompt", "Comando vocale rivolto a un coniglio Nabaztag. Parole possibili: orecchie, muovile, muoverle, LED, luci, naso, pancia, accendi, spegni, illumina, colore, stato.");
+  }
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 20_000);
   try {
@@ -266,6 +316,9 @@ export function createRelayServer(overrides = {}) {
     ticketStore,
     timeZone: config.timeZone,
     defaultTtlMs: config.sessionTtlMs,
+    onToolTranscript: ({ name, transcript }) => {
+      logger.info(`[relay] tool confirmation ${name}: ${JSON.stringify(String(transcript).slice(0, 300))}`);
+    },
   });
   // The MT-200 firmware has a very small TCP send window. Keep the long,
   // editable personality prompt in the POST body of a separate config sync
@@ -341,7 +394,7 @@ export function createRelayServer(overrides = {}) {
         const tools = await toolCache.get(toolsUrl);
         let heard = text;
         if (!text && (mode === "wake" || tools.length)) {
-          heard = await transcribeAudio(body, config, fetchImpl);
+          heard = await transcribeAudio(body, config, fetchImpl, language);
         }
         if (mode === "wake") {
           const wake = (url.searchParams.get("wake") || "nabaztag").slice(0, 40);
@@ -373,7 +426,14 @@ export function createRelayServer(overrides = {}) {
         const session = sessions.findByPublicId(sid);
         if (!session) throw new Error("unknown or expired session");
         const output = (await readBody(req, 64_000)).toString("utf8");
-        const payload = await session.continueWithToolResult(callId, output, requestBaseUrl(req));
+        const verifiedOutput = await verifyDeviceToolOutput({
+          pending: session.pendingTool?.(),
+          output,
+          remoteAddress: req.socket.remoteAddress,
+          fetchImpl,
+        });
+        logger.info(`[relay] device tool output: ${JSON.stringify(verifiedOutput.slice(0, 500))}`);
+        const payload = await session.continueWithToolResult(callId, verifiedOutput, requestBaseUrl(req));
         logger.info(`[relay] tool result produced ${payload.type || "an error"}`);
         sendJson(res, payload);
         return;

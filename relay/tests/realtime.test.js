@@ -68,6 +68,7 @@ test("creates a deterministic device function-call item before answering", async
   const continuation = session.continueWithToolResult(payload.call_id, "ok", "http://relay");
   const responseEvent = events.findLast((event) => event.type === "response.create");
   assert.equal(responseEvent.response.tool_choice, "none");
+  assert.match(responseEvent.response.instructions, /confermato il successo.*non dire che non puoi/i);
   assert.equal(events.findLast((event) => event.type === "session.update").session.tool_choice, "none");
   session.resolvePayload({ ok: 1, type: "answer" });
   assert.deepEqual(await continuation, { ok: 1, type: "answer" });

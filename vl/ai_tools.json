@@ -6,8 +6,8 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "left": { "type": "integer", "minimum": 0, "maximum": 16 },
-          "right": { "type": "integer", "minimum": 0, "maximum": 16 }
+          "left": { "type": "integer", "minimum": -2, "maximum": 16, "description": "Posizione 0-16; -1 muove di uno scatto, -2 mantiene la posizione corrente." },
+          "right": { "type": "integer", "minimum": -2, "maximum": 16, "description": "Posizione 0-16; -1 muove di uno scatto, -2 mantiene la posizione corrente." }
         },
         "required": ["left", "right"]
       },
