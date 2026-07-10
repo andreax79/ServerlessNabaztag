@@ -5,6 +5,8 @@
 #include protos/streaming_protos.mtl
 #include protos/midi_protos.mtl
 #include protos/sleep_protos.mtl
+#include protos/ai_protos.mtl
+#include protos/config_protos.mtl
 #ifdef PING
 #include protos/ping_protos.mtl
 #endif
@@ -44,6 +46,9 @@ fun _run_to_str run=
     ( sleepRun -> "sleepRun" )|
     ( recordRun -> "recordRun" )|
     ( recordStartRun -> "recordStartRun" )|
+    ( aiListenRun -> "aiListenRun" )|
+    ( aiWaitRun _ -> "aiWaitRun" )|
+    ( aiToolRun _ -> "aiToolRun" )|
     ( earResetWaitRun _ -> "earResetWaitRun" )
     ;;
 
@@ -68,7 +73,7 @@ fun _run_control_wait =
         ears_stop 0;
         if ev==BUTTON_CLIC then forth_interpreter WORD_ON_CLICK // click
         else if ev==BUTTON_DCLIC then forth_interpreter WORD_ON_DBL_CLICK //ackall
-        else if ev==BUTTON_LCLIC then record_control 0  //back ou record
+        else if ev==BUTTON_LCLIC then if config_get_ai_enabled then ai_control else record_control 0
         else if ev==BUTTON_DLCLIC then record_control 1 //back ou record
         else if ev&0x8000 then forth_interpreter WORD_ON_EARS // oreilles
     );
@@ -312,5 +317,8 @@ fun run_task task=
     ( interactiveReqWaitRun http ->
         interactive_request_wait http;
         _run_control_wait ) |
+    ( aiListenRun -> 0 )|
+    ( aiWaitRun _ -> 0 )|
+    ( aiToolRun _ -> 0 )|
     ( _ -> button_clear_event );
     TaskRun;;

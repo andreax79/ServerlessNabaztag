@@ -455,6 +455,93 @@ input, select, textarea {
     </fieldset>
   </form>
 
+  <h3 class="title">AI Assistant</h3>
+
+  <p>The OpenAI key is stored only in the Raspberry Pi relay environment and is never sent to or displayed by the rabbit.</p>
+  <form action="/setup-ai" method="POST">
+    <fieldset>
+      <div class="row">
+        <div class="column">
+          <label for="aiEnabledField">Assistant</label>
+          <select name="e" id="aiEnabledField">
+            <option value="0">Off (legacy long-click recording)</option>
+            <option value="1">On (long-click push-to-talk)</option>
+          </select>
+        </div>
+        <div class="column">
+          <label for="aiModelField">Realtime model</label>
+          <input name="m" type="text" id="aiModelField" placeholder="gpt-realtime-2.1" />
+        </div>
+        <div class="column">
+          <label for="aiVoiceField">Voice</label>
+          <select name="v" id="aiVoiceField">
+            <option value="marin">marin (recommended)</option>
+            <option value="cedar">cedar (recommended)</option>
+            <option value="alloy">alloy</option>
+            <option value="ash">ash</option>
+            <option value="ballad">ballad</option>
+            <option value="coral">coral</option>
+            <option value="echo">echo</option>
+            <option value="sage">sage</option>
+            <option value="shimmer">shimmer</option>
+            <option value="verse">verse</option>
+          </select>
+        </div>
+        <div class="column">
+          <label for="aiLangField">Language</label>
+          <select name="l" id="aiLangField">
+            <option value="it">Italian</option>
+            <option value="uk">English</option>
+            <option value="fr">French</option>
+            <option value="es">Spanish</option>
+            <option value="de">German</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="column column-50">
+          <label for="aiRelayField">Relay host and port (without http://)</label>
+          <input name="u" type="text" id="aiRelayField" placeholder="192.168.1.214:8787" />
+        </div>
+        <div class="column column-50">
+          <label for="aiToolsField">Tools URL (empty = platform /ai_tools.json)</label>
+          <input name="o" type="text" id="aiToolsField" placeholder="http://192.168.1.214/vl/ai_tools.json" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="column">
+          <label for="aiWakeField">Experimental wake word</label>
+          <select name="w" id="aiWakeField">
+            <option value="0">Off</option>
+            <option value="1">On</option>
+          </select>
+        </div>
+        <div class="column">
+          <label for="aiWakeWordField">Wake word</label>
+          <input name="n" type="text" id="aiWakeWordField" placeholder="nabaztag" />
+        </div>
+        <div class="column">
+          <label for="aiWakeSensitivityField">Wake sensitivity</label>
+          <input name="s" type="number" min="0" max="255" id="aiWakeSensitivityField" />
+        </div>
+        <div class="column">
+          <label for="aiMaxRecordingField">Max recording (seconds)</label>
+          <input name="r" type="number" min="2" max="20" id="aiMaxRecordingField" />
+        </div>
+        <div class="column">
+          <label for="aiSessionTtlField">Conversation TTL (seconds)</label>
+          <input name="t" type="number" min="15" max="255" id="aiSessionTtlField" />
+        </div>
+      </div>
+      <label for="aiPromptField">Nabaztag personality</label>
+      <textarea name="p" id="aiPromptField" rows="12"></textarea>
+      <input type="hidden" name="b" value="0" />
+      <input class="button" type="submit" value="Save AI settings" />
+      <button type="button" class="button button-outline" onclick="testAI()">Test: “Ciao”</button>
+      <span id="aiTestResult"></span>
+    </fieldset>
+  </form>
+
   <h3 class="title">Forth</h3>
 
   <div class="row">
@@ -505,6 +592,17 @@ async function clearInfo() {
     document.querySelector('#noseField').value=0;
 }
 
+async function testAI() {
+    const result = document.getElementById('aiTestResult');
+    result.textContent = ' Sending…';
+    try {
+        const response = await fetch('/ask?t=' + encodeURIComponent('Ciao, presentati in una frase'));
+        result.textContent = response.ok ? ' Request sent; the rabbit should answer shortly.' : ' Request failed.';
+    } catch (error) {
+        result.textContent = ' Request failed: ' + error.message;
+    }
+}
+
 function formatColor(c) {
     if (c == -1)
         return -1;
@@ -525,6 +623,19 @@ async function onLoad() {
     document.getElementById("longitudeField").value = status.longitude;
     document.getElementById("wakeUpField").value = status.wake_up;
     document.getElementById("goToBedField").value = status.go_to_bed;
+
+    document.getElementById("aiEnabledField").value = status.ai.enabled;
+    document.getElementById("aiModelField").value = status.ai.model;
+    document.getElementById("aiVoiceField").value = status.ai.voice;
+    document.getElementById("aiLangField").value = status.ai.language;
+    document.getElementById("aiRelayField").value = status.ai.relay_url;
+    document.getElementById("aiToolsField").value = status.ai.tools_url;
+    document.getElementById("aiWakeField").value = status.ai.wake_mode;
+    document.getElementById("aiWakeWordField").value = status.ai.wake_word;
+    document.getElementById("aiWakeSensitivityField").value = status.ai.wake_sensitivity;
+    document.getElementById("aiMaxRecordingField").value = status.ai.max_recording;
+    document.getElementById("aiSessionTtlField").value = status.ai.session_ttl;
+    document.getElementById("aiPromptField").value = status.ai.prompt;
 
     document.querySelector('#weatherField').value = status.info.weather;
     document.querySelector('#pollutionField').value = status.info.pollution;

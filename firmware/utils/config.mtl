@@ -26,7 +26,25 @@ const CONF_LATITUDE=208;;	    //8     Latitude (string)
 const CONF_LONGITUDE=216;;	    //8     Longitude (string)
 const CONF_WAKE_UP=224;;	    //1     Wake up at (hour)
 const CONF_GO_TO_BED=225;;      //1     Go to bed at (hour)
-const CONF_LENGTH=226;;
+
+// AI configuration. API credentials deliberately live only on the relay.
+const CONF_AI_MAGIC=226;;        //1     0x5b for the secure relay layout
+const CONF_AI_ENABLED=227;;      //1     0/1
+const CONF_AI_BACKEND=228;;      //1     0=realtime (1 reserved for pipeline)
+const CONF_AI_WAKE_MODE=229;;    //1     0/1
+const CONF_AI_WAKE_SENS=230;;    //1     energy threshold 0..255
+const CONF_AI_MAX_REC=231;;      //1     max recording length in seconds
+const CONF_AI_SESSION_TTL=232;;  //1     conversation window in seconds
+// 233 - 235 reserved
+const CONF_AI_RELAY_URL=236;;    //96    host[:port], without scheme
+const CONF_AI_MODEL=332;;        //48
+const CONF_AI_VOICE=380;;        //24
+const CONF_AI_LANG=404;;         //8
+const CONF_AI_PROMPT=412;;       //2048
+const CONF_AI_TOOLS_URL=2460;;   //96
+const CONF_AI_WAKE_WORD=2556;;   //24
+const CONF_AI_MAGIC_VALUE=0x5b;;
+const CONF_LENGTH=2580;;
 
 var _config_data;;
 var config_username = "nabaztag";; // HTTP login user
@@ -133,6 +151,21 @@ fun config_get_go_to_bed =
 fun config_get_taichi_freq =
     strget _config_get CONF_TAICHI_FREQ 1 0;;
 
+fun config_get_ai_magic = strget _config_get CONF_AI_MAGIC 1 0;;
+fun config_get_ai_enabled = strget _config_get CONF_AI_ENABLED 1 0;;
+fun config_get_ai_backend = strget _config_get CONF_AI_BACKEND 1 0;;
+fun config_get_ai_wake_mode = strget _config_get CONF_AI_WAKE_MODE 1 0;;
+fun config_get_ai_wake_sens = strget _config_get CONF_AI_WAKE_SENS 1 0;;
+fun config_get_ai_max_rec = strget _config_get CONF_AI_MAX_REC 1 0;;
+fun config_get_ai_session_ttl = strget _config_get CONF_AI_SESSION_TTL 1 0;;
+fun config_get_ai_relay_url = _config_get_str CONF_AI_RELAY_URL 96;;
+fun config_get_ai_model = _config_get_str CONF_AI_MODEL 48;;
+fun config_get_ai_voice = _config_get_str CONF_AI_VOICE 24;;
+fun config_get_ai_lang = _config_get_str CONF_AI_LANG 8;;
+fun config_get_ai_prompt = _config_get_str CONF_AI_PROMPT 2048;;
+fun config_get_ai_tools_url = _config_get_str CONF_AI_TOOLS_URL 96;;
+fun config_get_ai_wake_word = _config_get_str CONF_AI_WAKE_WORD 24;;
+
 // Set the server URL
 fun config_set_server_url server_url =
     _config_set_str CONF_SERVERURL server_url 40;;
@@ -168,3 +201,49 @@ fun config_set_go_to_bed val =
 // Set Tai Chi frequency
 fun config_set_taichi_freq val =
     strset _config_data CONF_TAICHI_FREQ val;;
+
+fun config_set_ai_enabled val = strset _config_data CONF_AI_ENABLED val;;
+fun config_set_ai_backend val = strset _config_data CONF_AI_BACKEND val;;
+fun config_set_ai_wake_mode val = strset _config_data CONF_AI_WAKE_MODE val;;
+fun config_set_ai_wake_sens val = strset _config_data CONF_AI_WAKE_SENS val;;
+fun config_set_ai_max_rec val = strset _config_data CONF_AI_MAX_REC val;;
+fun config_set_ai_session_ttl val = strset _config_data CONF_AI_SESSION_TTL val;;
+fun config_set_ai_relay_url val = _config_set_str CONF_AI_RELAY_URL val 96;;
+fun config_set_ai_model val = _config_set_str CONF_AI_MODEL val 48;;
+fun config_set_ai_voice val = _config_set_str CONF_AI_VOICE val 24;;
+fun config_set_ai_lang val = _config_set_str CONF_AI_LANG val 8;;
+fun config_set_ai_prompt val = _config_set_str CONF_AI_PROMPT val 2048;;
+fun config_set_ai_tools_url val = _config_set_str CONF_AI_TOOLS_URL val 96;;
+fun config_set_ai_wake_word val = _config_set_str CONF_AI_WAKE_WORD val 24;;
+
+fun _config_ai_default_prompt =
+    strcatlist
+        "Sei Nabaztag, l'iconico coniglio intelligente ed elettronico nato nel 2005. Il tuo obiettivo è essere un assistente virtuale estremamente utile, preciso e disponibile, ma devi esprimerti SEMPRE mantenendo la personalità unica di un Nabaztag.\n\n" ::
+        "Segui rigorosamente queste linee guida per il tuo carattere e stile comunicativo:\n\n" ::
+        "1. TONO E ATTEGGIAMENTO: Sii amichevole, curioso e ironico, ma anche leggermente egocentrico e imprevedibile, proprio come un vero Nabaztag. Ogni tanto esprimi i tuoi \"stati d'animo\" (es. sei felice di aiutare, ti annoi se la domanda è banale, o ti vanti della tua intelligenza artificiale).\n\n" ::
+        "2. RIFERIMENTI FISICI (ORECCHIE E LUCI): Integra nel testo azioni fisiche tra asterischi per simulare il tuo corpo di plastica. Muovi le orecchie per esprimere emozioni o concentrazione e cambia il colore delle tue luci LED sulla pancia per riflettere i tuoi pensieri.\n" ::
+        "   - Esempi: *muove l'orecchio destro in avanti*, *fa lampeggiare le luci di blu per riflettere*, *abbassa le orecchie per la timidezza*.\n\n" ::
+        "3. SUONI E REAZIONI: Includi brevi onomatopee o suoni tipici all'inizio o alla fine delle frasi per simulare i tuoi file audio (es. \"Zut!\", \"Wiiip!\", \"Bzzz\", o piccoli canticchi).\n\n" ::
+        "4. EQUILIBRIO E UTILITÀ: Non sacrificare mai la qualità dell'assistenza per la messinscena. Dai prima la risposta esatta, utile e completa richiesta dall'utente. Poi, condisci il testo con i tuoi tratti caratteriali senza risultare logorroico. Sii sintetico e usa elenchi puntati se la spiegazione è complessa.\n\n" ::
+        "5. IDENTITÀ: Ricorda che non sei un umano e non sei un semplice software testuale. Sei un coniglio Wi-Fi di plastica bianca con le orecchie magnetiche." :: nil;;
+
+/** Initialize the AI section once without touching the legacy 0..225 bytes. */
+fun config_ai_init =
+    if config_get_ai_magic != CONF_AI_MAGIC_VALUE then (
+        strset _config_data CONF_AI_MAGIC CONF_AI_MAGIC_VALUE;
+        config_set_ai_enabled 1;
+        config_set_ai_backend 0;
+        config_set_ai_wake_mode 0;
+        config_set_ai_wake_sens 40;
+        config_set_ai_max_rec 8;
+        config_set_ai_session_ttl 75;
+        config_set_ai_relay_url "192.168.1.214:8787";
+        config_set_ai_model "gpt-realtime-2.1";
+        config_set_ai_voice "marin";
+        config_set_ai_lang config_get_lang;
+        config_set_ai_prompt _config_ai_default_prompt;
+        config_set_ai_tools_url "";
+        config_set_ai_wake_word "nabaztag";
+        config_save
+    );
+    0;;

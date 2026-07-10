@@ -1,0 +1,16 @@
+proto ai_control 0;;
+proto ai_init 0;;
+proto ai_json 0;;
+proto ai_start_text 1;;
+proto ai_say_text 1;;
+proto ai_task 1;;
+
+proto forth_ai_ask 1;;
+proto forth_ai_ask_text 1;;
+proto forth_ai_say 1;;
+
+const AI_NET_TIMEOUT=30000;;
+const AI_TOOL_TIMEOUT=5000;;
+const AI_AUDIO_START_BUFFER=8192;;
+const AI_WAKE_SILENCE_MS=750;;
+const AI_WAKE_RATE_LIMIT=6;;

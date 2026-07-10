@@ -23,6 +23,9 @@ type Run =
     sleepRun |                  // Sleep mode
     recordRun |
     recordStartRun |
+    aiListenRun |
+    aiWaitRun _ |
+    aiToolRun _ |
     earResetWaitRun _;;
 
 proto run_init 0;;

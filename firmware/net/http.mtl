@@ -223,14 +223,14 @@ fun _http_send_req ip x=
 	0;;
 
 /**
- * Create and send an HTTP request
+ * Create and send an HTTP request with optional custom headers and content type.
  * verb: the HTTP verb to use (GET, POST, HEAD, etc.)
  * url: the URL to request (only http:// is supported)
  * postdata: additional data to send (nil if none)
  * cb: callback function to call when the request is done
  * type: type of request (HTTP_NORMAL, HTTP_STREAM, HTTP_DIRECT)
  */
-fun http_request verb url postdata cb type=
+fun http_request_ex verb url postdata headers content_type cb type=
 #ifdef HTTP_DEBUG
 	_http_debug strcatlist "HTTPREQUEST url=" :: url :: nil;
 #endif
@@ -241,6 +241,8 @@ fun http_request verb url postdata cb type=
             "Accept: */*\13\n" ::
             "Host: "::host::"\13\n"::
             "Connection: close\13\n" ::
+			(if content_type==nil then "" else (strcatlist "Content-Type: "::content_type::"\13\n"::nil)) ::
+			(if headers==nil then "" else headers) ::
 			if postdata==nil then "\13\n"::nil
 			else "Content-length: "::(itoa strlen postdata)::"\13\n\13\n"::postdata::nil
 		-> request in	// création de la chaîne requête
@@ -256,6 +258,10 @@ fun http_request verb url postdata cb type=
 		);
 		httpreq	// on retourne la structure requête pour pouvoir éventuellement l'interrompre en cours de route
 	);;
+
+/** Backward-compatible wrapper used by all legacy callers. */
+fun http_request verb url postdata cb type=
+	http_request_ex verb url postdata nil nil cb type;;
 
 //##> interruption d'une requête en cours
 // on interromp la requête et son fils (si elle en a un)

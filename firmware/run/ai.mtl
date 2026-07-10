@@ -1,0 +1,421 @@
+#include protos/ai_protos.mtl
+#include protos/run_protos.mtl
+#include protos/config_protos.mtl
+#include protos/record_protos.mtl
+#include protos/audiolib_protos.mtl
+#include protos/http_protos.mtl
+#include protos/forth_protos.mtl
+#include protos/json_protos.mtl
+#include protos/midi_protos.mtl
+#include protos/sleep_protos.mtl
+
+var _ai_req=nil;;
+var _ai_payload=nil;;
+var _ai_text=nil;;
+var _ai_mode="button";;
+var _ai_started=0;;
+var _ai_retries=0;;
+var _ai_config_retries=0;;
+var _ai_tool_calls=0;;
+var _ai_sid=nil;;
+var _ai_call_id=nil;;
+var _ai_tool_token=0;;
+var _ai_playing=0;;
+var _ai_error_until=0;;
+
+var _ai_wake_active=0;;
+var _ai_wake_triggered=0;;
+var _ai_wake_pre=nil;;
+var _ai_wake_data=nil;;
+var _ai_wake_started=0;;
+var _ai_wake_last_voice=0;;
+var _ai_wake_window=0;;
+var _ai_wake_count=0;;
+
+fun _ai_relay_base=
+    strcatlist "http://"::config_get_ai_relay_url::nil;;
+
+fun _ai_tools_url=
+    let config_get_ai_tools_url -> url in
+    if (strlen url)>0 then url
+    else strcatlist "http://"::config_get_server_url::"/ai_tools.json"::nil;;
+
+fun _ai_headers=
+    strcatlist
+        "X-Rabbit-Id: "::wifi_mac_addr::"\13\n"::
+        "X-Model: "::config_get_ai_model::"\13\n"::
+        "X-Voice: "::config_get_ai_voice::"\13\n"::
+        "X-Tools-Url: "::(url_encode _ai_tools_url)::"\13\n"::
+        "X-Session-Ttl: "::(itoa config_get_ai_session_ttl)::"\13\n"::nil;;
+
+fun _ai_clear_exchange=
+    set _ai_payload=nil;
+    set _ai_text=nil;
+    set _ai_sid=nil;
+    set _ai_call_id=nil;
+    set _ai_tool_calls=0;
+    0;;
+
+fun _ai_wake_stop=
+    if _ai_wake_active then recStop;
+    set _ai_wake_active=0;
+    set _ai_wake_triggered=0;
+    set _ai_wake_pre=nil;
+    set _ai_wake_data=nil;
+    0;;
+
+fun _ai_error message=
+    Secholn strcatlist "AI error: "::message::nil;
+    if _ai_req!=nil then http_abort _ai_req;
+    set _ai_req=nil;
+    if record_is_recording then reclib_rec_stop;
+    _ai_wake_stop;
+    set _ai_playing=0;
+    set _ai_error_until=time_ms+1200;
+    leds_set_all RGB_RED;
+    midi_play MIDI_ABORT;
+    _ai_clear_exchange;
+    run_set_state idleRun;
+    0;;
+
+fun ai_cancel=
+    if _ai_req!=nil then http_abort _ai_req;
+    set _ai_req=nil;
+    if record_is_recording then reclib_rec_stop;
+    _ai_wake_stop;
+    audiolib_wav_stop;
+    leds_turn_off;
+    _ai_clear_exchange;
+    run_set_state idleRun;
+    0;;
+
+fun _ai_audio_error=
+    _ai_error "audio stream timeout";;
+
+fun _ai_play_tts url=
+    if (strlen url)==0 then _ai_error "relay response has no TTS URL"
+    else (
+        leds_set_all RGB_BLUE;
+        set _ai_playing=1;
+        audiolib_start_http_ex url #_ai_audio_error AI_AUDIO_START_BUFFER;
+        _ai_clear_exchange;
+        run_set_state idleRun;
+        0
+    );;
+
+proto _ai_response_cb 2;;
+proto _ai_config_cb 2;;
+
+fun _ai_send_current=
+    let strcatlist _ai_relay_base::"/v1/ask?lang="::(url_encode config_get_ai_lang)::
+        "&mode="::_ai_mode::"&wake="::(url_encode config_get_ai_wake_word)::
+        (if _ai_text==nil then nil else strcat "&t=" (url_encode _ai_text))::nil -> url in (
+        leds_set_all RGB_AMBER;
+        set _ai_started=time_ms;
+        set _ai_req=http_request_ex "POST" url _ai_payload _ai_headers
+            (if _ai_payload==nil then "text/plain" else "audio/wav") #_ai_response_cb HTTP_NORMAL;
+        run_set_state aiWaitRun _ai_req;
+        0
+    );;
+
+/**
+ * Sync the editable personality as a request body before every turn. The
+ * rabbit's legacy TCP stack cannot reliably transmit that 2 KB value inside
+ * an HTTP header; the relay caches it by X-Rabbit-Id for the following ask.
+ */
+fun _ai_sync_config=
+    let strcatlist _ai_relay_base::"/v1/config?lang="::(url_encode config_get_ai_lang)::nil -> url in (
+        leds_set_all RGB_AMBER;
+        set _ai_started=time_ms;
+        set _ai_req=http_request_ex "POST" url config_get_ai_prompt _ai_headers
+            "text/plain; charset=utf-8" #_ai_config_cb HTTP_NORMAL;
+        run_set_state aiWaitRun _ai_req;
+        0
+    );;
+
+fun _ai_retry_or_error message=
+    if _ai_retries>0 then (
+        set _ai_retries=_ai_retries-1;
+        set _ai_req=nil;
+        _ai_send_current
+    ) else _ai_error message;;
+
+fun _ai_config_cb http res=
+    set _ai_req=nil;
+    if res==nil then (
+        if _ai_config_retries>0 then (
+            set _ai_config_retries=_ai_config_retries-1;
+            _ai_sync_config
+        ) else _ai_error "relay configuration sync failed"
+    ) else
+        let json_parse http_get_content res -> data in
+        let if data==nil then nil else word_get data "ok" -> ok in
+        if ok==nil || ok.int!=1 then _ai_error "relay rejected AI configuration"
+        else _ai_send_current;
+    0;;
+
+proto _ai_post_tool_result 1;;
+
+fun _ai_tool_cb f token=
+    if token==_ai_tool_token then (
+        let if f.stack==nil then "ok" else forth_word_fmt hd f.stack -> output in
+            _ai_post_tool_result output
+    );
+    0;;
+
+fun _ai_start_tool data=
+    set _ai_tool_calls=_ai_tool_calls+1;
+    if _ai_tool_calls>4 then _ai_error "tool call limit exceeded"
+    else
+        let word_get data "name" -> name in
+        let word_get data "sid" -> sid in
+        let word_get data "call_id" -> call_id in
+        let word_get data "args_b64" -> args_b64 in
+        if name==nil || sid==nil || call_id==nil || args_b64==nil then
+            _ai_error "invalid tool call response"
+        else
+            let strcat "tool-" name.str -> tool_word in
+            let forth_get_word tool_word -> tool in (
+                set _ai_sid=sid.str;
+                set _ai_call_id=call_id.str;
+                if tool==nil then _ai_post_tool_result strcat "error: missing Forth word " tool_word
+                else (
+                    set _ai_tool_token=_ai_tool_token+1;
+                    let _ai_tool_token -> token in
+                    let forth_new_state -> f in (
+                        forth_push_str f base64_decode args_b64.str;
+                        leds_set_all RGB_AMBER;
+                        set _ai_started=time_ms;
+                        run_set_state aiToolRun time_ms;
+                        forth_interpreter_ex tool_word f nil nil (fixarg2 #_ai_tool_cb token)
+                    )
+                )
+            );;
+
+fun _ai_handle_response res=
+    let http_get_content res -> content in
+    let if content==nil then nil else json_parse content -> data in
+    let if data==nil then nil else word_get data "ok" -> ok in
+    if ok==nil then _ai_retry_or_error "invalid relay JSON"
+    else if ok.int!=1 then (
+        let word_get data "reason" -> reason in
+        if reason!=nil && !strcmp reason.str "no-wake" then (
+            leds_turn_off;
+            _ai_clear_exchange;
+            run_set_state idleRun;
+            0
+        ) else
+            let word_get data "err" -> err in
+                _ai_retry_or_error if err==nil then "relay error" else err.str
+    ) else
+        let word_get data "type" -> response_type in
+        if response_type!=nil && !strcmp response_type.str "call" then
+            _ai_start_tool data
+        else
+            let word_get data "tts" -> tts in
+                if tts==nil then _ai_error "relay response has no TTS URL" else _ai_play_tts tts.str;;
+
+fun _ai_response_cb http res=
+    set _ai_req=nil;
+    if res==nil then _ai_retry_or_error "relay request failed"
+    else _ai_handle_response res;
+    0;;
+
+fun _ai_post_tool_result output=
+    if _ai_sid==nil || _ai_call_id==nil then _ai_error "tool session is missing"
+    else
+        let strcatlist _ai_relay_base::"/v1/tool-result?sid="::(url_encode _ai_sid)::
+            "&call_id="::(url_encode _ai_call_id)::nil -> url in (
+            set _ai_tool_token=_ai_tool_token+1;
+            leds_set_all RGB_AMBER;
+            set _ai_started=time_ms;
+            set _ai_req=http_request_ex "POST" url output _ai_headers "text/plain" #_ai_response_cb HTTP_NORMAL;
+            run_set_state aiWaitRun _ai_req;
+            0
+        );;
+
+fun _ai_say_cb http res=
+    set _ai_req=nil;
+    if res==nil then _ai_error "service TTS request failed"
+    else
+        let json_parse http_get_content res -> data in
+        let if data==nil then nil else word_get data "ok" -> ok in
+        if ok==nil || ok.int!=1 then _ai_error "service TTS relay error"
+        else let word_get data "tts" -> tts in
+            if tts==nil then _ai_error "service TTS relay response has no URL" else _ai_play_tts tts.str;
+    0;;
+
+fun ai_say_text text=
+    ai_cancel;
+    let strcatlist _ai_relay_base::"/v1/say?lang="::(url_encode config_get_ai_lang)::
+        "&voice="::(url_encode config_get_ai_voice)::nil -> url in (
+        leds_set_all RGB_AMBER;
+        set _ai_started=time_ms;
+        set _ai_req=http_request_ex "POST" url text _ai_headers "text/plain" #_ai_say_cb HTTP_NORMAL;
+        run_set_state aiWaitRun _ai_req;
+        0
+    );;
+
+fun ai_start_text text=
+    if !config_get_ai_enabled then 0
+    else (
+        ai_cancel;
+        set _ai_text=text;
+        set _ai_mode="button";
+        set _ai_retries=1;
+        set _ai_config_retries=1;
+        set _ai_tool_calls=0;
+        _ai_sync_config
+    );;
+
+fun ai_control=
+    if !config_get_ai_enabled || sleep_is_sleeping then 0
+    else (
+        ai_cancel;
+        audiolib_wav_stop;
+        ears_stop 1;
+        leds_turn_off;
+        leds_set_color LED_NOSE RGB_RED;
+        reclib_rec_start;
+        set _ai_started=time_ms;
+        set _ai_mode="button";
+        set _ai_retries=1;
+        set _ai_config_retries=1;
+        set _ai_tool_calls=0;
+        run_set_state aiListenRun;
+        0
+    );;
+
+fun _ai_finish_button_recording=
+    reclib_rec_stop;
+    set _ai_payload=strcatlist reclib_recriff;
+    _ai_sync_config;;
+
+fun _ai_take l n=
+    if l==nil || n<=0 then nil else (hd l)::_ai_take tl l n-1;;
+
+fun _ai_wake_rate_take=
+    if time_ms-_ai_wake_window>60000 then (
+        set _ai_wake_window=time_ms;
+        set _ai_wake_count=0
+    );
+    if _ai_wake_count>=AI_WAKE_RATE_LIMIT then 0
+    else (
+        set _ai_wake_count=_ai_wake_count+1;
+        1
+    );;
+
+fun _ai_wake_finish=
+    recStop;
+    set _ai_wake_active=0;
+    set _ai_payload=strcatlist (reclib_mkriff rev _ai_wake_data nil);
+    set _ai_wake_pre=nil;
+    set _ai_wake_data=nil;
+    set _ai_wake_triggered=0;
+    set _ai_mode="wake";
+    set _ai_retries=0;
+    set _ai_config_retries=1;
+    set _ai_tool_calls=0;
+    _ai_sync_config;;
+
+fun _ai_wake_rec_cb sample=
+    let sqrt recVol sample 0 -> energy in
+    if !_ai_wake_triggered then (
+        set _ai_wake_pre=_ai_take sample::_ai_wake_pre 4;
+        if energy>=config_get_ai_wake_sens && _ai_wake_rate_take then (
+            set _ai_wake_triggered=1;
+            set _ai_wake_data=_ai_wake_pre;
+            set _ai_wake_started=time_ms;
+            set _ai_wake_last_voice=time_ms
+        )
+    ) else (
+        set _ai_wake_data=sample::_ai_wake_data;
+        if energy>=config_get_ai_wake_sens then set _ai_wake_last_voice=time_ms;
+        if (time_ms-_ai_wake_last_voice>AI_WAKE_SILENCE_MS) ||
+           (time_ms-_ai_wake_started>config_get_ai_max_rec*1000) then _ai_wake_finish
+    );
+    0;;
+
+fun _ai_can_monitor_wake=
+    match run_get_state with
+    ( idleRun -> config_get_ai_enabled && config_get_ai_wake_mode && !sleep_is_sleeping &&
+        !_ai_playing && !audiolib_wav_running && !record_is_uploading )|
+    ( _ -> 0 );;
+
+fun _ai_wake_start=
+    if !_ai_wake_active then (
+        set _ai_wake_active=1;
+        set _ai_wake_triggered=0;
+        set _ai_wake_pre=nil;
+        set _ai_wake_data=nil;
+        recStop;
+        recStart 8000 0 #_ai_wake_rec_cb
+    );
+    0;;
+
+fun _ai_check_cancel=
+    let button_get_event -> event in
+    if event!=nil then ai_cancel else 0;;
+
+fun ai_task task=
+    if _ai_playing && !audiolib_wav_running then (
+        set _ai_playing=0;
+        leds_turn_off
+    );
+    if _ai_error_until!=0 && time_ms>_ai_error_until then (
+        set _ai_error_until=0;
+        leds_turn_off
+    );
+    match run_get_state with
+    ( aiListenRun ->
+        if !button2 || time_ms-_ai_started>config_get_ai_max_rec*1000 then _ai_finish_button_recording )|
+    ( aiWaitRun http ->
+        _ai_check_cancel;
+        if (http_inactive http)>AI_NET_TIMEOUT then (
+            http_abort http;
+            set _ai_req=nil;
+            _ai_retry_or_error "relay timeout"
+        ) )|
+    ( aiToolRun started ->
+        _ai_check_cancel;
+        if time_ms-started>AI_TOOL_TIMEOUT then (
+            set _ai_tool_token=_ai_tool_token+1;
+            _ai_post_tool_result "error: Forth tool timeout"
+        ) )|
+    ( _ ->
+        if _ai_can_monitor_wake then _ai_wake_start else _ai_wake_stop );
+    TaskRun;;
+
+fun ai_json=
+    strcatlist
+        "{\n"::
+            (json_int "enabled" config_get_ai_enabled)::",\n"::
+            (json_int "backend" config_get_ai_backend)::",\n"::
+            (json_int "wake_mode" config_get_ai_wake_mode)::",\n"::
+            (json_int "wake_sensitivity" config_get_ai_wake_sens)::",\n"::
+            (json_int "max_recording" config_get_ai_max_rec)::",\n"::
+            (json_int "session_ttl" config_get_ai_session_ttl)::",\n"::
+            (json_str "relay_url" config_get_ai_relay_url)::",\n"::
+            (json_str "model" config_get_ai_model)::",\n"::
+            (json_str "voice" config_get_ai_voice)::",\n"::
+            (json_str "language" config_get_ai_lang)::",\n"::
+            (json_str "prompt" config_get_ai_prompt)::",\n"::
+            (json_str "tools_url" config_get_ai_tools_url)::",\n"::
+            (json_str "wake_word" config_get_ai_wake_word)::",\n"::
+            (json_int "wake_monitoring" _ai_wake_active)::"\n"::
+        "}"::nil;;
+
+fun forth_ai_ask f=
+    ai_control;
+    0;;
+
+fun forth_ai_ask_text f=
+    let forth_pop f -> text in ai_start_text text.str;
+    0;;
+
+fun forth_ai_say f=
+    let forth_pop f -> text in ai_say_text text.str;
+    0;;
+
+fun ai_init=
+    task_start "ai" #ai_task;;

@@ -140,6 +140,10 @@ TIME&DATE      ( -- sec min hour day month year)        Push the current time an
 TIME-MS        ( -- ms )                                Push the current time in milliseconds onto the stack
 TIME?          ( -- flag )                              Check if the system time has been received from the time server
 TL             ( list -- list' )                        Get the tail of a list
+TOOL-MOVE_EARS ( args-json -- result )
+TOOL-PLAY_SOUND ( args-json -- result )
+TOOL-RABBIT_STATUS ( args-json -- result )
+TOOL-SET_LED   ( args-json -- result )
 TRUE           ( -- true )
 TUCK           ( n1 n2 -- n1 n2 n1 ) (top)              Copy the first  stack item below the second stack item
 UNTIL          (immediate) ( x -- )                     End a loop Compile a conditional jump back to the matching BEGIN

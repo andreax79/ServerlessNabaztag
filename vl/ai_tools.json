@@ -1,0 +1,64 @@
+{
+  "tools": [
+    {
+      "name": "move_ears",
+      "description": "Muove davvero le due orecchie del Nabaztag per esprimere un'emozione o accompagnare una risposta. Usa valori 0-16; 0 indica le orecchie dritte.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "left": { "type": "integer", "minimum": 0, "maximum": 16 },
+          "right": { "type": "integer", "minimum": 0, "maximum": 16 }
+        },
+        "required": ["left", "right"]
+      },
+      "exec": "forth"
+    },
+    {
+      "name": "set_led",
+      "description": "Cambia davvero una luce del Nabaztag. Scegli una luce e un colore RGB intero; usa -1 per restituire quella luce al controllo normale.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "target": { "type": "string", "enum": ["nose", "left", "center", "right", "base"] },
+          "color": { "type": "integer", "minimum": -1, "maximum": 16777215 }
+        },
+        "required": ["target", "color"]
+      },
+      "exec": "forth"
+    },
+    {
+      "name": "play_sound",
+      "description": "Riproduce una breve reazione sonora fisica del Nabaztag. Usala con moderazione, tipicamente prima o dopo una risposta.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "sound": { "type": "string", "enum": ["acquired", "ack", "abort", "random"] }
+        },
+        "required": ["sound"]
+      },
+      "exec": "forth"
+    },
+    {
+      "name": "rabbit_status",
+      "description": "Legge ora locale, stato di sonno, posizione delle orecchie e meteo memorizzato dal coniglio.",
+      "parameters": { "type": "object", "properties": {} },
+      "exec": "forth"
+    },
+    {
+      "name": "webhook_example",
+      "description": "Esempio disabilitato: copia questo blocco, configura un URL reale e imposta enabled a true.",
+      "parameters": {
+        "type": "object",
+        "properties": { "message": { "type": "string" } },
+        "required": ["message"]
+      },
+      "exec": "http",
+      "enabled": false,
+      "http": {
+        "method": "POST",
+        "url": "https://example.com/nabaztag-webhook",
+        "body": "{{args}}"
+      }
+    }
+  ]
+}
