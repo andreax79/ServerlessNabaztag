@@ -103,7 +103,7 @@ export class RealtimeSession {
           output_modalities: ["audio"],
           instructions: sessionInstructions(this),
           max_output_tokens: 512,
-          tool_choice: "auto",
+          tool_choice: "none",
           tools: realtimeToolDefinitions(this.tools),
           audio: {
             input: {
@@ -213,7 +213,7 @@ export class RealtimeSession {
     this.initializeTurn({ baseUrl, heard });
     const result = this.turn.deferred.promise;
 
-    const initialToolChoice = this.tools.length ? "auto" : "none";
+    const initialToolChoice = "none";
     this.setToolChoice(initialToolChoice);
     this.appendUserInput(text, audio);
     this.send({
@@ -276,11 +276,11 @@ export class RealtimeSession {
     this.turn.baseUrl = baseUrl || this.turn.baseUrl;
     this.turn.pending = null;
     const result = this.turn.deferred.promise;
-    this.sendToolOutput(callId, output, "auto");
+    this.sendToolOutput(callId, output, "none");
     return result;
   }
 
-  sendToolOutput(callId, output, toolChoice = "auto") {
+  sendToolOutput(callId, output, toolChoice = "none") {
     this.turn.state = "generating";
     this.turn.responseHasAudio = false;
     this.send({

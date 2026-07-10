@@ -40,7 +40,7 @@
     },
     {
       "name": "rabbit_status",
-      "description": "OBBLIGATORIO per domande su ora locale, meteo, sonno, posizione delle orecchie o stato corrente del coniglio. Usalo anche come fallback innocuo quando nessun'altra azione fisica è richiesta. Restituisce dati live in forma testuale, non codici numerici grezzi.",
+      "description": "Usa solo quando l'utente chiede esplicitamente ora locale, meteo, sonno, posizione delle orecchie o stato corrente del coniglio. Non usare come passaggio preliminare o fallback. Restituisce dati live in forma testuale, non codici numerici grezzi.",
       "parameters": { "type": "object", "properties": {} },
       "exec": "forth"
     },

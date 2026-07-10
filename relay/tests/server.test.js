@@ -8,8 +8,11 @@ test("classifies only explicit rabbit device intents", () => {
   assert.equal(chooseForcedTool("Accendi la luce del naso di blu", tools), "set_led");
   assert.equal(chooseForcedTool("Fai un suono di conferma", tools), "play_sound");
   assert.equal(chooseForcedTool("Dimmi lo stato del coniglio e il meteo", tools), "rabbit_status");
+  assert.equal(chooseForcedTool("Dimmi lo stato corrente del coniglio", tools), "rabbit_status");
+  assert.equal(chooseForcedTool("Come sta il coniglio?", tools), "rabbit_status");
   assert.equal(chooseForcedTool("Qual è la posizione delle orecchie?", tools), "rabbit_status");
   assert.equal(chooseForcedTool("Quanto fa due più due?", tools), "");
+  assert.equal(chooseForcedTool("Raccontami una storia sul coniglio", tools), "");
   assert.deepEqual(buildForcedToolArgs("move_ears", "sinistro cinque, destro zero"), { left: 5, right: 0 });
   assert.deepEqual(buildForcedToolArgs("move_ears", "muovi entrambe a sette"), { left: 7, right: 7 });
   assert.deepEqual(buildForcedToolArgs("move_ears", "porta il sinistro a sei"), { left: 6, right: 0 });

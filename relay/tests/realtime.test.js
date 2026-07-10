@@ -64,4 +64,40 @@ test("creates a deterministic device function-call item before answering", async
   assert.equal(functionItem.item.name, "move_ears");
   assert.deepEqual(JSON.parse(functionItem.item.arguments), { left: 5, right: 0 });
   assert.equal(events.some((event) => event.type === "response.create"), false);
+
+  const continuation = session.continueWithToolResult(payload.call_id, "ok", "http://relay");
+  const responseEvent = events.findLast((event) => event.type === "response.create");
+  assert.equal(responseEvent.response.tool_choice, "none");
+  assert.equal(events.findLast((event) => event.type === "session.update").session.tool_choice, "none");
+  session.resolvePayload({ ok: 1, type: "answer" });
+  assert.deepEqual(await continuation, { ok: 1, type: "answer" });
+});
+
+test("ordinary conversation disables rabbit tools", async () => {
+  const events = [];
+  const session = new RealtimeSession({
+    rabbitId: "rabbit",
+    apiKey: "test",
+    realtimeUrl: "wss://example.test",
+    model: "gpt-realtime-2.1",
+    voice: "marin",
+    prompt: "test",
+    language: "it",
+    timeZone: "Europe/Rome",
+    tools: [{ name: "rabbit_status", description: "status", parameters: { type: "object" }, exec: "forth" }],
+    ticketStore: {},
+    ttlMs: 75_000,
+  });
+  session.connect = async () => session;
+  session.ws = {
+    readyState: WebSocket.OPEN,
+    send(raw) { events.push(JSON.parse(raw)); },
+  };
+
+  const answer = session.beginTurn({ text: "Raccontami una storia", audio: null, baseUrl: "http://relay" });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(events.findLast((event) => event.type === "session.update").session.tool_choice, "none");
+  assert.equal(events.findLast((event) => event.type === "response.create").response.tool_choice, "none");
+  session.resolvePayload({ ok: 1, type: "answer" });
+  assert.deepEqual(await answer, { ok: 1, type: "answer" });
 });

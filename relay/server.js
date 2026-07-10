@@ -77,7 +77,7 @@ function normalizedIntent(value) {
     .toLowerCase();
 }
 
-/** Select only explicit, reversible device intents; ordinary conversation stays automatic. */
+/** Select only explicit, reversible device intents; ordinary conversation uses no tools. */
 export function chooseForcedTool(utterance, tools) {
   const text = normalizedIntent(utterance);
   const available = new Set(tools.map((tool) => tool.name));
@@ -97,7 +97,7 @@ export function chooseForcedTool(utterance, tools) {
   const soundAction = /(suon|riproduc|emett|fai|avvia)/;
   if (available.has("play_sound") && sound.test(text) && soundAction.test(text)) return "play_sound";
 
-  const liveStatus = /(stato (del |di )?(coniglio|nabaztag)|come stai|che ore|ora (locale|e)|meteo|prevision|piov|nev|temporale|dorm|sonno|sveglio|posizione.{0,30}orecchi)/;
+  const liveStatus = /(stato (?:(?:corrente|attuale) )?(?:del |di )?(coniglio|nabaztag)|come sta(?:i| il coniglio| nabaztag)|che ore|ora (locale|e)|meteo|prevision|piov|nev|temporale|dorm|sonno|sveglio|posizione.{0,30}orecchi)/;
   if (available.has("rabbit_status") && liveStatus.test(text)) return "rabbit_status";
   return "";
 }
@@ -351,7 +351,7 @@ export function createRelayServer(overrides = {}) {
         }
         const forcedTool = chooseForcedTool(heard, tools);
         const forcedArgs = forcedTool ? buildForcedToolArgs(forcedTool, heard) : {};
-        logger.info(`[relay] accepted turn with ${tools.length} tools; forced=${forcedTool || "auto"}`);
+        logger.info(`[relay] accepted turn with ${tools.length} tools; forced=${forcedTool || "none"}`);
         const ttlMs = clamp(header(req, "x-session-ttl", 8), 15, 300, config.sessionTtlMs / 1000) * 1000;
         const audio = text ? null : wavImaAdpcmToMuLaw(body);
 
