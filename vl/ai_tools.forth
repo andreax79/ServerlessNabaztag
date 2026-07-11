@@ -10,7 +10,6 @@ variable ai-tool-actual-left
 variable ai-tool-actual-right
 variable ai-tool-left-broken
 variable ai-tool-right-broken
-variable ai-tool-wait
 
 : ai-read-ear-health ( -- )
   nil "http://" :: ip :: "/status" :: str-join
@@ -24,13 +23,16 @@ variable ai-tool-wait
 : ai-ears-arrived ( -- flag )
   ears ai-tool-right @ = swap ai-tool-left @ = and ;
 
-: ai-wait-ears ( -- )  \ poll until both ears reach their target, max ~3.6 s
-  18 ai-tool-wait !
-  begin
-    ai-tool-wait @ 1- ai-tool-wait !
-    ai-ears-arrived ai-tool-wait @ 0 < or
-    dup invert if 200 ms then
-  until ;
+\ MS carries ~200 ms of scheduler overhead per call (measured on device), so
+\ the wait must be a single computed sleep, not a poll loop: the firmware
+\ kills any tool that runs longer than 5 s.
+: ai-ear-steps ( current target -- n )  \ steps along the shortest path
+  swap - 17 + 17 mod dup 8 > if 17 swap - then ;
+
+: ai-ears-travel-ms ( -- ms )  \ generous estimate of the longest ear travel
+  ai-tool-actual-left @ ai-tool-left @ ai-ear-steps
+  ai-tool-actual-right @ ai-tool-right @ ai-ear-steps
+  max 300 * 700 + 3000 min ;
 
 : tool-move_ears ( args-json -- result )
   json-parse
@@ -46,7 +48,8 @@ variable ai-tool-wait
   ai-tool-right @ 1 move-ear
   ai-tool-actual-left @ ai-tool-left @ ai-shortest-ear-dir
   ai-tool-left @ 0 move-ear
-  ai-wait-ears
+  ai-ears-travel-ms ms
+  ai-ears-arrived invert if 600 ms then
   ears ai-tool-actual-right ! ai-tool-actual-left !
   ai-ears-arrived if
     nil "ok: ears at left=" :: ai-tool-actual-left @ ::
