@@ -75,7 +75,7 @@ SystemCallArchitectures=native
 WantedBy=multi-user.target
 ```
 
-The default firmware relay address is `192.168.1.214:8787`. Keep port 8787 reachable only from the home LAN. TLS is used from the relay to OpenAI; the legacy rabbit-to-relay hop is plain HTTP because the firmware has no TLS stack.
+The firmware leaves the relay address empty until the assistant is configured. Enter the host and optional port without a scheme, for example `relay-host.local:8787`. Keep port 8787 reachable only from the home LAN. TLS is used from the relay to OpenAI; the legacy rabbit-to-relay hop is plain HTTP because the firmware has no TLS stack.
 
 ## API contract
 

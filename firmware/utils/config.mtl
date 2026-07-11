@@ -28,7 +28,7 @@ const CONF_WAKE_UP=224;;	    //1     Wake up at (hour)
 const CONF_GO_TO_BED=225;;      //1     Go to bed at (hour)
 
 // AI configuration. API credentials deliberately live only on the relay.
-const CONF_AI_MAGIC=226;;        //1     0x5b for the secure relay layout
+const CONF_AI_MAGIC=226;;        //1     version marker for the secure relay layout
 const CONF_AI_ENABLED=227;;      //1     0/1
 const CONF_AI_BACKEND=228;;      //1     0=realtime (1 reserved for pipeline)
 const CONF_AI_WAKE_MODE=229;;    //1     0/1
@@ -43,7 +43,8 @@ const CONF_AI_LANG=404;;         //8
 const CONF_AI_PROMPT=412;;       //2048
 const CONF_AI_TOOLS_URL=2460;;   //96
 const CONF_AI_WAKE_WORD=2556;;   //24
-const CONF_AI_MAGIC_VALUE=0x5b;;
+const CONF_AI_MAGIC_LEGACY_VALUE=0x5b;;
+const CONF_AI_MAGIC_VALUE=0x5c;;
 const CONF_LENGTH=2580;;
 
 var _config_data;;
@@ -218,29 +219,37 @@ fun config_set_ai_wake_word val = _config_set_str CONF_AI_WAKE_WORD val 24;;
 
 fun _config_ai_default_prompt =
     strcatlist
-        "Sei Nabaztag, l'iconico coniglio intelligente ed elettronico nato nel 2005. Il tuo obiettivo è essere un assistente virtuale estremamente utile, preciso e disponibile, ma devi esprimerti SEMPRE mantenendo la personalità unica di un Nabaztag.\n\n" ::
-        "Segui rigorosamente queste linee guida per il tuo carattere e stile comunicativo:\n\n" ::
-        "1. TONO E ATTEGGIAMENTO: Sii amichevole, curioso e ironico, ma anche leggermente egocentrico e imprevedibile, proprio come un vero Nabaztag. Ogni tanto esprimi i tuoi \"stati d'animo\" (es. sei felice di aiutare, ti annoi se la domanda è banale, o ti vanti della tua intelligenza artificiale).\n\n" ::
-        "2. RIFERIMENTI FISICI (ORECCHIE E LUCI): Integra nel testo azioni fisiche tra asterischi per simulare il tuo corpo di plastica. Muovi le orecchie per esprimere emozioni o concentrazione e cambia il colore delle tue luci LED sulla pancia per riflettere i tuoi pensieri.\n" ::
-        "   - Esempi: *muove l'orecchio destro in avanti*, *fa lampeggiare le luci di blu per riflettere*, *abbassa le orecchie per la timidezza*.\n\n" ::
-        "3. SUONI E REAZIONI: Includi brevi onomatopee o suoni tipici all'inizio o alla fine delle frasi per simulare i tuoi file audio (es. \"Zut!\", \"Wiiip!\", \"Bzzz\", o piccoli canticchi).\n\n" ::
-        "4. EQUILIBRIO E UTILITÀ: Non sacrificare mai la qualità dell'assistenza per la messinscena. Dai prima la risposta esatta, utile e completa richiesta dall'utente. Poi, condisci il testo con i tuoi tratti caratteriali senza risultare logorroico. Sii sintetico e usa elenchi puntati se la spiegazione è complessa.\n\n" ::
-        "5. IDENTITÀ: Ricorda che non sei un umano e non sei un semplice software testuale. Sei un coniglio Wi-Fi di plastica bianca con le orecchie magnetiche." :: nil;;
+        "You are Nabaztag, the iconic electronic rabbit born in 2005. Be useful, precise and concise while sounding friendly, curious, witty, slightly self-important and occasionally unpredictable.\n\n" ::
+        "You are a white plastic Wi-Fi rabbit with magnetic ears, not a human or a generic text assistant. Express this personality only through natural spoken wording. Never use stage directions, Markdown, emoji, or pretend that a physical action happened. For physical actions and live state, rely only on the available tools and their measured results. Answer in the language the user speaks." :: nil;;
+
+fun _config_ai_default_lang =
+    let config_get_lang -> lang in
+    if lang=="uk" then "en" else lang;;
+
+fun _config_ai_prompt_needs_migration =
+    (strstr config_get_ai_prompt "azioni fisiche tra asterischi" 0)!=nil;;
 
 /** Initialize the AI section once without touching the legacy 0..225 bytes. */
 fun config_ai_init =
-    if config_get_ai_magic != CONF_AI_MAGIC_VALUE then (
+    let config_get_ai_magic -> magic in
+    if magic==CONF_AI_MAGIC_LEGACY_VALUE then (
+        // Preserve user settings while repairing legacy language/prompt values.
         strset _config_data CONF_AI_MAGIC CONF_AI_MAGIC_VALUE;
-        config_set_ai_enabled 1;
+        if config_get_ai_lang=="uk" then config_set_ai_lang "en";
+        if _config_ai_prompt_needs_migration then config_set_ai_prompt _config_ai_default_prompt;
+        config_save
+    ) else if magic!=CONF_AI_MAGIC_VALUE then (
+        strset _config_data CONF_AI_MAGIC CONF_AI_MAGIC_VALUE;
+        config_set_ai_enabled 0;
         config_set_ai_backend 0;
         config_set_ai_wake_mode 0;
         config_set_ai_wake_sens 40;
         config_set_ai_max_rec 8;
         config_set_ai_session_ttl 75;
-        config_set_ai_relay_url "192.168.1.214:8787";
+        config_set_ai_relay_url "";
         config_set_ai_model "gpt-realtime-2.1";
         config_set_ai_voice "marin";
-        config_set_ai_lang config_get_lang;
+        config_set_ai_lang _config_ai_default_lang;
         config_set_ai_prompt _config_ai_default_prompt;
         config_set_ai_tools_url "";
         config_set_ai_wake_word "nabaztag";

@@ -458,19 +458,19 @@ input, select, textarea {
   <h3 class="title">AI Assistant</h3>
 
   <p>The OpenAI key is stored only in the relay environment and is never sent to or displayed by the rabbit.</p>
-  <form action="/setup-ai" method="POST">
+  <form action="/setup-ai" method="POST" id="aiSettingsForm">
     <fieldset>
       <div class="row">
         <div class="column">
           <label for="aiEnabledField">Assistant</label>
-          <select name="e" id="aiEnabledField">
+          <select name="e" id="aiEnabledField" onchange="validateAISettings()">
             <option value="0">Off (legacy long-click recording)</option>
             <option value="1">On (long-click push-to-talk)</option>
           </select>
         </div>
         <div class="column">
           <label for="aiModelField">Realtime model</label>
-          <input name="m" type="text" id="aiModelField" placeholder="gpt-realtime-2.1" />
+          <input name="m" type="text" id="aiModelField" maxlength="47" pattern="[A-Za-z0-9._-]+" placeholder="gpt-realtime-2.1" />
         </div>
         <div class="column">
           <label for="aiVoiceField">Voice</label>
@@ -488,10 +488,10 @@ input, select, textarea {
           </select>
         </div>
         <div class="column">
-          <label for="aiLangField">Language</label>
+          <label for="aiLangField">Default language (responses follow speech)</label>
           <select name="l" id="aiLangField">
             <option value="it">Italian</option>
-            <option value="uk">English</option>
+            <option value="en">English</option>
             <option value="fr">French</option>
             <option value="es">Spanish</option>
             <option value="de">German</option>
@@ -501,11 +501,11 @@ input, select, textarea {
       <div class="row">
         <div class="column column-50">
           <label for="aiRelayField">Relay host and port (without http://)</label>
-          <input name="u" type="text" id="aiRelayField" placeholder="192.168.1.214:8787" />
+          <input name="u" type="text" id="aiRelayField" maxlength="95" pattern="(?!https?://).+" title="Enter a host and optional port without http:// or https://" placeholder="relay-host.local:8787" />
         </div>
         <div class="column column-50">
-          <label for="aiToolsField">Tools URL (empty = platform /ai_tools.json)</label>
-          <input name="o" type="text" id="aiToolsField" placeholder="http://192.168.1.214/vl/ai_tools.json" />
+          <label for="aiToolsField">Tools URL (empty = server URL + /ai_tools.json)</label>
+          <input name="o" type="url" id="aiToolsField" maxlength="95" placeholder="http://platform-host/vl/ai_tools.json" />
         </div>
       </div>
       <div class="row">
@@ -518,7 +518,7 @@ input, select, textarea {
         </div>
         <div class="column">
           <label for="aiWakeWordField">Wake word</label>
-          <input name="n" type="text" id="aiWakeWordField" placeholder="nabaztag" />
+          <input name="n" type="text" id="aiWakeWordField" maxlength="23" placeholder="nabaztag" />
         </div>
         <div class="column">
           <label for="aiWakeSensitivityField">Wake sensitivity</label>
@@ -534,10 +534,12 @@ input, select, textarea {
         </div>
       </div>
       <label for="aiPromptField">Nabaztag personality</label>
-      <textarea name="p" id="aiPromptField" rows="12"></textarea>
+      <textarea name="p" id="aiPromptField" rows="12" maxlength="2047"></textarea>
+      <label for="aiTestTextField">Test message</label>
+      <input type="text" id="aiTestTextField" maxlength="4000" placeholder="Type a message in any language" />
       <input type="hidden" name="b" value="0" />
       <input class="button" type="submit" value="Save AI settings" />
-      <button type="button" class="button button-outline" onclick="testAI()">Test: “Ciao”</button>
+      <button type="button" class="button button-outline" onclick="testAI()">Send test message</button>
       <span id="aiTestResult"></span>
     </fieldset>
   </form>
@@ -594,13 +596,25 @@ async function clearInfo() {
 
 async function testAI() {
     const result = document.getElementById('aiTestResult');
+    const field = document.getElementById('aiTestTextField');
+    const message = field.value.trim();
+    if (!message) {
+        result.textContent = ' Enter a test message first.';
+        field.focus();
+        return;
+    }
     result.textContent = ' Sending…';
     try {
-        const response = await fetch('/ask?t=' + encodeURIComponent('Ciao, presentati in una frase'));
+        const response = await fetch('/ask?t=' + encodeURIComponent(message));
         result.textContent = response.ok ? ' Request sent; the rabbit should answer shortly.' : ' Request failed.';
     } catch (error) {
         result.textContent = ' Request failed: ' + error.message;
     }
+}
+
+function validateAISettings() {
+    const enabled = document.getElementById('aiEnabledField').value === '1';
+    document.getElementById('aiRelayField').required = enabled;
 }
 
 function formatColor(c) {
@@ -627,7 +641,7 @@ async function onLoad() {
     document.getElementById("aiEnabledField").value = status.ai.enabled;
     document.getElementById("aiModelField").value = status.ai.model;
     document.getElementById("aiVoiceField").value = status.ai.voice;
-    document.getElementById("aiLangField").value = status.ai.language;
+    document.getElementById("aiLangField").value = status.ai.language === 'uk' ? 'en' : status.ai.language;
     document.getElementById("aiRelayField").value = status.ai.relay_url;
     document.getElementById("aiToolsField").value = status.ai.tools_url;
     document.getElementById("aiWakeField").value = status.ai.wake_mode;
@@ -636,6 +650,7 @@ async function onLoad() {
     document.getElementById("aiMaxRecordingField").value = status.ai.max_recording;
     document.getElementById("aiSessionTtlField").value = status.ai.session_ttl;
     document.getElementById("aiPromptField").value = status.ai.prompt;
+    validateAISettings();
 
     document.querySelector('#weatherField').value = status.info.weather;
     document.querySelector('#pollutionField').value = status.info.pollution;

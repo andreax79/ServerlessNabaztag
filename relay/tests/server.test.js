@@ -55,6 +55,21 @@ test("transcription biases toward the configured wake word, not a fixed language
   assert.equal(submitted.get("prompt"), "nabaztag");
 });
 
+test("maps the legacy English code to ISO-639-1 before transcription", async () => {
+  let submitted;
+  await transcribeAudio(
+    Buffer.from("RIFF"),
+    { transcribeModel: "gpt-4o-mini-transcribe", apiKey: "test" },
+    async (_url, options) => {
+      submitted = options.body;
+      return { ok: true, async json() { return { text: "nabaztag" }; } };
+    },
+    "uk",
+    "nabaztag",
+  );
+  assert.equal(submitted.get("language"), "en");
+});
+
 test("button turns never call the transcription API", async (t) => {
   const turns = [];
   const sessions = {
@@ -78,7 +93,7 @@ test("button turns never call the transcription API", async (t) => {
       throw new Error(`unexpected upstream HTTP call: ${url}`);
     },
   });
-  const response = await fetch(`${base}/v1/ask?lang=it&mode=button`, {
+  const response = await fetch(`${base}/v1/ask?lang=uk&mode=button`, {
     method: "POST",
     headers: { "x-rabbit-id": "00:19:db:9e:8a:6c", "content-type": "audio/wav" },
     body: makeImaWav(Buffer.from([0x00, 0x00, 0x00, 0x00, 0x11, 0x11])),
@@ -86,6 +101,7 @@ test("button turns never call the transcription API", async (t) => {
   const payload = await response.json();
   assert.deepEqual(payload, { ok: 1, type: "answer", tts: "http://example.test/audio" });
   assert.equal(turns.length, 1);
+  assert.equal(turns[0].language, "en", "legacy English settings must be normalized before the Realtime session");
 });
 
 test("wake mode still gates on the wake word", async (t) => {

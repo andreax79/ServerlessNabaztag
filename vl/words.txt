@@ -34,6 +34,13 @@ $REPEAT        ( s n -- s )                             Repeat string s n times
 @              ( addr -- value )                        Fetch a value from memory at the given address.
 ABORT          ( i * x -- ) ( R: j * x -- )             Empty the data stack and the return stack
 ABS            ( n -- abs(n)                            Absolute value  )
+AI-EAR-STEPS   ( current target -- n )                  steps along the shortest path
+AI-EARS-ARRIVED ( -- flag )
+AI-EARS-TRAVEL-MS ( -- ms )                             generous estimate of the longest ear travel
+AI-READ-EAR-HEALTH ( -- )
+AI-SHORTEST-EAR-DIR ( current target -- dir )
+AI-SLEEP>TEXT  ( flag -- text )
+AI-WEATHER>TEXT ( code -- text )
 ALLOCATE-CELL  ( -- addr )                              Allocate a cell from memory and return its address.
 AND            ( n1 n2 -- flag )                        Logical AND
 BEGIN          (immediate) ( -- )                       Begin a loop Store the current position in the return stack

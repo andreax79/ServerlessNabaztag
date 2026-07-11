@@ -15,7 +15,9 @@ function decodeHeader(value) {
 }
 
 function localeOf(language) {
-  return /^[a-z]{2}(-[A-Za-z]{2})?$/.test(String(language || "")) ? language : "en";
+  const locale = String(language || "");
+  if (locale.toLowerCase() === "uk") return "en";
+  return /^[a-z]{2}(-[A-Za-z]{2})?$/.test(locale) ? locale : "en";
 }
 
 /**

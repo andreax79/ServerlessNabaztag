@@ -477,12 +477,12 @@ paths:
                 s: { type: integer, minimum: 0, maximum: 255 }
                 r: { type: integer, minimum: 2, maximum: 20 }
                 t: { type: integer, minimum: 15, maximum: 255 }
-                u: { type: string }
-                m: { type: string }
-                v: { type: string }
-                l: { type: string }
+                u: { type: string, maxLength: 95 }
+                m: { type: string, maxLength: 47, pattern: '^[A-Za-z0-9._-]+$' }
+                v: { type: string, maxLength: 23, enum: [marin, cedar, alloy, ash, ballad, coral, echo, sage, shimmer, verse] }
+                l: { type: string, maxLength: 7, enum: [en, it, fr, es, de] }
                 p: { type: string, maxLength: 2047 }
-                o: { type: string }
+                o: { type: string, maxLength: 95 }
                 n: { type: string, maxLength: 23 }
       responses:
         '204':
@@ -500,12 +500,12 @@ paths:
         - { name: s, in: query, description: "Wake energy threshold.", schema: { type: integer, minimum: 0, maximum: 255 } }
         - { name: r, in: query, description: "Maximum recording seconds.", schema: { type: integer, minimum: 2, maximum: 20 } }
         - { name: t, in: query, description: "Conversation session TTL in seconds.", schema: { type: integer, minimum: 15, maximum: 255 } }
-        - { name: u, in: query, description: "Plain HTTP relay host and port, without scheme.", schema: { type: string } }
-        - { name: m, in: query, description: "Realtime model ID.", schema: { type: string } }
-        - { name: v, in: query, description: "Realtime voice.", schema: { type: string } }
-        - { name: l, in: query, description: "Assistant language.", schema: { type: string } }
+        - { name: u, in: query, description: "Plain HTTP relay host and port, without scheme.", schema: { type: string, maxLength: 95 } }
+        - { name: m, in: query, description: "Realtime model ID.", schema: { type: string, maxLength: 47, pattern: '^[A-Za-z0-9._-]+$' } }
+        - { name: v, in: query, description: "Realtime voice.", schema: { type: string, maxLength: 23, enum: [marin, cedar, alloy, ash, ballad, coral, echo, sage, shimmer, verse] } }
+        - { name: l, in: query, description: "Default assistant language; spoken input can use any language.", schema: { type: string, maxLength: 7, enum: [en, it, fr, es, de] } }
         - { name: p, in: query, description: "Nabaztag personality prompt.", schema: { type: string, maxLength: 2047 } }
-        - { name: o, in: query, description: "Tool manifest URL; empty selects platform /ai_tools.json.", schema: { type: string } }
+        - { name: o, in: query, description: "Tool manifest URL; empty selects the configured server URL plus /ai_tools.json.", schema: { type: string, maxLength: 95 } }
         - { name: n, in: query, description: "Experimental wake word.", schema: { type: string, maxLength: 23 } }
       responses:
         '204':

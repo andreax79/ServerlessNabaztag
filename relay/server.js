@@ -7,7 +7,7 @@ import { TicketStore } from "./lib/tickets.js";
 import { ToolConfigCache } from "./lib/tools.js";
 
 const VOICES = new Set(["alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse", "marin", "cedar"]);
-const MODEL_NAME = /^[a-zA-Z0-9._-]{1,80}$/;
+const MODEL_NAME = /^[a-zA-Z0-9._-]{1,47}$/;
 const RABBIT_ID = /^[a-zA-Z0-9:._-]{1,80}$/;
 
 function envNumber(name, fallback) {
@@ -70,6 +70,11 @@ function decoded(value) {
   try { return decodeURIComponent(value); } catch { return value; }
 }
 
+function normalizedLanguage(value) {
+  const language = String(value || "").trim().slice(0, 8);
+  return language.toLowerCase() === "uk" ? "en" : language;
+}
+
 async function readBody(req, maxBytes) {
   const chunks = [];
   let length = 0;
@@ -106,7 +111,8 @@ export async function transcribeAudio(wav, config, fetchImpl, language = "", pro
   const form = new FormData();
   form.append("model", config.transcribeModel);
   form.append("file", new Blob([wav], { type: "audio/wav" }), "nabaztag.wav");
-  const inputLanguage = /^[a-z]{2}$/i.test(language) ? language.toLowerCase() : "";
+  const normalized = normalizedLanguage(language);
+  const inputLanguage = /^[a-z]{2}$/i.test(normalized) ? normalized.toLowerCase() : "";
   if (inputLanguage) form.append("language", inputLanguage);
   if (prompt) form.append("prompt", String(prompt).slice(0, 200));
   const controller = new AbortController();
@@ -246,7 +252,7 @@ export function createRelayServer(overrides = {}) {
         const model = MODEL_NAME.test(modelHeader) ? modelHeader : config.realtimeModel;
         const voiceHeader = header(req, "x-voice", 24);
         const voice = VOICES.has(voiceHeader) ? voiceHeader : config.voice;
-        const language = (url.searchParams.get("lang") || "").slice(0, 8);
+        const language = normalizedLanguage(url.searchParams.get("lang"));
         const prompt = promptsByRabbit.has(rabbitId)
           ? promptsByRabbit.get(rabbitId)
           : decoded(header(req, "x-prompt", 8192));
