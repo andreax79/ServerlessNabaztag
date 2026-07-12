@@ -47,6 +47,8 @@ fun forth_init_dictionary=
         [ [str: "1-"               ] [func:#forth_one_minus]] ::
         [ [str: "2+"               ] [func:#forth_two_plus]] ::
         [ [str: "2-"               ] [func:#forth_two_minus]] ::
+        [ [str: "2*"               ] [func:#forth_two_times]] ::
+        [ [str: "2/"               ] [func:#forth_two_div]] ::
         [ [str: "*"                ] [func:#forth_mul]] ::
         [ [str: "/"                ] [func:#forth_div]] ::
         [ [str: "mod"              ] [func:#forth_mod]] ::
@@ -57,6 +59,8 @@ fun forth_init_dictionary=
         [ [str: "min"              ] [func:#forth_min]] ::
         [ [str: "abs"              ] [func:#forth_abs]] ::
         [ [str: "rshift"           ] [func:#forth_rshift]] ::
+        [ [str: "lshift"           ] [func:#forth_lshift]] ::
+        [ [str: "negate"           ] [func:#forth_negate]] ::
         // Logical
         [ [str: "and"              ] [func:#forth_and ]] ::
         [ [str: "or"               ] [func:#forth_or ]] ::

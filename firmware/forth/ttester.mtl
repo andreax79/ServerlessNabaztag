@@ -45,8 +45,8 @@ fun forth_t_close_brace f=
         ) else (
             let (listlen f.stack) - forth_test_start_depth.int -> l in
                 for i=0; i<l do
-                    let forth_pop f -> actual_value in
-                    let forth_rpop f -> expected_value in
+                    let forth_pop f -> expected_value in
+                    let forth_rpop f -> actual_value in
                     let forth_compare_words actual_value expected_value -> c in
                     if c != 0 then
                         forth_write f strcatlist

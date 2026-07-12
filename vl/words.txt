@@ -9,8 +9,10 @@ $REPEAT        ( s n -- s )                             Repeat string s n times
 0=             ( n -- flag )                            True if top number zero
 1+             ( n -- n+1 )                             Increments top of stack by 1
 1-             ( n -- n-1 )                             Decrements top of stack by 1
+2*             ( n -- n*2 )                             Multiplies top of stack by 2
 2+             ( n -- n+2 )                             Increments top of stack by 2
 2-             ( n -- n-2 )                             Decrements top of stack by 2
+2/             ( n -- n/2 )                             Divides top of stack by 2
 2>R            ( x1 x2 -- ) ( R: -- x1 x2 )             Move two items to return stack
 2DROP          ( x1 x2 -- )
 2DUP           ( x1 x2 -- x1 x2 x1 x2 )
@@ -36,7 +38,7 @@ $REPEAT        ( s n -- s )                             Repeat string s n times
 ABORT          ( i * x -- ) ( R: j * x -- )             Empty the data stack and the return stack
 ABS            ( n -- abs(n)                            Absolute value  )
 ALLOCATE-CELL  ( -- addr )                              Allocate a cell from memory and return its address.
-AND            ( n1 n2 -- flag )                        Logical AND
+AND            ( x1 x2 -- x3 )                          x3 is the bit-by-bit logical "and" of x1 with x2.
 BEGIN          (immediate) ( -- )                       Begin a loop Store the current position in the return stack
 BETWEEN        ( n low high -- flag )
 BL             ( -- char )                              Character value for a space
@@ -73,7 +75,7 @@ HTTP-GET       ( url -- content header )                Perform an HTTP GET requ
 HTTP-POST      ( payload url -- content header )        Perform an HTTP POST request and return the content as a string HTTPS is not supported
 IF             (immediate) ( cond -- )                  Begin a conditional Compile a conditional jump to the matching ELSE or THEN
 INTERPRETER    ( -- )                                   Interactive Forth interpreter
-INVERT         ( n -- flag )                            Logical NOT
+INVERT         ( x1 -- x2 )                             Invert all bits of x1, giving its logical inverse x2.
 IP             ( -- ip )                                Push the IP address of the WIFI interface onto the stack
 JMP            ( addr -- )                              Unconditional jump
 JSON-GET       ( w path -- x ) (e.g., "daily.weathercode[0]") Get an element from a dictionary or list by path
@@ -90,6 +92,7 @@ MD5            ( str -- hash )                          Compute the MD5 hash of 
 METEO>INFO     ( n -- n )                               Convert weather code to info code
 MOVE-EAR       ( ear dir pos -- ) (0=left, 1=right) (0=left, 1=right) (0..16) Move an ear  ear in direction dir  to position pos
 MS             ( delay -- )                             Sleep for the specified number of milliseconds
+NEGATE         ( n -- -n )                              Negates the top number
 NIL            ( -- list )                              Push empty list onto the stack
 NIP            ( n1 n2 -- n2 )                          Drop the first item below the top of stack
 NTH            ( list/str n -- x )                      Get the n-th element of a list or the n-th character of a string
@@ -101,7 +104,7 @@ ON-EARS        ( -- )                                   Ears hook
 ON-HALFTIME    ( -- )                                   Half-hour hook
 ON-RFID        ( rfid -- )                              RFID hook
 ON-TIME        ( -- )                                   Hour hook
-OR             ( n1 n2 -- flag )                        Logical OR
+OR             ( x1 x2 -- x3 )                          x3 is the bit-by-bit inclusive-or of x1 with x2.
 OVER           ( n1 n2 -- n1 n2 n1 )                    Make copy of second item on top
 PAD_LEFT       ( s n c -- s )                           Pad string s on the left to length n with character c
 PAD_RIGHT      ( s n c -- s )                           Pad string s on the right to length n with character c
@@ -158,7 +161,7 @@ VARIABLE       (immediate) ( -- addr )                  Define a variable and al
 VOLUME         ( -- vol )                               Get the audio volume
 WAKE-UP        ( -- )                                   Wake up the Nabaztag from sleep mode
 WORDS          ( -- )                                   List the words in the dictionary
-XOR            ( n1 n2 -- flag )                        Logical XOR
+XOR            ( x1 x2 -- x3 )                          x3 is the bit-by-bit exclusive-or of x1 with x2.
 
 Variables
 ---------
