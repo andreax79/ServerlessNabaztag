@@ -17,37 +17,36 @@ fun forth_false f=
     forth_push f [int:FORTH_FALSE];;
 
 /**
- * AND ( n1 n2 -- flag )
- * Logical AND
+ * AND ( x1 x2 -- x3 )  x3 is the bit-by-bit logical "and" of x1 with x2.
  */
 fun forth_and f=
     let forth_pop f -> a in
     let forth_pop f -> b in
-    if (a.int!=FORTH_FALSE) && (b.int!=FORTH_FALSE) then forth_true f else forth_false f;;
+    let a.int & b.int -> v in
+    forth_push f [int:v];;
 
 /**
- * OR ( n1 n2 -- flag )
- * Logical OR
+ * OR ( x1 x2 -- x3 )  x3 is the bit-by-bit inclusive-or of x1 with x2.
  */
 fun forth_or f=
     let forth_pop f -> a in
     let forth_pop f -> b in
-    if (a.int!=FORTH_FALSE) || (b.int!=FORTH_FALSE) then forth_true f else forth_false f;;
+    let a.int | b.int -> v in
+    forth_push f [int:v];;
 
 /**
- * XOR ( n1 n2 -- flag )
- * Logical XOR
+ * XOR ( x1 x2 -- x3 )  x3 is the bit-by-bit exclusive-or of x1 with x2.
  */
 fun forth_xor f=
     let forth_pop f -> a in
     let forth_pop f -> b in
-    if (a.int!=FORTH_FALSE) != (b.int!=FORTH_FALSE) then forth_true f else forth_false f;;
+    let a.int ^ b.int -> v in
+    forth_push f [int:v];;
 
 /**
- * INVERT ( n -- flag )
- * Logical NOT
+ * INVERT ( x1 -- x2 )  Invert all bits of x1, giving its logical inverse x2.
  */
 fun forth_invert f=
     let forth_pop f -> a in
-    if (a.int==FORTH_FALSE) then forth_true f else forth_false f;;
-
+    let ~ a.int -> v in
+    forth_push f [int:v];;
