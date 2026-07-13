@@ -3,8 +3,12 @@
 fun strstr s p i=strfind s i p 0 nil;;
 fun itoanil l=if l==nil then '0'::nil else l;;
 fun listlen l=if l==nil then 0 else 1+listlen tl l;;
-fun listrem l x=if l!=nil then if x==hd l then tl l else (hd l)::listrem tl l x;;
-fun slistlen l=	if l==nil then 0 else (strlen hd l)+slistlen tl l;;
+
+/**
+ * Remove all occurrences of x from list l.
+ */
+fun list_rem l x=
+    if l!=nil then if x==hd l then tl l else (hd l)::list_rem tl l x;;
 
 /**
  * Return the nth element of list.
@@ -13,16 +17,22 @@ fun listnth l i=
     if !i then hd l else if i>0 then listnth tl l i-1;;
 
 /**
+ * Delete the nth element of list.
+ */
+fun list_rem_nth l i=
+    if !i then tl l else if i>0 then (hd l)::list_rem_nth tl l i-1;;
+
+/**
  * Return the last element of list.
  */
-fun listlast l=
-    if (tl l) != nil then listlast tl l else hd l;;
+fun list_last l=
+    if (tl l) != nil then list_last tl l else hd l;;
 
 /**
  * Extracts a number from a string, according to the length used the
  * number of bytes it is encoded on. (1, 2, 4)
 */
-fun strgetnum src i nbbytes =
+fun str_get_num src i nbbytes =
 	if (nbbytes == 1) then
 		strget src i
 	else if (nbbytes == 2) then
@@ -31,7 +41,10 @@ fun strgetnum src i nbbytes =
 		(strgetword src i) * 65536 + (strgetword src i+2)
 ;;
 
-fun listtostr l=
+/**
+ * Converts a list of characters to a string.
+ */
+fun list_to_str l=
 	let strnew listlen l -> s in
 	let 0->i in
 	(
@@ -43,11 +56,15 @@ fun listtostr l=
 	s
 	);;
 
-fun liststrlen l r=
+/**
+ * Returns the total length of all strings in a list
+ * plus 'r' * the number of strings in the list.
+ */
+fun list_str_len l r=
     if l==nil then
         r
     else
-        liststrlen tl l r+strlen hd l;;
+        list_str_len tl l r+strlen hd l;;
 
 fun itobin4 i=
 	let strnew 4 -> s in
@@ -88,8 +105,6 @@ fun strreplace s p v=
 
 
 fun rev p q=if p==nil then q else rev tl p (hd p)::q;;
-
-fun remfromlist l t= if l!=nil then if t==hd l then tl l else (hd l)::remfromlist tl l t;;
 
 fun insert x l f=
 	if l==nil then x::nil
@@ -278,7 +293,7 @@ fun dumpListS l0=
 /**
  * Converts a list to a table (array).
  */
-fun listtotab l=
+fun list_to_tab l=
     let 0 -> i in
     let tabnew 0 (listlen l) -> t in (
         for p=l;p!=nil;tl p do

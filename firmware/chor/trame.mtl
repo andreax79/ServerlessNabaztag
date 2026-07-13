@@ -400,7 +400,7 @@ fun trame_is_resource_valid rsrcName=
 
 fun _trame_queue_remove_entry binome=
     // dépile
-    set trame_queue = remfromlist trame_queue binome;
+    set trame_queue = list_rem trame_queue binome;
 
     // was full ?
     let listlen trame_queue -> queueLen in

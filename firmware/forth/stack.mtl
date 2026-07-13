@@ -112,14 +112,14 @@ fun forth_over f=
  * Rotate third item to top
  */
 fun forth_rot f=
-    let forth_pop f -> a in
-    let forth_pop f -> b in
-    let forth_pop f -> c in
-    set f.stack = b :: a :: c :: f.stack;
+    let forth_pop f -> n3 in
+    let forth_pop f -> n2 in
+    let forth_pop f -> n1 in
+    set f.stack = n1 :: n3 :: n2 :: f.stack;
     nil;;
 
 /**
- * PICK ( n ... ni - n ... ni ni )
+ * PICK ( n ... ni -- n ... ni ni )
  * Copy nth item to top of stack
  */
 fun forth_pick f=
@@ -127,7 +127,16 @@ fun forth_pick f=
     let forth_stack_at f n.int -> v in
     forth_push f v;;
 
-// fun forth_roll f= // TODO
+/**
+ * ROLL ( n ... ni -- n ... ni ni )
+ * Move nth item to top of stack
+ */
+fun forth_roll f=
+    let forth_pop f -> n in
+    let forth_stack_at f n.int -> v in (
+        set f.stack = list_rem_nth f.stack n.int;
+        forth_push f v
+    );;
 
 /**
  * NIP ( n1 n2 -- n2 )

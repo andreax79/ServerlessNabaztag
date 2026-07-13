@@ -106,7 +106,7 @@ fun http_sock_read input sock=
             set sock.sockInput = input::sock.sockInput
         );
         // Check if the total received data length now equals or exceeds the expected size
-        if sock.sockSize!=nil && (slistlen sock.sockInput)>=sock.sockSize then
+        if sock.sockSize!=nil && (list_str_len sock.sockInput 0)>=sock.sockSize then
             let strcatlist rev sock.sockInput nil -> str in
             (
                 // Clear the input buffer

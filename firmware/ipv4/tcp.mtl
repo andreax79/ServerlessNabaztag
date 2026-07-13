@@ -136,7 +136,7 @@ fun _tcp_open_arp_req_cb mac tcp trame=
  */
 fun _tcp_remove t=
     set t.stateT=STOFF;
-    set tcp_connections=remfromlist tcp_connections t;;
+    set tcp_connections=list_rem tcp_connections t;;
 
 // Global variable used as a counter to generate unique, ephemeral local port numbers
 // for outgoing connections when a specific local port is not provided

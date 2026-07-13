@@ -18,7 +18,7 @@ fun forth_init_dictionary=
         [ [str: "pick"             ] [func:#forth_pick]] ::
         [ [str: "nip"              ] [func:#forth_nip]] ::
         [ [str: "tuck"             ] [func:#forth_tuck]] ::
-        //[str: [ name:"roll"      ] [func:#forth_roll]] ::
+        [ [str: "roll"             ] [func:#forth_roll]] ::
         [ [str: "?dup"             ] [func:#forth_qdup]] ::
         [ [str: "depth"            ] [func:#forth_depth]] ::
         [ [str: ">r"               ] [func:#forth_to_r]] ::

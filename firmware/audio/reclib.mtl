@@ -14,7 +14,7 @@ fun _reclib_rec_cb s=
 	0;;
 
 fun _reclib_mkriff ldata=
-	let liststrlen ldata 0 -> len in
+	let list_str_len ldata 0 -> len in
         (strcatlist
             "RIFF" ::
             (itobin4 len+52) ::

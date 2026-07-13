@@ -1,10 +1,17 @@
 !              ( value addr -- )                        Store a value into memory at the given address.
 $REPEAT        ( s n -- s )                             Repeat string s n times
+*              ( n1 n2 -- product )                     Multiplies
+*              ( n1 n2 n3 -- (n2*n1)                    / Multiplies and Divides /n3 )
+*              ( n1 n2 n3 -- remainder quotient )       /MOD Multiplies and Divides and Modulus
++              ( n1 n2 -- sum )                         Adds
 +!             ( n addr -- )                            Adds a number to the contents of the address
+-              ( n1 n2 -- difference )                  Subtracts
 ->             (immediate) ( --  )                      Record depth and contents of stack
 .              ( n -- )                                 Display n
 .S             ( -- )                                   Copy and display the values currently on the data stac
 .TASKS         ( -- )                                   List the words in the dictionary
+/              ( n1 n2 -- quotient )                    Divides
+/MOD           ( n1 n2 -- remainder quotient )          Divides and Modulus
 0<>            ( n -- flag )                            True if top number is not zero
 0=             ( n -- flag )                            True if top number zero
 1+             ( n -- n+1 )                             Increments top of stack by 1
@@ -87,9 +94,13 @@ LOAD-SRV       ( filename -- )                          Load a forth file from t
 LOCAL>STRING   ( -- str )                               Push the current local time and date as a string onto the stack
 LOGIN          ( -- )                                   Login
 LOWER          ( s -- s )                               Convert string s to lowercase
+LSHIFT         ( n1 n2 -- n1 << n2 )                    Left shift
 MAC            ( -- mac )                               Push the MAC address of the WIFI interface onto the stack
+MAX            ( n1 n2 -- max )                         Maximum of top two numbers
 MD5            ( str -- hash )                          Compute the MD5 hash of a string
 METEO>INFO     ( n -- n )                               Convert weather code to info code
+MIN            ( n1 n2 -- min )                         Minimum of top two numbers
+MOD            ( n1 n2 -- remainder )                   Modulus
 MOVE-EAR       ( ear dir pos -- ) (0=left, 1=right) (0=left, 1=right) (0..16) Move an ear  ear in direction dir  to position pos
 MS             ( delay -- )                             Sleep for the specified number of milliseconds
 NEGATE         ( n -- -n )                              Negates the top number
@@ -108,6 +119,7 @@ OR             ( x1 x2 -- x3 )                          x3 is the bit-by-bit inc
 OVER           ( n1 n2 -- n1 n2 n1 )                    Make copy of second item on top
 PAD_LEFT       ( s n c -- s )                           Pad string s on the left to length n with character c
 PAD_RIGHT      ( s n c -- s )                           Pad string s on the right to length n with character c
+PICK           ( n ... ni -- n ... ni ni )              Copy nth item to top of stack
 PLAY-CHOR      ( chor_data -- )                         Play a choreography
 PLAY-MIDI      ( i -- ) (i-100)                         Play a MIDI sound/note If i>=100, play note  If 0<=i<100, play sound i If i<0, play a random note
 PLAY-URL       ( url -- )                               Play a WAV file from an HTTP URL HTTPS is not supported
@@ -122,7 +134,9 @@ REBOOT         ( -- )                                   Perform a reboot
 RELOAD-INIT    ( -- )                                   Reload init.forth
 RESUME-TASK    ( task-id -- flag )                      Resume the task with the given task id.
 REVISION       ( -- str )                               Push the revision string onto the stack
+ROLL           ( n ... ni -- n ... ni ni )              Move nth item to top of stack
 ROT            ( n1 n2 n3 -- n2 n3 n1 )                 Rotate third item to top
+RSHIFT         ( n1 n2 -- n1 >> n2 )                    Right shift
 SAY            ( text --  )                             Text to speech
 SET-INFO-ANIMATION ( data n -- )                        Set info animation n from json
 SLEEP          ( -- )                                   Put the Nabaztag into sleep mode
