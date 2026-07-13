@@ -20,7 +20,7 @@ fun forth_init_dictionary=
         [ [str: "pick"             ] [func:#forth_pick]] ::
         [ [str: "nip"              ] [func:#forth_nip]] ::
         [ [str: "tuck"             ] [func:#forth_tuck]] ::
-        //[str: [ name:"roll"      ] [func:#forth_roll]] ::
+        [ [str: "roll"             ] [func:#forth_roll]] ::
         [ [str: "?dup"             ] [func:#forth_qdup]] ::
         [ [str: "depth"            ] [func:#forth_depth]] ::
         [ [str: ">r"               ] [func:#forth_to_r]] ::
@@ -38,7 +38,7 @@ fun forth_init_dictionary=
         [ [str: ">"                ] [func:#forth_more]] ::
         [ [str: ">="               ] [func:#forth_more_eq]] ::
         [ [str: "<>"               ] [func:#forth_ne]] ::
-        [ [str: "<0"               ] [func:#forth_zero_less]] ::
+        [ [str: "0<"               ] [func:#forth_zero_less]] ::
         [ [str: "0="               ] [func:#forth_zero_eq]] ::
         [ [str: ">0"               ] [func:#forth_zero_more]] ::
         [ [str: "0<>"              ] [func:#forth_zero_ne]] ::
@@ -49,6 +49,8 @@ fun forth_init_dictionary=
         [ [str: "1-"               ] [func:#forth_one_minus]] ::
         [ [str: "2+"               ] [func:#forth_two_plus]] ::
         [ [str: "2-"               ] [func:#forth_two_minus]] ::
+        [ [str: "2*"               ] [func:#forth_two_times]] ::
+        [ [str: "2/"               ] [func:#forth_two_div]] ::
         [ [str: "*"                ] [func:#forth_mul]] ::
         [ [str: "/"                ] [func:#forth_div]] ::
         [ [str: "mod"              ] [func:#forth_mod]] ::
@@ -58,6 +60,9 @@ fun forth_init_dictionary=
         [ [str: "max"              ] [func:#forth_max]] ::
         [ [str: "min"              ] [func:#forth_min]] ::
         [ [str: "abs"              ] [func:#forth_abs]] ::
+        [ [str: "rshift"           ] [func:#forth_rshift]] ::
+        [ [str: "lshift"           ] [func:#forth_lshift]] ::
+        [ [str: "negate"           ] [func:#forth_negate]] ::
         // Logical
         [ [str: "and"              ] [func:#forth_and ]] ::
         [ [str: "or"               ] [func:#forth_or ]] ::
@@ -147,6 +152,10 @@ fun forth_init_dictionary=
         [ [str: "task-suspend"     ] [ func:#forth_task_suspend]] ::
         [ [str: "task-resume"      ] [ func:#forth_task_resume]] ::
         [ [str: ".tasks"           ] [ func:#forth_dot_tasks]] ::
+        // TTester
+        [ [str: "t{"               ] [ func:#forth_t_open_brace  flag:FORTH_IMMEDIATE]] ::
+        [ [str: "->"               ] [ func:#forth_t_arrow       flag:FORTH_IMMEDIATE]] ::
+        [ [str: "}t"               ] [ func:#forth_t_close_brace flag:FORTH_IMMEDIATE]] ::
         // Nabaztag
         [ [str:"sleeping?"         ] [ func:#forth_sleeping ]] ::
         [ [str:"sleep"             ] [ func:#forth_sleep       flag:FORTH_ASYNC ]] ::
@@ -164,6 +173,7 @@ fun forth_init_dictionary=
         [ [str:"gc"                ] [ func:#forth_gc ]] ::
         [ [str:"eval-trame"        ] [ func:#forth_eval_trame]] ::
         [ [str:"revision"          ] [ func:#forth_revision ]] ::
+        [ [str:"reboot"            ] [ func:#forth_reboot ]] ::
         [ [str:"ai-ask"            ] [ func:#forth_ai_ask ]] ::
         [ [str:"ai-ask-text"       ] [ func:#forth_ai_ask_text ]] ::
         [ [str:"ai-say"            ] [ func:#forth_ai_say ]] ::

@@ -32,7 +32,7 @@ fun _streaming_load_cb http res maxsize=
         // Je ne comprends pas la logique ici (AS sept07) : a quoi sert _streaming_rsc_tmp et maxsize, et comment passe-t-il à la suite ?
 //      Secholn res;
         set _streaming_rsc_tmp=res::_streaming_rsc_tmp;
-        if maxsize!=nil && (slistlen _streaming_rsc_tmp)>maxsize then
+        if maxsize!=nil && (list_str_len _streaming_rsc_tmp 0)>maxsize then
         (
             // too big ? (?)
             http_abort http;

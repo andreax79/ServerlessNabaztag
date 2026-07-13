@@ -99,7 +99,7 @@ fun _dhcp_extract src i type lease submask dnslist gateway mac=
     else let strget src i+1 -> len in
     let i+2->i in
     if c==53 then _dhcp_extract src i+len (strget src i) lease submask dnslist gateway mac
-    else if c==51 then _dhcp_extract src i+len type (strgetnum src i len) submask dnslist gateway mac
+    else if c==51 then _dhcp_extract src i+len type (str_get_num src i len) submask dnslist gateway mac
     else if c==1 then _dhcp_extract src i+len type lease (strsub src i 4) dnslist gateway mac
     else if c==6 then _dhcp_extract src i+len type lease submask (_dhcp_extract_helper_dns_list src i len) gateway mac
     else if c==3 then _dhcp_extract src i+len type lease submask dnslist (strsub src i 4) mac

@@ -127,7 +127,7 @@ fun task_scheduler=
                     TaskRun
                 ) |
                 (TaskSuspend -> TaskSuspend) | // Keep suspended tasks suspended
-                (_ -> set _tasks = remfromlist _tasks task; TaskStop) // Remove stopped tasks
+                (_ -> set _tasks = list_rem _tasks task; TaskStop) // Remove stopped tasks
             );
     0;;
 

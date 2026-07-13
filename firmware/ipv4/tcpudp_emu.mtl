@@ -41,7 +41,7 @@ fun tcp_write t msg i=
  */
 fun _tcp_remove t=
     set t.enableT = 0;
-    set tcp_connections=remfromlist tcp_connections t;;
+    set tcp_connections=list_rem tcp_connections t;;
 
 /**
  * Close a TCP connection. takes a TCP connection as an argument

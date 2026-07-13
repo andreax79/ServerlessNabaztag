@@ -522,8 +522,7 @@ char* sysRfidget()
 void sysReboot()
 {
 #ifdef VSIMU
-    printf("REBOOT NOW.....");
-    getchar();
+    printf("REBOOT NOW.....\n");
     exit(0);
 #endif
 #ifdef VREAL

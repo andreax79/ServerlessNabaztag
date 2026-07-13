@@ -267,7 +267,7 @@ fun cbnetdns msg mac ipfrom=
 		_dns_debug strcatlist ("on recoit une reponse pour une question dns, id " :: (itoa id) :: ", ip = " :: (if nil!=ip then ip else "nil") :: " pour le domaine " :: x.domainD :: nil);
 		_dns_debug strcatlist ("cette requete etait avec le serveur numero " :: (itoa x.idxDnsD) :: ", c'est a dire l'ip " :: (ip_to_str listnth netdnslist (x.idxDnsD)) :: nil);
 #endif
-		set ldnsreq=listrem ldnsreq x;
+		set ldnsreq=list_rem ldnsreq x;
 
 		// check if the answear is empty. if it is, we should try to ask the next dns server
 		if (ip == nil && ttl == nil && (dnsHasAnotherServer x)) then

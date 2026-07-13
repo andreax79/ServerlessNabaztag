@@ -1,15 +1,25 @@
 !              ( value addr -- )                        Store a value into memory at the given address.
 $REPEAT        ( s n -- s )                             Repeat string s n times
+*              ( n1 n2 -- product )                     Multiplies
+*              ( n1 n2 n3 -- (n2*n1)                    / Multiplies and Divides /n3 )
+*              ( n1 n2 n3 -- remainder quotient )       /MOD Multiplies and Divides and Modulus
++              ( n1 n2 -- sum )                         Adds
 +!             ( n addr -- )                            Adds a number to the contents of the address
+-              ( n1 n2 -- difference )                  Subtracts
+->             (immediate) ( --  )                      Record depth and contents of stack
 .              ( n -- )                                 Display n
 .S             ( -- )                                   Copy and display the values currently on the data stac
 .TASKS         ( -- )                                   List the words in the dictionary
+/              ( n1 n2 -- quotient )                    Divides
+/MOD           ( n1 n2 -- remainder quotient )          Divides and Modulus
 0<>            ( n -- flag )                            True if top number is not zero
 0=             ( n -- flag )                            True if top number zero
 1+             ( n -- n+1 )                             Increments top of stack by 1
 1-             ( n -- n-1 )                             Decrements top of stack by 1
+2*             ( n -- n*2 )                             Multiplies top of stack by 2
 2+             ( n -- n+2 )                             Increments top of stack by 2
 2-             ( n -- n-2 )                             Decrements top of stack by 2
+2/             ( n -- n/2 )                             Divides top of stack by 2
 2>R            ( x1 x2 -- ) ( R: -- x1 x2 )             Move two items to return stack
 2DROP          ( x1 x2 -- )
 2DUP           ( x1 x2 -- x1 x2 x1 x2 )
@@ -44,7 +54,7 @@ AI-VALID-EAR-TARGET? ( target -- flag )
 AI-VALID-LED-COLOR? ( color -- flag )
 AI-WEATHER>TEXT ( code -- text )
 ALLOCATE-CELL  ( -- addr )                              Allocate a cell from memory and return its address.
-AND            ( n1 n2 -- flag )                        Logical AND
+AND            ( x1 x2 -- x3 )                          x3 is the bit-by-bit logical "and" of x1 with x2.
 BEGIN          (immediate) ( -- )                       Begin a loop Store the current position in the return stack
 BETWEEN        ( n low high -- flag )
 BL             ( -- char )                              Character value for a space
@@ -82,7 +92,7 @@ HTTP-GET       ( url -- content header )                Perform an HTTP GET requ
 HTTP-POST      ( payload url -- content header )        Perform an HTTP POST request and return the content as a string HTTPS is not supported
 IF             (immediate) ( cond -- )                  Begin a conditional Compile a conditional jump to the matching ELSE or THEN
 INTERPRETER    ( -- )                                   Interactive Forth interpreter
-INVERT         ( n -- flag )                            Logical NOT
+INVERT         ( x1 -- x2 )                             Invert all bits of x1, giving its logical inverse x2.
 IP             ( -- ip )                                Push the IP address of the WIFI interface onto the stack
 JMP            ( addr -- )                              Unconditional jump
 JSON-GET       ( w path -- x ) (e.g., "daily.weathercode[0]") Get an element from a dictionary or list by path
@@ -94,11 +104,16 @@ LOAD-SRV       ( filename -- )                          Load a forth file from t
 LOCAL>STRING   ( -- str )                               Push the current local time and date as a string onto the stack
 LOGIN          ( -- )                                   Login
 LOWER          ( s -- s )                               Convert string s to lowercase
+LSHIFT         ( n1 n2 -- n1 << n2 )                    Left shift
 MAC            ( -- mac )                               Push the MAC address of the WIFI interface onto the stack
+MAX            ( n1 n2 -- max )                         Maximum of top two numbers
 MD5            ( str -- hash )                          Compute the MD5 hash of a string
 METEO>INFO     ( n -- n )                               Convert weather code to info code
+MIN            ( n1 n2 -- min )                         Minimum of top two numbers
+MOD            ( n1 n2 -- remainder )                   Modulus
 MOVE-EAR       ( ear dir pos -- ) (0=left, 1=right) (0=left, 1=right) (0..16) Move an ear  ear in direction dir  to position pos
 MS             ( delay -- )                             Sleep for the specified number of milliseconds
+NEGATE         ( n -- -n )                              Negates the top number
 NIL            ( -- list )                              Push empty list onto the stack
 NIP            ( n1 n2 -- n2 )                          Drop the first item below the top of stack
 NTH            ( list/str n -- x )                      Get the n-th element of a list or the n-th character of a string
@@ -110,10 +125,11 @@ ON-EARS        ( -- )                                   Ears hook
 ON-HALFTIME    ( -- )                                   Half-hour hook
 ON-RFID        ( rfid -- )                              RFID hook
 ON-TIME        ( -- )                                   Hour hook
-OR             ( n1 n2 -- flag )                        Logical OR
+OR             ( x1 x2 -- x3 )                          x3 is the bit-by-bit inclusive-or of x1 with x2.
 OVER           ( n1 n2 -- n1 n2 n1 )                    Make copy of second item on top
 PAD_LEFT       ( s n c -- s )                           Pad string s on the left to length n with character c
 PAD_RIGHT      ( s n c -- s )                           Pad string s on the right to length n with character c
+PICK           ( n ... ni -- n ... ni ni )              Copy nth item to top of stack
 PLAY-CHOR      ( chor_data -- )                         Play a choreography
 PLAY-MIDI      ( i -- ) (i-100)                         Play a MIDI sound/note If i>=100, play note  If 0<=i<100, play sound i If i<0, play a random note
 PLAY-URL       ( url -- )                               Play a WAV file from an HTTP URL HTTPS is not supported
@@ -124,10 +140,13 @@ RANDOM         ( max -- n )                             Return a pseudo-random n
 RDEPTH         ( -- count )                             Count number of items on return stack
 RDROP          ( n --  )                                Discard top of return stack
 READ-LINE      ( -- line )                              Read a line from the current socket
+REBOOT         ( -- )                                   Perform a reboot
 RELOAD-INIT    ( -- )                                   Reload init.forth
 RESUME-TASK    ( task-id -- flag )                      Resume the task with the given task id.
 REVISION       ( -- str )                               Push the revision string onto the stack
+ROLL           ( n ... ni -- n ... ni ni )              Move nth item to top of stack
 ROT            ( n1 n2 n3 -- n2 n3 n1 )                 Rotate third item to top
+RSHIFT         ( n1 n2 -- n1 >> n2 )                    Right shift
 SAY            ( text --  )                             Text to speech
 SET-INFO-ANIMATION ( data n -- )                        Set info animation n from json
 SLEEP          ( -- )                                   Put the Nabaztag into sleep mode
@@ -156,6 +175,8 @@ TOOL-RABBIT_STATUS ( args-json -- result )
 TOOL-SET_LED   ( args-json -- result )
 TRUE           ( -- true )
 TUCK           ( n1 n2 -- n1 n2 n1 ) (top)              Copy the first  stack item below the second stack item
+T{             (immediate) ( --  )                      Records the current stack depth prior to the test code
+T}             (immediate) ( --  )                      Compare the expected stack with the actual stack contents
 UNTIL          (immediate) ( x -- )                     End a loop Compile a conditional jump back to the matching BEGIN
 UPDATE-TIME    ( -- )                                   Update the system time from the time server
 UPDATE-WEATHER ( -- )                                   Update weather and air quality information
@@ -168,7 +189,7 @@ VARIABLE       (immediate) ( -- addr )                  Define a variable and al
 VOLUME         ( -- vol )                               Get the audio volume
 WAKE-UP        ( -- )                                   Wake up the Nabaztag from sleep mode
 WORDS          ( -- )                                   List the words in the dictionary
-XOR            ( n1 n2 -- flag )                        Logical XOR
+XOR            ( x1 x2 -- x3 )                          x3 is the bit-by-bit exclusive-or of x1 with x2.
 
 Variables
 ---------

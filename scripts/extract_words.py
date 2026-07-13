@@ -2,6 +2,7 @@
 
 import sys
 import re
+import os
 
 MTL_COMMENT_RE = re.compile(r"/\*\*.*?\*/", re.DOTALL)
 MTL_VAR_RE = re.compile(r'str:"([^"]+)"\s*.*?FORTH_MEMORY.*?//\s*(.+)$')
@@ -47,6 +48,8 @@ def extract_words(files: list[str]) -> tuple[list[str], list[str]]:
     words: list[str] = []
     variables: list[str] = []
     for file_path in files:
+        if os.path.basename(file_path) == "test.forth":
+            continue
         with open(file_path, "r", encoding="utf-8") as f:
             # Get the file extension
             file_extension = file_path.split(".")[-1].lower()

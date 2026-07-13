@@ -177,7 +177,7 @@ fun wifi_wep_key val=
     if len==5 || len==13 then val
     else let strreplace val ":" "" -> val in
     let if len<10 then 0 else if len<26 then 5 else 13 -> len in
-    listtostr _wifi_wep_key val 0 len<<1;;
+    list_to_str _wifi_wep_key val 0 len<<1;;
 
 fun _wifi_auth=
     leds_set_all RGB_AMBER;
