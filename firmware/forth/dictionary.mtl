@@ -152,6 +152,7 @@ fun forth_init_dictionary=
         [ [str:"sleep"             ] [ func:#forth_sleep       flag:FORTH_ASYNC ]] ::
         [ [str:"wake-up"           ] [ func:#forth_wake_up     flag:FORTH_ASYNC ]] ::
         [ [str:"ears"              ] [ func:#forth_ears ]] ::
+        [ [str:"ear-broken?"       ] [ func:#forth_ear_broken ]] ::
         [ [str:"move-ear"          ] [ func:#forth_move_ear ]] ::
         [ [str:"random"            ] [ func:#forth_random ]] ::
         [ [str:"volume"            ] [ func:#forth_volume ]] ::

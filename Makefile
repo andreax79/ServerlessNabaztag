@@ -46,6 +46,7 @@ deploy: firmware
 		exit 1; \
 	fi
 	scp vl/bc.jsp vl/*.forth vl/*.json vl/index.html vl/words.txt $(DEPLOY_TARGET)
+	scp vl/api/openapi.yaml $(DEPLOY_TARGET)/api/openapi.yaml
 
 .PHONY: run-sim
 run-sim:

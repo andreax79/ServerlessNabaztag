@@ -474,28 +474,23 @@ input, select, textarea {
         </div>
         <div class="column">
           <label for="aiVoiceField">Voice</label>
-          <select name="v" id="aiVoiceField">
-            <option value="marin">marin (recommended)</option>
-            <option value="cedar">cedar (recommended)</option>
-            <option value="alloy">alloy</option>
-            <option value="ash">ash</option>
-            <option value="ballad">ballad</option>
-            <option value="coral">coral</option>
-            <option value="echo">echo</option>
-            <option value="sage">sage</option>
-            <option value="shimmer">shimmer</option>
-            <option value="verse">verse</option>
-          </select>
+          <input name="v" type="text" id="aiVoiceField" list="aiVoiceOptions" maxlength="23" pattern="[A-Za-z0-9._-]+" placeholder="marin" />
+          <datalist id="aiVoiceOptions">
+            <option value="marin"></option><option value="cedar"></option>
+            <option value="alloy"></option><option value="ash"></option>
+            <option value="ballad"></option><option value="coral"></option>
+            <option value="echo"></option><option value="sage"></option>
+            <option value="shimmer"></option><option value="verse"></option>
+          </datalist>
         </div>
         <div class="column">
           <label for="aiLangField">Default language (responses follow speech)</label>
-          <select name="l" id="aiLangField">
-            <option value="it">Italian</option>
-            <option value="en">English</option>
-            <option value="fr">French</option>
-            <option value="es">Spanish</option>
-            <option value="de">German</option>
-          </select>
+          <input name="l" type="text" id="aiLangField" list="aiLanguageOptions" maxlength="7" pattern="[A-Za-z]{2}(-[A-Za-z]{2})?" placeholder="it" />
+          <datalist id="aiLanguageOptions">
+            <option value="it"></option><option value="en"></option>
+            <option value="fr"></option><option value="es"></option>
+            <option value="de"></option>
+          </datalist>
         </div>
       </div>
       <div class="row">
@@ -540,7 +535,7 @@ input, select, textarea {
       <input type="hidden" name="b" value="0" />
       <input class="button" type="submit" value="Save AI settings" />
       <button type="button" class="button button-outline" onclick="testAI()">Send test message</button>
-      <span id="aiTestResult"></span>
+      <span id="aiTestResult"> Uses the last saved settings.</span>
     </fieldset>
   </form>
 

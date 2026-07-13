@@ -102,6 +102,10 @@ export class TicketStore {
     let stderr = "";
     child.stdout.on("data", (chunk) => ticket.append(chunk));
     child.stderr.on("data", (chunk) => { stderr = `${stderr}${chunk}`.slice(-2000); });
+    // A missing/crashed FFmpeg can close the pipe while Realtime audio is
+    // still arriving. Handle EPIPE on stdin so it cannot become an uncaught
+    // stream error that terminates the relay process.
+    child.stdin.on("error", (error) => ticket.fail(error));
     child.on("error", (error) => ticket.fail(error));
     child.on("close", (code) => {
       if (code === 0) ticket.finish();

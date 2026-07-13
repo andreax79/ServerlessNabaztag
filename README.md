@@ -68,7 +68,7 @@ The optional voice assistant uses a stateful Node.js relay because the original 
 
 No API credential is stored in the rabbit's flash, exposed through `/status`, or sent over the plain-HTTP LAN hop. The relay-to-OpenAI connection uses TLS/WSS. Keep the relay port restricted to the trusted LAN. Official Realtime format, voice, and function-calling details are documented in the [OpenAI Realtime conversations guide](https://developers.openai.com/api/docs/guides/realtime-conversations) and [Realtime API reference](https://developers.openai.com/api/reference/resources/realtime).
 
-The current public Realtime session schema does not expose a stable reasoning-effort field, so the relay does not send an invented or unsupported option. Tool use and response limits remain explicitly configured.
+For Realtime-2.x models the relay defaults to `reasoning.effort: low`, OpenAI's recommended starting point for responsive production voice agents. It can be changed with `OPENAI_REASONING_EFFORT`; older Realtime model families omit the field automatically.
 
 ### Create a voice tool in five minutes
 
@@ -87,7 +87,7 @@ Copy both files to the platform web directory and hot-reload them without a firm
 curl -G http://RABBIT_IP/forth --data-urlencode "c=reload-init"
 ```
 
-HTTP tools run on the relay and must use a fixed user-configured URL; model-built URLs are rejected. A disabled webhook template is included in `ai_tools.json`. Anyone who can speak near the rabbit can request an enabled tool, so keep all voice tools reversible and non-destructive. Tool and HTTP timeouts, a four-call loop limit, per-rabbit rate limits, and signed expiring MP3 URLs are enforced automatically.
+HTTP tools run on the relay and must use a fixed user-configured URL; model-built URLs are rejected. A disabled webhook template is included in `ai_tools.json`. Anyone who can speak near the rabbit can request an enabled tool, so keep all voice tools reversible and non-destructive. Tool and HTTP timeouts, a four-call loop limit, sequential execution, per-rabbit and global rate limits, and signed expiring MP3 URLs are enforced automatically.
 
 Forth Interpreter
 ----------------

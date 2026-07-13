@@ -5,6 +5,24 @@ function assertPlainObject(value, label) {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${label} must be an object`);
 }
 
+function assertStrictSchema(schema, label) {
+  if (schema.type === "object") {
+    assertPlainObject(schema.properties, `${label}.properties`);
+    if (schema.additionalProperties !== false) throw new Error(`${label} must set additionalProperties to false in strict mode`);
+    const propertyNames = Object.keys(schema.properties);
+    if (!Array.isArray(schema.required) || propertyNames.some((name) => !schema.required.includes(name))) {
+      throw new Error(`${label} must require every property in strict mode`);
+    }
+    for (const [name, property] of Object.entries(schema.properties)) {
+      assertPlainObject(property, `${label}.properties.${name}`);
+      assertStrictSchema(property, `${label}.properties.${name}`);
+    }
+  } else if (schema.type === "array" && schema.items) {
+    assertPlainObject(schema.items, `${label}.items`);
+    assertStrictSchema(schema.items, `${label}.items`);
+  }
+}
+
 export function validateToolConfig(input) {
   assertPlainObject(input, "tool configuration");
   if (!Array.isArray(input.tools)) throw new Error("tool configuration must contain a tools array");
@@ -25,6 +43,10 @@ export function validateToolConfig(input) {
       parameters: source.parameters,
       exec: source.exec,
     };
+    if (source.strict === true) {
+      assertStrictSchema(source.parameters, `parameters for ${source.name}`);
+      tool.strict = true;
+    }
 
     if (source.exec === "http") {
       assertPlainObject(source.http, `http configuration for ${source.name}`);
@@ -35,6 +57,7 @@ export function validateToolConfig(input) {
       if (!['http:', 'https:'].includes(url.protocol)) throw new Error(`unsupported URL protocol for ${source.name}`);
       const method = String(source.http.method || "POST").toUpperCase();
       if (!HTTP_METHODS.has(method)) throw new Error(`unsupported HTTP method for ${source.name}`);
+      if (source.http.headers != null) assertPlainObject(source.http.headers, `HTTP headers for ${source.name}`);
       tool.http = {
         url: url.toString(),
         method,
@@ -49,6 +72,10 @@ export function validateToolConfig(input) {
 }
 
 export function realtimeToolDefinitions(tools) {
+  // "strict": true in the manifest enforces a strict-shaped JSON schema at
+  // validation time, but the field itself must not reach the wire: the
+  // Realtime session API rejects it ("Unknown parameter: session.tools[N].strict"),
+  // unlike Chat Completions function calling.
   return tools.map(({ name, description, parameters }) => ({
     type: "function",
     name,
@@ -96,20 +123,22 @@ export async function executeHttpTool(tool, args, fetchImpl = fetch) {
 }
 
 export class ToolConfigCache {
-  constructor({ ttlMs = 60_000, fetchImpl = fetch, maxBytes = 256_000 } = {}) {
+  constructor({ ttlMs = 60_000, fetchImpl = fetch, maxBytes = 256_000, maxEntries = 64 } = {}) {
     this.ttlMs = ttlMs;
     this.fetchImpl = fetchImpl;
     this.maxBytes = maxBytes;
+    this.maxEntries = maxEntries;
     this.cache = new Map();
   }
 
   async get(url) {
     if (!url) return [];
-    const cached = this.cache.get(url);
-    if (cached && cached.expires > Date.now()) return cached.tools;
-
     const parsed = new URL(url);
     if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error("tools URL must use HTTP or HTTPS");
+    const key = parsed.toString();
+    const cached = this.cache.get(key);
+    if (cached && cached.expires > Date.now()) return cached.tools;
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10_000);
     try {
@@ -117,7 +146,9 @@ export class ToolConfigCache {
       if (!response.ok) throw new Error(`tools URL returned HTTP ${response.status}`);
       const text = await readLimited(response, this.maxBytes);
       const tools = validateToolConfig(JSON.parse(text));
-      this.cache.set(url, { tools, expires: Date.now() + this.ttlMs });
+      this.cache.delete(key);
+      this.cache.set(key, { tools, expires: Date.now() + this.ttlMs });
+      while (this.cache.size > this.maxEntries) this.cache.delete(this.cache.keys().next().value);
       return tools;
     } finally {
       clearTimeout(timeout);

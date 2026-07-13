@@ -43,8 +43,11 @@ fun _ai_tools_url=
 fun _ai_headers=
     strcatlist
         "X-Rabbit-Id: "::wifi_mac_addr::"\13\n"::
-        "X-Model: "::config_get_ai_model::"\13\n"::
-        "X-Voice: "::config_get_ai_voice::"\13\n"::
+        // Encode editable values before placing them in HTTP headers. The
+        // relay decodes them after parsing, so stored CR/LF cannot inject a
+        // second header into the rabbit's plain-HTTP request.
+        "X-Model: "::(url_encode config_get_ai_model)::"\13\n"::
+        "X-Voice: "::(url_encode config_get_ai_voice)::"\13\n"::
         "X-Tools-Url: "::(url_encode _ai_tools_url)::"\13\n"::
         "X-Session-Ttl: "::(itoa config_get_ai_session_ttl)::"\13\n"::nil;;
 

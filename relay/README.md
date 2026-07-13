@@ -1,6 +1,6 @@
 # Nabaztag Realtime relay
 
-Stateful Node.js relay between the rabbit's plain-HTTP firmware and the OpenAI Realtime API. It keeps the OpenAI key on the Raspberry Pi, maintains one short-lived WebSocket session per rabbit, converts the rabbit's 8 kHz IMA ADPCM recording to G.711 μ-law, streams Realtime PCM output through FFmpeg as MP3, and brokers user-defined tools.
+Stateful Node.js relay between the rabbit's plain-HTTP firmware and the OpenAI Realtime API. It keeps the OpenAI key on the relay host, maintains one short-lived WebSocket session per rabbit, converts the rabbit's 8 kHz IMA ADPCM recording to G.711 μ-law, streams Realtime PCM output through FFmpeg as MP3, and brokers user-defined tools.
 
 ## Requirements
 
@@ -30,7 +30,7 @@ openssl rand -hex 32
 
 Never put `.env` in Git or copy the OpenAI key into the rabbit. The rabbit sends only its non-secret AI preferences and the recording over the trusted LAN.
 
-## Raspberry Pi service
+## Linux systemd service
 
 Install Node.js and FFmpeg, copy `relay/` to `/opt/nabaztag-relay`, then create `/etc/nabaztag-relay.env` from `.env.example`. The following systemd unit keeps the relay running:
 
@@ -86,9 +86,9 @@ The firmware leaves the relay address empty until the assistant is configured. E
 - `GET /v1/tts?sid=...&exp=...&sig=...` — signed live MP3 stream.
 - `POST /v1/say?voice=marin` — service TTS for `ai-say`.
 
-The relay caps request sizes, applies per-rabbit rate limits, expires sessions automatically, signs MP3 URLs with HMAC-SHA256, limits each exchange to four tool calls, and places 10-second timeouts on HTTP tools.
+The relay caps request sizes, applies per-rabbit and global rate limits, expires sessions automatically, signs MP3 URLs with HMAC-SHA256, limits each exchange to four sequential tool calls, and places 10-second timeouts on HTTP tools. `X-Rabbit-Id` is not authentication, so the port must remain restricted to a trusted LAN. Treat the configured tool manifest as trusted relay configuration because enabled HTTP tools can access their fixed URLs and headers.
 
-Tool routing is done by the model itself: sessions run with `tool_choice: "auto"` and the tools declared in `ai_tools.json`, so a physical request in any language triggers the matching function call natively — the relay contains no utterance parsing and no per-language rules. Button audio goes straight to the Realtime session (audio to audio, no transcription step); the transcription API is used only in wake mode, as a cheap gate that checks the configured wake word before a Realtime turn is spent. Verification lives in the hot-reloadable Forth tools on the rabbit: `move_ears` waits for the ears to reach their target and reports the verified positions (`ok: …`) or a concrete failure (`error: …`), and the session instructions tell the model to base its spoken confirmation only on that result.
+Tool routing is done by the model itself: sessions run with `tool_choice: "auto"`, `parallel_tool_calls: false`, and the tools declared in `ai_tools.json`, so a physical request in any language triggers the matching function call natively — the relay contains no utterance parsing and no per-language rules. Default tools use strict JSON schemas. Button audio goes straight to the Realtime session (audio to audio, no transcription step); the transcription API is used only in wake mode, as a cheap gate that checks the configured wake word before a Realtime turn is spent. Verification lives in the hot-reloadable Forth tools on the rabbit: `move_ears` waits for the ears to reach their target and reports the verified positions (`ok: …`) or a concrete failure (`error: …`), and the session instructions tell the model to base its spoken confirmation only on that result. `OPENAI_REASONING_EFFORT=low` follows OpenAI's recommended starting point for responsive production voice agents using Realtime-2.x models.
 
 ## Tests
 

@@ -37,4 +37,6 @@ test("wake word matching is accent-insensitive and fuzzy only at the start", () 
   assert.equal(hasWakeWordAtStart("Nabaz tag accendi le luci", "nabaztag"), true);
   assert.equal(hasWakeWordAtStart("Ehi Nabaztag", "nabaztag"), false);
   assert.equal(hasWakeWordAtStart("Coniglio, svegliati", "nabaztag"), false);
+  assert.equal(hasWakeWordAtStart("hey rabbit", "hi"), false, "short wake words must not allow two edits");
+  assert.equal(hasWakeWordAtStart("你好，请告诉我时间", "你好"), true, "non-Latin wake words are supported");
 });

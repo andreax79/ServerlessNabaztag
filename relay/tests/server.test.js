@@ -70,6 +70,20 @@ test("maps the legacy English code to ISO-639-1 before transcription", async () 
   assert.equal(submitted.get("language"), "en");
 });
 
+test("uses the primary language subtag for transcription", async () => {
+  let submitted;
+  await transcribeAudio(
+    Buffer.from("RIFF"),
+    { transcribeModel: "gpt-4o-mini-transcribe", apiKey: "test" },
+    async (_url, options) => {
+      submitted = options.body;
+      return { ok: true, async json() { return { text: "olá" }; } };
+    },
+    "pt-BR",
+  );
+  assert.equal(submitted.get("language"), "pt");
+});
+
 test("button turns never call the transcription API", async (t) => {
   const turns = [];
   const sessions = {

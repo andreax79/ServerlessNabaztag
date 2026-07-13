@@ -15,6 +15,7 @@ function stubSession(tools) {
     prompt: "test",
     language: "it",
     timeZone: "Europe/Rome",
+    reasoningEffort: "low",
     tools,
     ticketStore: {
       createPcmEncoder() {
@@ -33,6 +34,14 @@ function stubSession(tools) {
   };
   return { session, events, tickets };
 }
+
+test("session configuration sequences tools and uses low reasoning", () => {
+  const { session } = stubSession([]);
+  const config = session.sessionConfig();
+  assert.equal(config.tool_choice, "auto");
+  assert.equal(config.parallel_tool_calls, false);
+  assert.deepEqual(config.reasoning, { effort: "low" });
+});
 
 function audioDelta() {
   return JSON.stringify({ type: "response.output_audio.delta", delta: Buffer.from([0, 0]).toString("base64") });
@@ -66,6 +75,38 @@ test("expires a parked tool turn after one minute", () => {
   assert.equal(closed, true);
   assert.equal(manager.byRabbit.size, 0);
   assert.equal(manager.byPublicId.size, 0);
+});
+
+test("session capacity evicts the oldest idle session", async (t) => {
+  const manager = new RealtimeSessionManager({
+    apiKey: "test",
+    realtimeUrl: "wss://example.test",
+    ticketStore: {},
+    timeZone: "Europe/Rome",
+    maxSessions: 1,
+  });
+  let closed = false;
+  const old = {
+    rabbitId: "old",
+    publicId: "old-session",
+    turn: null,
+    lastUsed: 1,
+    ttlMs: 75_000,
+    close() { closed = true; },
+  };
+  manager.byRabbit.set(old.rabbitId, old);
+  manager.byPublicId.set(old.publicId, old);
+  const original = RealtimeSession.prototype.connect;
+  RealtimeSession.prototype.connect = async function stubConnect() { return this; };
+  t.after(() => { RealtimeSession.prototype.connect = original; });
+
+  await manager.get({
+    rabbitId: "new", model: "gpt-realtime-2.1", voice: "marin",
+    prompt: "", language: "en", tools: [], ttlMs: 75_000,
+  });
+  assert.equal(closed, true);
+  assert.equal(manager.byRabbit.has("old"), false);
+  assert.equal(manager.byRabbit.has("new"), true);
 });
 
 test("a new ask replaces a session stuck in an abandoned turn", async (t) => {
@@ -186,6 +227,33 @@ test("commentary audio before a function call still resolves as a call", async (
   assert.equal(tickets[0].ended, 1, "the commentary ticket must be discarded");
   assert.equal(session.turn.ticket, null, "the follow-up response must get a fresh ticket");
   assert.equal(events.some((event) => event.type === "session.update"), false);
+});
+
+test("response.done is a function-call fallback and cannot cancel its continuation", async () => {
+  const { session } = stubSession([
+    { name: "set_led", description: "light", parameters: { type: "object" }, exec: "forth" },
+  ]);
+  const doneWithCall = JSON.stringify({
+    type: "response.done",
+    response: {
+      id: "resp_tool",
+      status: "completed",
+      output: [{ type: "function_call", call_id: "call_done", name: "set_led", arguments: "{\"target\":\"nose\",\"color\":255}" }],
+    },
+  });
+
+  const turn = session.beginTurn({ text: "blue nose", audio: null, baseUrl: "http://relay" });
+  await new Promise((resolve) => setImmediate(resolve));
+  session.onMessage(doneWithCall);
+  assert.equal((await turn).type, "call");
+
+  const continuation = session.continueWithToolResult("call_done", "ok: nose LED override=255", "http://relay");
+  // Simulate the previous response.done arriving after the fast tool result.
+  session.onMessage(doneWithCall);
+  assert.ok(session.turn, "the continuation must remain active");
+  session.onMessage(audioDelta());
+  session.onMessage(responseDone());
+  assert.equal((await continuation).type, "answer");
 });
 
 test("undeclared tools are answered with an error output, not a crash", async () => {

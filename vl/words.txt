@@ -40,6 +40,8 @@ AI-EARS-TRAVEL-MS ( -- ms )                             generous estimate of the
 AI-READ-EAR-HEALTH ( -- )
 AI-SHORTEST-EAR-DIR ( current target -- dir )
 AI-SLEEP>TEXT  ( flag -- text )
+AI-VALID-EAR-TARGET? ( target -- flag )
+AI-VALID-LED-COLOR? ( color -- flag )
 AI-WEATHER>TEXT ( code -- text )
 ALLOCATE-CELL  ( -- addr )                              Allocate a cell from memory and return its address.
 AND            ( n1 n2 -- flag )                        Logical AND
@@ -60,6 +62,7 @@ DEPTH          ( -- count )                             Count number of items on
 DROP           ( n --  )                                Discard top of stack
 DUP            ( n -- n n )                             Duplicate top of stack
 EAIQ>INFO      ( n -- n )                               Convert European Air Quality Index to info code
+EAR-BROKEN?    ( ear -- flag )                          Return the native firmware health flag.
 EARS           ( -- left-pos right-pos )                Return the current ears positions
 ELSE           (immediate) ( -- )                       Begin the else part of a conditional Compile an unconditional jump to the matching THEN Update the previous conditional jump to point to the instruction after the ELSE
 EMIT           ( char -- )                              Emit character

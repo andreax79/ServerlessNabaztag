@@ -12,10 +12,16 @@ variable ai-tool-left-broken
 variable ai-tool-right-broken
 
 : ai-read-ear-health ( -- )
-  nil "http://" :: ip :: "/status" :: str-join
-  http-get drop json-parse
-  dup "ears.left.broken" json-get ai-tool-left-broken !
-  "ears.right.broken" json-get ai-tool-right-broken ! ;
+  0 ear-broken? ai-tool-left-broken !
+  1 ear-broken? ai-tool-right-broken ! ;
+
+: ai-valid-ear-target? ( target -- flag )
+  dup nil = if drop 0 exit then
+  dup -2 >= swap 16 <= and ;
+
+: ai-valid-led-color? ( color -- flag )
+  dup nil = if drop 0 exit then
+  dup -1 >= swap 16777215 <= and ;
 
 : ai-shortest-ear-dir ( current target -- dir )
   swap - 17 + 17 mod 8 > if 1 else 0 then ;
@@ -32,18 +38,28 @@ variable ai-tool-right-broken
 : ai-ears-travel-ms ( -- ms )  \ generous estimate of the longest ear travel
   ai-tool-actual-left @ ai-tool-left @ ai-ear-steps
   ai-tool-actual-right @ ai-tool-right @ ai-ear-steps
-  max 300 * 700 + 3000 min ;
+  max dup 0 = if exit then 300 * 700 + 3000 min ;
 
 : tool-move_ears ( args-json -- result )
   json-parse
   dup "left" json-get ai-tool-left !
   "right" json-get ai-tool-right !
+  ai-tool-left @ ai-valid-ear-target?
+  ai-tool-right @ ai-valid-ear-target? and invert if
+    "error: ear targets must be integers from -2 to 16" exit
+  then
   ears ai-tool-actual-right ! ai-tool-actual-left !
   \ -1 advances one step, -2 or a missing value keeps the current position
   ai-tool-left @ -1 = if ai-tool-actual-left @ 1+ 17 mod ai-tool-left ! then
   ai-tool-right @ -1 = if ai-tool-actual-right @ 1+ 17 mod ai-tool-right ! then
   ai-tool-left @ -2 = ai-tool-left @ nil = or if ai-tool-actual-left @ ai-tool-left ! then
   ai-tool-right @ -2 = ai-tool-right @ nil = or if ai-tool-actual-right @ ai-tool-right ! then
+  ai-read-ear-health
+  ai-tool-left-broken @ ai-tool-left @ ai-tool-actual-left @ <> and
+  ai-tool-right-broken @ ai-tool-right @ ai-tool-actual-right @ <> and or if
+    nil "error: cannot move ears while firmware health flag is set; left broken=" ::
+    ai-tool-left-broken @ :: " right broken=" :: ai-tool-right-broken @ :: str-join exit
+  then
   ai-tool-actual-right @ ai-tool-right @ ai-shortest-ear-dir
   ai-tool-right @ 1 move-ear
   ai-tool-actual-left @ ai-tool-left @ ai-shortest-ear-dir
@@ -65,16 +81,29 @@ variable ai-tool-right-broken
 : tool-set_led ( args-json -- result )
   json-parse
   dup "color" json-get swap "target" json-get
+  over ai-valid-led-color? invert if
+    drop drop "error: LED color must be an integer from -1 to 16777215" exit
+  then
   dup "nose" = if
-    drop dup led-nose ! led-nose @ = if "ok" else "error: nose LED was not applied" then
+    drop dup led-nose ! led-nose @ = if
+      nil "ok: nose LED override=" :: led-nose @ :: str-join
+    else "error: nose LED was not applied" then
   else dup "left" = if
-    drop dup led-left ! led-left @ = if "ok" else "error: left LED was not applied" then
+    drop dup led-left ! led-left @ = if
+      nil "ok: left LED override=" :: led-left @ :: str-join
+    else "error: left LED was not applied" then
   else dup "center" = if
-    drop dup led-center ! led-center @ = if "ok" else "error: center LED was not applied" then
+    drop dup led-center ! led-center @ = if
+      nil "ok: center LED override=" :: led-center @ :: str-join
+    else "error: center LED was not applied" then
   else dup "right" = if
-    drop dup led-right ! led-right @ = if "ok" else "error: right LED was not applied" then
+    drop dup led-right ! led-right @ = if
+      nil "ok: right LED override=" :: led-right @ :: str-join
+    else "error: right LED was not applied" then
   else dup "base" = if
-    drop dup led-base ! led-base @ = if "ok" else "error: base LED was not applied" then
+    drop dup led-base ! led-base @ = if
+      nil "ok: base LED override=" :: led-base @ :: str-join
+    else "error: base LED was not applied" then
   else
     drop drop "error: unknown LED target"
   then then then then then ;
@@ -111,7 +140,7 @@ variable ai-tool-right-broken
   ears ai-tool-actual-right ! ai-tool-actual-left !
   ai-read-ear-health
   nil
-  "local time: " :: local>string ::
+  "ok: local time: " :: local>string ::
   ", state: " :: sleeping? ai-sleep>text ::
   ai-tool-left-broken @ if
     ", left ear: broken, unreliable last reading=" ::

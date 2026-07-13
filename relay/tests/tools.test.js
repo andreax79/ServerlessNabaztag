@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { executeHttpTool, validateToolConfig } from "../lib/tools.js";
+import { executeHttpTool, realtimeToolDefinitions, validateToolConfig } from "../lib/tools.js";
 
 test("validates Forth and fixed-URL HTTP tools", () => {
   const tools = validateToolConfig({ tools: [
@@ -12,6 +12,25 @@ test("validates Forth and fixed-URL HTTP tools", () => {
     name: "unsafe", parameters: { type: "object" }, exec: "http",
     http: { url: "https://example.com/{{args}}" },
   }] }), /URL templates/);
+});
+
+test("validates strict schemas but never sends the strict field to Realtime", () => {
+  const [tool] = validateToolConfig({ tools: [{
+    name: "status",
+    description: "Status",
+    strict: true,
+    parameters: { type: "object", properties: {}, required: [], additionalProperties: false },
+    exec: "forth",
+  }] });
+  // The Realtime session API rejects an explicit strict parameter, unlike
+  // Chat Completions: the manifest flag only drives schema validation.
+  assert.equal("strict" in realtimeToolDefinitions([tool])[0], false);
+  assert.throws(() => validateToolConfig({ tools: [{
+    name: "broken",
+    strict: true,
+    parameters: { type: "object", properties: {} },
+    exec: "forth",
+  }] }), /additionalProperties/);
 });
 
 test("HTTP tool substitutes arguments only in its body", async () => {

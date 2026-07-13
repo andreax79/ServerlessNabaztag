@@ -53,7 +53,7 @@ function safeArguments(value) {
 }
 
 export class RealtimeSession {
-  constructor({ rabbitId, apiKey, realtimeUrl, model, voice, prompt, language, timeZone, tools, ticketStore, ttlMs, onToolTranscript = null }) {
+  constructor({ rabbitId, apiKey, realtimeUrl, model, voice, prompt, language, timeZone, reasoningEffort = "", tools, ticketStore, ttlMs, onToolTranscript = null }) {
     this.rabbitId = rabbitId;
     this.publicId = randomBytes(18).toString("base64url");
     this.apiKey = apiKey;
@@ -63,6 +63,7 @@ export class RealtimeSession {
     this.prompt = prompt;
     this.language = language;
     this.timeZone = timeZone;
+    this.reasoningEffort = reasoningEffort;
     this.tools = tools;
     this.toolsByName = new Map(tools.map((tool) => [tool.name, tool]));
     this.ticketStore = ticketStore;
@@ -82,8 +83,38 @@ export class RealtimeSession {
       voice: this.voice,
       prompt: this.prompt,
       language: this.language,
+      reasoningEffort: this.reasoningEffort,
       tools: this.tools,
     });
+  }
+
+  sessionConfig() {
+    const reasoning = /^gpt-realtime-2(?:[.-]|$)/.test(this.model) && this.reasoningEffort
+      ? { effort: this.reasoningEffort }
+      : undefined;
+    return {
+      type: "realtime",
+      model: this.model,
+      output_modalities: ["audio"],
+      instructions: sessionInstructions(this),
+      max_output_tokens: 512,
+      tool_choice: "auto",
+      // The device protocol has one pending-call slot, so physical tools must
+      // be sequenced even though reasoning Realtime models support parallelism.
+      parallel_tool_calls: false,
+      ...(reasoning ? { reasoning } : {}),
+      tools: realtimeToolDefinitions(this.tools),
+      audio: {
+        input: {
+          format: { type: "audio/pcmu" },
+          turn_detection: null,
+        },
+        output: {
+          format: { type: "audio/pcm", rate: 24000 },
+          voice: this.voice,
+        },
+      },
+    };
   }
 
   async connect() {
@@ -96,57 +127,32 @@ export class RealtimeSession {
         ready.resolve();
       }
     };
+    this._readyReject = (error) => {
+      if (!ready.settled) {
+        ready.settled = true;
+        ready.reject(error);
+      }
+    };
     const url = new URL(this.realtimeUrl);
     url.searchParams.set("model", this.model);
     const ws = new WebSocket(url, { headers: { Authorization: `Bearer ${this.apiKey}` } });
     this.ws = ws;
 
-    const timer = setTimeout(() => {
-      if (!ready.settled) {
-        ready.settled = true;
-        ready.reject(new Error("Realtime connection timed out"));
-      }
-    }, 15_000);
+    const timer = setTimeout(() => this._readyReject(new Error("Realtime connection timed out")), 15_000);
     ws.on("open", () => {
       this.send({
         type: "session.update",
-        session: {
-          type: "realtime",
-          model: this.model,
-          output_modalities: ["audio"],
-          instructions: sessionInstructions(this),
-          max_output_tokens: 512,
-          // The model decides on its own when a declared tool is needed, in
-          // any language. Never route intents relay-side.
-          tool_choice: "auto",
-          tools: realtimeToolDefinitions(this.tools),
-          audio: {
-            input: {
-              format: { type: "audio/pcmu" },
-              turn_detection: null,
-            },
-            output: {
-              format: { type: "audio/pcm", rate: 24000 },
-              voice: this.voice,
-            },
-          },
-        },
+        session: this.sessionConfig(),
       });
     });
     ws.on("message", (data) => this.onMessage(data));
     ws.on("error", (error) => {
-      if (!ready.settled) {
-        ready.settled = true;
-        ready.reject(error);
-      }
+      this._readyReject(error);
       this.failTurn(error);
     });
     ws.on("close", () => {
       this.closed = true;
-      if (!ready.settled) {
-        ready.settled = true;
-        ready.reject(new Error("Realtime connection closed before setup completed"));
-      }
+      this._readyReject(new Error("Realtime connection closed before setup completed"));
       this.failTurn(new Error("Realtime connection closed"));
     });
 
@@ -328,7 +334,12 @@ export class RealtimeSession {
       return;
     }
     if (event.type === "error") {
-      this.failTurn(new Error(event.error?.message || "Realtime API error"));
+      const error = new Error(event.error?.message || "Realtime API error");
+      // Configuration errors arrive as protocol events, not WebSocket errors.
+      // Reject the handshake immediately instead of masking them as a 15 s
+      // connection timeout.
+      this._readyReject?.(error);
+      this.failTurn(error);
       return;
     }
     if (!this.turn) return;
@@ -361,6 +372,17 @@ export class RealtimeSession {
       return;
     }
     if (event.type === "response.done") {
+      // The documented response.done event contains complete function calls.
+      // Treat it as the authoritative fallback and always ignore the done for
+      // a tool-producing response. This also closes a race where a very fast
+      // device tool result starts the next response before the previous done
+      // event reaches us.
+      const functionCall = event.response?.output?.find((item) => item?.type === "function_call");
+      if (functionCall) {
+        this.handleFunctionCall({ response_id: event.response?.id, item: functionCall })
+          .catch((error) => this.failTurn(error));
+        return;
+      }
       if (this.turn.state === "handling-tool") return;
       if (this.turn.responseHasAudio) {
         if (this.turn.ticket?.encoder?.stdin && !this.turn.ticket.encoder.stdin.destroyed) this.turn.ticket.encoder.stdin.end();
@@ -397,11 +419,13 @@ export class RealtimeSession {
 }
 
 export class RealtimeSessionManager {
-  constructor({ apiKey, realtimeUrl, ticketStore, timeZone, defaultTtlMs = 75_000, onToolTranscript = null }) {
+  constructor({ apiKey, realtimeUrl, ticketStore, timeZone, reasoningEffort = "", maxSessions = 32, defaultTtlMs = 75_000, onToolTranscript = null }) {
     this.apiKey = apiKey;
     this.realtimeUrl = realtimeUrl;
     this.ticketStore = ticketStore;
     this.timeZone = timeZone;
+    this.reasoningEffort = reasoningEffort;
+    this.maxSessions = Number.isFinite(maxSessions) ? Math.max(1, maxSessions) : 32;
     this.defaultTtlMs = defaultTtlMs;
     this.onToolTranscript = onToolTranscript;
     this.byRabbit = new Map();
@@ -418,12 +442,13 @@ export class RealtimeSessionManager {
       prompt,
       language,
       timeZone: this.timeZone,
+      reasoningEffort: this.reasoningEffort,
       tools,
       ticketStore: this.ticketStore,
       ttlMs: ttlMs || this.defaultTtlMs,
       onToolTranscript: this.onToolTranscript,
     };
-    const signature = JSON.stringify({ model, voice, prompt, language, tools });
+    const signature = JSON.stringify({ model, voice, prompt, language, reasoningEffort: this.reasoningEffort, tools });
     let session = this.byRabbit.get(rabbitId);
     if (session && session.turn) {
       // The firmware always cancels its previous exchange before a new ask,
@@ -438,13 +463,26 @@ export class RealtimeSessionManager {
       session = null;
     }
     if (!session) {
+      if (this.byRabbit.size >= this.maxSessions) {
+        const oldestIdle = [...this.byRabbit.values()]
+          .filter((candidate) => !candidate.turn)
+          .sort((a, b) => a.lastUsed - b.lastUsed)[0];
+        if (!oldestIdle) throw new Error("relay session capacity reached");
+        this.remove(oldestIdle);
+      }
       session = new RealtimeSession(options);
       this.byRabbit.set(rabbitId, session);
       this.byPublicId.set(session.publicId, session);
     }
     session.ttlMs = ttlMs || this.defaultTtlMs;
-    await session.connect();
-    return session;
+    try {
+      await session.connect();
+      return session;
+    } catch (error) {
+      // Do not leave a permanently rejected session cached until its TTL.
+      if (this.byRabbit.get(rabbitId) === session) this.remove(session);
+      throw error;
+    }
   }
 
   findByPublicId(id) {

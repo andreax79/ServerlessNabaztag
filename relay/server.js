@@ -6,9 +6,10 @@ import { RealtimeSessionManager } from "./lib/realtime.js";
 import { TicketStore } from "./lib/tickets.js";
 import { ToolConfigCache } from "./lib/tools.js";
 
-const VOICES = new Set(["alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse", "marin", "cedar"]);
 const MODEL_NAME = /^[a-zA-Z0-9._-]{1,47}$/;
+const VOICE_NAME = /^[a-zA-Z0-9._-]{1,23}$/;
 const RABBIT_ID = /^[a-zA-Z0-9:._-]{1,80}$/;
+const REASONING_EFFORTS = new Set(["minimal", "low", "medium", "high", "xhigh"]);
 
 function envNumber(name, fallback) {
   const value = Number(process.env[name]);
@@ -17,7 +18,8 @@ function envNumber(name, fallback) {
 
 export function loadConfig(overrides = {}) {
   const signingSecret = overrides.signingSecret ?? process.env.TTS_SIGNING_SECRET ?? "";
-  return {
+  const configuredEffort = process.env.OPENAI_REASONING_EFFORT || "low";
+  const config = {
     host: process.env.HOST || "0.0.0.0",
     port: envNumber("PORT", 8787),
     apiKey: process.env.OPENAI_API_KEY || "",
@@ -30,12 +32,22 @@ export function loadConfig(overrides = {}) {
     ttsModel: process.env.OPENAI_TTS_MODEL || "gpt-4o-mini-tts",
     transcribeModel: process.env.OPENAI_TRANSCRIBE_MODEL || "gpt-4o-mini-transcribe",
     voice: process.env.OPENAI_VOICE || "marin",
+    reasoningEffort: REASONING_EFFORTS.has(configuredEffort) ? configuredEffort : "low",
     timeZone: process.env.TIME_ZONE || "Europe/Rome",
     sessionTtlMs: envNumber("SESSION_TTL_SECONDS", 75) * 1000,
     maxAudioBytes: envNumber("MAX_AUDIO_BYTES", 1_048_576),
     ffmpegPath: process.env.FFMPEG_PATH || "ffmpeg",
+    maxTurnsPerMinute: envNumber("MAX_TURNS_PER_MINUTE", 60),
+    maxSessions: envNumber("MAX_SESSIONS", 32),
     ...overrides,
   };
+  config.reasoningEffort = REASONING_EFFORTS.has(config.reasoningEffort) ? config.reasoningEffort : "low";
+  config.port = clamp(config.port, 1, 65_535, 8787);
+  config.sessionTtlMs = clamp(config.sessionTtlMs, 15_000, 300_000, 75_000);
+  config.maxAudioBytes = clamp(config.maxAudioBytes, 16_384, 8_388_608, 1_048_576);
+  config.maxTurnsPerMinute = clamp(config.maxTurnsPerMinute, 1, 10_000, 60);
+  config.maxSessions = clamp(config.maxSessions, 1, 1_000, 32);
+  return config;
 }
 
 class SlidingRateLimiter {
@@ -52,8 +64,21 @@ class SlidingRateLimiter {
     }
     fresh.push(now);
     this.hits.set(key, fresh);
+    // Rabbit IDs come from an HTTP header. Prune stale buckets so spoofed IDs
+    // cannot grow this map forever on a long-running relay.
+    if (this.hits.size > 256) {
+      for (const [storedKey, times] of this.hits) {
+        if (!times.some((time) => now - time < windowMs)) this.hits.delete(storedKey);
+      }
+    }
     return true;
   }
+}
+
+function setBounded(map, key, value, maxEntries = 256) {
+  map.delete(key);
+  map.set(key, value);
+  while (map.size > maxEntries) map.delete(map.keys().next().value);
 }
 
 function clamp(value, min, max, fallback) {
@@ -112,7 +137,9 @@ export async function transcribeAudio(wav, config, fetchImpl, language = "", pro
   form.append("model", config.transcribeModel);
   form.append("file", new Blob([wav], { type: "audio/wav" }), "nabaztag.wav");
   const normalized = normalizedLanguage(language);
-  const inputLanguage = /^[a-z]{2}$/i.test(normalized) ? normalized.toLowerCase() : "";
+  const inputLanguage = /^[a-z]{2}(?:-[a-z]{2})?$/i.test(normalized)
+    ? normalized.slice(0, 2).toLowerCase()
+    : "";
   if (inputLanguage) form.append("language", inputLanguage);
   if (prompt) form.append("prompt", String(prompt).slice(0, 200));
   const controller = new AbortController();
@@ -181,6 +208,8 @@ export function createRelayServer(overrides = {}) {
     realtimeUrl: config.realtimeUrl,
     ticketStore,
     timeZone: config.timeZone,
+    reasoningEffort: config.reasoningEffort,
+    maxSessions: config.maxSessions,
     defaultTtlMs: config.sessionTtlMs,
     onToolTranscript: ({ name, transcript }) => {
       logger.info(`[relay] tool confirmation ${name}: ${JSON.stringify(String(transcript).slice(0, 300))}`);
@@ -231,7 +260,7 @@ export function createRelayServer(overrides = {}) {
         if (!RABBIT_ID.test(rabbitId)) throw new Error("missing or invalid X-Rabbit-Id");
         if (!limiter.take(`${rabbitId}:config`, 30, 60_000)) throw new Error("rate limit exceeded");
         const prompt = (await readBody(req, 8192)).toString("utf8");
-        promptsByRabbit.set(rabbitId, prompt);
+        setBounded(promptsByRabbit, rabbitId, prompt);
         logger.info("[relay] non-secret rabbit configuration synced");
         sendJson(res, { ok: 1 });
         return;
@@ -247,11 +276,12 @@ export function createRelayServer(overrides = {}) {
         const text = url.searchParams.get("t")?.slice(0, 4000) || "";
         const body = text ? Buffer.alloc(0) : await readBody(req, config.maxAudioBytes);
         if (!text && !body.length) throw new Error("audio body is empty");
+        if (!limiter.take("global:ask", Math.max(1, config.maxTurnsPerMinute), 60_000)) throw new Error("global rate limit exceeded");
 
-        const modelHeader = header(req, "x-model", 80);
+        const modelHeader = decoded(header(req, "x-model", 80));
         const model = MODEL_NAME.test(modelHeader) ? modelHeader : config.realtimeModel;
-        const voiceHeader = header(req, "x-voice", 24);
-        const voice = VOICES.has(voiceHeader) ? voiceHeader : config.voice;
+        const voiceHeader = decoded(header(req, "x-voice", 64));
+        const voice = VOICE_NAME.test(voiceHeader) ? voiceHeader : config.voice;
         const language = normalizedLanguage(url.searchParams.get("lang"));
         const prompt = promptsByRabbit.has(rabbitId)
           ? promptsByRabbit.get(rabbitId)
@@ -295,10 +325,11 @@ export function createRelayServer(overrides = {}) {
       }
 
       if (req.method === "POST" && url.pathname === "/v1/say") {
+        if (!limiter.take("global:say", Math.max(1, config.maxTurnsPerMinute), 60_000)) throw new Error("global rate limit exceeded");
         const text = (await readBody(req, 16_000)).toString("utf8").trim();
         if (!text) throw new Error("text body is empty");
         const requestedVoice = url.searchParams.get("voice") || config.voice;
-        const voice = VOICES.has(requestedVoice) ? requestedVoice : config.voice;
+        const voice = VOICE_NAME.test(requestedVoice) ? requestedVoice : config.voice;
         const mp3 = await synthesize(text, voice, config, fetchImpl);
         const ticket = ticketStore.createBuffered(mp3);
         sendJson(res, { ok: 1, tts: ticketStore.urlFor(ticket, requestBaseUrl(req)) });
@@ -310,6 +341,12 @@ export function createRelayServer(overrides = {}) {
       sendJson(res, { ok: 0, err: publicError(error) });
     }
   });
+  // Bound slow/incomplete clients without limiting a completed request while
+  // it waits for the Realtime model or a physical tool.
+  server.headersTimeout = 10_000;
+  server.requestTimeout = 45_000;
+  server.keepAliveTimeout = 1_000;
+  server.maxHeadersCount = 32;
 
   const cleanup = setInterval(() => {
     sessions.cleanup();
@@ -328,4 +365,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   server.listen(config.port, config.host, () => {
     console.log(`Nabaztag relay listening on http://${config.host}:${config.port}`);
   });
+  const shutdown = () => {
+    const force = setTimeout(() => process.exit(1), 10_000);
+    force.unref();
+    server.close(() => process.exit(0));
+  };
+  process.once("SIGINT", shutdown);
+  process.once("SIGTERM", shutdown);
 }

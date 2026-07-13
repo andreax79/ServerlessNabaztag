@@ -119,7 +119,7 @@ function normalizeWords(text) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
     .trim()
     .split(/\s+/)
     .filter(Boolean);
@@ -127,8 +127,16 @@ function normalizeWords(text) {
 
 export function hasWakeWordAtStart(transcript, wakeWord, maxDistance = 2) {
   const words = normalizeWords(transcript);
-  const wake = normalizeWords(wakeWord).join("");
+  const wakeWords = normalizeWords(wakeWord);
+  const wake = wakeWords.join("");
   if (!words.length || !wake) return false;
-  return [words[0], `${words[0]}${words[1] || ""}`]
-    .some((candidate) => levenshtein(candidate, wake) <= maxDistance);
+  // Short wake words must not inherit the two-edit tolerance intended for
+  // "nabaztag", otherwise almost any short word could spend a Realtime turn.
+  const allowedDistance = Math.min(maxDistance, Math.floor(wake.length / 3));
+  const candidates = [];
+  const maxWords = Math.min(words.length, Math.max(2, wakeWords.length + 1));
+  for (let count = 1; count <= maxWords; count += 1) {
+    candidates.push(words.slice(0, count).join(""));
+  }
+  return candidates.some((candidate) => levenshtein(candidate, wake) <= allowedDistance);
 }

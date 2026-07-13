@@ -7,8 +7,9 @@ RUN apt-get update \
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev
-COPY . .
+COPY --chown=node:node . .
 
 ENV HOST=0.0.0.0 PORT=8787
 EXPOSE 8787
+USER node
 CMD ["node", "server.js"]

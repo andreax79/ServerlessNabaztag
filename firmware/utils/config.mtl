@@ -203,12 +203,12 @@ fun config_set_go_to_bed val =
 fun config_set_taichi_freq val =
     strset _config_data CONF_TAICHI_FREQ val;;
 
-fun config_set_ai_enabled val = strset _config_data CONF_AI_ENABLED val;;
-fun config_set_ai_backend val = strset _config_data CONF_AI_BACKEND val;;
-fun config_set_ai_wake_mode val = strset _config_data CONF_AI_WAKE_MODE val;;
-fun config_set_ai_wake_sens val = strset _config_data CONF_AI_WAKE_SENS val;;
-fun config_set_ai_max_rec val = strset _config_data CONF_AI_MAX_REC val;;
-fun config_set_ai_session_ttl val = strset _config_data CONF_AI_SESSION_TTL val;;
+fun config_set_ai_enabled val = strset _config_data CONF_AI_ENABLED (if val then 1 else 0);;
+fun config_set_ai_backend val = strset _config_data CONF_AI_BACKEND 0;;
+fun config_set_ai_wake_mode val = strset _config_data CONF_AI_WAKE_MODE (if val then 1 else 0);;
+fun config_set_ai_wake_sens val = strset _config_data CONF_AI_WAKE_SENS (max 0 (min 255 val));;
+fun config_set_ai_max_rec val = strset _config_data CONF_AI_MAX_REC (max 2 (min 20 val));;
+fun config_set_ai_session_ttl val = strset _config_data CONF_AI_SESSION_TTL (max 15 (min 255 val));;
 fun config_set_ai_relay_url val = _config_set_str CONF_AI_RELAY_URL val 96;;
 fun config_set_ai_model val = _config_set_str CONF_AI_MODEL val 48;;
 fun config_set_ai_voice val = _config_set_str CONF_AI_VOICE val 24;;
