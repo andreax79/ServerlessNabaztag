@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Nabaztag</title>
+  <link rel="stylesheet" href="http://{SERVER_URL}/normalize.css" />
+  <link rel="stylesheet" href="http://{SERVER_URL}/milligram.css" />
+  <link rel="stylesheet" href="http://{SERVER_URL}/serverless.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/x-icon" href="http://{SERVER_URL}/favicon.ico" />
+  </style>
+</head>
+<body>
+
+<!-- Sticky Menu -->
+<nav class="sticky-nav">
+<div class="container nav-inner">
+  <span class="title">Serverless Nabaztag</span>
+  <ul>
+    <li><a href="/">Home</a></li>
+    <li><a href="/services.html" class="active">Services</a></li>
+    <li><a href="/audio.html">Audio</a></li>
+    <li><a href="/setup.html">Setup</a></li>
+    <li><a href="/ai.html">AI</a></li>
+    <li><a href="/forth.html">Forth</a></li>
+  </ul>
+</div>
+</nav>
+
+<div class="container main-content">
+
+  <h3 class="title">Services</h3>
+
+  <div class="row">
+    <div class="column">
+      <form action="/weather" method="GET">
+        <fieldset>
+            <label for="weatherField">Weather</label>
+            <select name="v" id="weatherField" onchange="this.form.submit()">
+            <option value="-1"></option>
+            <option value="0">Sun</option>
+            <option value="1">Clouds</option>
+            <option value="2">Fog</option>
+            <option value="3">Rain</option>
+            <option value="4">Snow</option>
+            <option value="5">Storm</option>
+            </select>
+        </fieldset>
+      </form>
+    </div>
+    <div class="column">
+      <form action="/pollution" method="GET">
+        <fieldset>
+            <label for="pollutionField">Pollution</label>
+            <select name="v" id="pollutionField" onchange="this.form.submit()">
+            <option value="-1"></option>
+            <option value="0">Good</option>
+            <option value="1">Good-Fair</option>
+            <option value="2">Fair</option>
+            <option value="3">Fair-Moderate</option>
+            <option value="4">Moderate</option>
+            <option value="5">Moderate-Poor</option>
+            <option value="6">Poor</option>
+            <option value="7">Poor-very poor</option>
+            <option value="8">Very poor</option>
+            <option value="9">Very-extremly poor</option>
+            <option value="10">Extremly poor</option>
+            </select>
+        </fieldset>
+      </form>
+    </div>
+    <div class="column">
+      <form action="/traffic" method="GET">
+        <fieldset>
+            <label for="trafficField">Traffic</label>
+            <select name="v" id="trafficField" onchange="this.form.submit()">
+            <option value="-1"></option>
+            <option value="0">Free</option>
+            <option value="1">Okay</option>
+            <option value="2">Moderate</option>
+            <option value="3">Normal</option>
+            <option value="4">Heavy</option>
+            <option value="5">Congested</option>
+            <option value="6">Extreme</option>
+            </select>
+        </fieldset>
+      </form>
+    </div>
+    <div class="column">
+      <form action="/service4" method="GET">
+        <fieldset>
+            <label for="service4Field">Generic Service 4</label>
+            <select name="v" id="service4Field" onchange="this.form.submit()">
+            <option value="-1"></option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            </select>
+        </fieldset>
+      </form>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="column">
+      <form action="/service5" method="GET">
+        <fieldset>
+            <label for="service5Field">Generic Service 5</label>
+            <select name="v" id="service5Field" onchange="this.form.submit()">
+            <option value="-1"></option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            </select>
+        </fieldset>
+      </form>
+    </div>
+    <div class="column">
+      <form action="/stock" method="GET">
+        <fieldset>
+            <label for="stockField">Stock</label>
+            <select name="v" id="stockField" onchange="this.form.submit()">
+            <option value="-1"></option>
+            <option value="0">---</option>
+            <option value="1">--</option>
+            <option value="2">-</option>
+            <option value="3">0</option>
+            <option value="4">+</option>
+            <option value="5">++</option>
+            <option value="6">+++</option>
+            </select>
+        </fieldset>
+      </form>
+    </div>
+    <div class="column">
+      <form action="/mail" method="GET">
+        <fieldset>
+            <label for="emailsField">E-mail</label>
+            <select name="v" id="emailsField" onchange="this.form.submit()">
+            <option value="-1"></option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            </select>
+        </fieldset>
+      </form>
+    </div>
+    <div class="column">
+      <form action="/nose" method="GET">
+        <fieldset>
+            <label for="noseField">Messages (nose)</label>
+            <select name="v" id="noseField" onchange="this.form.submit()">
+            <option value="0">Off</option>
+            <option value="1">On</option>
+            <option value="2">Todo</option>
+            <option value="3">Urgent</option>
+            <option value="4">Panic</option>
+            </select>
+        </fieldset>
+      </form>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="column">
+        <button type="button" class="button button-outline" onclick="clearInfo()">Clear service status</button>
+        <button type="button" class="button button-outline" onclick="fetch('update-weather');">Update weather/pollution status</button>
+        <label>&nbsp;</label>
+    </div>
+  </div>
+
+  <footer class="footer">
+     <a href="https://github.com/andreax79/ServerlessNabaztag" target="_blank" title="ServerlessNabaztag">github.com/andreax79/ServerlessNabaztag</a>
+     - <span id="revision"></span>
+  </footer>
+</div>
+<script>
+async function clearInfo() {
+    fetch('/clear');
+    document.querySelector('#weatherField').value=-1;
+    document.querySelector('#pollutionField').value=-1;
+    document.querySelector('#trafficField').value=-1;
+    document.querySelector('#service4Field').value=-1;
+    document.querySelector('#service5Field').value=-1;
+    document.querySelector('#stockField').value=-1;
+    document.querySelector('#emailsField').value=-1;
+    document.querySelector('#noseField').value=0;
+}
+
+async function onLoad() {
+    const response = await fetch('/status');
+    const status = await response.json();
+    document.getElementById("revision").innerHTML = status.rev;
+
+    document.querySelector('#weatherField').value = status.info.weather;
+    document.querySelector('#pollutionField').value = status.info.pollution;
+    document.querySelector('#trafficField').value = status.info.traffic;
+    document.querySelector('#service4Field').value = status.info.service4;
+    document.querySelector('#service5Field').value = status.info.service5;
+    document.querySelector('#stockField').value = status.info.stock;
+    document.querySelector('#emailsField').value = status.info.emails;
+    document.querySelector('#noseField').value = status.info.messages;
+}
+
+document.addEventListener('DOMContentLoaded', onLoad);
+</script>
+</body>
+</html>

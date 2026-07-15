@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Nabaztag</title>
+  <link rel="stylesheet" href="http://{SERVER_URL}/normalize.css" />
+  <link rel="stylesheet" href="http://{SERVER_URL}/milligram.css" />
+  <link rel="stylesheet" href="http://{SERVER_URL}/serverless.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/x-icon" href="http://{SERVER_URL}/favicon.ico" />
+  </style>
+</head>
+<body>
+
+<!-- Sticky Menu -->
+<nav class="sticky-nav">
+<div class="container nav-inner">
+  <span class="title">Serverless Nabaztag</span>
+  <ul>
+    <li><a href="/">Home</a></li>
+    <li><a href="/services.html">Services</a></li>
+    <li><a href="/audio.html">Audio</a></li>
+    <li><a href="/setup.html">Setup</a></li>
+    <li><a href="/ai.html">AI</a></li>
+    <li><a href="/forth.html" class="active">Forth</a></li>
+  </ul>
+</div>
+</nav>
+
+<div class="container main-content">
+
+  <h3 class="title">Forth</h3>
+
+  <div class="row">
+    <div class="column">
+      <form action="/forth" method="POST">
+        <fieldset>
+          <label for="codeField">Forth code</label>
+          <textarea name="c" id="codeField">words</textarea>
+          <input class="button" type="submit" value="Play">
+      </fieldset>
+      </form>
+    </div>
+  </div>
+
+  <footer class="footer">
+     <a href="https://github.com/andreax79/ServerlessNabaztag" target="_blank" title="ServerlessNabaztag">github.com/andreax79/ServerlessNabaztag</a>
+     - <span id="revision"></span>
+  </footer>
+</div>
+<script>
+async function onLoad() {
+    const response = await fetch('/status');
+    const status = await response.json();
+    document.getElementById("revision").innerHTML = status.rev;
+}
+
+document.addEventListener('DOMContentLoaded', onLoad);
+</script>
+</body>
+</html>

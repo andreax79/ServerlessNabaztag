@@ -1,0 +1,59 @@
+.sticky-nav {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #fff;
+  border-bottom: .1rem solid #d1d1d1;
+}
+
+.sticky-nav .nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 0;
+}
+
+.sticky-nav .title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #333;
+  text-decoration: none;
+  letter-spacing: -.05rem;
+}
+
+.sticky-nav ul {
+  list-style: none;
+  display: flex;
+  gap: 2.4rem;
+  margin: 0;
+  padding: 0;
+}
+
+.sticky-nav ul li a {
+  color: #606c76;
+  text-decoration: none;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1.4rem;
+  letter-spacing: .1rem;
+}
+
+.sticky-nav ul li a:hover,
+.sticky-nav ul li a.active {
+  color: #9b4dca;
+}
+
+section {
+  padding: 6rem 0;
+  border-bottom: .1rem solid #f4f5f6;
+}
+
+section:last-of-type {
+  border-bottom: none;
+}
+
+.main-content {
+  padding-top: 2rem;
+}

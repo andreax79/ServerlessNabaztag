@@ -475,12 +475,20 @@ fun http_not_found sock args=
         sock_send_and_close sock res
     );;
 
-fun _http_get_index_cb http res sock=
+/**
+ * Callback for handling the HTTP response from the server when fetching a page.
+ * For html pages, it replaces {SERVER_URL} with the actual server URL before sending to the client.
+ */
+fun _http_get_from_server http res sock=
     if res == nil then
         http_not_found sock nil
     else (
-        let strreplace (http_get_content res) "{SERVER_URL}" config_get_server_url -> content in (
-            sock_send sock (http_header HTTP_200 "text/html" (strlen content)); // header
+        let http_split_header_content res -> [header content] in
+        let http_get_header_field header HTTP_CONTENT_TYPE -> content_type in (
+            // For the html page, replace {SERVER_URL} with the actual server URL.
+            if !strcmp content_type "text/html" then
+                set content = strreplace content "{SERVER_URL}" config_get_server_url;
+            sock_send sock (http_header HTTP_200 content_type (strlen content)); // header
             sock_send_and_close sock content;
             nil
         )
@@ -489,9 +497,9 @@ fun _http_get_index_cb http res sock=
 /**
  * Serve the index.html page, replacing {SERVER_URL} with the actual server URL.
  */
-fun http_get_index sock args=
-    let strcatlist "http://" :: config_get_server_url :: "/index.html" :: nil -> url in
-        http_request "GET" url nil (fixarg3 #_http_get_index_cb sock) HTTP_NORMAL;
+fun http_get_from_server page sock args=
+    let strcatlist "http://" :: config_get_server_url :: page :: nil -> url in
+        http_request "GET" url nil (fixarg3 #_http_get_from_server sock) HTTP_NORMAL;
     nil;;
 
 fun _http_get_openapi_yaml_cb http res sock=
@@ -629,7 +637,8 @@ fun http_server_process_request req sock=
         else if !strcmp path "/ask" then http_get_ai_ask sock args // text-only AI test
         else if !strcmp path "/forth" then http_post_forth sock args // forth command, c=code
         else if !strcmp path "/openapi.yaml" then http_get_openapi_yaml sock args // openapi spec
-        else if !strcmp path "/" then http_get_index sock args // index page
+        else if !strcmp path "/" then http_get_from_server "/index.html" sock args // index page
+        else if strstr path ".html" 0 != nil then http_get_from_server path sock args // html page
         else http_not_found sock args;
         0
     );;

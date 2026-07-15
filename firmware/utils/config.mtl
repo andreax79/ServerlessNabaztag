@@ -1,5 +1,10 @@
 #include protos/config_protos.mtl
 
+/*
+ * The configuration is stored in the last sector of the internal flash memory.
+ * The maximum size of the configuration is 4096 bytes
+ */
+
 const CONF_SERVERURL=0;;		//41    Violet Platform URL
 const CONF_NETDHCP=41;;		    //1     DHCP server enabled
 const CONF_NETIP=42;;			//4     Local IP
@@ -45,7 +50,8 @@ const CONF_AI_TOOLS_URL=2460;;   //96
 const CONF_AI_WAKE_WORD=2556;;   //24
 const CONF_AI_MAGIC_LEGACY_VALUE=0x5b;;
 const CONF_AI_MAGIC_VALUE=0x5c;;
-const CONF_LENGTH=2580;;
+const CONF_LENGTH=2580;;         // Max 4096 bytes
+
 
 var _config_data;;
 var config_username = "nabaztag";; // HTTP login user

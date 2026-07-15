@@ -24,4 +24,5 @@ const HTTP_CONTENT_END = "\13\n";;
 const HTTP_CONTENT_LENGTH = "content-length: ";; // lowerrcase
 const HTTP_AUTHORIZATION = "authorization: ";; // lowerrcase
 const HTTP_DATE = "date: ";; // lowerrcase
+const HTTP_CONTENT_TYPE = "content-type: ";; // lowerrcase
 const HTTP_BASIC = "Basic";;

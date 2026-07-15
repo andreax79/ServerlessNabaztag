@@ -3,186 +3,37 @@
 <head>
   <meta charset="UTF-8" />
   <title>Nabaztag</title>
+  <link rel="stylesheet" href="http://{SERVER_URL}/normalize.css" />
   <link rel="stylesheet" href="http://{SERVER_URL}/milligram.css" />
+  <link rel="stylesheet" href="http://{SERVER_URL}/serverless.css" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" type="image/x-icon" href="http://{SERVER_URL}/favicon.ico" />
-  <style type="text/css">
-/*
-body {
-  background: #2c2f34;
-  color: #f2f2f2;
-}
-input, select, textarea {
-  color: #f2f2f2;
-}
-*/
   </style>
 </head>
 <body>
-<div class="container">
-  <div class="row">
-    <h1>Nabaztag</h1>
-  </div>
+
+<!-- Sticky Menu -->
+<nav class="sticky-nav">
+<div class="container nav-inner">
+  <span class="title">Serverless Nabaztag</span>
+  <ul>
+    <li><a href="/" class="active">Home</a></li>
+    <li><a href="/services.html">Services</a></li>
+    <li><a href="/audio.html">Audio</a></li>
+    <li><a href="/setup.html">Setup</a></li>
+    <li><a href="/ai.html">AI</a></li>
+    <li><a href="/forth.html">Forth</a></li>
+  </ul>
+</div>
+</nav>
+
+<div class="container main-content">
+
   <div class="row">
     <div class="column">
        <ul>
          <li><a id="openAPI" href="http://andreax79.github.io/ServerlessNabaztag/vl/api/" target="_blank">API Documentation</a></li>
        </ul>
-    </div>
-  </div>
-
-  <h3 class="title">Services</h3>
-
-  <div class="row">
-    <div class="column">
-      <form action="/weather" method="GET">
-        <fieldset>
-            <label for="weatherField">Weather</label>
-            <select name="v" id="weatherField" onchange="this.form.submit()">
-            <option value="-1"></option>
-            <option value="0">Sun</option>
-            <option value="1">Clouds</option>
-            <option value="2">Fog</option>
-            <option value="3">Rain</option>
-            <option value="4">Snow</option>
-            <option value="5">Storm</option>
-            </select>
-        </fieldset>
-      </form>
-    </div>
-    <div class="column">
-      <form action="/pollution" method="GET">
-        <fieldset>
-            <label for="pollutionField">Pollution</label>
-            <select name="v" id="pollutionField" onchange="this.form.submit()">
-            <option value="-1"></option>
-            <option value="0">Good</option>
-            <option value="1">Good-Fair</option>
-            <option value="2">Fair</option>
-            <option value="3">Fair-Moderate</option>
-            <option value="4">Moderate</option>
-            <option value="5">Moderate-Poor</option>
-            <option value="6">Poor</option>
-            <option value="7">Poor-very poor</option>
-            <option value="8">Very poor</option>
-            <option value="9">Very-extremly poor</option>
-            <option value="10">Extremly poor</option>
-            </select>
-        </fieldset>
-      </form>
-    </div>
-    <div class="column">
-      <form action="/traffic" method="GET">
-        <fieldset>
-            <label for="trafficField">Traffic</label>
-            <select name="v" id="trafficField" onchange="this.form.submit()">
-            <option value="-1"></option>
-            <option value="0">Free</option>
-            <option value="1">Okay</option>
-            <option value="2">Moderate</option>
-            <option value="3">Normal</option>
-            <option value="4">Heavy</option>
-            <option value="5">Congested</option>
-            <option value="6">Extreme</option>
-            </select>
-        </fieldset>
-      </form>
-    </div>
-    <div class="column">
-      <form action="/service4" method="GET">
-        <fieldset>
-            <label for="service4Field">Generic Service 4</label>
-            <select name="v" id="service4Field" onchange="this.form.submit()">
-            <option value="-1"></option>
-            <option value="0">0</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-            <option value="6">6</option>
-            <option value="7">7</option>
-            <option value="8">8</option>
-            <option value="9">9</option>
-            </select>
-        </fieldset>
-      </form>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="column">
-      <form action="/service5" method="GET">
-        <fieldset>
-            <label for="service5Field">Generic Service 5</label>
-            <select name="v" id="service5Field" onchange="this.form.submit()">
-            <option value="-1"></option>
-            <option value="0">0</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-            <option value="6">6</option>
-            <option value="7">7</option>
-            <option value="8">8</option>
-            <option value="9">9</option>
-            </select>
-        </fieldset>
-      </form>
-    </div>
-    <div class="column">
-      <form action="/stock" method="GET">
-        <fieldset>
-            <label for="stockField">Stock</label>
-            <select name="v" id="stockField" onchange="this.form.submit()">
-            <option value="-1"></option>
-            <option value="0">---</option>
-            <option value="1">--</option>
-            <option value="2">-</option>
-            <option value="3">0</option>
-            <option value="4">+</option>
-            <option value="5">++</option>
-            <option value="6">+++</option>
-            </select>
-        </fieldset>
-      </form>
-    </div>
-    <div class="column">
-      <form action="/mail" method="GET">
-        <fieldset>
-            <label for="emailsField">E-mail</label>
-            <select name="v" id="emailsField" onchange="this.form.submit()">
-            <option value="-1"></option>
-            <option value="0">0</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            </select>
-        </fieldset>
-      </form>
-    </div>
-    <div class="column">
-      <form action="/nose" method="GET">
-        <fieldset>
-            <label for="noseField">Messages (nose)</label>
-            <select name="v" id="noseField" onchange="this.form.submit()">
-            <option value="0">Off</option>
-            <option value="1">On</option>
-            <option value="2">Todo</option>
-            <option value="3">Urgent</option>
-            <option value="4">Panic</option>
-            </select>
-        </fieldset>
-      </form>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="column">
-        <button type="button" class="button button-outline" onclick="clearInfo()">Clear service status</button>
-        <button type="button" class="button button-outline" onclick="fetch('update-weather');">Update weather/pollution status</button>
-        <label>&nbsp;</label>
     </div>
   </div>
 
@@ -337,37 +188,6 @@ input, select, textarea {
     </div>
   </div>
 
-  <h3 class="title">Sound</h3>
-
-  <div class="row">
-    <div class="column">
-      <label>Play MIDI</label>
-      <ul>
-      <li><a href="/communication">Communication</a></li>
-      <li><a href="/ack">Ack</a></li>
-      <li><a href="/abort">Abort</a></li>
-      <li><a href="/ministop">Ministop</a></li>
-      </ul>
-    </div>
-    <div class="column column-75">
-      <form action="/play" method="GET">
-        <fieldset>
-          <label for="mp3uriField">Play MP3 file</label>
-          (http only, https is not supported)
-          <input type="text" name="u" id="mp3uriField" placeholder="http://ia800304.us.archive.org/14/items/SadTrombone/73581__benboncan__sad-trombone.mp3" />
-          <input class="button" type="submit" value="Play">
-      </fieldset>
-      </form>
-      <form action="/say" method="GET">
-        <fieldset>
-          <label for="textToSpeachField">Text to speach</label>
-          <input type="text" name="t" id="textToSpeachField" />
-          <input class="button" type="submit" value="Say">
-      </fieldset>
-      </form>
-    </div>
-  </div>
-
   <div class="row">
     <div class="column">
       <h3>Util</h3>
@@ -397,221 +217,12 @@ input, select, textarea {
     </div>
   </div>
 
-  <h3 class="title">Setup</h3>
-
-  <form action="/setup" method="GET">
-    <fieldset>
-      <div class="row">
-        <div class="column">
-            <label for="latitudeField">Latitude</label>
-            <input name="j" type="text" placeholder="45.464" id="latitudeField" />
-        </div>
-        <div class="column">
-            <label for="longitudeField">Longitude</label>
-            <input name="k" type="text" placeholder="9.1895" id="longitudeField" />
-        </div>
-        <div class="column">
-            <label for="langField">Language</label>
-            <select name="l" id="langField">
-            <option value="uk">English</option>
-            <option value="it">Italian</option>
-            <option value="fr">French</option>
-            <option value="es">Spanish</option>
-            <option value="de">German</option>
-            </select>
-        </div>
-        <div class="column">
-            <label for="taichiField">Tai Chi</label>
-            <select name="t" id="taichiField">
-            <option value="0">Off</option>
-            <option value="40">Min</option>
-            <option value="80">Medium</option>
-            <option value="255">Max</option>
-            </select>
-        </div>
-      </div>
-      <div class="row">
-        <div class="column">
-            <label for="cityCodeField">City (Timezone)</label>
-            <select name="c" id="cityCodeField"></select>
-            <input class="button" type="submit" value="Set">
-        </div>
-        <div class="column">
-            <label for="dstField">Daylight Saving Time</label>
-            <select name="d" id="dstField">
-            <option value="0">Off</option>
-            <option value="1">On</option>
-            </select>
-        </div>
-        <div class="column">
-            <label for="wakeUpField">Wake up</label>
-            <input name="w" type="number" min="0" max="23" placeholder="7" id="wakeUpField" />
-        </div>
-        <div class="column">
-            <label for="goToBedField">Go to bed</label>
-            <input name="b" type="number" min="0" max="23" placeholder="22" id="goToBedField" />
-        </div>
-      </div>
-    </fieldset>
-  </form>
-
-  <h3 class="title">AI Assistant</h3>
-
-  <p>The OpenAI key is stored only in the relay environment and is never sent to or displayed by the rabbit.</p>
-  <form action="/setup-ai" method="POST" id="aiSettingsForm">
-    <fieldset>
-      <div class="row">
-        <div class="column">
-          <label for="aiEnabledField">Assistant</label>
-          <select name="e" id="aiEnabledField" onchange="validateAISettings()">
-            <option value="0">Off (legacy long-click recording)</option>
-            <option value="1">On (long-click push-to-talk)</option>
-          </select>
-        </div>
-        <div class="column">
-          <label for="aiModelField">Realtime model</label>
-          <input name="m" type="text" id="aiModelField" maxlength="47" pattern="[A-Za-z0-9._-]+" placeholder="gpt-realtime-2.1" />
-        </div>
-        <div class="column">
-          <label for="aiVoiceField">Voice</label>
-          <input name="v" type="text" id="aiVoiceField" list="aiVoiceOptions" maxlength="23" pattern="[A-Za-z0-9._-]+" placeholder="marin" />
-          <datalist id="aiVoiceOptions">
-            <option value="marin"></option><option value="cedar"></option>
-            <option value="alloy"></option><option value="ash"></option>
-            <option value="ballad"></option><option value="coral"></option>
-            <option value="echo"></option><option value="sage"></option>
-            <option value="shimmer"></option><option value="verse"></option>
-          </datalist>
-        </div>
-        <div class="column">
-          <label for="aiLangField">Default language (responses follow speech)</label>
-          <input name="l" type="text" id="aiLangField" list="aiLanguageOptions" maxlength="7" pattern="[A-Za-z]{2}(-[A-Za-z]{2})?" placeholder="it" />
-          <datalist id="aiLanguageOptions">
-            <option value="it"></option><option value="en"></option>
-            <option value="fr"></option><option value="es"></option>
-            <option value="de"></option>
-          </datalist>
-        </div>
-      </div>
-      <div class="row">
-        <div class="column column-50">
-          <label for="aiRelayField">Relay host and port (without http://)</label>
-          <input name="u" type="text" id="aiRelayField" maxlength="95" pattern="(?!https?://).+" title="Enter a host and optional port without http:// or https://" placeholder="relay-host.local:8787" />
-        </div>
-        <div class="column column-50">
-          <label for="aiToolsField">Tools URL (empty = server URL + /ai_tools.json)</label>
-          <input name="o" type="url" id="aiToolsField" maxlength="95" placeholder="http://platform-host/vl/ai_tools.json" />
-        </div>
-      </div>
-      <div class="row">
-        <div class="column">
-          <label for="aiWakeField">Experimental wake word</label>
-          <select name="w" id="aiWakeField">
-            <option value="0">Off</option>
-            <option value="1">On</option>
-          </select>
-        </div>
-        <div class="column">
-          <label for="aiWakeWordField">Wake word</label>
-          <input name="n" type="text" id="aiWakeWordField" maxlength="23" placeholder="nabaztag" />
-        </div>
-        <div class="column">
-          <label for="aiWakeSensitivityField">Wake sensitivity</label>
-          <input name="s" type="number" min="0" max="255" id="aiWakeSensitivityField" />
-        </div>
-        <div class="column">
-          <label for="aiMaxRecordingField">Max recording (seconds)</label>
-          <input name="r" type="number" min="2" max="20" id="aiMaxRecordingField" />
-        </div>
-        <div class="column">
-          <label for="aiSessionTtlField">Conversation TTL (seconds)</label>
-          <input name="t" type="number" min="15" max="255" id="aiSessionTtlField" />
-        </div>
-      </div>
-      <label for="aiPromptField">Nabaztag personality</label>
-      <textarea name="p" id="aiPromptField" rows="12" maxlength="2047"></textarea>
-      <label for="aiTestTextField">Test message</label>
-      <input type="text" id="aiTestTextField" maxlength="4000" placeholder="Type a message in any language" />
-      <input type="hidden" name="b" value="0" />
-      <input class="button" type="submit" value="Save AI settings" />
-      <button type="button" class="button button-outline" onclick="testAI()">Send test message</button>
-      <span id="aiTestResult"> Uses the last saved settings.</span>
-    </fieldset>
-  </form>
-
-  <h3 class="title">Forth</h3>
-
-  <div class="row">
-    <div class="column">
-      <form action="/forth" method="POST">
-        <fieldset>
-          <label for="codeField">Forth code</label>
-          <textarea name="c" id="codeField">words</textarea>
-          <input class="button" type="submit" value="Play">
-      </fieldset>
-      </form>
-    </div>
-  </div>
-
   <footer class="footer">
      <a href="https://github.com/andreax79/ServerlessNabaztag" target="_blank" title="ServerlessNabaztag">github.com/andreax79/ServerlessNabaztag</a>
      - <span id="revision"></span>
   </footer>
 </div>
 <script>
-async function loadTimezones(city_code) {
-    const response = await fetch('/timezones');
-    const timezones = await response.json();
-    const select = document.getElementById('cityCodeField');
-    select.innerHTML = '';
-
-    // Populate the select
-    timezones.forEach(tz => {
-        const option = document.createElement('option');
-        option.value = tz.code;
-        option.textContent = tz.name;
-        select.appendChild(option);
-    });
-
-    // Set the selected value
-    document.querySelector('#cityCodeField').value = city_code;
-}
-
-async function clearInfo() {
-    fetch('/clear');
-    document.querySelector('#weatherField').value=-1;
-    document.querySelector('#pollutionField').value=-1;
-    document.querySelector('#trafficField').value=-1;
-    document.querySelector('#service4Field').value=-1;
-    document.querySelector('#service5Field').value=-1;
-    document.querySelector('#stockField').value=-1;
-    document.querySelector('#emailsField').value=-1;
-    document.querySelector('#noseField').value=0;
-}
-
-async function testAI() {
-    const result = document.getElementById('aiTestResult');
-    const field = document.getElementById('aiTestTextField');
-    const message = field.value.trim();
-    if (!message) {
-        result.textContent = ' Enter a test message first.';
-        field.focus();
-        return;
-    }
-    result.textContent = ' Sending…';
-    try {
-        const response = await fetch('/ask?t=' + encodeURIComponent(message));
-        result.textContent = response.ok ? ' Request sent; the rabbit should answer shortly.' : ' Request failed.';
-    } catch (error) {
-        result.textContent = ' Request failed: ' + error.message;
-    }
-}
-
-function validateAISettings() {
-    const enabled = document.getElementById('aiEnabledField').value === '1';
-    document.getElementById('aiRelayField').required = enabled;
-}
-
 function formatColor(c) {
     if (c == -1)
         return -1;
@@ -624,38 +235,6 @@ async function onLoad() {
     document.getElementById("macAddress").innerHTML = status.wifi.mac;
     document.getElementById("revision").innerHTML = status.rev;
 
-    document.querySelector('#langField').value = status.language;
-    document.querySelector('#taichiField').value = status.taichi_freq;
-    document.querySelector('#dstField').value = status.time.dst;
-
-    document.getElementById("latitudeField").value = status.latitude;
-    document.getElementById("longitudeField").value = status.longitude;
-    document.getElementById("wakeUpField").value = status.wake_up;
-    document.getElementById("goToBedField").value = status.go_to_bed;
-
-    document.getElementById("aiEnabledField").value = status.ai.enabled;
-    document.getElementById("aiModelField").value = status.ai.model;
-    document.getElementById("aiVoiceField").value = status.ai.voice;
-    document.getElementById("aiLangField").value = status.ai.language === 'uk' ? 'en' : status.ai.language;
-    document.getElementById("aiRelayField").value = status.ai.relay_url;
-    document.getElementById("aiToolsField").value = status.ai.tools_url;
-    document.getElementById("aiWakeField").value = status.ai.wake_mode;
-    document.getElementById("aiWakeWordField").value = status.ai.wake_word;
-    document.getElementById("aiWakeSensitivityField").value = status.ai.wake_sensitivity;
-    document.getElementById("aiMaxRecordingField").value = status.ai.max_recording;
-    document.getElementById("aiSessionTtlField").value = status.ai.session_ttl;
-    document.getElementById("aiPromptField").value = status.ai.prompt;
-    validateAISettings();
-
-    document.querySelector('#weatherField').value = status.info.weather;
-    document.querySelector('#pollutionField').value = status.info.pollution;
-    document.querySelector('#trafficField').value = status.info.traffic;
-    document.querySelector('#service4Field').value = status.info.service4;
-    document.querySelector('#service5Field').value = status.info.service5;
-    document.querySelector('#stockField').value = status.info.stock;
-    document.querySelector('#emailsField').value = status.info.emails;
-    document.querySelector('#noseField').value = status.info.messages;
-
     document.getElementById("ledNoseField").value = formatColor(status.leds.overrides.nose);
     document.getElementById("ledLeftField").value = formatColor(status.leds.overrides.left);
     document.getElementById("ledMiddleField").value = formatColor(status.leds.overrides.middle);
@@ -664,7 +243,6 @@ async function onLoad() {
     document.getElementById("ledBaseBreathingField").value = status.leds.base_breathing ? 1 : 0;
 
     document.getElementById("openAPI").href += "?openapi_url=http%3A%2F%2F" + window.location.host + "%2Fopenapi.yaml";
-    loadTimezones(status.time.city_code);
 }
 
 document.addEventListener('DOMContentLoaded', onLoad);

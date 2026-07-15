@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Nabaztag</title>
+  <link rel="stylesheet" href="http://{SERVER_URL}/normalize.css" />
+  <link rel="stylesheet" href="http://{SERVER_URL}/milligram.css" />
+  <link rel="stylesheet" href="http://{SERVER_URL}/serverless.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/x-icon" href="http://{SERVER_URL}/favicon.ico" />
+  </style>
+</head>
+<body>
+
+<!-- Sticky Menu -->
+<nav class="sticky-nav">
+<div class="container nav-inner">
+  <span class="title">Serverless Nabaztag</span>
+  <ul>
+    <li><a href="/">Home</a></li>
+    <li><a href="/services.html">Services</a></li>
+    <li><a href="/audio.html">Audio</a></li>
+    <li><a href="/setup.html">Setup</a></li>
+    <li><a href="/ai.html" class="active">AI</a></li>
+    <li><a href="/forth.html">Forth</a></li>
+  </ul>
+</div>
+</nav>
+
+<div class="container main-content">
+
+  <h3 class="title">AI Assistant</h3>
+
+  <p>The OpenAI key is stored only in the relay environment and is never sent to or displayed by the rabbit.</p>
+  <form action="/setup-ai" method="POST" id="aiSettingsForm">
+    <fieldset>
+      <div class="row">
+        <div class="column">
+          <label for="aiEnabledField">Assistant</label>
+          <select name="e" id="aiEnabledField" onchange="validateAISettings()">
+            <option value="0">Off (legacy long-click recording)</option>
+            <option value="1">On (long-click push-to-talk)</option>
+          </select>
+        </div>
+        <div class="column">
+          <label for="aiModelField">Realtime model</label>
+          <input name="m" type="text" id="aiModelField" maxlength="47" pattern="[A-Za-z0-9._-]+" placeholder="gpt-realtime-2.1" />
+        </div>
+        <div class="column">
+          <label for="aiVoiceField">Voice</label>
+          <input name="v" type="text" id="aiVoiceField" list="aiVoiceOptions" maxlength="23" pattern="[A-Za-z0-9._-]+" placeholder="marin" />
+          <datalist id="aiVoiceOptions">
+            <option value="marin"></option><option value="cedar"></option>
+            <option value="alloy"></option><option value="ash"></option>
+            <option value="ballad"></option><option value="coral"></option>
+            <option value="echo"></option><option value="sage"></option>
+            <option value="shimmer"></option><option value="verse"></option>
+          </datalist>
+        </div>
+        <div class="column">
+          <label for="aiLangField">Default language (responses follow speech)</label>
+          <input name="l" type="text" id="aiLangField" list="aiLanguageOptions" maxlength="7" pattern="[A-Za-z]{2}(-[A-Za-z]{2})?" placeholder="it" />
+          <datalist id="aiLanguageOptions">
+            <option value="it"></option><option value="en"></option>
+            <option value="fr"></option><option value="es"></option>
+            <option value="de"></option>
+          </datalist>
+        </div>
+      </div>
+      <div class="row">
+        <div class="column column-50">
+          <label for="aiRelayField">Relay host and port (without http://)</label>
+          <input name="u" type="text" id="aiRelayField" maxlength="95" pattern="(?!https?://).+" title="Enter a host and optional port without http:// or https://" placeholder="relay-host.local:8787" />
+        </div>
+        <div class="column column-50">
+          <label for="aiToolsField">Tools URL (empty = server URL + /ai_tools.json)</label>
+          <input name="o" type="url" id="aiToolsField" maxlength="95" placeholder="http://platform-host/vl/ai_tools.json" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="column">
+          <label for="aiWakeField">Experimental wake word</label>
+          <select name="w" id="aiWakeField">
+            <option value="0">Off</option>
+            <option value="1">On</option>
+          </select>
+        </div>
+        <div class="column">
+          <label for="aiWakeWordField">Wake word</label>
+          <input name="n" type="text" id="aiWakeWordField" maxlength="23" placeholder="nabaztag" />
+        </div>
+        <div class="column">
+          <label for="aiWakeSensitivityField">Wake sensitivity</label>
+          <input name="s" type="number" min="0" max="255" id="aiWakeSensitivityField" />
+        </div>
+        <div class="column">
+          <label for="aiMaxRecordingField">Max recording (sec)</label>
+          <input name="r" type="number" min="2" max="20" id="aiMaxRecordingField" />
+        </div>
+        <div class="column">
+          <label for="aiSessionTtlField">Conversation TTL (sec)</label>
+          <input name="t" type="number" min="15" max="255" id="aiSessionTtlField" />
+        </div>
+      </div>
+      <label for="aiPromptField">Nabaztag personality</label>
+      <textarea name="p" id="aiPromptField" rows="12" maxlength="2047"></textarea>
+      <label for="aiTestTextField">Test message</label>
+      <input type="text" id="aiTestTextField" maxlength="4000" placeholder="Type a message in any language" />
+      <input type="hidden" name="b" value="0" />
+      <input class="button" type="submit" value="Save AI settings" />
+      <button type="button" class="button button-outline" onclick="testAI()">Send test message</button>
+      <span id="aiTestResult"> Uses the last saved settings.</span>
+    </fieldset>
+  </form>
+
+  <footer class="footer">
+     <a href="https://github.com/andreax79/ServerlessNabaztag" target="_blank" title="ServerlessNabaztag">github.com/andreax79/ServerlessNabaztag</a>
+     - <span id="revision"></span>
+  </footer>
+</div>
+<script>
+async function testAI() {
+    const result = document.getElementById('aiTestResult');
+    const field = document.getElementById('aiTestTextField');
+    const message = field.value.trim();
+    if (!message) {
+        result.textContent = ' Enter a test message first.';
+        field.focus();
+        return;
+    }
+    result.textContent = ' Sending…';
+    try {
+        const response = await fetch('/ask?t=' + encodeURIComponent(message));
+        result.textContent = response.ok ? ' Request sent; the rabbit should answer shortly.' : ' Request failed.';
+    } catch (error) {
+        result.textContent = ' Request failed: ' + error.message;
+    }
+}
+
+function validateAISettings() {
+    const enabled = document.getElementById('aiEnabledField').value === '1';
+    document.getElementById('aiRelayField').required = enabled;
+}
+
+async function onLoad() {
+    const response = await fetch('/status');
+    const status = await response.json();
+    document.getElementById("revision").innerHTML = status.rev;
+
+    document.getElementById("aiEnabledField").value = status.ai.enabled;
+    document.getElementById("aiModelField").value = status.ai.model;
+    document.getElementById("aiVoiceField").value = status.ai.voice;
+    document.getElementById("aiLangField").value = status.ai.language === 'uk' ? 'en' : status.ai.language;
+    document.getElementById("aiRelayField").value = status.ai.relay_url;
+    document.getElementById("aiToolsField").value = status.ai.tools_url;
+    document.getElementById("aiWakeField").value = status.ai.wake_mode;
+    document.getElementById("aiWakeWordField").value = status.ai.wake_word;
+    document.getElementById("aiWakeSensitivityField").value = status.ai.wake_sensitivity;
+    document.getElementById("aiMaxRecordingField").value = status.ai.max_recording;
+    document.getElementById("aiSessionTtlField").value = status.ai.session_ttl;
+    document.getElementById("aiPromptField").value = status.ai.prompt;
+    validateAISettings();
+}
+
+document.addEventListener('DOMContentLoaded', onLoad);
+</script>
+</body>
+</html>

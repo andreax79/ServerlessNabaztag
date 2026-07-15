@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Nabaztag</title>
+  <link rel="stylesheet" href="http://{SERVER_URL}/normalize.css" />
+  <link rel="stylesheet" href="http://{SERVER_URL}/milligram.css" />
+  <link rel="stylesheet" href="http://{SERVER_URL}/serverless.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/x-icon" href="http://{SERVER_URL}/favicon.ico" />
+  </style>
+</head>
+<body>
+
+<!-- Sticky Menu -->
+<nav class="sticky-nav">
+<div class="container nav-inner">
+  <span class="title">Serverless Nabaztag</span>
+  <ul>
+    <li><a href="/">Home</a></li>
+    <li><a href="/services.html">Services</a></li>
+    <li><a href="/audio.html">Audio</a></li>
+    <li><a href="/setup.html" class="active">Setup</a></li>
+    <li><a href="/ai.html">AI</a></li>
+    <li><a href="/forth.html">Forth</a></li>
+  </ul>
+</div>
+</nav>
+
+<div class="container main-content">
+
+  <h3 class="title">Setup</h3>
+
+  <form action="/setup" method="GET">
+    <fieldset>
+      <div class="row">
+        <div class="column">
+            <label for="latitudeField">Latitude</label>
+            <input name="j" type="text" placeholder="45.464" id="latitudeField" />
+        </div>
+        <div class="column">
+            <label for="longitudeField">Longitude</label>
+            <input name="k" type="text" placeholder="9.1895" id="longitudeField" />
+        </div>
+        <div class="column">
+            <label for="langField">Language</label>
+            <select name="l" id="langField">
+            <option value="uk">English</option>
+            <option value="it">Italian</option>
+            <option value="fr">French</option>
+            <option value="es">Spanish</option>
+            <option value="de">German</option>
+            </select>
+        </div>
+        <div class="column">
+            <label for="taichiField">Tai Chi</label>
+            <select name="t" id="taichiField">
+            <option value="0">Off</option>
+            <option value="40">Min</option>
+            <option value="80">Medium</option>
+            <option value="255">Max</option>
+            </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="column">
+            <label for="cityCodeField">City (Timezone)</label>
+            <select name="c" id="cityCodeField"></select>
+            <input class="button" type="submit" value="Set">
+        </div>
+        <div class="column">
+            <label for="dstField">Daylight Saving Time</label>
+            <select name="d" id="dstField">
+            <option value="0">Off</option>
+            <option value="1">On</option>
+            </select>
+        </div>
+        <div class="column">
+            <label for="wakeUpField">Wake up</label>
+            <input name="w" type="number" min="0" max="23" placeholder="7" id="wakeUpField" />
+        </div>
+        <div class="column">
+            <label for="goToBedField">Go to bed</label>
+            <input name="b" type="number" min="0" max="23" placeholder="22" id="goToBedField" />
+        </div>
+      </div>
+    </fieldset>
+  </form>
+
+  <footer class="footer">
+     <a href="https://github.com/andreax79/ServerlessNabaztag" target="_blank" title="ServerlessNabaztag">github.com/andreax79/ServerlessNabaztag</a>
+     - <span id="revision"></span>
+  </footer>
+</div>
+<script>
+async function loadTimezones(city_code) {
+    const response = await fetch('/timezones');
+    const timezones = await response.json();
+    const select = document.getElementById('cityCodeField');
+    select.innerHTML = '';
+
+    // Populate the select
+    timezones.forEach(tz => {
+        const option = document.createElement('option');
+        option.value = tz.code;
+        option.textContent = tz.name;
+        select.appendChild(option);
+    });
+
+    // Set the selected value
+    document.querySelector('#cityCodeField').value = city_code;
+}
+
+async function onLoad() {
+    const response = await fetch('/status');
+    const status = await response.json();
+    document.getElementById("revision").innerHTML = status.rev;
+
+    document.querySelector('#langField').value = status.language;
+    document.querySelector('#taichiField').value = status.taichi_freq;
+    document.querySelector('#dstField').value = status.time.dst;
+
+    document.getElementById("latitudeField").value = status.latitude;
+    document.getElementById("longitudeField").value = status.longitude;
+    document.getElementById("wakeUpField").value = status.wake_up;
+    document.getElementById("goToBedField").value = status.go_to_bed;
+
+    loadTimezones(status.time.city_code);
+}
+
+document.addEventListener('DOMContentLoaded', onLoad);
+</script>
+</body>
+</html>

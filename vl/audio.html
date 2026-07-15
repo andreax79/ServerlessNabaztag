@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Nabaztag</title>
+  <link rel="stylesheet" href="http://{SERVER_URL}/normalize.css" />
+  <link rel="stylesheet" href="http://{SERVER_URL}/milligram.css" />
+  <link rel="stylesheet" href="http://{SERVER_URL}/serverless.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/x-icon" href="http://{SERVER_URL}/favicon.ico" />
+  </style>
+</head>
+<body>
+
+<!-- Sticky Menu -->
+<nav class="sticky-nav">
+<div class="container nav-inner">
+  <span class="title">Serverless Nabaztag</span>
+  <ul>
+    <li><a href="/">Home</a></li>
+    <li><a href="/services.html">Services</a></li>
+    <li><a href="/audio.html" class="active">Audio</a></li>
+    <li><a href="/setup.html">Setup</a></li>
+    <li><a href="/ai.html">AI</a></li>
+    <li><a href="/forth.html">Forth</a></li>
+  </ul>
+</div>
+</nav>
+
+<div class="container main-content">
+
+  <h3 class="title">Audio</h3>
+
+  <div class="row">
+    <div class="column">
+      <label>Play MIDI</label>
+      <ul>
+      <li><a href="/communication">Communication</a></li>
+      <li><a href="/ack">Ack</a></li>
+      <li><a href="/abort">Abort</a></li>
+      <li><a href="/ministop">Ministop</a></li>
+      </ul>
+    </div>
+    <div class="column column-75">
+      <form action="/play" method="GET">
+        <fieldset>
+          <label for="mp3uriField">Play MP3 file</label>
+          (http only, https is not supported)
+          <input type="text" name="u" id="mp3uriField" placeholder="http://ia800304.us.archive.org/14/items/SadTrombone/73581__benboncan__sad-trombone.mp3" />
+          <input class="button" type="submit" value="Play">
+      </fieldset>
+      </form>
+      <form action="/say" method="GET">
+        <fieldset>
+          <label for="textToSpeachField">Text to speach</label>
+          <input type="text" name="t" id="textToSpeachField" />
+          <input class="button" type="submit" value="Say">
+      </fieldset>
+      </form>
+    </div>
+  </div>
+
+  <footer class="footer">
+     <a href="https://github.com/andreax79/ServerlessNabaztag" target="_blank" title="ServerlessNabaztag">github.com/andreax79/ServerlessNabaztag</a>
+     - <span id="revision"></span>
+  </footer>
+</div>
+<script>
+async function onLoad() {
+    const response = await fetch('/status');
+    const status = await response.json();
+    document.getElementById("revision").innerHTML = status.rev;
+}
+
+document.addEventListener('DOMContentLoaded', onLoad);
+</script>
+</body>
+</html>
