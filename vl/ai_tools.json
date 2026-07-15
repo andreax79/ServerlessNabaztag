@@ -1,0 +1,73 @@
+{
+  "tools": [
+    {
+      "name": "move_ears",
+      "strict": true,
+      "description": "Physically move the rabbit's ears. Call this whenever the user asks, in any language, to move, raise, lower, turn, position, wiggle or demonstrate the ears. Positions go from 0 to 16 (steps of a full rotation, 0 = ears straight up). Use -1 to advance an ear by one step, -2 to leave that ear where it is. The result reports the verified final position.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "left": { "type": "integer", "minimum": -2, "maximum": 16, "description": "Left ear target: 0-16, or -1 to advance one step, or -2 to keep the current position." },
+          "right": { "type": "integer", "minimum": -2, "maximum": 16, "description": "Right ear target: 0-16, or -1 to advance one step, or -2 to keep the current position." }
+        },
+        "required": ["left", "right"],
+        "additionalProperties": false
+      },
+      "exec": "forth"
+    },
+    {
+      "name": "set_led",
+      "strict": true,
+      "description": "Set the color of one of the rabbit's lights. Call this whenever the user asks, in any language, to switch a light on or off, change its color, or demonstrate the lights. color is an integer RGB value (red 16711680, green 65280, blue 255, white 16777215); 0 switches the LED off; -1 returns it to normal automatic behavior.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "target": { "type": "string", "enum": ["nose", "left", "center", "right", "base"], "description": "Which light: the nose, the three belly LEDs (left, center, right) or the base." },
+          "color": { "type": "integer", "minimum": -1, "maximum": 16777215 }
+        },
+        "required": ["target", "color"],
+        "additionalProperties": false
+      },
+      "exec": "forth"
+    },
+    {
+      "name": "play_sound",
+      "strict": true,
+      "description": "Play a short reaction sound from the rabbit's body. Call this when the user asks the rabbit to make a sound, beep or jingle.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "sound": { "type": "string", "enum": ["acquired", "ack", "abort", "random"] }
+        },
+        "required": ["sound"],
+        "additionalProperties": false
+      },
+      "exec": "forth"
+    },
+    {
+      "name": "rabbit_status",
+      "strict": true,
+      "description": "Read the rabbit's live status: local time, awake or sleeping, verified ear positions and ear health, and the current weather. Call this when the user asks about the time, the weather, the ears' position or health, or how the rabbit is doing. Do not call it as a preliminary step for other tools.",
+      "parameters": { "type": "object", "properties": {}, "required": [], "additionalProperties": false },
+      "exec": "forth"
+    },
+    {
+      "name": "webhook_example",
+      "strict": true,
+      "description": "Disabled example: copy this block, configure a real URL and set enabled to true.",
+      "parameters": {
+        "type": "object",
+        "properties": { "message": { "type": "string" } },
+        "required": ["message"],
+        "additionalProperties": false
+      },
+      "exec": "http",
+      "enabled": false,
+      "http": {
+        "method": "POST",
+        "url": "https://example.com/nabaztag-webhook",
+        "body": "{{args}}"
+      }
+    }
+  ]
+}

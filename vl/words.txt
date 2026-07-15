@@ -44,6 +44,15 @@ $REPEAT        ( s n -- s )                             Repeat string s n times
 @              ( addr -- value )                        Fetch a value from memory at the given address.
 ABORT          ( i * x -- ) ( R: j * x -- )             Empty the data stack and the return stack
 ABS            ( n -- abs(n)                            Absolute value  )
+AI-EAR-STEPS   ( current target -- n )                  steps along the shortest path
+AI-EARS-ARRIVED ( -- flag )
+AI-EARS-TRAVEL-MS ( -- ms )                             generous estimate of the longest ear travel
+AI-READ-EAR-HEALTH ( -- )
+AI-SHORTEST-EAR-DIR ( current target -- dir )
+AI-SLEEP>TEXT  ( flag -- text )
+AI-VALID-EAR-TARGET? ( target -- flag )
+AI-VALID-LED-COLOR? ( color -- flag )
+AI-WEATHER>TEXT ( code -- text )
 ALLOCATE-CELL  ( -- addr )                              Allocate a cell from memory and return its address.
 AND            ( x1 x2 -- x3 )                          x3 is the bit-by-bit logical "and" of x1 with x2.
 BEGIN          (immediate) ( -- )                       Begin a loop Store the current position in the return stack
@@ -63,6 +72,7 @@ DEPTH          ( -- count )                             Count number of items on
 DROP           ( n --  )                                Discard top of stack
 DUP            ( n -- n n )                             Duplicate top of stack
 EAIQ>INFO      ( n -- n )                               Convert European Air Quality Index to info code
+EAR-BROKEN?    ( ear -- flag )                          Return the native firmware health flag.
 EARS           ( -- left-pos right-pos )                Return the current ears positions
 ELSE           (immediate) ( -- )                       Begin the else part of a conditional Compile an unconditional jump to the matching THEN Update the previous conditional jump to point to the instruction after the ELSE
 EMIT           ( char -- )                              Emit character
@@ -159,6 +169,10 @@ TIME&DATE      ( -- sec min hour day month year)        Push the current time an
 TIME-MS        ( -- ms )                                Push the current time in milliseconds onto the stack
 TIME?          ( -- flag )                              Check if the system time has been received from the time server
 TL             ( list -- list' )                        Get the tail of a list
+TOOL-MOVE_EARS ( args-json -- result )
+TOOL-PLAY_SOUND ( args-json -- result )
+TOOL-RABBIT_STATUS ( args-json -- result )
+TOOL-SET_LED   ( args-json -- result )
 TRUE           ( -- true )
 TUCK           ( n1 n2 -- n1 n2 n1 ) (top)              Copy the first  stack item below the second stack item
 T{             (immediate) ( --  )                      Records the current stack depth prior to the test code

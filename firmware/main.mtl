@@ -86,6 +86,7 @@ const LED_TIMEOUT = 600;; // 10 minutes
 
 #include run/run.mtl
 #include forth/forth.mtl
+#include run/ai.mtl
 
 fun main=
     // Set the loop callback
@@ -94,6 +95,7 @@ fun main=
     ears_init;
     // Load the configuration
     config_load;
+    config_ai_init;
     // Init the wifi and start the wifi job
     wifi_init 0;
     // Initialize the network stack, start the network jobs
@@ -113,6 +115,8 @@ fun main=
     interactive_init;
     // Start the main loop
     run_init;
+    // Start the optional AI/wake-word state machine
+    ai_init;
     // Start the servers
 #ifdef WEBSERVER
     http_server_start_srv PORT_HTTP;

@@ -39,6 +39,18 @@ const FORTH_MEMORY_LEDS_OVERRIDE_CENTER = (1<<29) + 38 + 2;;
 const FORTH_MEMORY_LEDS_OVERRIDE_RIGHT = (1<<29) + 38 + 3;;
 const FORTH_MEMORY_LEDS_OVERRIDE_BASE = (1<<29) + 38 + 4;;
 const FORTH_MEMORY_LEDS_BASE_BREATHING = (1<<29) + 43;;
+const FORTH_MEMORY_AI_ENABLED = (1<<29) + 44;;
+const FORTH_MEMORY_AI_WAKE_MODE = (1<<29) + 45;;
+const FORTH_MEMORY_AI_WAKE_SENS = (1<<29) + 46;;
+const FORTH_MEMORY_AI_MAX_REC = (1<<29) + 47;;
+const FORTH_MEMORY_AI_SESSION_TTL = (1<<29) + 48;;
+const FORTH_MEMORY_AI_RELAY_URL = (1<<29) + 49;;
+const FORTH_MEMORY_AI_MODEL = (1<<29) + 50;;
+const FORTH_MEMORY_AI_VOICE = (1<<29) + 51;;
+const FORTH_MEMORY_AI_LANG = (1<<29) + 52;;
+const FORTH_MEMORY_AI_PROMPT = (1<<29) + 53;;
+const FORTH_MEMORY_AI_TOOLS_URL = (1<<29) + 54;;
+const FORTH_MEMORY_AI_WAKE_WORD = (1<<29) + 55;;
 
 type MemoryBlock = [
     memory_block_size   // size of the memory block
@@ -168,6 +180,30 @@ fun _forth_memory_get_special f addr=
         [str:config_username]
     else if addr >= FORTH_MEMORY_LEDS_OVERRIDE && addr < FORTH_MEMORY_LEDS_OVERRIDE + 5 then
         [int:leds_override.(addr - FORTH_MEMORY_LEDS_OVERRIDE)]
+    else if addr == FORTH_MEMORY_AI_ENABLED then
+        [int:config_get_ai_enabled]
+    else if addr == FORTH_MEMORY_AI_WAKE_MODE then
+        [int:config_get_ai_wake_mode]
+    else if addr == FORTH_MEMORY_AI_WAKE_SENS then
+        [int:config_get_ai_wake_sens]
+    else if addr == FORTH_MEMORY_AI_MAX_REC then
+        [int:config_get_ai_max_rec]
+    else if addr == FORTH_MEMORY_AI_SESSION_TTL then
+        [int:config_get_ai_session_ttl]
+    else if addr == FORTH_MEMORY_AI_RELAY_URL then
+        [str:config_get_ai_relay_url]
+    else if addr == FORTH_MEMORY_AI_MODEL then
+        [str:config_get_ai_model]
+    else if addr == FORTH_MEMORY_AI_VOICE then
+        [str:config_get_ai_voice]
+    else if addr == FORTH_MEMORY_AI_LANG then
+        [str:config_get_ai_lang]
+    else if addr == FORTH_MEMORY_AI_PROMPT then
+        [str:config_get_ai_prompt]
+    else if addr == FORTH_MEMORY_AI_TOOLS_URL then
+        [str:config_get_ai_tools_url]
+    else if addr == FORTH_MEMORY_AI_WAKE_WORD then
+        [str:config_get_ai_wake_word]
     else
         nil;;
 
@@ -214,7 +250,31 @@ fun _forth_memory_set_special f addr value=
     else if addr >= FORTH_MEMORY_LEDS_OVERRIDE && addr < FORTH_MEMORY_LEDS_OVERRIDE + 5 then (
         set leds_override.(addr - FORTH_MEMORY_LEDS_OVERRIDE) =
             if value.int != nil then value.int else parse_color value.str; nil
-    ) else
+    ) else if addr == FORTH_MEMORY_AI_ENABLED then
+        config_set_ai_enabled if value.int!=0 then 1 else 0
+    else if addr == FORTH_MEMORY_AI_WAKE_MODE then
+        config_set_ai_wake_mode if value.int!=0 then 1 else 0
+    else if addr == FORTH_MEMORY_AI_WAKE_SENS then
+        config_set_ai_wake_sens value.int
+    else if addr == FORTH_MEMORY_AI_MAX_REC then
+        config_set_ai_max_rec value.int
+    else if addr == FORTH_MEMORY_AI_SESSION_TTL then
+        config_set_ai_session_ttl value.int
+    else if addr == FORTH_MEMORY_AI_RELAY_URL then
+        config_set_ai_relay_url value.str
+    else if addr == FORTH_MEMORY_AI_MODEL then
+        config_set_ai_model value.str
+    else if addr == FORTH_MEMORY_AI_VOICE then
+        config_set_ai_voice value.str
+    else if addr == FORTH_MEMORY_AI_LANG then
+        config_set_ai_lang value.str
+    else if addr == FORTH_MEMORY_AI_PROMPT then
+        config_set_ai_prompt value.str
+    else if addr == FORTH_MEMORY_AI_TOOLS_URL then
+        config_set_ai_tools_url value.str
+    else if addr == FORTH_MEMORY_AI_WAKE_WORD then
+        config_set_ai_wake_word value.str
+    else
         nil;;
 
 /**

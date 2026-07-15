@@ -9,6 +9,7 @@
 #include protos/http_protos.mtl
 #include protos/info_protos.mtl
 #include protos/ntp_protos.mtl
+#include protos/ai_protos.mtl
 
 // debug
 #ifdef HTTP_SERVER_DEBUG
@@ -164,6 +165,7 @@ fun http_get_json_status sock args=
             (json_obj "info" info_json) :: ",\n" ::
             (json_obj "network" net_json) :: ",\n" ::
             (json_obj "wifi" wifi_json) :: ",\n" ::
+            (json_obj "ai" ai_json) :: ",\n" ::
             (json_str "rev" BYTECODE_REVISION_STR) :: "\n" ::
         "}" :: nil
 ;;
@@ -407,6 +409,30 @@ fun http_get_setup sock args=
     forth_interpreter WORD_UPDATE_WEATHER;
     http_send_header_and_close HTTP_204 nil sock;;
 
+/** Update non-secret AI preferences. The OpenAI key exists only on the relay. */
+fun http_get_setup_ai sock args=
+    let http_arg_int args 'e' -> val in if val!=nil then config_set_ai_enabled val;
+    let http_arg_int args 'b' -> val in if val!=nil then config_set_ai_backend val;
+    let http_arg_int args 'w' -> val in if val!=nil then config_set_ai_wake_mode val;
+    let http_arg_int args 's' -> val in if val!=nil then config_set_ai_wake_sens val;
+    let http_arg_int args 'r' -> val in if val!=nil then config_set_ai_max_rec val;
+    let http_arg_int args 't' -> val in if val!=nil then config_set_ai_session_ttl val;
+    let http_arg_str args 'u' -> val in if val!=nil then config_set_ai_relay_url val;
+    let http_arg_str args 'm' -> val in if val!=nil then config_set_ai_model val;
+    let http_arg_str args 'v' -> val in if val!=nil then config_set_ai_voice val;
+    let http_arg_str args 'l' -> val in if val!=nil then config_set_ai_lang val;
+    let http_arg_str args 'p' -> val in if val!=nil then config_set_ai_prompt val;
+    let http_arg_str args 'o' -> val in if val!=nil then config_set_ai_tools_url val;
+    let http_arg_str args 'n' -> val in if val!=nil then config_set_ai_wake_word val;
+    config_save;
+    http_send_header_and_close HTTP_204 nil sock;;
+
+/** Start a text-only AI turn, useful for setup and home automation tests. */
+fun http_get_ai_ask sock args=
+    let http_arg_str args 't' -> text in
+        ai_start_text text;
+    http_send_header_and_close HTTP_204 nil sock;;
+
 /**
  * Format a list of words to a string
  */
@@ -599,6 +625,8 @@ fun http_server_process_request req sock=
         else if !strcmp path "/dns" then http_get_dns sock args // d=domain name
         else if !strcmp path "/leds" then http_post_leds sock args // leds override, l=left, c=center, r=right
         else if !strcmp path "/setup" then http_get_setup sock args // setup parameters
+        else if !strcmp path "/setup-ai" then http_get_setup_ai sock args // AI preferences, no secrets
+        else if !strcmp path "/ask" then http_get_ai_ask sock args // text-only AI test
         else if !strcmp path "/forth" then http_post_forth sock args // forth command, c=code
         else if !strcmp path "/openapi.yaml" then http_get_openapi_yaml sock args // openapi spec
         else if !strcmp path "/" then http_get_index sock args // index page

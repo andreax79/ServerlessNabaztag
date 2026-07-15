@@ -26,6 +26,10 @@ fun _reclib_mkriff ldata=
             nil
         ) :: ldata;;
 
+/** Build the firmware's IMA ADPCM WAV container from chronological chunks. */
+fun reclib_mkriff ldata=
+    _reclib_mkriff ldata;;
+
 fun reclib_rec_start =
 	recStop;
 	set record_is_recording=1;

@@ -26,7 +26,26 @@ const CONF_LATITUDE=208;;	    //8     Latitude (string)
 const CONF_LONGITUDE=216;;	    //8     Longitude (string)
 const CONF_WAKE_UP=224;;	    //1     Wake up at (hour)
 const CONF_GO_TO_BED=225;;      //1     Go to bed at (hour)
-const CONF_LENGTH=226;;
+
+// AI configuration. API credentials deliberately live only on the relay.
+const CONF_AI_MAGIC=226;;        //1     version marker for the secure relay layout
+const CONF_AI_ENABLED=227;;      //1     0/1
+const CONF_AI_BACKEND=228;;      //1     0=realtime (1 reserved for pipeline)
+const CONF_AI_WAKE_MODE=229;;    //1     0/1
+const CONF_AI_WAKE_SENS=230;;    //1     energy threshold 0..255
+const CONF_AI_MAX_REC=231;;      //1     max recording length in seconds
+const CONF_AI_SESSION_TTL=232;;  //1     conversation window in seconds
+// 233 - 235 reserved
+const CONF_AI_RELAY_URL=236;;    //96    host[:port], without scheme
+const CONF_AI_MODEL=332;;        //48
+const CONF_AI_VOICE=380;;        //24
+const CONF_AI_LANG=404;;         //8
+const CONF_AI_PROMPT=412;;       //2048
+const CONF_AI_TOOLS_URL=2460;;   //96
+const CONF_AI_WAKE_WORD=2556;;   //24
+const CONF_AI_MAGIC_LEGACY_VALUE=0x5b;;
+const CONF_AI_MAGIC_VALUE=0x5c;;
+const CONF_LENGTH=2580;;
 
 var _config_data;;
 var config_username = "nabaztag";; // HTTP login user
@@ -133,6 +152,21 @@ fun config_get_go_to_bed =
 fun config_get_taichi_freq =
     strget _config_get CONF_TAICHI_FREQ 1 0;;
 
+fun config_get_ai_magic = strget _config_get CONF_AI_MAGIC 1 0;;
+fun config_get_ai_enabled = strget _config_get CONF_AI_ENABLED 1 0;;
+fun config_get_ai_backend = strget _config_get CONF_AI_BACKEND 1 0;;
+fun config_get_ai_wake_mode = strget _config_get CONF_AI_WAKE_MODE 1 0;;
+fun config_get_ai_wake_sens = strget _config_get CONF_AI_WAKE_SENS 1 0;;
+fun config_get_ai_max_rec = strget _config_get CONF_AI_MAX_REC 1 0;;
+fun config_get_ai_session_ttl = strget _config_get CONF_AI_SESSION_TTL 1 0;;
+fun config_get_ai_relay_url = _config_get_str CONF_AI_RELAY_URL 96;;
+fun config_get_ai_model = _config_get_str CONF_AI_MODEL 48;;
+fun config_get_ai_voice = _config_get_str CONF_AI_VOICE 24;;
+fun config_get_ai_lang = _config_get_str CONF_AI_LANG 8;;
+fun config_get_ai_prompt = _config_get_str CONF_AI_PROMPT 2048;;
+fun config_get_ai_tools_url = _config_get_str CONF_AI_TOOLS_URL 96;;
+fun config_get_ai_wake_word = _config_get_str CONF_AI_WAKE_WORD 24;;
+
 // Set the server URL
 fun config_set_server_url server_url =
     _config_set_str CONF_SERVERURL server_url 40;;
@@ -168,3 +202,57 @@ fun config_set_go_to_bed val =
 // Set Tai Chi frequency
 fun config_set_taichi_freq val =
     strset _config_data CONF_TAICHI_FREQ val;;
+
+fun config_set_ai_enabled val = strset _config_data CONF_AI_ENABLED (if val then 1 else 0);;
+fun config_set_ai_backend val = strset _config_data CONF_AI_BACKEND 0;;
+fun config_set_ai_wake_mode val = strset _config_data CONF_AI_WAKE_MODE (if val then 1 else 0);;
+fun config_set_ai_wake_sens val = strset _config_data CONF_AI_WAKE_SENS (max 0 (min 255 val));;
+fun config_set_ai_max_rec val = strset _config_data CONF_AI_MAX_REC (max 2 (min 20 val));;
+fun config_set_ai_session_ttl val = strset _config_data CONF_AI_SESSION_TTL (max 15 (min 255 val));;
+fun config_set_ai_relay_url val = _config_set_str CONF_AI_RELAY_URL val 96;;
+fun config_set_ai_model val = _config_set_str CONF_AI_MODEL val 48;;
+fun config_set_ai_voice val = _config_set_str CONF_AI_VOICE val 24;;
+fun config_set_ai_lang val = _config_set_str CONF_AI_LANG val 8;;
+fun config_set_ai_prompt val = _config_set_str CONF_AI_PROMPT val 2048;;
+fun config_set_ai_tools_url val = _config_set_str CONF_AI_TOOLS_URL val 96;;
+fun config_set_ai_wake_word val = _config_set_str CONF_AI_WAKE_WORD val 24;;
+
+fun _config_ai_default_prompt =
+    strcatlist
+        "You are Nabaztag, the iconic electronic rabbit born in 2005. Be useful, precise and concise while sounding friendly, curious, witty, slightly self-important and occasionally unpredictable.\n\n" ::
+        "You are a white plastic Wi-Fi rabbit with magnetic ears, not a human or a generic text assistant. Express this personality only through natural spoken wording. Never use stage directions, Markdown, emoji, or pretend that a physical action happened. For physical actions and live state, rely only on the available tools and their measured results. Answer in the language the user speaks." :: nil;;
+
+fun _config_ai_default_lang =
+    let config_get_lang -> lang in
+    if lang=="uk" then "en" else lang;;
+
+fun _config_ai_prompt_needs_migration =
+    (strstr config_get_ai_prompt "azioni fisiche tra asterischi" 0)!=nil;;
+
+/** Initialize the AI section once without touching the legacy 0..225 bytes. */
+fun config_ai_init =
+    let config_get_ai_magic -> magic in
+    if magic==CONF_AI_MAGIC_LEGACY_VALUE then (
+        // Preserve user settings while repairing legacy language/prompt values.
+        strset _config_data CONF_AI_MAGIC CONF_AI_MAGIC_VALUE;
+        if config_get_ai_lang=="uk" then config_set_ai_lang "en";
+        if _config_ai_prompt_needs_migration then config_set_ai_prompt _config_ai_default_prompt;
+        config_save
+    ) else if magic!=CONF_AI_MAGIC_VALUE then (
+        strset _config_data CONF_AI_MAGIC CONF_AI_MAGIC_VALUE;
+        config_set_ai_enabled 0;
+        config_set_ai_backend 0;
+        config_set_ai_wake_mode 0;
+        config_set_ai_wake_sens 40;
+        config_set_ai_max_rec 8;
+        config_set_ai_session_ttl 75;
+        config_set_ai_relay_url "";
+        config_set_ai_model "gpt-realtime-2.1";
+        config_set_ai_voice "marin";
+        config_set_ai_lang _config_ai_default_lang;
+        config_set_ai_prompt _config_ai_default_prompt;
+        config_set_ai_tools_url "";
+        config_set_ai_wake_word "nabaztag";
+        config_save
+    );
+    0;;

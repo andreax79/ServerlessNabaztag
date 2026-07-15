@@ -52,6 +52,42 @@ Firmware features
 * Override the LEDs with custom colors and change the breathing LED color
 * Customize LEDs animation patterns
 * Respond to ICMP pings
+* Optional low-latency OpenAI Realtime voice assistant with conversation memory and hot-reloadable physical tools
+
+Realtime voice assistant
+------------------------
+
+The optional voice assistant uses a stateful Node.js relay because the original rabbit can speak only plain HTTP and cannot open TLS or WebSocket connections. The relay keeps the OpenAI WebSocket session, converts the rabbit's 8 kHz IMA ADPCM recording to G.711 μ-law, and streams the response back as MP3. The assistant and experimental wake word are disabled by default; the default model is `gpt-realtime-2.1` and the default voice is `marin`. Hold the top button to talk after enabling the assistant; a short click cancels a pending request or playback. Before each turn the firmware synchronizes the editable personality prompt in a request body, avoiding the original TCP stack's small-header limit.
+
+### Secure setup
+
+1. Install the relay from [relay/README.md](relay/README.md) on a Raspberry Pi, NAS, or other stateful LAN host with Node.js and FFmpeg.
+2. Store `OPENAI_API_KEY` and a random `TTS_SIGNING_SECRET` only in the relay's protected environment file. Set a project budget limit in the OpenAI dashboard.
+3. Open the rabbit web interface, enable **AI Assistant**, and set the relay address without a scheme, for example `relay-host.local:8787`.
+4. Confirm `curl -sv http://relay-host.local:8787/v1/health` returns HTTP 200 without a redirect, enter a message in **Test message**, and select **Send test message**.
+
+No API credential is stored in the rabbit's flash, exposed through `/status`, or sent over the plain-HTTP LAN hop. The relay-to-OpenAI connection uses TLS/WSS. Keep the relay port restricted to the trusted LAN. Official Realtime format, voice, and function-calling details are documented in the [OpenAI Realtime conversations guide](https://developers.openai.com/api/docs/guides/realtime-conversations) and [Realtime API reference](https://developers.openai.com/api/reference/resources/realtime).
+
+For Realtime-2.x models the relay defaults to `reasoning.effort: low`, OpenAI's recommended starting point for responsive production voice agents. It can be changed with `OPENAI_REASONING_EFFORT`; older Realtime model families omit the field automatically.
+
+### Create a voice tool in five minutes
+
+Tool declarations live in [vl/ai_tools.json](vl/ai_tools.json), while physical/LAN implementations live in [vl/ai_tools.forth](vl/ai_tools.forth). The model can call only declared tools, and the firmware executes only Forth words prefixed with `tool-`. To add a reversible tool named `wave`, add its JSON Schema declaration with `"exec": "forth"`, then define:
+
+```forth
+: tool-wave ( args-json -- result )
+  drop
+  0 5 left-ear move-ear
+  "ok" ;
+```
+
+Copy both files to the platform web directory and hot-reload them without a firmware rebuild:
+
+```sh
+curl -G http://RABBIT_IP/forth --data-urlencode "c=reload-init"
+```
+
+HTTP tools run on the relay and must use a fixed user-configured URL; model-built URLs are rejected. A disabled webhook template is included in `ai_tools.json`. Anyone who can speak near the rabbit can request an enabled tool, so keep all voice tools reversible and non-destructive. Tool and HTTP timeouts, a four-call loop limit, sequential execution, per-rabbit and global rate limits, and signed expiring MP3 URLs are enforced automatically.
 
 Forth Interpreter
 ----------------
@@ -135,6 +171,7 @@ Most of the Nabaztag's functionality can be customized by editing the Forth file
 * [vl/hooks.forth](vl/hooks.forth) - Event handlers (clicks, RFID, etc.)
 * [vl/telnet.forth](vl/telnet.forth) - Telnet server
 * [vl/weather.forth](vl/weather.forth) - Weather and air quality
+* [vl/ai_tools.json](vl/ai_tools.json) and [vl/ai_tools.forth](vl/ai_tools.forth) - Realtime tool declarations and hot-reloadable implementations
 
 Development
 -----------

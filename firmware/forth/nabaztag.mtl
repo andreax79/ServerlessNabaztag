@@ -35,6 +35,12 @@ fun forth_ears f=
     forth_push f [int:ears_get_position EARS_LEFT];
     forth_push f [int:ears_get_position EARS_RIGHT];;
 
+/** EAR-BROKEN? ( ear -- flag ) Return the native firmware health flag. */
+fun forth_ear_broken f=
+    let forth_pop f -> ear in
+    let ear.int -> index in
+    forth_push f [int:if index>=0 && index<2 && ears_is_broken index then FORTH_TRUE else FORTH_FALSE];;
+
 /**
  * MOVE-EAR ( ear dir pos -- )
  * Move an ear (0=left, 1=right) ear in direction dir (0=left, 1=right) to position pos (0..16)

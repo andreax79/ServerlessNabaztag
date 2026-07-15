@@ -1,4 +1,5 @@
 proto audiolib_start_http 2;;
+proto audiolib_start_http_ex 3;;
 proto audiolib_update_vol 0;;
 
 var audiolib_wav_buffering=0;;

@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Serverless Nabaztag API
   description: An OpenAPI specification for controlling a Serverless Nabaztag smart rabbit.
-  version: 1.0.5
+  version: 1.1.0
   contact:
     url: https://github.com/andreax79/ServerlessNabaztag
 servers:
@@ -440,6 +440,76 @@ paths:
       responses:
         '204':
           description: Command sent successfully.
+  /ask:
+    get:
+      summary: Start a text AI turn
+      tags: [AI]
+      description: Sends text to the configured Realtime relay and plays the answer on the rabbit.
+      parameters:
+        - name: t
+          in: query
+          required: true
+          description: Text to send to the voice assistant.
+          schema:
+            type: string
+            maxLength: 4000
+      responses:
+        '204':
+          description: AI turn started asynchronously.
+  /setup-ai:
+    post:
+      summary: Configure the AI assistant from the web UI
+      tags: [AI]
+      description: |
+        Accepts the same non-secret preferences as the GET operation in a
+        form body. POST is preferred for the full personality prompt so it
+        does not exceed legacy URL/header limits.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                e: { type: integer, enum: [0, 1] }
+                b: { type: integer, enum: [0, 1] }
+                w: { type: integer, enum: [0, 1] }
+                s: { type: integer, minimum: 0, maximum: 255 }
+                r: { type: integer, minimum: 2, maximum: 20 }
+                t: { type: integer, minimum: 15, maximum: 255 }
+                u: { type: string, maxLength: 95 }
+                m: { type: string, maxLength: 47, pattern: '^[A-Za-z0-9._-]+$' }
+                v: { type: string, maxLength: 23, pattern: '^[A-Za-z0-9._-]+$' }
+                l: { type: string, maxLength: 7, pattern: '^[A-Za-z]{2}(-[A-Za-z]{2})?$' }
+                p: { type: string, maxLength: 2047 }
+                o: { type: string, maxLength: 95 }
+                n: { type: string, maxLength: 23 }
+      responses:
+        '204':
+          description: AI settings saved.
+    get:
+      summary: Configure the AI assistant
+      tags: [AI]
+      description: |
+        Updates non-secret AI preferences. The OpenAI API key is intentionally
+        configured only on the relay and is never accepted by this endpoint.
+      parameters:
+        - { name: e, in: query, description: "Enable assistant (0/1).", schema: { type: integer, enum: [0, 1] } }
+        - { name: b, in: query, description: "Backend (0 = Realtime; 1 reserved).", schema: { type: integer, enum: [0, 1] } }
+        - { name: w, in: query, description: "Enable experimental wake word (0/1).", schema: { type: integer, enum: [0, 1] } }
+        - { name: s, in: query, description: "Wake energy threshold.", schema: { type: integer, minimum: 0, maximum: 255 } }
+        - { name: r, in: query, description: "Maximum recording seconds.", schema: { type: integer, minimum: 2, maximum: 20 } }
+        - { name: t, in: query, description: "Conversation session TTL in seconds.", schema: { type: integer, minimum: 15, maximum: 255 } }
+        - { name: u, in: query, description: "Plain HTTP relay host and port, without scheme.", schema: { type: string, maxLength: 95 } }
+        - { name: m, in: query, description: "Realtime model ID.", schema: { type: string, maxLength: 47, pattern: '^[A-Za-z0-9._-]+$' } }
+        - { name: v, in: query, description: "Realtime voice ID.", schema: { type: string, maxLength: 23, pattern: '^[A-Za-z0-9._-]+$' } }
+        - { name: l, in: query, description: "Default BCP-47 language; spoken input can use any language.", schema: { type: string, maxLength: 7, pattern: '^[A-Za-z]{2}(-[A-Za-z]{2})?$' } }
+        - { name: p, in: query, description: "Nabaztag personality prompt.", schema: { type: string, maxLength: 2047 } }
+        - { name: o, in: query, description: "Tool manifest URL; empty selects the configured server URL plus /ai_tools.json.", schema: { type: string, maxLength: 95 } }
+        - { name: n, in: query, description: "Experimental wake word.", schema: { type: string, maxLength: 23 } }
+      responses:
+        '204':
+          description: AI settings saved.
   /tasks:
     get:
       summary: Get tasks

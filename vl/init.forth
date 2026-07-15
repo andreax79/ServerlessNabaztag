@@ -53,7 +53,8 @@ then ;
 utc>string . cr ;
 
 : stop-script-tasks ( -- ) \ Stop stale Forth script tasks after init reloads
-20 task-stop drop 21 task-stop drop
+\ Task 20 is the native AI state machine; script tasks start after it.
+21 task-stop drop
 22 task-stop drop 23 task-stop drop
 24 task-stop drop 25 task-stop drop
 26 task-stop drop 27 task-stop drop
@@ -64,6 +65,7 @@ utc>string . cr ;
 
 "config.forth" load-srv
 "consts.forth" load-srv
+"ai_tools.forth" load-srv
 "hooks.forth" load-srv
 "weather.forth" load-srv
 "telnet.forth" load-srv

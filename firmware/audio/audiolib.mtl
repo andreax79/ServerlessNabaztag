@@ -24,6 +24,7 @@ var _audiolib_wav_lasttime;;
 var _audiolib_wav_lastnet;;
 var _audiolib_wav_zeros;;
 var _audiolib_force_vol=0;;
+var _audiolib_wav_buffer_startsize=80000;;
 
 // debug
 #ifdef AUDIOLIB_DEBUG
@@ -103,7 +104,7 @@ fun _audiolib_wav_play_cb i =
     else
     (
         // was buffering ?
-        if audiolib_wav_buffering && (_audiolib_wav_state==WAV_EOF || (list_str_len _audiolib_wav_fifo 0)>=WAV_BUFFER_STARTSIZE) then
+        if audiolib_wav_buffering && (_audiolib_wav_state==WAV_EOF || (list_str_len _audiolib_wav_fifo 0)>=_audiolib_wav_buffer_startsize) then
         (
             Audiowln "<<<<end_buffering";
             set audiolib_wav_buffering=0
@@ -186,7 +187,7 @@ fun _wavcbhttp httpreq req=
         let (list_str_len _audiolib_wav_fifo 0) -> n in
         (
         // Secho "[b+:"; Iecho n ; Secho "]";
-        if _audiolib_wav_index==nil && n>WAV_BUFFER_STARTSIZE then
+        if _audiolib_wav_index==nil && n>_audiolib_wav_buffer_startsize then
         (
             // had never started wav playback : start it
             set _audiolib_wav_fifo=tl _audiolib_wav_fifo;
@@ -201,8 +202,9 @@ fun _wavcbhttp httpreq req=
     audiolib_update_vol;
     0;;
 
-fun audiolib_start_http url cb=
+fun audiolib_start_http_ex url cb startsize=
     audiolib_wav_stop;
+    set _audiolib_wav_buffer_startsize=startsize;
     set _audiolib_wav_http_cb = cb;
     set _audiolib_wav_end_timeout=WAV_END_TIMEOUT;
     set _audiolib_wav_fifo=nil;
@@ -213,6 +215,9 @@ fun audiolib_start_http url cb=
     set _audiolib_wav_lasttime=nil;
     set _audiolib_wav_lastnet=time_ms;
     set _audiolib_wav_http=http_request "GET" url nil #_wavcbhttp HTTP_STREAM;;
+
+fun audiolib_start_http url cb=
+    audiolib_start_http_ex url cb WAV_BUFFER_STARTSIZE;;
 
 fun audiolib_wav_time_task task=
     // Check timeout against _audiolib_wav_buffering_since
