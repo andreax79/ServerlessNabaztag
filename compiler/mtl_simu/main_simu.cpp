@@ -45,6 +45,7 @@ void usage();
 
 char srcbytecode[MAXSIZE_BYTECODE];
 
+extern int exit_code;
 
 void dump(uchar *src,int len)
 {
@@ -216,7 +217,7 @@ int main(int argc,char **argv)
 #endif
 		getchar();
 	}
-	return 0;
+	return exit_code;
 }
 
 

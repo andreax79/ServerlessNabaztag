@@ -43,11 +43,28 @@
 #endif
 #include"vlog.h"
 
+int exit_code = 0;
+
 void logSecho(int p,int nl)
 {
+#ifdef VSIMU
+	unsigned char *t = (unsigned char*)VSTARTBIN(VALTOPNT(p));
+    int is_error = strncmp((char*)t,"[TEST-ERROR]",12) == 0;
+    if (is_error) {
+        // Set color to red
+        printf("\033[31m");
+        exit_code = 1; // Set exit code to indicate error
+    }
+#endif
 	if (p==NIL) consolestr("NIL");
 	else consolebin((unsigned char*)VSTARTBIN(VALTOPNT(p)),VSIZEBIN(VALTOPNT(p)));
 	if (nl) consolestr(ENDLINE);
+#ifdef VSIMU
+    if (is_error) {
+        // Reset color to default
+        printf("\033[0m");
+    }
+#endif
 }
 
 void logIecho(int i,int nl)
@@ -523,7 +540,7 @@ void sysReboot()
 {
 #ifdef VSIMU
     printf("REBOOT NOW.....\n");
-    exit(0);
+    exit(exit_code);
 #endif
 #ifdef VREAL
     reset_uc();
@@ -535,8 +552,7 @@ void sysFlash(char* firmware,int len)
 {
 #ifdef VSIMU
     printf("REBOOT AND FLASH NOW.....");
-    getchar();
-    exit(0);
+    exit(exit_code);
 #endif
 #ifdef VREAL
   __disable_interrupt();
