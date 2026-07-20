@@ -69,7 +69,7 @@ public:
 	FileSystem* filesystem;
 	Util *util;
 	Winutil *winutil;
-	Memory(int size,Terminal *t,FileSystem *fs);
+	Memory(int size,Terminal *t,FileSystem *fs,bool quiet);
 	~Memory();
 
 	int start();

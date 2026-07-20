@@ -59,5 +59,5 @@ run-sim:
 .PHONY: test
 test:
 	@./scripts/make_nominal.sh -D SIMU -D TEST
-	$(SIMULATOR) --noleds --mac $(MAC) --logs vm --source "nominal.mtl" --http_server_path $(HTTP_SERVER_PATH) --http_server_port $(HTTP_SERVER_PORT)
+	$(SIMULATOR) --noleds --quiet --mac $(MAC) --logs vm --source "nominal.mtl" --http_server_path $(HTTP_SERVER_PATH) --http_server_port $(HTTP_SERVER_PORT)
 	@rm -f nominal.mtl foo.bin

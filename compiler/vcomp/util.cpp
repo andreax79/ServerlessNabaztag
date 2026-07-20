@@ -19,10 +19,10 @@
 #include "interpreter.h"
 #include "util.h"
 
-Util::Util(Memory* mem)
+Util::Util(Memory* mem, bool quiet)
 {
 	m=mem;
-	compiler=new Compiler(m);
+	compiler=new Compiler(m, quiet);
 	interpreter=new Interpreter(m);
 }
 

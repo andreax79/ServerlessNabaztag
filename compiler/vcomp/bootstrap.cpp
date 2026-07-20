@@ -39,14 +39,14 @@ void AbortMetal(Memory* m,int donotstop)
 
 
 
-int StartMetal(const char *starter, const char* output, bool inSign)
+int StartMetal(const char *starter, const char* output, bool inSign, bool quiet)
 {
 	int k;
 
 //  passe dans le répertoire de l'executable, en retenant le répertoire courant
 
 	Terminal* t=new Terminal();
-	Memory* m=new Memory(32*1024,t,NULL);
+	Memory* m=new Memory(32*1024,t,NULL,quiet);
 	t->m=m;
 
 	if (k=m->start())
@@ -57,7 +57,11 @@ int StartMetal(const char *starter, const char* output, bool inSign)
 	STRPUSH(m, (char*) starter);
 	if (!(k=m->util->compiler->gocompile(COMPILE_FROMFILE)))
 	{
-		t->printf(LOG_RUNTIME,"\nCompiler : done (%d bytes) !\n", m->util->compiler->brelease->getsize());
+        if (quiet) {
+            t->printf(LOG_RUNTIME,"Compiler : done (%d bytes)\n", m->util->compiler->brelease->getsize());
+        } else {
+            t->printf(LOG_RUNTIME,"\nCompiler : done (%d bytes) !\n", m->util->compiler->brelease->getsize());
+        }
 		File* f=new File(NULL);
 		f->openwrite((char*) output);
 		if (inSign) {
@@ -81,9 +85,9 @@ int StartMetal(const char *starter, const char* output, bool inSign)
 }
 
 
-int vcompDoit(char *starter)
+int vcompDoit(char *starter, bool quiet)
 {
-	int k=StartMetal(starter, "foo.bin", false);
+	int k=StartMetal(starter, "foo.bin", false, quiet);
 	// getchar();
 	return k;
 }

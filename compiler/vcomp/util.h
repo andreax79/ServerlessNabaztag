@@ -20,7 +20,7 @@ class Util
 private :
 	Memory* m;
 public:
-	Util(Memory* mem);
+	Util(Memory* mem, bool quiet);
 	~Util();
 	int start();
 	void stop();

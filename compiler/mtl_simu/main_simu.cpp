@@ -46,6 +46,7 @@ void usage();
 char srcbytecode[MAXSIZE_BYTECODE];
 
 extern int exit_code;
+bool quiet = false;
 
 void dump(uchar *src,int len)
 {
@@ -98,7 +99,7 @@ void loadbytecode(char *src)
 }
 
 
-int vcompDoit(char *starter);
+int vcompDoit(char *starter, bool quiet);
 
 extern unsigned char dumpbc[];
 
@@ -169,7 +170,7 @@ int main(int argc,char **argv)
 
 	PropDump();
 
-	if (!vcompDoit(PropGet("SOURCE")))
+	if (!vcompDoit(PropGet("SOURCE"), quiet))
 	{
 		loadbytecode("foo.bin");
 
@@ -285,6 +286,8 @@ int handle_options(int argc, char **argv)
             PropSet("DISPLAY_LEDS", "1");
         } else if (!strcmp(argv[i], "--noleds")) {
             PropSet("DISPLAY_LEDS", "0");
+        } else if (!strcmp(argv[i], "--quiet") || !strcmp(argv[i], "-q")) {
+            quiet = true;
 		} else {
 			usage();
 			res=0;
@@ -314,5 +317,6 @@ void usage()
                  "          --http_server_path <path>: embedded http server path\n" \
                  "          --http_server_port <port>: embedded http server port\n" \
                  "          --leds/noleds: enable/disable leds simulation\n" \
+                 "          --quiet/-q: disable compiler output except errors\n" \
 				 "Toutes les options sont prioritaires sur les valeurs contenues dans config.txt\n");
 }

@@ -70,35 +70,47 @@ void loadbytecode(char *src)
 }
 
 
-int StartMetal(const char *starter, const char* output, bool inSign);
+int StartMetal(const char *starter, const char* output, bool inSign, bool quiet);
 
 extern unsigned char dumpbc[];
 
 void usage(char* inProgram) {
-	printf("Syntaxe: %s [-s] source output\n", inProgram);
+	fprintf(stderr, "Syntaxe: %s [-s] [-q] source output\n", inProgram);
 }
 
 int main(int argc,char **argv)
 {
-	bool signBinary = false;
-	char* source = argv[1];
-	char* output = argv[2];
-	if ((argc != 3) && (argc != 4)) {
-		usage(argv[0]);
-		return 1;
-	}
-	if (argc == 4) {
-		if (strcmp(argv[1], "-s") == 0) {
-			signBinary = true;
-			source = argv[2];
-			output = argv[3];
-		} else {
-			usage(argv[0]);
-			return 1;
-		}
-	}
+    bool signBinary = false;
+    bool quiet = false;
+    char *source = NULL;
+    char *output = NULL;
+    int i;
 
-	StartMetal(source, output, signBinary);
+    for (i = 1; i < argc; i++) {
+        if (argv[i][0] == '-') {
+            if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--sign") == 0) {
+                signBinary = true;
+            } else if (strcmp(argv[i], "-q") == 0 || strcmp(argv[i], "--quiet") == 0) {
+                quiet = true;
+            } else {
+                fprintf(stderr, "Unknown option: %s\n", argv[i]);
+                usage(argv[0]);
+                return 1;
+            }
+        } else {
+            break;
+        }
+    }
+
+    if (argc - i != 2) {
+        usage(argv[0]);
+        return 1;
+    }
+
+    source = argv[i];
+    output = argv[i + 1];
+
+	StartMetal(source, output, signBinary, quiet);
 	return 0;
 }
 

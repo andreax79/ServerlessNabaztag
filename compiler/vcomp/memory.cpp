@@ -101,7 +101,7 @@ void Memory::removeroot(int *p)
 	}
 }
 
-Memory::Memory(int size,Terminal *t,FileSystem *fs)
+Memory::Memory(int size,Terminal *t,FileSystem *fs,bool quiet)
 {
 	term=t;
 	filesystem=fs;
@@ -109,7 +109,7 @@ Memory::Memory(int size,Terminal *t,FileSystem *fs)
 	gcincperiod=GCincPeriod;
 	abort=0;
 
-	util=new Util(this);
+	util=new Util(this, quiet);
 	winutil=NULL;
 //	listing();
 }

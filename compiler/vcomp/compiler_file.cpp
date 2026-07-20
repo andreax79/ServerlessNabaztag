@@ -64,10 +64,11 @@ int Compiler::recglobals(int vlab,Prodbuffer *b)
 	// avant de l'enregistrer, on verifie si tout est correct
 	int* p;
 	p = searchref_nosetused(PNTTOVAL(newpackage),STRSTART(VALTOPNT(TABGET(VALTOPNT(vlab),LABELLIST_NAME))));
-	if (NULL != p)
+	if (NULL != p && !quiet)
 		{
 			if (VALTOINT(TABGET(p,REF_USED)) == 0)
 				{
+                    if (!quiet)
 					PRINTF(m)(LOG_WARNING,"%s is declared but never used\n",
 								 STRSTART(VALTOPNT(TABGET(VALTOPNT(vlab),LABELLIST_NAME))));
 				}
@@ -110,7 +111,10 @@ int Compiler::recbc(int vref,Prodbuffer *b,Prodbuffer *btab,int offset)
 	b->addchar(nargs);
 	b->addshort(nloc);
 	b->addstr(STRSTART(VALTOPNT(TABGET(fun,FUN_BC))),STRLEN(VALTOPNT(TABGET(fun,FUN_BC))));
-	printf("%d@%d:%s nargs=%d nlocals=%d / %d bytes\n",nf,ipc,STRSTART(VALTOPNT(TABGET(VALTOPNT(vref),REF_NAME))),nargs,nloc,STRLEN(VALTOPNT(TABGET(fun,FUN_BC))));
+    if (!quiet)
+    {
+        printf("%d@%d:%s nargs=%d nlocals=%d / %d bytes\n",nf,ipc,STRSTART(VALTOPNT(TABGET(VALTOPNT(vref),REF_NAME))),nargs,nloc,STRLEN(VALTOPNT(TABGET(fun,FUN_BC))));
+    }
 	return nf;
 }
 
@@ -130,13 +134,17 @@ int Compiler::gocompile(int type)
 	if (type==COMPILE_FROMFILE)
 	{
 		parser=new Parser(m->term,m->filesystem,name);
-		PRINTF(m)(LOG_COMPILER,"Compiler : compiling file '%s'\n",name);
+        if (!quiet) {
+            PRINTF(m)(LOG_COMPILER,"Compiler : compiling file '%s'\n",name);
+        }
 	}
 	else
 	{
 		parser=new Parser(m->term,name);
 		name="...";
-		PRINTF(m)(LOG_COMPILER,"Compiler : compiling string buffer\n");
+        if (!quiet) {
+            PRINTF(m)(LOG_COMPILER,"Compiler : compiling string buffer\n");
+        }
 	}
 
 	if (k=createpackage(name,4)) return k;	// [package nom_fichier env]
@@ -485,10 +493,12 @@ int Compiler::parsefun()
 	// chercher d'éventuels prototypes
 	if (k=fillproto(PNTTOVAL(newpackage),newref)) return k;
 
-	outputbuf->reinit();
-	outputbuf->printf("Compiler : %s : ",STRSTART(VALTOPNT(TABGET(newref,REF_NAME))));
-	echograph(outputbuf,VALTOPNT(TABGET(newref,REF_TYPE)));
-	PRINTF(m)(LOG_COMPILER,"%s\n",outputbuf->getstart());
+    if (!quiet) {
+        outputbuf->reinit();
+        outputbuf->printf("Compiler : %s : ",STRSTART(VALTOPNT(TABGET(newref,REF_NAME))));
+        echograph(outputbuf,VALTOPNT(TABGET(newref,REF_TYPE)));
+        PRINTF(m)(LOG_COMPILER,"%s\n",outputbuf->getstart());
+    }
 
 	return 0;
 }
@@ -541,10 +551,12 @@ int Compiler::parsevar()
 	addreftopackage(newref,newpackage);
 	STACKDROP(m);
 
-	outputbuf->reinit();
-	outputbuf->printf("Compiler : var %s : ",STRSTART(VALTOPNT(TABGET(newref,REF_NAME))));
-	echograph(outputbuf,VALTOPNT(TABGET(newref,REF_TYPE)));
-	PRINTF(m)(LOG_COMPILER,"%s\n",outputbuf->getstart());
+    if (!quiet) {
+        outputbuf->reinit();
+        outputbuf->printf("Compiler : var %s : ",STRSTART(VALTOPNT(TABGET(newref,REF_NAME))));
+        echograph(outputbuf,VALTOPNT(TABGET(newref,REF_TYPE)));
+        PRINTF(m)(LOG_COMPILER,"%s\n",outputbuf->getstart());
+    }
 	return 0;
 }
 
@@ -581,10 +593,12 @@ int Compiler::parseconst()
 	addreftopackage(newref,newpackage);
 	STACKDROP(m);
 
-	outputbuf->reinit();
-	outputbuf->printf("Compiler : const %s : ",STRSTART(VALTOPNT(TABGET(newref,REF_NAME))));
-	echograph(outputbuf,VALTOPNT(TABGET(newref,REF_TYPE)));
-	PRINTF(m)(LOG_COMPILER,"%s\n",outputbuf->getstart());
+    if (!quiet) {
+        outputbuf->reinit();
+        outputbuf->printf("Compiler : const %s : ",STRSTART(VALTOPNT(TABGET(newref,REF_NAME))));
+        echograph(outputbuf,VALTOPNT(TABGET(newref,REF_TYPE)));
+        PRINTF(m)(LOG_COMPILER,"%s\n",outputbuf->getstart());
+    }
 	return 0;
 }
 
@@ -660,10 +674,12 @@ int Compiler::parseproto()
 	addreftopackage(newref,newpackage);
 	STACKDROP(m);
 
-	outputbuf->reinit();
-	outputbuf->printf("Compiler : proto %s : ",STRSTART(VALTOPNT(TABGET(newref,REF_NAME))));
-	echograph(outputbuf,VALTOPNT(TABGET(newref,REF_TYPE)));
-	PRINTF(m)(LOG_COMPILER,"%s\n",outputbuf->getstart());
+    if (!quiet) {
+        outputbuf->reinit();
+        outputbuf->printf("Compiler : proto %s : ",STRSTART(VALTOPNT(TABGET(newref,REF_NAME))));
+        echograph(outputbuf,VALTOPNT(TABGET(newref,REF_TYPE)));
+        PRINTF(m)(LOG_COMPILER,"%s\n",outputbuf->getstart());
+    }
 	return 0;
 }
 // compilation d'un type
@@ -815,10 +831,12 @@ int Compiler::parsestruct()
 			STACKDROP(m);
 			TABSET(m,newfield,REF_TYPE,STACKPULL(m));
 
-			outputbuf->reinit();
-			outputbuf->printf("Compiler : %s : ",STRSTART(VALTOPNT(TABGET(newfield,REF_NAME))));
-			echograph(outputbuf,VALTOPNT(TABGET(newfield,REF_TYPE)));
-			PRINTF(m)(LOG_COMPILER,"%s\n",outputbuf->getstart());
+            if (!quiet) {
+                outputbuf->reinit();
+                outputbuf->printf("Compiler : %s : ",STRSTART(VALTOPNT(TABGET(newfield,REF_NAME))));
+                echograph(outputbuf,VALTOPNT(TABGET(newfield,REF_TYPE)));
+                PRINTF(m)(LOG_COMPILER,"%s\n",outputbuf->getstart());
+            }
 		}
 		else if (!strcmp(parser->token,"]")) loop=0;
 		else
@@ -831,11 +849,13 @@ int Compiler::parsestruct()
 
 	STACKDROPN(m,2);
 
-	outputbuf->reinit();
-	outputbuf->printf("Compiler : ");
-	echograph(outputbuf,VALTOPNT(TABGET(newref,REF_TYPE)));
-	outputbuf->printf(" : struct (%d)\n",VALTOINT(TABGET(newref,REF_VAL)));
-	PRINTF(m)(LOG_COMPILER,"%s\n",outputbuf->getstart());
+    if (!quiet) {
+        outputbuf->reinit();
+        outputbuf->printf("Compiler : ");
+        echograph(outputbuf,VALTOPNT(TABGET(newref,REF_TYPE)));
+        outputbuf->printf(" : struct (%d)\n",VALTOINT(TABGET(newref,REF_VAL)));
+        PRINTF(m)(LOG_COMPILER,"%s\n",outputbuf->getstart());
+    }
 
 	return 0;
 }
@@ -894,10 +914,12 @@ int Compiler::parsesum()
 			TABSET(m,VALTOPNT(STACKGET(m,0)),TYPEHEADER_LENGTH+1,TABGET(newref,REF_TYPE));	// attachement du type resultat au noeud fun
 			TABSET(m,newcons,REF_TYPE,STACKPULL(m));
 
-			outputbuf->reinit();
-			outputbuf->printf("Compiler : %s : ",STRSTART(VALTOPNT(TABGET(newcons,REF_NAME))));
-			echograph(outputbuf,VALTOPNT(TABGET(newcons,REF_TYPE)));
-			PRINTF(m)(LOG_COMPILER,"%s\n",outputbuf->getstart());
+            if (!quiet) {
+                outputbuf->reinit();
+                outputbuf->printf("Compiler : %s : ",STRSTART(VALTOPNT(TABGET(newcons,REF_NAME))));
+                echograph(outputbuf,VALTOPNT(TABGET(newcons,REF_TYPE)));
+                PRINTF(m)(LOG_COMPILER,"%s\n",outputbuf->getstart());
+            }
 		}
 		else
 		{
@@ -919,11 +941,13 @@ int Compiler::parsesum()
 	} while(loop);
 	STACKDROPN(m,2);
 
-	outputbuf->reinit();
-	outputbuf->printf("Compiler : ");
-	echograph(outputbuf,VALTOPNT(TABGET(newref,REF_TYPE)));
-	outputbuf->printf(" : constructor\n");
-	PRINTF(m)(LOG_COMPILER,"%s\n",outputbuf->getstart());
+    if (!quiet) {
+        outputbuf->reinit();
+        outputbuf->printf("Compiler : ");
+        echograph(outputbuf,VALTOPNT(TABGET(newref,REF_TYPE)));
+        outputbuf->printf(" : constructor\n");
+        PRINTF(m)(LOG_COMPILER,"%s\n",outputbuf->getstart());
+    }
 
 	return 0;
 }

@@ -16,9 +16,10 @@
 #include "compiler.h"
 
 
-Compiler::Compiler(Memory* mem)
+Compiler::Compiler(Memory* mem, bool q)
 {
 	m=mem;
+    quiet=q;
 	bc=new Prodbuffer();
 	outputbuf=new Prodbuffer();
 	brelease=new Prodbuffer();

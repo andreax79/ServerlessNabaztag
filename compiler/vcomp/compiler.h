@@ -35,6 +35,7 @@ private:
 	int nblocals;
 
 	int ifuns;
+    bool quiet;
 
 	// typage
 	int createnodetypecore(char* name);
@@ -156,7 +157,7 @@ private:
 
 public:
 	Prodbuffer* brelease;
-	Compiler(Memory* mem);
+	Compiler(Memory* mem, bool quiet);
 	~Compiler();
 	int start();
 	void stop();
