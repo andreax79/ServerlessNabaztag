@@ -1,5 +1,6 @@
 # Makefile pour le compilateur de mtl.
 COMMON_OBJS=properties.o dumpbc.o log.o
+COMMON_DEPS = $(COMMON_OBJS:.o=.d)
 
 all : mtl_simu mtl_comp
 
@@ -18,4 +19,6 @@ clean :
 	$(MAKE) -C vcomp clean
 	$(MAKE) -C mtl_comp clean
 	$(MAKE) -C mtl_simu clean
-	rm -f $(COMMON_OBJS)
+	rm -f $(COMMON_OBJS) $(COMMON_DEPS)
+
+-include $(COMMON_DEPS)

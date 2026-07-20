@@ -22,6 +22,7 @@ help:
 
 .PHONY: compiler
 compiler:
+	@$(MAKE) -C compiler vcomp/libvcomp.a
 	@$(MAKE) -C compiler
 
 .PHONY: clean
@@ -46,7 +47,7 @@ deploy: firmware
 		echo "Please set the DEPLOY_TARGET variable in .env file"; \
 		exit 1; \
 	fi
-	scp vl/bc.jsp vl/*.forth vl/*.json vl/index.html vl/words.txt $(DEPLOY_TARGET)
+	scp vl/bc.jsp vl/*.forth vl/*.json vl/*.html vl/words.txt $(DEPLOY_TARGET)
 	scp vl/api/openapi.yaml $(DEPLOY_TARGET)/api/openapi.yaml
 
 .PHONY: run-sim
@@ -58,5 +59,5 @@ run-sim:
 .PHONY: test
 test:
 	@./scripts/make_nominal.sh -D SIMU -D TEST
-	@$(SIMULATOR) --noleds --mac $(MAC) --logs vm --source "nominal.mtl" --http_server_path $(HTTP_SERVER_PATH) --http_server_port $(HTTP_SERVER_PORT) || true
+	$(SIMULATOR) --noleds --mac $(MAC) --logs vm --source "nominal.mtl" --http_server_path $(HTTP_SERVER_PATH) --http_server_port $(HTTP_SERVER_PORT)
 	@rm -f nominal.mtl foo.bin

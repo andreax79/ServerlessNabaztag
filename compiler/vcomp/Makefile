@@ -1,5 +1,5 @@
-CXXFLAGS=-m32 -Wno-write-strings
-CFLAGS=-m32 -Wno-write-strings
+CXXFLAGS=-m32 -Wno-write-strings -MMD -MP
+CFLAGS=-m32 -Wno-write-strings -MMD -MP
 
 OBJS = \
 	bootstrap.o \
@@ -19,9 +19,13 @@ OBJS = \
 	terminal.o \
 	util.o
 
+DEPS = $(OBJS:.o=.d)
+
 libvcomp.a : $(OBJS)
 	ar rcs $@ $(OBJS)
 	ranlib $@
 
 clean :
-	rm -f $(OBJS) libvcomp.a
+	rm -f $(OBJS) $(DEPS) libvcomp.a
+
+-include $(DEPS)
