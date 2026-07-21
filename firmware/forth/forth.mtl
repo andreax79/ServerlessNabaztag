@@ -128,6 +128,17 @@ fun forth_execute_code f code=
                 )
                 // Execute primitive function
                 else if word.func != nil then (
+                    if word.func == #forth_postpone_compile then (
+                        if (f.pc >= (tablen code)) then
+                            forth_abort_msg f "POSTPONE internal error"
+                        else (
+                            let code.(f.pc) -> postponed_word in (
+                                set f.pc = f.pc + 1;
+                                set f.cstack = postponed_word :: f.cstack;
+                                nil
+                            )
+                        )
+                    ) else
                     if word.flag == FORTH_ASYNC then (
                         // If asynchronous word, push current pc and code onto return stack
                         // and return after word execution

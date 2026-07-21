@@ -417,6 +417,16 @@ T{ 1S 1S OR -> 1S }T
 T{ 1 2 OVER -> 1 2 1 }T
 
 
+\ F.6.1.2120 RECURSE -------------------------------------------------
+
+T{ : GFACT ( n -- n! ) DUP 2 < IF DROP 1 EXIT THEN DUP 1- RECURSE * ; -> }T
+T{ 0 GFACT -> 1 }T
+T{ 1 GFACT -> 1 }T
+T{ 2 GFACT -> 2 }T
+T{ 5 GFACT -> 120 }T
+
+T{ ( A comment ) 1234 -> 1234 }T
+
 \ PICK --------------------------------------------------------------
 T{ 123 0         PICK -> 123 123 }T
 T{ 10 20 1       PICK -> 10 20 10 }T
@@ -471,6 +481,10 @@ T{ 1S 1S XOR -> 0S }T
 T{ : GC1 58 ; -> }T
 T{ : GC3 [ GC1 ] LITERAL ; -> }T
 T{ GC3 -> 58 }T
+
+\ F.6.1.2510 ['] ----------------------------------------------------
+T{ : GXT ['] GT1 ; -> }T
+T{ GXT EXECUTE -> 123 }T
 
 T{ : GT-LIT [ 3 4 + ] LITERAL ; -> }T
 T{ GT-LIT -> 7 }T

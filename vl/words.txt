@@ -57,7 +57,7 @@ AI-VALID-EAR-TARGET? ( target -- flag )
 AI-VALID-LED-COLOR? ( color -- flag )
 AI-WEATHER>TEXT ( code -- text )
 ALLOCATE-CELL  ( -- addr )                              Allocate a cell from memory and return its address.
-AND            ( x1 x2 -- x3 )                          x3 is the bit-by-bit logical "and" of x1 with x2.
+AND            ( x1 x2 -- x3 )                          x3 is the bit-by-bit logical "and" of x1 with x2
 BEGIN          (immediate) ( -- )                       Begin a loop Store the current position in the return stack
 BETWEEN        ( n low high -- flag )
 BL             ( -- char )                              Character value for a space
@@ -95,13 +95,14 @@ HELP           ( -- )
 HTTP-GET       ( url -- content header )                Perform an HTTP GET request and return the content as a string HTTPS is not supported
 HTTP-POST      ( payload url -- content header )        Perform an HTTP POST request and return the content as a string HTTPS is not supported
 IF             (immediate) ( cond -- )                  Begin a conditional Compile a conditional jump to the matching ELSE or THEN
-IMMEDIATE      ( -- )                                   Mark the latest defined word as immediate.
+IMMEDIATE      ( -- )                                   Mark the latest defined word as immediate
 INTERPRETER    ( -- )                                   Interactive Forth interpreter
-INVERT         ( x1 -- x2 )                             Invert all bits of x1, giving its logical inverse x2.
+INVERT         ( x1 -- x2 )                             Invert all bits of x1, giving its logical inverse x2
 IP             ( -- ip )                                Push the IP address of the WIFI interface onto the stack
 JMP            ( addr -- )                              Unconditional jump
 JSON-GET       ( w path -- x ) (e.g., "daily.weathercode[0]") Get an element from a dictionary or list by path
 JSON-PARSE     ( str -- list/dict )                     Parse a JSON string into a list or dictionary
+LITERAL        (immediate) ( x -- )                     Compile x as a literal into the current colon definition
 LOAD-INFO-ANIMATION ( filename anim_num -- )            Load info animation from the server
 LOAD-INFO-ANIMATION ( filename anim_num -- )            Load info animation from the server
 LOAD-INFO-ANIMATIONS ( -- )                             Load info animations from the server
@@ -130,7 +131,7 @@ ON-EARS        ( -- )                                   Ears hook
 ON-HALFTIME    ( -- )                                   Half-hour hook
 ON-RFID        ( rfid -- )                              RFID hook
 ON-TIME        ( -- )                                   Hour hook
-OR             ( x1 x2 -- x3 )                          x3 is the bit-by-bit inclusive-or of x1 with x2.
+OR             ( x1 x2 -- x3 )                          x3 is the bit-by-bit inclusive-or of x1 with x2
 OVER           ( n1 n2 -- n1 n2 n1 )                    Make copy of second item on top
 PAD_LEFT       ( s n c -- s )                           Pad string s on the left to length n with character c
 PAD_RIGHT      ( s n c -- s )                           Pad string s on the right to length n with character c
@@ -138,6 +139,7 @@ PICK           ( n ... ni -- n ... ni ni )              Copy nth item to top of 
 PLAY-CHOR      ( chor_data -- )                         Play a choreography
 PLAY-MIDI      ( i -- ) (i-100)                         Play a MIDI sound/note If i>=100, play note  If 0<=i<100, play sound i If i<0, play a random note
 PLAY-URL       ( url -- )                               Play a WAV file from an HTTP URL HTTPS is not supported
+POSTPONE       (immediate) ( "<spaces>name" -- )        Append compilation semantics of name to the current definition
 PROMPT         ( -- )                                   Display the Forth interpreter prompt
 R>             ( -- x ) ( R: x -- )                     Retrieve item from return stack
 R@             ( -- x ) ( R: x -- x )                   Copy top of return stack onto data stack
@@ -146,6 +148,7 @@ RDEPTH         ( -- count )                             Count number of items on
 RDROP          ( n --  )                                Discard top of return stack
 READ-LINE      ( -- line )                              Read a line from the current socket
 REBOOT         ( -- )                                   Perform a reboot
+RECURSE        (immediate) ( -- )                       Compile a call to the current colon definition
 RELOAD-INIT    ( -- )                                   Reload init.forth
 RESUME-TASK    ( task-id -- flag )                      Resume the task with the given task id.
 REVISION       ( -- str )                               Push the revision string onto the stack
@@ -194,7 +197,10 @@ VARIABLE       (immediate) ( -- addr )                  Define a variable and al
 VOLUME         ( -- vol )                               Get the audio volume
 WAKE-UP        ( -- )                                   Wake up the Nabaztag from sleep mode
 WORDS          ( -- )                                   List the words in the dictionary
-XOR            ( x1 x2 -- x3 )                          x3 is the bit-by-bit exclusive-or of x1 with x2.
+XOR            ( x1 x2 -- x3 )                          x3 is the bit-by-bit exclusive-or of x1 with x2
+[              (immediate) ( -- )                       Enter interpretation state during compilation
+[']            (immediate) ( "<spaces>name" -- )        Compile the execution token of name as a literal
+]              ( -- )                                   Return to compilation state
 
 Variables
 ---------

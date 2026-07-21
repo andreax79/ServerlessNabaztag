@@ -17,7 +17,7 @@ fun forth_false f=
     forth_push f [int:FORTH_FALSE];;
 
 /**
- * AND ( x1 x2 -- x3 )  x3 is the bit-by-bit logical "and" of x1 with x2.
+ * AND ( x1 x2 -- x3 )  x3 is the bit-by-bit logical "and" of x1 with x2
  */
 fun forth_and f=
     let forth_pop f -> a in
@@ -26,7 +26,7 @@ fun forth_and f=
     forth_push f [int:v];;
 
 /**
- * OR ( x1 x2 -- x3 )  x3 is the bit-by-bit inclusive-or of x1 with x2.
+ * OR ( x1 x2 -- x3 )  x3 is the bit-by-bit inclusive-or of x1 with x2
  */
 fun forth_or f=
     let forth_pop f -> a in
@@ -35,7 +35,7 @@ fun forth_or f=
     forth_push f [int:v];;
 
 /**
- * XOR ( x1 x2 -- x3 )  x3 is the bit-by-bit exclusive-or of x1 with x2.
+ * XOR ( x1 x2 -- x3 )  x3 is the bit-by-bit exclusive-or of x1 with x2
  */
 fun forth_xor f=
     let forth_pop f -> a in
@@ -44,7 +44,7 @@ fun forth_xor f=
     forth_push f [int:v];;
 
 /**
- * INVERT ( x1 -- x2 )  Invert all bits of x1, giving its logical inverse x2.
+ * INVERT ( x1 -- x2 )  Invert all bits of x1, giving its logical inverse x2
  */
 fun forth_invert f=
     let forth_pop f -> a in

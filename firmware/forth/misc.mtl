@@ -102,6 +102,20 @@ fun forth_literal f=
     );;
 
 /**
+ * RECURSE (immediate) ( -- )
+ * Compile a call to the current colon definition
+ */
+fun forth_recurse f=
+    if f.state != FORTH_STATE_COMPILATION then
+        forth_abort_msg f "RECURSE requires compilation state"
+    else if f.latest == nil then
+        forth_abort_msg f "RECURSE requires a current definition"
+    else (
+        set f.cstack = f.latest :: f.cstack;
+        nil
+    );;
+
+/**
  * [ (immediate) ( -- )
  * Enter interpretation state during compilation
  */
@@ -220,6 +234,56 @@ fun forth_tick f=
     ) else (
         forth_push f word;
         nil
+    );;
+
+/**
+ * ['] (immediate) ( "<spaces>name" -- )
+ * Compile the execution token of name as a literal
+ */
+fun forth_bracket_tick f=
+    if f.state != FORTH_STATE_COMPILATION then
+        forth_abort_msg f "['] requires compilation state"
+    else (
+        forth_interpreter_get_token f;
+        let hd f.istack -> inter in
+        let forth_get_word inter.token -> word in
+        if word == nil then (
+            forth_abort_msg f strcat "['] followed by undefined word " inter.token
+        ) else (
+            set f.cstack = word :: f.cstack;
+            nil
+        )
+    );;
+
+/**
+ * Internal helper used by POSTPONE at run time.
+ * The execution engine consumes the following cell and appends it to cstack.
+ */
+fun forth_postpone_compile f=
+    nil;;
+
+/**
+ * POSTPONE (immediate) ( "<spaces>name" -- )
+ * Append compilation semantics of name to the current definition
+ */
+fun forth_postpone f=
+    if f.state != FORTH_STATE_COMPILATION then
+        forth_abort_msg f "POSTPONE requires compilation state"
+    else (
+        forth_interpreter_get_token f;
+        let hd f.istack -> inter in
+        let forth_get_word inter.token -> word in
+        if word == nil then (
+            forth_abort_msg f strcat "POSTPONE followed by undefined word " inter.token
+        ) else if (word.flag != nil) && ((word.flag & FORTH_IMMEDIATE) == FORTH_IMMEDIATE) then (
+            // Immediate words carry compilation semantics by executing at compile time.
+            set f.cstack = word :: f.cstack;
+            nil
+        ) else (
+            // Non-immediate words need to be compiled later when this helper runs.
+            set f.cstack = word :: [func:#forth_postpone_compile] :: f.cstack;
+            nil
+        )
     );;
 
 /**
