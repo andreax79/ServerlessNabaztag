@@ -78,7 +78,7 @@ fun forth_constant f=
 
 /**
  * IMMEDIATE ( -- )
- * Mark the latest defined word as immediate.
+ * Mark the latest defined word as immediate
  */
 fun forth_immediate f=
     if f.latest == nil then
@@ -87,6 +87,39 @@ fun forth_immediate f=
         set f.latest.flag = if f.latest.flag == nil then FORTH_IMMEDIATE else (f.latest.flag | FORTH_IMMEDIATE);
         nil
     );;
+
+/**
+ * LITERAL (immediate) ( x -- )
+ * Compile x as a literal into the current colon definition
+ */
+fun forth_literal f=
+    if f.state != FORTH_STATE_COMPILATION then
+        forth_abort_msg f "LITERAL requires compilation state"
+    else (
+        let forth_pop f -> x in
+            set f.cstack = x :: f.cstack;
+        nil
+    );;
+
+/**
+ * [ (immediate) ( -- )
+ * Enter interpretation state during compilation
+ */
+fun forth_bracket f=
+    if f.state != FORTH_STATE_COMPILATION then
+        forth_abort_msg f "[ requires compilation state"
+    else (
+        set f.state = FORTH_STATE_NORMAL;
+        nil
+    );;
+
+/**
+ * ] ( -- )
+ * Return to compilation state
+ */
+fun forth_right_bracket f=
+    set f.state = FORTH_STATE_COMPILATION;
+    nil;;
 
 /**
  * DEFINED? (immediate) ( "<spaces>name" -- flag )

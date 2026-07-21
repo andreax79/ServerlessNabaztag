@@ -334,7 +334,9 @@ T{ -1 GI1 -> 123 }T
 
 \ F.6.1.1710 IMMEDIATE ----------------------------------------------
 T{ 123 CONSTANT iw1 IMMEDIATE iw1 -> 123 }T
+T{ : iw2 iw1 LITERAL ; iw2 -> 123 }T
 T{ VARIABLE iw3 IMMEDIATE 234 iw3 ! iw3 @ -> 234 }T
+T{ : iw4 iw3 [ @ ] LITERAL ; iw4 -> 234 }T
 
 VARIABLE IM-FLAG
 T{ 0 IM-FLAG ! -> }T
@@ -463,6 +465,17 @@ T{ 0S 0S XOR -> 0S }T
 T{ 0S 1S XOR -> 1S }T
 T{ 1S 0S XOR -> 1S }T
 T{ 1S 1S XOR -> 0S }T
+
+
+\ F.6.1.2500 [ ------------------------------------------------------
+T{ : GC1 58 ; -> }T
+T{ : GC3 [ GC1 ] LITERAL ; -> }T
+T{ GC3 -> 58 }T
+
+T{ : GT-LIT [ 3 4 + ] LITERAL ; -> }T
+T{ GT-LIT -> 7 }T
+T{ : GT-LIT2 1 [ 2 3 + ] LITERAL + ; -> }T
+T{ GT-LIT2 -> 6 }T
 
 
 : on-connect ( -- )

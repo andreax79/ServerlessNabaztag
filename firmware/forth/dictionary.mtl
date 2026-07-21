@@ -127,6 +127,9 @@ fun forth_init_dictionary=
         [ [str: ":"                ] [ func:#forth_colon]] ::
         [ [str: ";"                ] [ func:#forth_semi        flag:FORTH_IMMEDIATE]] ::
         [ [str: "'"                ] [ func:#forth_tick]] ::
+        [ [str: "literal"          ] [ func:#forth_literal     flag:FORTH_IMMEDIATE]] ::
+        [ [str: "["                ] [ func:#forth_bracket     flag:FORTH_IMMEDIATE]] ::
+        [ [str: "]"                ] [ func:#forth_right_bracket]] ::
         [ [str: "immediate"        ] [ func:#forth_immediate   flag:FORTH_IMMEDIATE]] ::
         [ [str: "("                ] [ func:#forth_p]] ::
         [ [str: "constant"         ] [ func:#forth_constant]] ::
