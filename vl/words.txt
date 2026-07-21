@@ -1,5 +1,6 @@
 !              ( value addr -- )                        Store a value into memory at the given address.
 $REPEAT        ( s n -- s )                             Repeat string s n times
+'              (immediate) ( -- xt )                    Get the next word from the dictionary and push it
 *              ( n1 n2 -- product )                     Multiplies
 *              ( n1 n2 n3 -- (n2*n1)                    / Multiplies and Divides /n3 )
 *              ( n1 n2 n3 -- remainder quotient )       /MOD Multiplies and Divides and Modulus
@@ -27,7 +28,9 @@ $REPEAT        ( s n -- s )                             Repeat string s n times
 2R>            ( -- x1 x2 ) ( r: x1 x2 -- )             Retrieve two items from return stack
 2R@            ( -- x1 x2 ) ( r: x1 x2 -- x1 x2 )       Copy two items from return stack to data stack
 2SWAP          ( x1 x2 x3 x4 -- x3 x4 x1 x2 )
+:              ( -- )                                   Begin a new word definition
 ::             ( list x -- list' )                      Add an element to the front of a list
+;              ( -- )                                   End a word definition
 <              ( n1 n2 -- flag )                        True if second word less than top word
 <0             ( n -- flag )                            True if top number less than zero
 <=             ( n1 n2 -- flag )                        True if second word less than or equal to top word
@@ -80,6 +83,7 @@ ENDCASE        (immediate) ( -- )                       End a case statement
 ENDOF          (immediate) ( -- )                       End a case option
 EVAL-TRAME     ( str -- )                               Evaluate a trame
 EVALUATE       ( str -- )                               Evaluate a string as Forth code
+EXECUTE        ( xt -- )                                Execute a word object previously obtained with '
 EXIT           ( -- )                                   Return control to the caller
 FALSE          ( -- false )
 FREE-CELL      ( addr -- )                              Free a cell in memory at the given address.

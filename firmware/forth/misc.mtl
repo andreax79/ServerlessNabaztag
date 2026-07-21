@@ -5,7 +5,7 @@
  */
 
 /**
- * : Begin a new word definition
+ * : Begin a new word definition ( -- )
  */
 fun forth_colon f=
     if f.state == FORTH_STATE_COMPILATION then (
@@ -33,7 +33,7 @@ fun forth_colon f=
         );;
 
 /**
- * ; End a word definition
+ * ; End a word definition ( -- )
  */
 fun forth_semi f=
     if f.state != FORTH_STATE_COMPILATION then (
@@ -157,6 +157,47 @@ fun forth_evaluate f=
         // forth_abort_msg f "EVALUATE expects a string"
     ) else (
         forth_interpreter_ex word.str f f.forth_sock f.forth_task #_forth_evaluate_cb
+    );;
+
+/**
+ * ' (immediate) ( -- xt )
+ * Get the next word from the dictionary and push it
+ */
+fun forth_tick f=
+    forth_interpreter_get_token f;
+    let hd f.istack -> inter in
+    let forth_get_word inter.token -> word in
+    if word == nil then (
+        forth_abort_msg f strcat "' followed by undefined word " inter.token
+    ) else (
+        forth_push f word;
+        nil
+    );;
+
+/**
+ * EXECUTE ( xt -- )
+ * Execute a word object previously obtained with '
+ */
+fun forth_execute f=
+    let forth_pop f -> word in
+    // Execute a colon-defined word
+    if word.code != nil then (
+        forth_rpush f [int:f.pc code:nil];
+        set f.pc = 0;
+        forth_execute_code f word.code
+    // Execute primitive function
+    ) else if word.func != nil then (
+        if word.flag == FORTH_ASYNC then (
+            // If asynchronous word, push current pc and code onto return stack
+            // and return after word execution
+            forth_rpush f [int:f.pc code:nil]
+        );
+        call word.func [f];
+        word.flag
+    // Push the word onto the stack
+    ) else (
+        forth_push f word;
+        word.flag
     );;
 
 /**

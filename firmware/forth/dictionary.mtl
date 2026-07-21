@@ -126,8 +126,10 @@ fun forth_init_dictionary=
         // Misc
         [ [str: ":"                ] [ func:#forth_colon]] ::
         [ [str: ";"                ] [ func:#forth_semi        flag:FORTH_IMMEDIATE]] ::
+        [ [str: "'"                ] [ func:#forth_tick]] ::
         [ [str: "("                ] [ func:#forth_p]] ::
-        [ [str: "constant"         ] [ func:#forth_constant    flag:FORTH_IMMEDIATE]] ::
+        [ [str: "constant"         ] [ func:#forth_constant]] ::
+        [ [str: "execute"          ] [ func:#forth_execute]] ::
         [ [str: "defined?"         ] [ func:#forth_defined_q   flag:FORTH_IMMEDIATE]] ::
         [ [str: "words"            ] [ func:#forth_words]] ::
         [ [str: "time&date"        ] [ func:#forth_time_and_date ]] ::
