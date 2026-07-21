@@ -95,6 +95,7 @@ HELP           ( -- )
 HTTP-GET       ( url -- content header )                Perform an HTTP GET request and return the content as a string HTTPS is not supported
 HTTP-POST      ( payload url -- content header )        Perform an HTTP POST request and return the content as a string HTTPS is not supported
 IF             (immediate) ( cond -- )                  Begin a conditional Compile a conditional jump to the matching ELSE or THEN
+IMMEDIATE      ( -- )                                   Mark the latest defined word as immediate.
 INTERPRETER    ( -- )                                   Interactive Forth interpreter
 INVERT         ( x1 -- x2 )                             Invert all bits of x1, giving its logical inverse x2.
 IP             ( -- ip )                                Push the IP address of the WIFI interface onto the stack

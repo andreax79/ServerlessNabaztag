@@ -154,10 +154,12 @@ fun forth_new_state=
     [
         stack:nil // data stack
         rstack:nil // return stack
+        cstack:nil // control stack
         pc:0 // program counter
         state:FORTH_STATE_NORMAL // normal (not compilation) state
         forth_sock: nil // socket
         forth_task: nil // task
+        latest:nil // latest defined word
         // istack: inter :: nil // interpreter state
         istack:nil // interpreter state stack
     ];;

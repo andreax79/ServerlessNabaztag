@@ -407,8 +407,10 @@ fun forth_variable f=
                 nil // Variable already defined
             else
                 // Allocate a new cell for the variable and add the new variable to the dictionary
-                let forth_memory_alloc_cell -> addr in
-                    forth_add_variable inter.token addr
+                let forth_memory_alloc_cell -> addr in (
+                    forth_add_variable inter.token addr;
+                    set f.latest = forth_get_word inter.token
+                )
         )
     );
     nil;;

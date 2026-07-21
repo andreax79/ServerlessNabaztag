@@ -26,6 +26,7 @@ fun forth_colon f=
                         set new_word = [code:nil];
                         word_dict_set_w forth_dictionary key new_word
                     );
+                    set f.latest = new_word;
                     forth_rpush f new_word;
                     set f.cstack = nil;
                     nil
@@ -65,13 +66,27 @@ fun forth_constant f=
             let [str:to_lower inter.token] -> key in (
                 set new_word = [code:{x}];
                 word_dict_set_w forth_dictionary key new_word;
+                set f.latest = new_word;
                 nil
             )
         else
         (
             set new_word.code = {x};
+            set f.latest = new_word;
             nil
         );;
+
+/**
+ * IMMEDIATE ( -- )
+ * Mark the latest defined word as immediate.
+ */
+fun forth_immediate f=
+    if f.latest == nil then
+        forth_abort_msg f "IMMEDIATE requires a previous definition"
+    else (
+        set f.latest.flag = if f.latest.flag == nil then FORTH_IMMEDIATE else (f.latest.flag | FORTH_IMMEDIATE);
+        nil
+    );;
 
 /**
  * DEFINED? (immediate) ( "<spaces>name" -- flag )

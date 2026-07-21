@@ -58,7 +58,7 @@ T{ $12eF       -> 4847        }T
 
 
 \ F.6.1.0070 ' ------------------------------------------------------
-T{ : GT1 123 ;   ->     }T
+T{ : GT1 123 ; -> }T
 T{ ' GT1 EXECUTE -> 123 }T
 
 
@@ -330,6 +330,18 @@ T{ -1 GI1 -> 123 }T
 T{  0 GI2 -> 234 }T
 T{  1 GI2 -> 123 }T
 T{ -1 GI1 -> 123 }T
+
+
+\ F.6.1.1710 IMMEDIATE ----------------------------------------------
+T{ 123 CONSTANT iw1 IMMEDIATE iw1 -> 123 }T
+T{ VARIABLE iw3 IMMEDIATE 234 iw3 ! iw3 @ -> 234 }T
+
+VARIABLE IM-FLAG
+T{ 0 IM-FLAG ! -> }T
+T{ : MARK-IMMEDIATE 77 IM-FLAG ! ; IMMEDIATE -> }T
+T{ : USE-MARK MARK-IMMEDIATE ; -> }T
+T{ IM-FLAG @ -> 77 }T
+T{ 0 IM-FLAG ! MARK-IMMEDIATE IM-FLAG @ -> 77 }T
 
 
 \ F.6.1.1720 INVERT -------------------------------------------------
