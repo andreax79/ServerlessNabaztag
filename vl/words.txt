@@ -6,6 +6,8 @@ $REPEAT        ( s n -- s )                             Repeat string s n times
 *              ( n1 n2 n3 -- remainder quotient )       /MOD Multiplies and Divides and Modulus
 +              ( n1 n2 -- sum )                         Adds
 +!             ( n addr -- )                            Adds a number to the contents of the address
++LOOP          ( runtime ) ( increment loop-addr -- )   Add increment to loop index and repeat until limit crossing
++LOOP          (immediate) ( -- )                       End a counted loop with variable step from stack
 -              ( n1 n2 -- difference )                  Subtracts
 ->             (immediate) ( --  )                      Record depth and contents of stack
 .              ( n -- )                                 Display n
@@ -42,6 +44,8 @@ $REPEAT        ( s n -- s )                             Repeat string s n times
 >NUMBER        ( s -- n )                               Convert string s to number n
 >R             ( x -- ) ( R: -- x )                     Move top item to return stack for temporary storage
 ?              ( addr -- )                              Prints the contents of the address, followed by one space
+?DO            ( runtime ) ( limit start leave-addr -- ) Enter a DO...LOOP runtime frame or skip loop if start==limit
+?DO            (immediate) ( limit start -- )           Begin a counted loop that is skipped when start equals limit
 ?DUP           ( x -- 0 | x x )                         Duplicate top of stack if not zero
 ?JMP           ( cond addr -- )                         Jump if zero
 @              ( addr -- value )                        Fetch a value from memory at the given address.
@@ -72,6 +76,8 @@ CRONTAB        ( -- )                                   Crontab
 DAYTIME        ( -- ) (UTC)                             Display the current time
 DEFINED?       (immediate) ( "<spaces>name" -- flag )   Check if a word is defined in the dictionary
 DEPTH          ( -- count )                             Count number of items on stack
+DO             ( runtime ) ( limit start leave-addr -- ) Enter a DO...LOOP runtime frame
+DO             (immediate) ( limit start -- )           Begin a counted loop
 DROP           ( n --  )                                Discard top of stack
 DUP            ( n -- n n )                             Duplicate top of stack
 EAIQ>INFO      ( n -- n )                               Convert European Air Quality Index to info code
@@ -94,14 +100,17 @@ HD             ( list -- list x )                       Get the head of a list
 HELP           ( -- )
 HTTP-GET       ( url -- content header )                Perform an HTTP GET request and return the content as a string HTTPS is not supported
 HTTP-POST      ( payload url -- content header )        Perform an HTTP POST request and return the content as a string HTTPS is not supported
+I              ( -- n )                                 Push the current loop index from the innermost DO...LOOP
 IF             (immediate) ( cond -- )                  Begin a conditional Compile a conditional jump to the matching ELSE or THEN
 IMMEDIATE      ( -- )                                   Mark the latest defined word as immediate
 INTERPRETER    ( -- )                                   Interactive Forth interpreter
 INVERT         ( x1 -- x2 )                             Invert all bits of x1, giving its logical inverse x2
 IP             ( -- ip )                                Push the IP address of the WIFI interface onto the stack
+J              ( -- n )                                 Push the current loop index from the next outer DO...LOOP
 JMP            ( addr -- )                              Unconditional jump
 JSON-GET       ( w path -- x ) (e.g., "daily.weathercode[0]") Get an element from a dictionary or list by path
 JSON-PARSE     ( str -- list/dict )                     Parse a JSON string into a list or dictionary
+LEAVE          (immediate) ( -- )                       Compile an early exit from the current DO...LOOP
 LITERAL        (immediate) ( x -- )                     Compile x as a literal into the current colon definition
 LOAD-INFO-ANIMATION ( filename anim_num -- )            Load info animation from the server
 LOAD-INFO-ANIMATION ( filename anim_num -- )            Load info animation from the server
@@ -109,6 +118,8 @@ LOAD-INFO-ANIMATIONS ( -- )                             Load info animations fro
 LOAD-SRV       ( filename -- )                          Load a forth file from the server
 LOCAL>STRING   ( -- str )                               Push the current local time and date as a string onto the stack
 LOGIN          ( -- )                                   Login
+LOOP           ( runtime ) ( loop-addr -- )             Increment loop index by 1 and repeat until the limit is reached
+LOOP           (immediate) ( -- )                       End a counted loop with step +1
 LOWER          ( s -- s )                               Convert string s to lowercase
 LSHIFT         ( n1 n2 -- n1 << n2 )                    Left shift
 MAC            ( -- mac )                               Push the MAC address of the WIFI interface onto the stack

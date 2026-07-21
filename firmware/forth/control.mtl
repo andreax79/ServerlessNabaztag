@@ -7,6 +7,8 @@
 const FORTH_IF_PLACEHOLDER = -1000;;
 const FORTH_CASE_PLACEHOLDER = -1001;;
 const FORTH_OF_PLACEHOLDER = -1002;;
+const FORTH_DO_PLACEHOLDER = -1003;;
+const FORTH_DO_RUNTIME_FRAME = -1004;;
 
 /**
  * ABORT ( i * x -- ) ( R: j * x -- )
@@ -51,6 +53,307 @@ fun forth_qjmp f=
     let forth_pop f -> cond in
     if (cond.int == 0) && (addr.int != nil) then set f.pc = addr.int; // if cond is false , jump to addr
     nil;;
+
+/**
+ * Find the Nth active DO loop frame on the return stack (1-based)
+ */
+fun _forth_get_do_frame f n=
+    let nil -> frame in
+    let nil -> idx in
+    let 0 -> i in
+    let 0 -> found in (
+        for p=f.rstack; (p!=nil) && (frame==nil); tl p do
+            let hd p -> w in
+                if (w != nil) && (w.int == FORTH_DO_RUNTIME_FRAME) && (w.list != nil) then (
+                    set found = found + 1;
+                    if found == n then (
+                        set frame = w;
+                        set idx = [int:i]
+                    )
+                );
+            set i = i + 1;
+        [list:frame :: idx :: nil]
+    );;
+
+/**
+ * DO ( runtime ) ( limit start leave-addr -- )
+ * Enter a DO...LOOP runtime frame
+ */
+fun forth_do f=
+    let forth_pop f -> leave_addr in
+    let forth_pop f -> start in
+    let forth_pop f -> limit in
+    if (leave_addr.int == nil) || (start.int == nil) || (limit.int == nil) then (
+        forth_abort_msg f "DO expects integers"
+    ) else (
+        forth_rpush f [
+            int:FORTH_DO_RUNTIME_FRAME
+            list:[int:start.int] :: [int:limit.int] :: [int:leave_addr.int] :: nil
+        ];
+        nil
+    );;
+
+/**
+ * ?DO ( runtime ) ( limit start leave-addr -- )
+ * Enter a DO...LOOP runtime frame or skip loop if start==limit
+ */
+fun forth_qdo f=
+    let forth_pop f -> leave_addr in
+    let forth_pop f -> start in
+    let forth_pop f -> limit in
+    if (leave_addr.int == nil) || (start.int == nil) || (limit.int == nil) then (
+        forth_abort_msg f "?DO expects integers"
+    ) else if start.int == limit.int then (
+        set f.pc = leave_addr.int;
+        nil
+    ) else (
+        forth_rpush f [
+            int:FORTH_DO_RUNTIME_FRAME
+            list:[int:start.int] :: [int:limit.int] :: [int:leave_addr.int] :: nil
+        ];
+        nil
+    );;
+
+/**
+ * LOOP ( runtime ) ( loop-addr -- )
+ * Increment loop index by 1 and repeat until the limit is reached
+ */
+fun forth_loop f=
+    let forth_pop f -> loop_addr in
+    let _forth_get_do_frame f 1 -> found in
+    let hd found.list -> frame in
+    let hd tl found.list -> frame_idx in
+    if (loop_addr.int == nil) || (frame == nil) || (frame.list == nil) || (frame_idx == nil) then
+        forth_abort_msg f "LOOP without matching DO"
+    else
+        let hd frame.list -> idx_w in
+        let hd tl frame.list -> limit_w in
+        let idx_w.int + 1 -> next in
+            if next >= limit_w.int then (
+                set f.rstack = list_rem_nth f.rstack frame_idx.int;
+                nil
+            ) else (
+                set idx_w.int = next;
+                set f.pc = loop_addr.int;
+                nil
+            );;
+
+/**
+ * +LOOP ( runtime ) ( increment loop-addr -- )
+ * Add increment to loop index and repeat until limit crossing
+ */
+fun forth_plus_loop f=
+    let forth_pop f -> loop_addr in
+    let forth_pop f -> inc in
+    let _forth_get_do_frame f 1 -> found in
+    let hd found.list -> frame in
+    let hd tl found.list -> frame_idx in
+    if (inc.int == nil) || (loop_addr.int == nil) || (frame == nil) || (frame.list == nil) || (frame_idx == nil) then
+        forth_abort_msg f "+LOOP without matching DO"
+    else
+        let hd frame.list -> idx_w in
+        let hd tl frame.list -> limit_w in
+        let idx_w.int -> old in
+        let old + inc.int -> next in
+        let 0 -> done in (
+            if inc.int > 0 then (
+                if (old < limit_w.int) && (next >= limit_w.int) then set done = 1
+            ) else if inc.int < 0 then (
+                if (old >= limit_w.int) && (next < limit_w.int) then set done = 1
+            );
+            if done != 0 then (
+                set f.rstack = list_rem_nth f.rstack frame_idx.int;
+                nil
+            ) else (
+                set idx_w.int = next;
+                set f.pc = loop_addr.int;
+                nil
+            )
+        );;
+
+/**
+ * I ( -- n )
+ * Push the current loop index from the innermost DO...LOOP
+ */
+fun forth_i f=
+    let _forth_get_do_frame f 1 -> found in
+    let hd found.list -> frame in
+    if (frame == nil) || (frame.list == nil) then
+        forth_abort_msg f "I outside DO...LOOP"
+    else
+        let hd frame.list -> idx_w in
+            forth_push f [int:idx_w.int];;
+
+/**
+ * J ( -- n )
+ * Push the current loop index from the next outer DO...LOOP
+ */
+fun forth_j f=
+    let _forth_get_do_frame f 2 -> found in
+    let hd found.list -> frame in
+    if (frame == nil) || (frame.list == nil) then
+        forth_abort_msg f "J outside nested DO...LOOP"
+    else
+        let hd frame.list -> idx_w in
+            forth_push f [int:idx_w.int];;
+
+/**
+ * LEAVE ( runtime )
+ * Exit the innermost DO...LOOP immediately
+ */
+fun forth_leave_runtime f=
+    let _forth_get_do_frame f 1 -> found in
+    let hd found.list -> frame in
+    let hd tl found.list -> frame_idx in
+    if (frame == nil) || (frame.list == nil) || (frame_idx == nil) then
+        forth_abort_msg f "LEAVE without matching DO"
+    else
+        let hd tl tl frame.list -> leave_w in (
+            set f.rstack = list_rem_nth f.rstack frame_idx.int;
+            set f.pc = leave_w.int
+        );;
+
+/**
+ * Helper: find the nearest compile-time DO frame in the return stack
+ */
+fun _forth_find_compile_do f=
+    let nil -> frame in
+    let 0 -> i in
+    let nil -> idx in (
+        for p=f.rstack; (p!=nil) && (frame==nil); tl p do (
+            let hd p -> ctrl in
+                if (ctrl != nil) && (ctrl.str != nil) && !strcmp ctrl.str "do-compile" then (
+                    set frame = ctrl;
+                    set idx = [int:i]
+                );
+            set i = i + 1
+        );
+        [list:frame :: idx :: nil]
+    );;
+
+/**
+ * DO (immediate) ( limit start -- )
+ * Begin a counted loop
+ */
+fun forth_do_compile f=
+    if f.state != FORTH_STATE_COMPILATION then (
+        forth_abort_msg f "DO Compile mode only"
+    ) else (
+        let listlen f.cstack -> current_pos in
+        let [int:FORTH_DO_PLACEHOLDER] -> leave_addr_w in (
+            // Compile: leave-addr DO
+            set f.cstack = [func:#forth_do] :: leave_addr_w :: f.cstack;
+            // Record compile metadata for LOOP/+LOOP and LEAVE fixups
+            forth_rpush f [
+                str:"do-compile"
+                int:current_pos + 2
+                list:leave_addr_w :: nil
+            ]
+        );
+        nil
+    );;
+
+/**
+ * ?DO (immediate) ( limit start -- )
+ * Begin a counted loop that is skipped when start equals limit
+ */
+fun forth_qdo_compile f=
+    if f.state != FORTH_STATE_COMPILATION then (
+        forth_abort_msg f "?DO Compile mode only"
+    ) else (
+        let listlen f.cstack -> current_pos in
+        let [int:FORTH_DO_PLACEHOLDER] -> leave_addr_w in (
+            // Compile: leave-addr ?DO
+            set f.cstack = [func:#forth_qdo] :: leave_addr_w :: f.cstack;
+            // Record compile metadata for LOOP/+LOOP and LEAVE fixups
+            forth_rpush f [
+                str:"do-compile"
+                int:current_pos + 2
+                list:leave_addr_w :: nil
+            ]
+        );
+        nil
+    );;
+
+/**
+ * LEAVE (immediate) ( -- )
+ * Compile an early exit from the current DO...LOOP
+ */
+fun forth_leave_compile f=
+    if f.state != FORTH_STATE_COMPILATION then (
+        forth_abort_msg f "LEAVE Compile mode only"
+    ) else (
+        let _forth_find_compile_do f -> found in
+        let hd found.list -> frame in
+        if frame == nil then (
+            forth_abort_msg f "LEAVE without matching DO"
+        ) else (
+            let [int:FORTH_DO_PLACEHOLDER] -> leave_addr_w in (
+                // Compile: leave-addr JMP
+                set f.cstack = [func:#forth_jmp] :: leave_addr_w :: f.cstack;
+                set frame.list = leave_addr_w :: frame.list;
+                nil
+            )
+        )
+    );;
+
+/**
+ * LOOP (immediate) ( -- )
+ * End a counted loop with step +1
+ */
+fun forth_loop_compile f=
+    if f.state != FORTH_STATE_COMPILATION then (
+        forth_abort_msg f "LOOP Compile mode only"
+    ) else (
+        let _forth_find_compile_do f -> found in
+        let hd found.list -> frame in
+        let hd tl found.list -> frame_idx in
+        if (frame == nil) || (frame_idx == nil) then (
+            forth_abort_msg f "LOOP without matching DO"
+        ) else (
+            let listlen f.cstack -> current_pos in
+            let current_pos + 2 -> loop_end in (
+                // Patch DO and LEAVE placeholders to jump after LOOP
+                for p=frame.list; p!=nil; tl p do
+                    let hd p -> leave_addr_w in
+                        set leave_addr_w.int = loop_end;
+                // Compile: loop-start LOOP
+                set f.cstack = [func:#forth_loop] :: [int:frame.int] :: f.cstack;
+                // Remove compile-time DO frame metadata
+                set f.rstack = list_rem_nth f.rstack frame_idx.int;
+                nil
+            )
+        )
+    );;
+
+/**
+ * +LOOP (immediate) ( -- )
+ * End a counted loop with variable step from stack
+ */
+fun forth_plus_loop_compile f=
+    if f.state != FORTH_STATE_COMPILATION then (
+        forth_abort_msg f "+LOOP Compile mode only"
+    ) else (
+        let _forth_find_compile_do f -> found in
+        let hd found.list -> frame in
+        let hd tl found.list -> frame_idx in
+        if (frame == nil) || (frame_idx == nil) then (
+            forth_abort_msg f "+LOOP without matching DO"
+        ) else (
+            let listlen f.cstack -> current_pos in
+            let current_pos + 2 -> loop_end in (
+                // Patch DO and LEAVE placeholders to jump after +LOOP
+                for p=frame.list; p!=nil; tl p do
+                    let hd p -> leave_addr_w in
+                        set leave_addr_w.int = loop_end;
+                // Compile: loop-start +LOOP
+                set f.cstack = [func:#forth_plus_loop] :: [int:frame.int] :: f.cstack;
+                // Remove compile-time DO frame metadata
+                set f.rstack = list_rem_nth f.rstack frame_idx.int;
+                nil
+            )
+        )
+    );;
 
 /**
  * BEGIN (immediate)  ( -- )

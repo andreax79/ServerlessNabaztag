@@ -85,6 +85,45 @@ T{       -1  2 + ->          1 }T
 T{       -1 -2 + ->         -3 }T
 T{       -1  1 + ->          0 }T
 
+\ F.6.1.0140 +LOOP --------------------------------------------------
+T{ : GD2 DO I -1 +LOOP ; -> }T
+T{        1          4 GD2 -> 4 3 2  1 }T
+T{       -1          2 GD2 -> 2 1 0 -1 }T
+T{ MID-UINT MID-UINT+1 GD2 -> MID-UINT+1 MID-UINT }T
+
+VARIABLE gditerations
+VARIABLE gdincrement
+
+: gd7 ( limit start increment -- )
+   gdincrement !
+   0 gditerations !
+   DO
+     1 gditerations +!
+     I
+     gditerations @ 6 = IF LEAVE THEN
+     gdincrement @
+   +LOOP gditerations @
+;
+
+T{    4  4  -1 gd7 ->  4                  1  }T
+T{    1  4  -1 gd7 ->  4  3  2  1         4  }T
+T{    4  1  -1 gd7 ->  1  0 -1 -2  -3  -4 6  }T
+T{    4  1   0 gd7 ->  1  1  1  1   1   1 6  }T
+T{    0  0   0 gd7 ->  0  0  0  0   0   0 6  }T
+T{    1  4   0 gd7 ->  4  4  4  4   4   4 6  }T
+T{    1  4   1 gd7 ->  4  5  6  7   8   9 6  }T
+T{    4  1   1 gd7 ->  1  2  3            3  }T
+T{    4  4   1 gd7 ->  4  5  6  7   8   9 6  }T
+T{    2 -1  -1 gd7 -> -1 -2 -3 -4  -5  -6 6  }T
+T{   -1  2  -1 gd7 ->  2  1  0 -1         4  }T
+T{    2 -1   0 gd7 -> -1 -1 -1 -1  -1  -1 6  }T
+T{   -1  2   0 gd7 ->  2  2  2  2   2   2 6  }T
+T{   -1  2   1 gd7 ->  2  3  4  5   6   7 6  }T
+T{    2 -1   1 gd7 -> -1 0 1              3  }T
+T{  -20 30 -10 gd7 -> 30 20 10  0 -10 -20 6  }T
+T{  -20 31 -10 gd7 -> 31 21 11  1  -9 -19 6  }T
+T{  -20 29 -10 gd7 -> 29 19  9 -1 -11     5  }T 
+
 
 \ F.6.1.0150 ,
 \ HERE 1 ,
@@ -233,6 +272,64 @@ T{ 123 GR2 -> 123 }T
 T{  1S GR1 ->  1S }T
 
 
+\ F.6.2.0620 ?DO ----------------------------------------------------
+: qd ?DO I LOOP ;
+T{   789   789 qd -> }T
+T{ -9876 -9876 qd -> }T
+T{     5     0 qd -> 0 1 2 3 4 }T
+
+: qd1 ?DO I 10 +LOOP ;
+T{ 50 1 qd1 -> 1 11 21 31 41 }T
+T{ 50 0 qd1 -> 0 10 20 30 40 }T
+
+: qd2 ?DO I 3 > IF LEAVE ELSE I THEN LOOP ;
+T{ 5 -1 qd2 -> -1 0 1 2 3 }T
+
+: qd3 ?DO I 1 +LOOP ;
+T{ 4  4 qd3 -> }T
+T{ 4  1 qd3 ->  1 2 3 }T
+T{ 2 -1 qd3 -> -1 0 1 }T
+
+: qd4 ?DO I -1 +LOOP ;
+T{  4 4 qd4 -> }T
+T{  1 4 qd4 -> 4 3 2  1 }T
+T{ -1 2 qd4 -> 2 1 0 -1 }T
+
+: qd5 ?DO I -10 +LOOP ;
+T{   1 50 qd5 -> 50 40 30 20 10   }T
+T{   0 50 qd5 -> 50 40 30 20 10 0 }T
+T{ -25 10 qd5 -> 10 0 -10 -20     }T
+
+VARIABLE qditerations
+VARIABLE qdincrement
+
+: qd6 ( limit start increment -- )    qdincrement !
+   0 qditerations !
+   ?DO
+     1 qditerations +!
+     I
+     qditerations @ 6 = IF LEAVE THEN
+     qdincrement @
+   +LOOP qditerations @
+;
+
+T{  4  4 -1 qd6 ->                   0  }T
+T{  1  4 -1 qd6 ->  4  3  2  1       4  }T
+T{  4  1 -1 qd6 ->  1  0 -1 -2 -3 -4 6  }T
+T{  4  1  0 qd6 ->  1  1  1  1  1  1 6  }T
+T{  0  0  0 qd6 ->                   0  }T
+T{  1  4  0 qd6 ->  4  4  4  4  4  4 6  }T
+T{  1  4  1 qd6 ->  4  5  6  7  8  9 6  }T
+T{  4  1  1 qd6 ->  1  2  3          3  }T
+T{  4  4  1 qd6 ->                   0  }T
+T{  2 -1 -1 qd6 -> -1 -2 -3 -4 -5 -6 6  }T
+T{ -1  2 -1 qd6 ->  2  1  0 -1       4  }T
+T{  2 -1  0 qd6 -> -1 -1 -1 -1 -1 -1 6  }T
+T{ -1  2  0 qd6 ->  2  2  2  2  2  2 6  }T
+T{ -1  2  1 qd6 ->  2  3  4  5  6  7 6  }T
+T{  2 -1  1 qd6 -> -1  0  1          3  }T
+
+
 \ F.6.1.0630 ?DUP ---------------------------------------------------
 T{ -1 ?DUP -> -1 -1 }T
 T{  0 ?DUP ->  0    }T
@@ -351,6 +448,22 @@ T{ 0 INVERT -> -1 }T
 T{ -1 INVERT -> 0 }T
 
 
+\ F.6.1.1760 LEAVE --------------------------------------------------
+T{ : GD5 123 SWAP 0 DO 
+     I 4 > IF DROP 234 LEAVE THEN 
+   LOOP ; -> }T
+T{ 1 GD5 -> 123 }T
+T{ 5 GD5 -> 123 }T
+T{ 6 GD5 -> 234 }T
+
+
+\ F.6.1.1800 LOOP ---------------------------------------------------
+T{ : GD1 DO I LOOP ; -> }T
+T{          4        1 GD1 ->  1 2 3   }T
+T{          2       -1 GD1 -> -1 0 1   }T
+T{ MID-UINT+1 MID-UINT GD1 -> MID-UINT }T
+
+
 \ F.6.1.1805 LSHIFT -------------------------------------------------
 T{   1  0 LSHIFT ->     1 }T
 T{   1  1 LSHIFT ->     2 }T
@@ -413,12 +526,27 @@ T{ 1S 0S OR -> 1S }T
 T{ 1S 1S OR -> 1S }T
 
 
+\ F.6.2.0620 ?DO ----------------------------------------------------
+T{ : GQ1 ?DO I LOOP ; -> }T
+T{ 4 1 GQ1 -> 1 2 3 }T
+T{ 2 2 GQ1 -> }T
+
+
 \ F.6.1.1990 OVER ----------------------------------------------------
 T{ 1 2 OVER -> 1 2 1 }T
 
 
-\ F.6.1.2120 RECURSE -------------------------------------------------
+\ F.6.1.2033 POSTPONE ------------------------------------------------
+T{ : GT4 POSTPONE GT1 ; IMMEDIATE -> }T
+T{ : GT5 GT4 ; -> }T
+T{ GT5 -> 123 }T
+T{ : GT6 345 ; -> }T
+T{ : GT7 POSTPONE GT6 ; IMMEDIATE -> }T
+T{ : GT8 GT7 ; -> }T
+T{ GT8 -> 345 }T
 
+
+\ F.6.1.2120 RECURSE -------------------------------------------------
 T{ : GFACT ( n -- n! ) DUP 2 < IF DROP 1 EXIT THEN DUP 1- RECURSE * ; -> }T
 T{ 0 GFACT -> 1 }T
 T{ 1 GFACT -> 1 }T

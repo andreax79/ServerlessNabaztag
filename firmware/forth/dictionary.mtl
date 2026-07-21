@@ -112,6 +112,13 @@ fun forth_init_dictionary=
         // Control
         [ [str: "begin"            ] [ func:#forth_begin       flag:FORTH_IMMEDIATE]] ::
         [ [str: "until"            ] [ func:#forth_until       flag:FORTH_IMMEDIATE]] ::
+        [ [str: "do"               ] [ func:#forth_do_compile  flag:FORTH_IMMEDIATE]] ::
+        [ [str: "?do"              ] [ func:#forth_qdo_compile flag:FORTH_IMMEDIATE]] ::
+        [ [str: "loop"             ] [ func:#forth_loop_compile flag:FORTH_IMMEDIATE]] ::
+        [ [str: "+loop"            ] [ func:#forth_plus_loop_compile flag:FORTH_IMMEDIATE]] ::
+        [ [str: "leave"            ] [ func:#forth_leave_compile flag:FORTH_IMMEDIATE]] ::
+        [ [str: "i"                ] [ func:#forth_i ]] ::
+        [ [str: "j"                ] [ func:#forth_j ]] ::
         [ [str: "if"               ] [ func:#forth_if          flag:FORTH_IMMEDIATE]] ::
         [ [str: "else"             ] [ func:#forth_else        flag:FORTH_IMMEDIATE]] ::
         [ [str: "then"             ] [ func:#forth_then        flag:FORTH_IMMEDIATE]] ::
