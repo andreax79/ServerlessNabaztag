@@ -138,6 +138,25 @@ fun forth_execute_code f code=
                                 nil
                             )
                         )
+                    ) else if word.func == #forth_does_runtime then (
+                        if (f.pc >= (tablen code)) then
+                            forth_abort_msg f "DOES> internal error"
+                        else (
+                            let code.(f.pc) -> does_payload in (
+                                set f.pc = f.pc + 1;
+                                let if f.create_latest != nil then f.create_latest else f.latest -> does_target in
+                                if (does_target == nil) || (does_target.int == nil) then
+                                    forth_abort_msg f "DOES> without a created word"
+                                else (
+                                    set does_target.code = forth_word_list_to_array (
+                                        [int:does_target.int] :: does_payload.list
+                                    );
+                                    if does_target == f.create_latest then
+                                        set f.create_latest = nil;
+                                    nil
+                                )
+                            )
+                        )
                     ) else
                     if word.flag == FORTH_ASYNC then (
                         // If asynchronous word, push current pc and code onto return stack

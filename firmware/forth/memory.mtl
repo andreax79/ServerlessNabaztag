@@ -58,6 +58,8 @@ type MemoryBlock = [
     memory_cells        // table (array) of cells
 ];;
 
+var forth_memory_here_addr = nil;;
+
 /**
  * Find the first free bit in the bitmap.
  * Returns the index of the free bit, or nil if none found.
@@ -112,8 +114,15 @@ fun forth_memory_alloc_cell=
                 // allocate first cell in new block
                 set block.memory_bitmap = block.memory_bitmap | (1<<0)
         );
+        set forth_memory_here_addr = addr;
         addr
     );;
+
+/**
+ * Return the current data-space cell address.
+ */
+fun forth_memory_here=
+    if forth_memory_here_addr == nil then 0 else forth_memory_here_addr;;
 
 /**
  * Free a cell in the memory manager at the given address.
@@ -328,7 +337,26 @@ fun forth_memory_set_cell f addr value=
         );;
 
 /**
- * ALLOCATE-CELL ( -- addr )  Allocate a cell from memory and return its address.
+ * Return true when addr already refers to an allocated cell.
+ */
+fun forth_memory_cell_allocated addr=
+    if addr & FORTH_MEMORY_LIMIT then
+        0
+    else
+        let 0 -> allocated in (
+            for p=forth_memory; (p!=nil) && (allocated==0); tl p do (
+                let hd p -> block in
+                if addr < block.memory_block_size then (
+                    set allocated = if (block.memory_bitmap & (1<<addr)) != 0 then 1 else 0
+                ) else (
+                    set addr = addr - block.memory_block_size
+                )
+            );
+            allocated
+        );;
+
+/**
+ * ALLOCATE-CELL ( -- addr )  Allocate a cell from memory and return its address
  */
 fun forth_allocate_cell f=
     let forth_memory_alloc_cell -> addr in
@@ -336,7 +364,29 @@ fun forth_allocate_cell f=
     nil;;
 
 /**
- * FREE-CELL ( addr -- )  Free a cell in memory at the given address.
+ * , ( x -- )  Store x at HERE and advance data-space pointer
+ */
+fun forth_comma f=
+    let forth_pop f -> value in
+    let forth_memory_here -> addr in (
+        if (forth_memory_cell_allocated addr) == 0 then
+            let forth_memory_alloc_cell -> a in
+                set addr = a;
+        forth_memory_set_cell f addr value;
+        set forth_memory_here_addr = addr + 1
+    );
+    nil;;
+
+/**
+ * HERE ( -- addr )  Return the current data-space cell address
+ */
+fun forth_here f=
+    let forth_memory_here -> addr in
+        forth_push f [int:addr];
+    nil;;
+
+/**
+ * FREE-CELL ( addr -- )  Free a cell in memory at the given address
  */
 fun forth_free_cell f=
     let forth_pop f -> addr in
@@ -344,7 +394,7 @@ fun forth_free_cell f=
     nil;;
 
 /**
- * @ ( addr -- value )  Fetch a value from memory at the given address.
+ * @ ( addr -- value )  Fetch a value from memory at the given address
  */
 fun forth_fetch f=
     let forth_pop f -> addr in
@@ -353,7 +403,7 @@ fun forth_fetch f=
     nil;;
 
 /**
- * ! ( value addr -- )  Store a value into memory at the given address.
+ * ! ( value addr -- )  Store a value into memory at the given address
  */
 fun forth_store f=
     let forth_pop f -> addr in
@@ -393,7 +443,7 @@ fun forth_add_variable name addr=
     nil;;
 
 /**
- * VARIABLE (immediate) ( -- addr )  Define a variable and allocate a word for it.
+ * VARIABLE (immediate) ( -- addr )  Define a variable and allocate a word for it
  */
 fun forth_variable f=
     if f.state == FORTH_STATE_COMPILATION then (

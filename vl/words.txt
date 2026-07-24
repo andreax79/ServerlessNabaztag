@@ -1,4 +1,4 @@
-!              ( value addr -- )                        Store a value into memory at the given address.
+!              ( value addr -- )                        Store a value into memory at the given address
 $REPEAT        ( s n -- s )                             Repeat string s n times
 '              (immediate) ( -- xt )                    Get the next word from the dictionary and push it
 *              ( n1 n2 -- product )                     Multiplies
@@ -8,6 +8,7 @@ $REPEAT        ( s n -- s )                             Repeat string s n times
 +!             ( n addr -- )                            Adds a number to the contents of the address
 +LOOP          ( runtime ) ( increment loop-addr -- )   Add increment to loop index and repeat until limit crossing
 +LOOP          (immediate) ( -- )                       End a counted loop with variable step from stack
+,              ( x -- )                                 Store x at HERE and advance data-space pointer
 -              ( n1 n2 -- difference )                  Subtracts
 ->             (immediate) ( --  )                      Record depth and contents of stack
 .              ( n -- )                                 Display n
@@ -19,17 +20,19 @@ $REPEAT        ( s n -- s )                             Repeat string s n times
 0=             ( n -- flag )                            True if top number zero
 1+             ( n -- n+1 )                             Increments top of stack by 1
 1-             ( n -- n-1 )                             Decrements top of stack by 1
+2!             ( x1 x2 addr -- )                        Store two cells into memory
 2*             ( n -- n*2 )                             Multiplies top of stack by 2
 2+             ( n -- n+2 )                             Increments top of stack by 2
 2-             ( n -- n-2 )                             Decrements top of stack by 2
 2/             ( n -- n/2 )                             Divides top of stack by 2
 2>R            ( x1 x2 -- ) ( R: -- x1 x2 )             Move two items to return stack
-2DROP          ( x1 x2 -- )
-2DUP           ( x1 x2 -- x1 x2 x1 x2 )
-2OVER          ( x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2 )
+2@             ( addr -- x1 x2 )                        Fetch two cells from memory
+2DROP          ( x1 x2 -- )                             Drop the top two cells from the stack
+2DUP           ( x1 x2 -- x1 x2 x1 x2 )                 Copy the top two cells on the stack
+2OVER          ( x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2 )     Copy the second pair of cells to the top of the stack
 2R>            ( -- x1 x2 ) ( r: x1 x2 -- )             Retrieve two items from return stack
 2R@            ( -- x1 x2 ) ( r: x1 x2 -- x1 x2 )       Copy two items from return stack to data stack
-2SWAP          ( x1 x2 x3 x4 -- x3 x4 x1 x2 )
+2SWAP          ( x1 x2 x3 x4 -- x3 x4 x1 x2 )           Exchange the top two cell pairs
 :              ( -- )                                   Begin a new word definition
 ::             ( list x -- list' )                      Add an element to the front of a list
 ;              ( -- )                                   End a word definition
@@ -48,7 +51,7 @@ $REPEAT        ( s n -- s )                             Repeat string s n times
 ?DO            (immediate) ( limit start -- )           Begin a counted loop that is skipped when start equals limit
 ?DUP           ( x -- 0 | x x )                         Duplicate top of stack if not zero
 ?JMP           ( cond addr -- )                         Jump if zero
-@              ( addr -- value )                        Fetch a value from memory at the given address.
+@              ( addr -- value )                        Fetch a value from memory at the given address
 ABORT          ( i * x -- ) ( R: j * x -- )             Empty the data stack and the return stack
 ABS            ( n -- abs(n)                            Absolute value  )
 AI-EAR-STEPS   ( current target -- n )                  steps along the shortest path
@@ -60,7 +63,7 @@ AI-SLEEP>TEXT  ( flag -- text )
 AI-VALID-EAR-TARGET? ( target -- flag )
 AI-VALID-LED-COLOR? ( color -- flag )
 AI-WEATHER>TEXT ( code -- text )
-ALLOCATE-CELL  ( -- addr )                              Allocate a cell from memory and return its address.
+ALLOCATE-CELL  ( -- addr )                              Allocate a cell from memory and return its address
 AND            ( x1 x2 -- x3 )                          x3 is the bit-by-bit logical "and" of x1 with x2
 BEGIN          (immediate) ( -- )                       Begin a loop Store the current position in the return stack
 BETWEEN        ( n low high -- flag )
@@ -68,16 +71,20 @@ BL             ( -- char )                              Character value for a sp
 CALC-SURPRISE  ( -- )                                   calculate next surprise time
 CALC-TAICHI    ( -- )                                   Calculate next taichi time
 CASE           (immediate) ( -- )                       Begin a case statement
+CELL+          ( addr1 -- addr2 )                       Add one cell to an address
+CELLS          ( n -- n )                               Multiply n by the size of a cell
 CLEAR-INFO     ( -- )                                   Clear all information
 CONSTANT       (immediate) ( x "<spaces>name" -- )      Define a constant with the given name and value
 COUNT          ( list/str -- n )                        Get the length of a list or a string
 CR             ( -- )                                   Display CR
+CREATE         ( "<spaces>name" -- )                    Create a new dictionary entry that pushes its private data-field address
 CRONTAB        ( -- )                                   Crontab
 DAYTIME        ( -- ) (UTC)                             Display the current time
 DEFINED?       (immediate) ( "<spaces>name" -- flag )   Check if a word is defined in the dictionary
 DEPTH          ( -- count )                             Count number of items on stack
 DO             ( runtime ) ( limit start leave-addr -- ) Enter a DO...LOOP runtime frame
 DO             (immediate) ( limit start -- )           Begin a counted loop
+DOES>          (immediate) ( -- )                       Split current defining word into a CREATE prelude and run-time behavior
 DROP           ( n --  )                                Discard top of stack
 DUP            ( n -- n n )                             Duplicate top of stack
 EAIQ>INFO      ( n -- n )                               Convert European Air Quality Index to info code
@@ -92,12 +99,13 @@ EVALUATE       ( str -- )                               Evaluate a string as For
 EXECUTE        ( xt -- )                                Execute a word object previously obtained with '
 EXIT           ( -- )                                   Return control to the caller
 FALSE          ( -- false )
-FREE-CELL      ( addr -- )                              Free a cell in memory at the given address.
+FREE-CELL      ( addr -- )                              Free a cell in memory at the given address
 GC             ( -- mem% )                              Perform garbage collection and return the memory usage percentage
 GET-HOUR       ( -- hour )                              Get the current hour
 GET-MINUTE     ( -- minute )                            Get the current minute
 HD             ( list -- list x )                       Get the head of a list
 HELP           ( -- )
+HERE           ( -- addr )                              Return the current data-space cell address
 HTTP-GET       ( url -- content header )                Perform an HTTP GET request and return the content as a string HTTPS is not supported
 HTTP-POST      ( payload url -- content header )        Perform an HTTP POST request and return the content as a string HTTPS is not supported
 I              ( -- n )                                 Push the current loop index from the innermost DO...LOOP
@@ -204,7 +212,7 @@ UPTIME         ( -- s )                                 Push the system uptime i
 URL-DECODE     ( s -- s )                               URL decode string s
 URL-ENCODE     ( s -- s )                               URL encode string s
 UTC>STRING     ( -- str )                               Push the current UTC time and date as a string onto the stack
-VARIABLE       (immediate) ( -- addr )                  Define a variable and allocate a word for it.
+VARIABLE       (immediate) ( -- addr )                  Define a variable and allocate a word for it
 VOLUME         ( -- vol )                               Get the audio volume
 WAKE-UP        ( -- )                                   Wake up the Nabaztag from sleep mode
 WORDS          ( -- )                                   List the words in the dictionary

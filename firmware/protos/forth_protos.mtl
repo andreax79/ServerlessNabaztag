@@ -20,6 +20,9 @@ type Forth=[
     cstack              // control stack (for compilation)
     istack              // interpreter state stack
     latest              // latest defined word
+    create_latest       // latest word created by CREATE at runtime
+    does_seen           // true when DOES> has been encountered in current definition
+    does_prelude        // saved prelude words for a defining word up to DOES>
     pc                  // program counter
     state               // normal (0) or compilation state (-1)
     output              // list of collected output strings
@@ -35,6 +38,7 @@ proto forth_init 0;;
 proto forth_init_dictionary 0;;
 proto forth_interpreter 1;;
 proto forth_interpreter_ex 5;;
+proto forth_interpreter_get_current_line 1;;
 proto forth_interpreter_get_token 1;;
 proto forth_interpreter_loop 1;;
 proto forth_interpreter_resume 1;;

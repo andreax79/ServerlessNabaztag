@@ -18,6 +18,21 @@ fun forth_interpreter_new_word token quoted=
         forth_str_to_int nil token;;
 
 /**
+ * Return the current input line up to the parser cursor.
+ * Extracts text from the character after the previous '\n' to i.start.
+ */
+fun forth_interpreter_get_current_line f=
+    let hd f.istack -> i in
+    if i == nil then ""
+    else
+        let 0 -> line_start in
+        let i.start - 2 -> p in (
+            while (p >= 0) && ((strget i.input p) != ASCII_NEWLINE) do set p = p - 1;
+            if p >= 0 then set line_start = p + 1;
+            strsub i.input line_start (i.start - line_start)
+        );;
+
+/**
  * Process a quoted string token, handles escape sequences.
  */
 fun _forth_process_quoted_string i=
@@ -160,6 +175,9 @@ fun forth_new_state=
         forth_sock: nil // socket
         forth_task: nil // task
         latest:nil // latest defined word
+        create_latest:nil // latest runtime-created word by CREATE
+        does_seen:0 // DOES> marker for current definition
+        does_prelude:nil // saved cstack segment for DOES>
         // istack: inter :: nil // interpreter state
         istack:nil // interpreter state stack
     ];;

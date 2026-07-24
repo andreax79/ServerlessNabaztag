@@ -41,7 +41,10 @@ fun forth_t_close_brace f=
     let forth_cpop f -> forth_test_actual_stack in
     let forth_cpop f -> forth_test_start_depth in
         if (listlen f.stack) != forth_test_actual_stack.int then (
-            forth_write f "[TEST-ERROR] Wrong number of results\n"
+            forth_write f strcatlist
+                "[TEST-ERROR] Wrong number of results " ::
+                (forth_interpreter_get_current_line f) ::
+                "\n" :: nil
         ) else (
             let (listlen f.stack) - forth_test_start_depth.int -> l in
                 for i=0; i<l do
@@ -53,7 +56,9 @@ fun forth_t_close_brace f=
                             "[TEST-ERROR] Incorrect result: " ::
                             (forth_word_fmt actual_value) ::
                             " expected: " ::
-                            (forth_word_fmt expected_value) :: "\n" :: nil;
+                            (forth_word_fmt expected_value) :: " " ::
+                            (forth_interpreter_get_current_line f) ::
+                            "\n" :: nil;
             nil
         );
     nil;;

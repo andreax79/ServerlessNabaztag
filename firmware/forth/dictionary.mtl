@@ -102,6 +102,8 @@ fun forth_init_dictionary=
         [ [str: ">number"          ] [func:#forth_to_number ]] ::
         // Memory
         [ [str: "allocate-cell"    ] [ func:#forth_allocate_cell ]] ::
+        [ [str: ","                ] [ func:#forth_comma ]] ::
+        [ [str: "here"             ] [ func:#forth_here ]] ::
         [ [str: "free-cell"        ] [ func:#forth_free_cell ]] ::
         [ [str: "@"                ] [ func:#forth_fetch ]] ::
         [ [str: "!"                ] [ func:#forth_store ]] ::
@@ -140,6 +142,8 @@ fun forth_init_dictionary=
         [ [str: "recurse"          ] [ func:#forth_recurse     flag:FORTH_IMMEDIATE]] ::
         [ [str: "["                ] [ func:#forth_bracket     flag:FORTH_IMMEDIATE]] ::
         [ [str: "]"                ] [ func:#forth_right_bracket]] ::
+        [ [str: "create"           ] [ func:#forth_create]] ::
+        [ [str: "does>"            ] [ func:#forth_does_compile flag:FORTH_IMMEDIATE]] ::
         [ [str: "immediate"        ] [ func:#forth_immediate   flag:FORTH_IMMEDIATE]] ::
         [ [str: "("                ] [ func:#forth_p]] ::
         [ [str: "constant"         ] [ func:#forth_constant]] ::

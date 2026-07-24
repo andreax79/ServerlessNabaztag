@@ -4,6 +4,15 @@
  * This code is licensed under the MIT License
  */
 
+proto forth_memory_alloc_cell 0;;
+
+/**
+ * Internal helper for DOES>.
+ * The execution engine consumes the following payload and patches the child word.
+ */
+fun forth_does_runtime f=
+    nil;;
+
 /**
  * : Begin a new word definition ( -- )
  */
@@ -29,6 +38,8 @@ fun forth_colon f=
                     set f.latest = new_word;
                     forth_rpush f new_word;
                     set f.cstack = nil;
+                    set f.does_seen = 0;
+                    set f.does_prelude = nil;
                     nil
                 )
         );;
@@ -42,12 +53,64 @@ fun forth_semi f=
     ) else
         let forth_rpop f -> new_word in (
             // Finish the new word definition
-            // Set the code field to the compiled code
-            set new_word.code = forth_word_list_to_array (rev f.cstack nil);
+            // If DOES> was seen, split definition into prelude and does-body payload.
+            if f.does_seen == 0 then
+                set new_word.code = forth_word_list_to_array (rev f.cstack nil)
+            else (
+                let rev f.cstack nil -> does_body in
+                let [list:does_body] :: [func:#forth_does_runtime] :: f.does_prelude -> definer_rev in
+                set new_word.code = forth_word_list_to_array (
+                    rev definer_rev nil
+                )
+            );
             set f.cstack = nil;
+            set f.does_seen = 0;
+            set f.does_prelude = nil;
             set f.state = FORTH_STATE_NORMAL;
             nil
         );;
+
+/**
+ * CREATE ( "<spaces>name" -- )
+ * Create a new dictionary entry that pushes its private data-field address
+ */
+fun forth_create f=
+    let hd f.istack -> inter in (
+        forth_interpreter_get_token f;
+        if (strlen inter.token) == 0 then
+            forth_abort_msg f "CREATE requires a name"
+        else if !strcmp inter.token ";" then
+            forth_abort_msg f "CREATE requires a valid name"
+        else
+            let forth_get_word inter.token -> new_word in
+            if new_word != nil then
+                forth_abort_msg f strcat "CREATE: word already exists " inter.token
+            else
+                let forth_memory_alloc_cell -> addr in (
+                    set new_word = [int:addr code:{[int:addr]}];
+                    word_dict_set_w forth_dictionary [str:to_lower inter.token] new_word;
+                    set f.latest = new_word;
+                    set f.create_latest = new_word;
+                    nil
+                )
+    );;
+
+/**
+ * DOES> (immediate) ( -- )
+ * Split current defining word into a CREATE prelude and run-time behavior
+ */
+fun forth_does_compile f=
+    if f.state != FORTH_STATE_COMPILATION then
+        forth_abort_msg f "DOES> requires compilation state"
+    else if f.does_seen != 0 then
+        forth_abort_msg f "DOES> can only appear once in a definition"
+    else (
+        set f.does_seen = 1;
+        set f.does_prelude = f.cstack;
+        set f.cstack = nil;
+        nil
+    );;
+
 
 fun forth_p f=
     nil;;

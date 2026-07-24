@@ -1,21 +1,9 @@
-\ : load-srv ( filename -- )  \ Load a forth file from the server
-\ >r nil server-url @ :: "/" :: r> :: str-join http-get
-\ drop \ drop header
-\ evaluate ; \ evaluate the content
-\
-\ "init.forth" load-srv
+: load-srv ( filename -- )  \ Load a forth file from the server
+>r nil server-url @ :: "/" :: r> :: str-join http-get
+drop \ drop header
+evaluate ; \ evaluate the content
 
-: 2drop ( x1 x2 -- )
-drop drop ;
-
-: 2dup ( x1 x2 -- x1 x2 x1 x2 )
-over over ;
-
-: 2over ( x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2 )
-3 pick 3 pick ;
-
-: 2swap ( x1 x2 x3 x4 -- x3 x4 x1 x2 )
-rot >r rot r> ;
+"core.forth" load-srv
 
 \ ------------------------------------------------------------------
 
@@ -85,6 +73,7 @@ T{       -1  2 + ->          1 }T
 T{       -1 -2 + ->         -3 }T
 T{       -1  1 + ->          0 }T
 
+
 \ F.6.1.0140 +LOOP --------------------------------------------------
 T{ : GD2 DO I -1 +LOOP ; -> }T
 T{        1          4 GD2 -> 4 3 2  1 }T
@@ -122,19 +111,38 @@ T{   -1  2   1 gd7 ->  2  3  4  5   6   7 6  }T
 T{    2 -1   1 gd7 -> -1 0 1              3  }T
 T{  -20 30 -10 gd7 -> 30 20 10  0 -10 -20 6  }T
 T{  -20 31 -10 gd7 -> 31 21 11  1  -9 -19 6  }T
-T{  -20 29 -10 gd7 -> 29 19  9 -1 -11     5  }T 
+T{  -20 29 -10 gd7 -> 29 19  9 -1 -11     5  }T
 
 
-\ F.6.1.0150 ,
-\ HERE 1 ,
-\ HERE 2 ,
-\ CONSTANT 2ND
-\ CONSTANT 1ST
-\ \ F.6.1.0130 +!
-\ T{  0 1ST !        ->   }T
-\ T{  1 1ST +!       ->   }T
-\ T{    1ST @        -> 1 }T
-\ T{ -1 1ST +! 1ST @ -> 0 }T
+\ F.6.1.0150 , ------------------------------------------------------
+HERE 1 ,
+HERE 2 ,
+CONSTANT 2ND
+CONSTANT 1ST
+\ T{       1ST 2ND U< -> <TRUE> }T \ HERE MUST GROW WITH ALLOT
+T{       1ST CELL+  -> 2ND }T \ ... BY ONE CELL
+T{   1ST 1 CELLS +  -> 2ND }T
+T{     1ST @ 2ND @  -> 1 2 }T
+T{         5 1ST !  ->     }T
+T{     1ST @ 2ND @  -> 5 2 }T
+T{         6 2ND !  ->     }T
+T{     1ST @ 2ND @  -> 5 6 }T
+T{           1ST 2@ -> 6 5 }T
+T{       2 1 1ST 2! ->     }T
+T{           1ST 2@ -> 2 1 }T
+T{ 1S 1ST !  1ST @  -> 1S  }T    \ CAN STORE CELL-WIDE VALUE
+
+
+\ F.6.1.0130 +! ------------------------------------------------------
+T{  0 1ST !        ->   }T
+T{  1 1ST +!       ->   }T
+T{    1ST @        -> 1 }T
+T{ -1 1ST +! 1ST @ -> 0 }T
+
+
+\ HERE --------------------------------------------------------------
+T{ HERE HERE = -> <TRUE> }T
+T{ ALLOCATE-CELL DUP >R HERE = R> FREE-CELL -> <TRUE> }T
 
 
 \ F.6.1.0160 - ------------------------------------------------------
@@ -200,7 +208,6 @@ T{ MSB 2/ MSB AND ->   MSB }T
 
 
 \ F.6.1.0370 2DROP --------------------------------------------------
-
 T{ 1 2 2DROP -> }T
 
 
@@ -409,6 +416,24 @@ T{   0 DEPTH -> 0 1   }T
 T{     DEPTH -> 0     }T
 
 
+\ F.6.1.1250 DOES> --------------------------------------------------
+T{ : DOES1 DOES> @ 1 + ; -> }T
+T{ : DOES2 DOES> @ 2 + ; -> }T
+T{ CREATE CR1 -> }T
+T{ CR1   -> HERE }T
+T{ 1 ,   ->   }T
+T{ CR1 @ -> 1 }T
+T{ DOES1 ->   }T
+T{ CR1   -> 2 }T
+T{ DOES2 ->   }T
+T{ CR1   -> 3 }T
+\ T{ : WEIRD: CREATE DOES> 1 + DOES> 2 + ; -> }T
+\ T{ WEIRD: W1 -> }T
+\ T{ ' W1 >BODY -> HERE }T
+\ T{ W1 -> HERE 1 + }T
+\ T{ W1 -> HERE 2 + }T
+
+
 \ F.6.1.1260 DROP ---------------------------------------------------
 T{ 1 2 DROP -> 1 }T
 T{ 0   DROP ->   }T
@@ -448,9 +473,21 @@ T{ 0 INVERT -> -1 }T
 T{ -1 INVERT -> 0 }T
 
 
+\ F.6.1.1730 J ------------------------------------------------------
+T{ : GD3 DO 1 0 DO J LOOP LOOP ; -> }T
+T{          4        1 GD3 ->  1 2 3   }T
+T{          2       -1 GD3 -> -1 0 1   }T
+T{ MID-UINT+1 MID-UINT GD3 -> MID-UINT }T
+
+T{ : GD4 DO 1 0 DO J LOOP -1 +LOOP ; -> }T
+T{        1          4 GD4 -> 4 3 2 1             }T
+T{       -1          2 GD4 -> 2 1 0 -1            }T
+T{ MID-UINT MID-UINT+1 GD4 -> MID-UINT+1 MID-UINT }T
+
+
 \ F.6.1.1760 LEAVE --------------------------------------------------
-T{ : GD5 123 SWAP 0 DO 
-     I 4 > IF DROP 234 LEAVE THEN 
+T{ : GD5 123 SWAP 0 DO
+     I 4 > IF DROP 234 LEAVE THEN
    LOOP ; -> }T
 T{ 1 GD5 -> 123 }T
 T{ 5 GD5 -> 123 }T
@@ -598,6 +635,22 @@ T{    123 V1 ! ->     }T
 T{        V1 @ -> 123 }T
 
 
+\ F.6.1.2430 WHILE ---------------------------------------------------
+\ T{ : GI3 BEGIN DUP 5 < WHILE DUP 1+ REPEAT ; -> }T
+\ T{ 0 GI3 -> 0 1 2 3 4 5 }T
+\ T{ 4 GI3 -> 4 5 }T
+\ T{ 5 GI3 -> 5 }T
+\ T{ 6 GI3 -> 6 }T
+\ T{ : GI5 BEGIN DUP 2 > WHILE
+\       DUP 5 < WHILE DUP 1+ REPEAT
+\       123 ELSE 345 THEN ; -> }T
+\ T{ 1 GI5 -> 1 345 }T
+\ T{ 2 GI5 -> 2 345 }T
+\ T{ 3 GI5 -> 3 4 5 123 }T
+\ T{ 4 GI5 -> 4 5 123 }T
+\ T{ 5 GI5 -> 5 123 }T
+
+
 \ F.6.1.2490 XOR ----------------------------------------------------
 T{ 0S 0S XOR -> 0S }T
 T{ 0S 1S XOR -> 1S }T
@@ -609,6 +662,7 @@ T{ 1S 1S XOR -> 0S }T
 T{ : GC1 58 ; -> }T
 T{ : GC3 [ GC1 ] LITERAL ; -> }T
 T{ GC3 -> 58 }T
+
 
 \ F.6.1.2510 ['] ----------------------------------------------------
 T{ : GXT ['] GT1 ; -> }T

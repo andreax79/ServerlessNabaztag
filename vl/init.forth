@@ -1,22 +1,9 @@
-: between ( n low high -- flag )
->r over r> <= >r >= r> and ;
-
-: 2drop ( x1 x2 -- )
-drop drop ;
-
-: 2dup ( x1 x2 -- x1 x2 x1 x2 )
-over over ;
-
-: 2over ( x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2 )
-3 pick 3 pick ;
-
-: 2swap ( x1 x2 x3 x4 -- x3 x4 x1 x2 )
-rot >r rot r> ;
-
 : load-srv ( filename -- )  \ Load a forth file from the server
 >r nil server-url @ :: "/" :: r> :: str-join http-get
 drop \ drop header
 evaluate ; \ evaluate the content
+
+"core.forth" load-srv
 
 : reload-init ( -- )  \ Reload init.forth
 "init.forth" load-srv ;
