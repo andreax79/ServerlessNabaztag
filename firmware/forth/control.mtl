@@ -214,6 +214,21 @@ fun forth_leave_runtime f=
         );;
 
 /**
+ * UNLOOP ( -- )
+ * Remove the innermost DO...LOOP runtime frame
+ */
+fun forth_unloop f=
+    let _forth_get_do_frame f 1 -> found in
+    let hd found.list -> frame in
+    let hd tl found.list -> frame_idx in
+    if (frame == nil) || (frame.list == nil) || (frame_idx == nil) then
+        forth_abort_msg f "UNLOOP without matching DO"
+    else (
+        set f.rstack = list_rem_nth f.rstack frame_idx.int;
+        nil
+    );;
+
+/**
  * Helper: find the nearest compile-time DO frame in the return stack
  */
 fun _forth_find_compile_do f=
@@ -366,7 +381,7 @@ fun forth_begin f=
     ) else (
         // Push the current position onto the return stack
         let listlen f.cstack -> current_pos in
-        set f.rstack = [int:current_pos] :: f.rstack;
+        set f.rstack = [str:"begin-compile" int:current_pos] :: f.rstack;
         nil
     );;
 
@@ -381,13 +396,89 @@ fun forth_until f=
     ) else (
         // Get the position of the matching BEGIN from the return stack
         let hd f.rstack -> loop_start in (
-            if loop_start == nil then (
+            let (if loop_start == nil then 0 else if loop_start.str == nil then 0 else !strcmp loop_start.str "begin-compile") -> is_begin in
+            if is_begin == 0 then (
                 forth_abort_msg f "UNTIL without matching BEGIN"
             ) else (
                 // Remove the loop start from the return stack
                 set f.rstack = tl f.rstack;
                 // Compile a conditional jump back to the loop start
-                set f.cstack = [func:#forth_qjmp] :: loop_start :: f.cstack;
+                set f.cstack = [func:#forth_qjmp] :: [int:loop_start.int] :: f.cstack;
+                nil
+            )
+        )
+    );;
+
+/**
+ * AGAIN (immediate)  ( -- )
+ * End a loop
+ * Compile an unconditional jump back to the matching BEGIN
+ */
+fun forth_again f=
+    if f.state != FORTH_STATE_COMPILATION then (
+        forth_abort_msg f "AGAIN Compile mode only"
+    ) else (
+        // Get the position of the matching BEGIN from the return stack
+        let hd f.rstack -> loop_start in (
+            let (if loop_start == nil then 0 else if loop_start.str == nil then 0 else !strcmp loop_start.str "begin-compile") -> is_begin in
+            if is_begin == 0 then (
+                forth_abort_msg f "AGAIN without matching BEGIN"
+            ) else (
+                // Remove the loop start from the return stack
+                set f.rstack = tl f.rstack;
+                // Compile an unconditional jump back to the loop start
+                set f.cstack = [func:#forth_jmp] :: [int:loop_start.int] :: f.cstack;
+                nil
+            )
+        )
+    );;
+
+/**
+ * WHILE (immediate)  ( x -- )
+ * Compile a conditional jump to the matching REPEAT
+ */
+fun forth_while f=
+    if f.state != FORTH_STATE_COMPILATION then (
+        forth_abort_msg f "WHILE Compile mode only"
+    ) else (
+        // Ensure there is a matching BEGIN marker in compile control stack
+        let hd f.rstack -> loop_start in
+            let (if loop_start == nil then 0 else if loop_start.str == nil then 0 else !strcmp loop_start.str "begin-compile") -> is_begin in
+            if is_begin == 0 then (
+                forth_abort_msg f "WHILE without matching BEGIN"
+            ) else (
+                let listlen f.cstack -> current_pos in
+                    // Keep BEGIN on top and place WHILE orig just below it
+                    set f.rstack = loop_start :: [int:current_pos+1] :: tl f.rstack;
+                    // Compile: repeat-addr ?JMP
+                    set f.cstack = [func:#forth_qjmp] :: [int:FORTH_IF_PLACEHOLDER] :: f.cstack;
+                    nil
+            )
+    );;
+
+/**
+ * REPEAT (immediate)  ( -- )
+ * End BEGIN ... WHILE loop
+ */
+fun forth_repeat f=
+    if f.state != FORTH_STATE_COMPILATION then (
+        forth_abort_msg f "REPEAT Compile mode only"
+    ) else (
+        // Top of compile control stack: BEGIN position, below it: WHILE placeholder
+        let hd f.rstack -> loop_start in
+        let hd tl f.rstack -> while_addr in
+        let listlen f.cstack -> current_pos in
+        let (if while_addr == nil then nil else listnth f.cstack (current_pos - while_addr.int)) -> while_addr_w in (
+            let (if loop_start == nil then 0 else if loop_start.str == nil then 0 else !strcmp loop_start.str "begin-compile") -> is_begin in
+            if (is_begin == 0) || (while_addr == nil) || (while_addr_w == nil) || (while_addr_w.int != FORTH_IF_PLACEHOLDER) then (
+                forth_abort_msg f "REPEAT without matching BEGIN/WHILE"
+            ) else (
+                // Pop WHILE and BEGIN compile control entries
+                set f.rstack = tl tl f.rstack;
+                // Compile backward jump to BEGIN
+                set f.cstack = [func:#forth_jmp] :: [int:loop_start.int] :: f.cstack;
+                // Patch WHILE false-branch to jump after REPEAT
+                set while_addr_w.int = current_pos + 2;
                 nil
             )
         )

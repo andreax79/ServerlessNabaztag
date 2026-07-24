@@ -54,6 +54,7 @@ $REPEAT        ( s n -- s )                             Repeat string s n times
 @              ( addr -- value )                        Fetch a value from memory at the given address
 ABORT          ( i * x -- ) ( R: j * x -- )             Empty the data stack and the return stack
 ABS            ( n -- abs(n)                            Absolute value  )
+AGAIN          (immediate) ( -- )                       End a loop Compile an unconditional jump back to the matching BEGIN
 AI-EAR-STEPS   ( current target -- n )                  steps along the shortest path
 AI-EARS-ARRIVED ( -- flag )
 AI-EARS-TRAVEL-MS ( -- ms )                             generous estimate of the longest ear travel
@@ -169,6 +170,7 @@ READ-LINE      ( -- line )                              Read a line from the cur
 REBOOT         ( -- )                                   Perform a reboot
 RECURSE        (immediate) ( -- )                       Compile a call to the current colon definition
 RELOAD-INIT    ( -- )                                   Reload init.forth
+REPEAT         (immediate) ( -- )                       End BEGIN ... WHILE loop
 RESUME-TASK    ( task-id -- flag )                      Resume the task with the given task id.
 REVISION       ( -- str )                               Push the revision string onto the stack
 ROLL           ( n ... ni -- n ... ni ni )              Move nth item to top of stack
@@ -204,6 +206,7 @@ TRUE           ( -- true )
 TUCK           ( n1 n2 -- n1 n2 n1 ) (top)              Copy the first  stack item below the second stack item
 T{             (immediate) ( --  )                      Records the current stack depth prior to the test code
 T}             (immediate) ( --  )                      Compare the expected stack with the actual stack contents
+UNLOOP         ( -- )                                   Remove the innermost DO...LOOP runtime frame
 UNTIL          (immediate) ( x -- )                     End a loop Compile a conditional jump back to the matching BEGIN
 UPDATE-TIME    ( -- )                                   Update the system time from the time server
 UPDATE-WEATHER ( -- )                                   Update weather and air quality information
@@ -215,6 +218,7 @@ UTC>STRING     ( -- str )                               Push the current UTC tim
 VARIABLE       (immediate) ( -- addr )                  Define a variable and allocate a word for it
 VOLUME         ( -- vol )                               Get the audio volume
 WAKE-UP        ( -- )                                   Wake up the Nabaztag from sleep mode
+WHILE          (immediate) ( x -- )                     Compile a conditional jump to the matching REPEAT
 WORDS          ( -- )                                   List the words in the dictionary
 XOR            ( x1 x2 -- x3 )                          x3 is the bit-by-bit exclusive-or of x1 with x2
 [              (immediate) ( -- )                       Enter interpretation state during compilation

@@ -350,6 +350,13 @@ T{      -1 ABS ->          1 }T
 T{ MIN-INT ABS -> MID-UINT+1 }T
 
 
+\ F.6.1.0700 AGAIN ---------------------------------------------------
+T{ : GI6 BEGIN DUP 5 > IF EXIT THEN DUP 1+ AGAIN ; -> }T
+T{ 3 GI6 -> 3 4 5 6 }T
+T{ 5 GI6 -> 5 6 }T
+T{ 6 GI6 -> 6 }T
+
+
 \ F.6.1.0720 AND ----------------------------------------------------
 T{ 0 0 AND -> 0 }T
 T{ 0 1 AND -> 0 }T
@@ -629,6 +636,25 @@ T{  MSB 1 RSHIFT     2*  -> MSB }T
 T{ 1 2 SWAP -> 2 1 }T
 
 
+\ F.6.1.2380 UNLOOP -------------------------------------------------
+T{ : GD6 ( PAT: {0 0},{0 0}{1 0}{1 1},{0 0}{1 0}{1 1}{2 0}{2 1}{2 2} )
+      0 SWAP 0 DO
+         I 1+ 0 DO
+           I J + 3 = IF I UNLOOP I UNLOOP EXIT THEN 1+
+         LOOP
+      LOOP ; -> }T
+T{ 1 GD6 -> 1 }T
+T{ 2 GD6 -> 3 }T
+T{ 3 GD6 -> 4 1 2 }T
+
+
+\ F.6.1.2390 UNTIL --------------------------------------------------
+T{ : GI4 BEGIN DUP 1+ DUP 5 > UNTIL ; -> }T
+T{ 3 GI4 -> 3 4 5 6 }T
+T{ 5 GI4 -> 5 6 }T
+T{ 6 GI4 -> 6 7 }T
+
+
 \ F.6.1.2410 VARIABLE -----------------------------------------------
 T{ VARIABLE V1 ->     }T
 T{    123 V1 ! ->     }T
@@ -636,19 +662,19 @@ T{        V1 @ -> 123 }T
 
 
 \ F.6.1.2430 WHILE ---------------------------------------------------
-\ T{ : GI3 BEGIN DUP 5 < WHILE DUP 1+ REPEAT ; -> }T
-\ T{ 0 GI3 -> 0 1 2 3 4 5 }T
-\ T{ 4 GI3 -> 4 5 }T
-\ T{ 5 GI3 -> 5 }T
-\ T{ 6 GI3 -> 6 }T
-\ T{ : GI5 BEGIN DUP 2 > WHILE
-\       DUP 5 < WHILE DUP 1+ REPEAT
-\       123 ELSE 345 THEN ; -> }T
-\ T{ 1 GI5 -> 1 345 }T
-\ T{ 2 GI5 -> 2 345 }T
-\ T{ 3 GI5 -> 3 4 5 123 }T
-\ T{ 4 GI5 -> 4 5 123 }T
-\ T{ 5 GI5 -> 5 123 }T
+T{ : GI3 BEGIN DUP 5 < WHILE DUP 1+ REPEAT ; -> }T
+T{ 0 GI3 -> 0 1 2 3 4 5 }T
+T{ 4 GI3 -> 4 5 }T
+T{ 5 GI3 -> 5 }T
+T{ 6 GI3 -> 6 }T
+T{ : GI5 BEGIN DUP 2 > WHILE
+   DUP 5 < WHILE DUP 1+ REPEAT
+   123 ELSE 345 THEN ; -> }T
+T{ 1 GI5 -> 1 345 }T
+T{ 2 GI5 -> 2 345 }T
+T{ 3 GI5 -> 3 4 5 123 }T
+T{ 4 GI5 -> 4 5 123 }T
+T{ 5 GI5 -> 5 123 }T
 
 
 \ F.6.1.2490 XOR ----------------------------------------------------
