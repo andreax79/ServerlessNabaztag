@@ -92,16 +92,38 @@ fun forth_is_nil w=
  */
 fun forth_compare_words w1 w2=
     // TODO compare other types
+    // Compare integers
     if w1.int != nil && w2.int != nil then
         if w1.int == w2.int then 0 // equal
         else if w1.int < w2.int then -1  // w1 less than w2
         else 1 // w1 greater than w2
+    // Compare strings
     else if w1.str != nil && w2.str != nil then
         str_compare w1.str w2.str
+    // Compare functions
+    else if w1.func != nil && w2.func != nil then
+        if w1.func == w2.func then 0 else nil
+    // Compare lists
+    else if w1.list != nil && w2.list != nil then
+        forth_compare_lists w1.list w2.list
+    // Compare nil
     else if (forth_is_nil w1) != 0 && (forth_is_nil w2) != 0 then
         0  // both nil
     else
         nil;;
+
+/**
+ * Compare two lists of words.
+ */
+fun forth_compare_lists l1 l2=
+    if l1==nil && l2==nil then 0
+    else if l1==nil then -1
+    else if l2==nil then 1
+    else let hd l1 -> h1 in
+         let hd l2 -> h2 in
+         let forth_compare_lists tl l1 tl l2 -> res in
+         if res != 0 then res
+         else forth_compare_words h1 h2;;
 
 /**
  * Run a sequence of Words as code, managing the return stack for nested calls.
@@ -154,6 +176,36 @@ fun forth_execute_code f code=
                                     if does_target == f.create_latest then
                                         set f.create_latest = nil;
                                     nil
+                                )
+                            )
+                        )
+                    ) else if word.func == #forth_defer_runtime then (
+                        if (f.pc >= (tablen code)) then
+                            forth_abort_msg f "DEFER internal error"
+                        else (
+                            let code.(f.pc) -> deferred_addr in (
+                                set f.pc = f.pc + 1;
+                                if (deferred_addr == nil) || (deferred_addr.int == nil) then
+                                    forth_abort_msg f "DEFER invalid target"
+                                else (
+                                    let forth_memory_get_cell f deferred_addr.int -> deferred_xt in
+                                    if deferred_xt == nil then
+                                        forth_abort_msg f "DEFER word has no action"
+                                    else (
+                                        set flag = deferred_xt.flag;
+                                        if deferred_xt.code != nil then (
+                                            forth_rpush f [int:f.pc code:code];
+                                            set f.pc = 0;
+                                            set code = deferred_xt.code;
+                                            nil
+                                        ) else if deferred_xt.func != nil then (
+                                            if deferred_xt.flag == FORTH_ASYNC then
+                                                forth_rpush f [int:f.pc code:code];
+                                            call deferred_xt.func [f]
+                                        ) else (
+                                            forth_push f deferred_xt
+                                        )
+                                    )
                                 )
                             )
                         )

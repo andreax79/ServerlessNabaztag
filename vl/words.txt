@@ -44,6 +44,7 @@ $REPEAT        ( s n -- s )                             Repeat string s n times
 >              ( n1 n2 -- flag )                        True if second word greater than top word
 >0             ( n -- flag )                            True if top number greater than zero
 >=             ( n1 n2 -- flag )                        True if second word greater than or equal to
+>BODY          ( xt -- a-addr )                         Return the data-field address associated with a defining word
 >NUMBER        ( s -- n )                               Convert string s to number n
 >R             ( x -- ) ( R: -- x )                     Move top item to return stack for temporary storage
 ?              ( addr -- )                              Prints the contents of the address, followed by one space
@@ -81,6 +82,9 @@ CR             ( -- )                                   Display CR
 CREATE         ( "<spaces>name" -- )                    Create a new dictionary entry that pushes its private data-field address
 CRONTAB        ( -- )                                   Crontab
 DAYTIME        ( -- ) (UTC)                             Display the current time
+DEFER          ( "<spaces>name" -- )                    Create a deferred word whose action is stored in an internal cell
+DEFER!         ( xt2 xt1 -- )                           Set the deferred action associated with xt-deferred
+DEFER@         ( xt1 -- xt2 )                           Fetch the deferred action associated with xt-deferred
 DEFINED?       (immediate) ( "<spaces>name" -- flag )   Check if a word is defined in the dictionary
 DEPTH          ( -- count )                             Count number of items on stack
 DO             ( runtime ) ( limit start leave-addr -- ) Enter a DO...LOOP runtime frame
@@ -115,6 +119,7 @@ IMMEDIATE      ( -- )                                   Mark the latest defined 
 INTERPRETER    ( -- )                                   Interactive Forth interpreter
 INVERT         ( x1 -- x2 )                             Invert all bits of x1, giving its logical inverse x2
 IP             ( -- ip )                                Push the IP address of the WIFI interface onto the stack
+IS             (immediate) ( xt "<spaces>name" -- )     Assign deferred action in interpretation state, or compile the assignment
 J              ( -- n )                                 Push the current loop index from the next outer DO...LOOP
 JMP            ( addr -- )                              Unconditional jump
 JSON-GET       ( w path -- x ) (e.g., "daily.weathercode[0]") Get an element from a dictionary or list by path

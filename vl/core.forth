@@ -22,5 +22,11 @@ dup cell+ @ swap @ ;
 : 2! ( x1 x2 addr -- )  \ Store two cells into memory
 swap over ! cell+ ! ;
 
+: defer! ( xt2 xt1 -- )  \ Set the deferred action associated with xt-deferred
+>body ! ;
+
+: defer@ ( xt1 -- xt2 )  \  Fetch the deferred action associated with xt-deferred
+>body @ ;
+
 : between ( n low high -- flag )
 >r over r> <= >r >= r> and ;

@@ -30,6 +30,7 @@ type Forth=[
     forth_task          // associated task
 ];;
 
+proto forth_compare_lists 2;;
 proto forth_compare_words 2;;
 proto forth_dict_to_str 2;;
 proto forth_execute_code 2;;

@@ -5,12 +5,21 @@
  */
 
 proto forth_memory_alloc_cell 0;;
+proto forth_memory_get_cell 2;;
+proto forth_memory_set_cell 3;;
 
 /**
  * Internal helper for DOES>.
  * The execution engine consumes the following payload and patches the child word.
  */
 fun forth_does_runtime f=
+    nil;;
+
+/**
+ * Internal helper for DEFER.
+ * The execution engine consumes the following payload and dispatches the deferred xt.
+ */
+fun forth_defer_runtime f=
     nil;;
 
 /**
@@ -93,6 +102,71 @@ fun forth_create f=
                     set f.create_latest = new_word;
                     nil
                 )
+    );;
+
+/**
+ * DEFER ( "<spaces>name" -- )
+ * Create a deferred word whose action is stored in an internal cell
+ */
+fun forth_defer f=
+    let hd f.istack -> inter in (
+        forth_interpreter_get_token f;
+        if (strlen inter.token) == 0 then
+            forth_abort_msg f "DEFER requires a name"
+        else if !strcmp inter.token ";" then
+            forth_abort_msg f "DEFER requires a valid name"
+        else
+            let forth_get_word inter.token -> new_word in
+            if new_word != nil then
+                forth_abort_msg f strcat "DEFER: word already exists " inter.token
+            else
+                let forth_memory_alloc_cell -> addr in (
+                    // Keep deferred action unbound until explicitly set.
+                    forth_memory_set_cell f addr nil;
+                    set new_word = [
+                        int:addr
+                        code:{[func:#forth_defer_runtime] [int:addr]}
+                    ];
+                    word_dict_set_w forth_dictionary [str:to_lower inter.token] new_word;
+                    set f.latest = new_word;
+                    nil
+                )
+    );;
+
+/**
+ * IS (immediate) ( xt "<spaces>name" -- )
+ * Assign deferred action in interpretation state, or compile the assignment
+ */
+fun forth_is f=
+    let hd f.istack -> inter in (
+        forth_interpreter_get_token f;
+        let forth_get_word inter.token -> target in
+        let nil -> addr in (
+            if target != nil then (
+                if target.int != nil then
+                    set addr = target.int
+                else if (target.code != nil) && ((tablen target.code) > 0) && (target.code.(0) != nil) && (target.code.(0).int != nil) then
+                    set addr = target.code.(0).int
+            );
+
+            if addr == nil then
+                forth_abort_msg f strcat "IS expects a deferred word name, got " inter.token
+            else if f.state == FORTH_STATE_COMPILATION then (
+                let forth_get_word "!" -> store_word in (
+                    if store_word == nil then
+                        forth_abort_msg f "IS internal error: ! not found"
+                    else (
+                        // Compile: ( xt -- ) <addr> !
+                        set f.cstack = store_word :: [int:addr] :: f.cstack;
+                        nil
+                    )
+                )
+            ) else (
+                let forth_pop f -> xt in
+                    forth_memory_set_cell f addr xt;
+                nil
+            )
+        )
     );;
 
 /**
@@ -373,6 +447,29 @@ fun forth_execute f=
     ) else (
         forth_push f word;
         word.flag
+    );;
+
+/**
+ * >BODY ( xt -- a-addr )
+ * Return the data-field address associated with a defining word
+ */
+fun forth_to_body f=
+    let forth_pop f -> xt in
+    if xt == nil then
+        forth_abort_msg f ">BODY expects a defining-word xt"
+    else (
+        let nil -> addr in (
+            if xt.int != nil then
+                set addr = xt.int
+            else if (xt.code != nil) && ((tablen xt.code) > 0) && (xt.code.(0) != nil) && (xt.code.(0).int != nil) then
+                set addr = xt.code.(0).int;
+
+            if addr == nil then
+                forth_abort_msg f ">BODY expects a defining-word xt"
+            else
+                forth_push f [int:addr];
+            nil
+        )
     );;
 
 /**
