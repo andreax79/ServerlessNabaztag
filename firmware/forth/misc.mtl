@@ -23,6 +23,16 @@ fun forth_defer_runtime f=
     nil;;
 
 /**
+ * Internal helper for VALUE run time.
+ * The execution engine pushes the data-field address before calling this helper.
+ */
+fun forth_value_runtime f=
+    let forth_pop f -> addr in
+    let forth_memory_get_cell f addr.int -> value in
+        forth_push f value;
+    nil;;
+
+/**
  * : Begin a new word definition ( -- )
  */
 fun forth_colon f=
@@ -212,6 +222,80 @@ fun forth_constant f=
             set f.latest = new_word;
             nil
         );;
+
+/**
+ * VALUE ( x "<spaces>name" -- )
+ * Define a value with the given initial content
+ */
+fun forth_value f=
+    if f.state == FORTH_STATE_COMPILATION then (
+        forth_abort_msg f "VALUE cannot be used in compilation mode"
+    ) else (
+        forth_interpreter_get_token f;
+        let forth_pop f -> x in
+        let hd f.istack -> inter in
+        let forth_get_word inter.token -> new_word in
+            if (strlen inter.token) == 0 then
+                forth_abort_msg f "VALUE requires a name"
+            else if !strcmp inter.token ";" then
+                forth_abort_msg f "VALUE requires a valid name"
+            else
+                let forth_memory_alloc_cell -> addr in (
+                    forth_memory_set_cell f addr x;
+                    if new_word == nil then (
+                        let [
+                            int:addr
+                            code:{[int:addr] [func:#forth_value_runtime]}
+                        ] -> new_value in (
+                            word_dict_set_w forth_dictionary [str:to_lower inter.token] new_value;
+                            set f.latest = new_value;
+                            nil
+                        )
+                    ) else (
+                        set new_word.int = addr;
+                        set new_word.code = {[int:addr] [func:#forth_value_runtime]};
+                        set f.latest = new_word;
+                        nil
+                    )
+                )
+    );
+    nil;;
+
+/**
+ * TO (immediate) ( x "<spaces>name" -- )
+ * Assign to a VALUE (or any defining word with a data-field address)
+ */
+fun forth_to f=
+    let hd f.istack -> inter in (
+        forth_interpreter_get_token f;
+        let forth_get_word inter.token -> target in
+        let nil -> addr in (
+            if target != nil then (
+                if target.int != nil then
+                    set addr = target.int
+                else if (target.code != nil) && ((tablen target.code) > 0) && (target.code.(0) != nil) && (target.code.(0).int != nil) then
+                    set addr = target.code.(0).int
+            );
+
+            if addr == nil then
+                forth_abort_msg f strcat "TO expects a VALUE-like word name, got " inter.token
+            else if f.state == FORTH_STATE_COMPILATION then (
+                let forth_get_word "!" -> store_word in (
+                    if store_word == nil then
+                        forth_abort_msg f "TO internal error: ! not found"
+                    else (
+                        // Compile: ( x -- ) <addr> !
+                        set f.cstack = store_word :: [int:addr] :: f.cstack;
+                        nil
+                    )
+                )
+            ) else (
+                let forth_pop f -> x in
+                    forth_memory_set_cell f addr x;
+                nil
+            )
+        )
+    );;
 
 /**
  * IMMEDIATE ( -- )

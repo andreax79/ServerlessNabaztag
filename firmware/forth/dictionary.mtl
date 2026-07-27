@@ -153,6 +153,8 @@ fun forth_init_dictionary=
         [ [str: "immediate"        ] [ func:#forth_immediate   flag:FORTH_IMMEDIATE]] ::
         [ [str: "("                ] [ func:#forth_p]] ::
         [ [str: "constant"         ] [ func:#forth_constant]] ::
+        [ [str: "value"            ] [ func:#forth_value]] ::
+        [ [str: "to"               ] [ func:#forth_to flag:FORTH_IMMEDIATE]] ::
         [ [str: "execute"          ] [ func:#forth_execute]] ::
         [ [str: ">body"            ] [ func:#forth_to_body]] ::
         [ [str: "defined?"         ] [ func:#forth_defined_q   flag:FORTH_IMMEDIATE]] ::

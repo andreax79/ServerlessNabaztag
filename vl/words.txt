@@ -203,6 +203,7 @@ TIME&DATE      ( -- sec min hour day month year)        Push the current time an
 TIME-MS        ( -- ms )                                Push the current time in milliseconds onto the stack
 TIME?          ( -- flag )                              Check if the system time has been received from the time server
 TL             ( list -- list' )                        Get the tail of a list
+TO             (immediate) ( x "<spaces>name" -- ) (or any defining word with a data-field address) Assign to a VALUE
 TOOL-MOVE_EARS ( args-json -- result )
 TOOL-PLAY_SOUND ( args-json -- result )
 TOOL-RABBIT_STATUS ( args-json -- result )
@@ -220,6 +221,7 @@ UPTIME         ( -- s )                                 Push the system uptime i
 URL-DECODE     ( s -- s )                               URL decode string s
 URL-ENCODE     ( s -- s )                               URL encode string s
 UTC>STRING     ( -- str )                               Push the current UTC time and date as a string onto the stack
+VALUE          ( x "<spaces>name" -- )                  Define a value with the given initial content
 VARIABLE       (immediate) ( -- addr )                  Define a variable and allocate a word for it
 VOLUME         ( -- vol )                               Get the audio volume
 WAKE-UP        ( -- )                                   Wake up the Nabaztag from sleep mode
