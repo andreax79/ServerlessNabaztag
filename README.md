@@ -24,7 +24,7 @@ Configure the rabbit
 * Unplug the rabbit, press the button on its head and hold it while you replug your rabbit. When all the lights are blue, you can release the button
 * On your computer, connect to the WiFi network created by your rabbit (the name should be Nabaztag\<XX\>)
 * Go to the configuration page at the following address: http://192.168.0.1
-* At the bottom of the page, in General Info, change "Violet Platform" to andreax79.github.io/ServerlessNabaztag/vl (without http://)
+* At the bottom of the page, in General Info, change "Violet Platform" to andreax79.github.io/ServerlessNabaztag (without http://; the firmware automatically appends `/vl`)
 * Click on Update settings and wait for the rabbit to reboot
 * You can now connect to the IP of your rabbit, configure and control it. (Note: if your rabbit IP is assigned with DHCP, you have to discover the IP address. Usually you can check the assigned IP from some page on your router)
 
@@ -35,7 +35,7 @@ Install on your web server (HTTP only)
 * Unplug the rabbit, press the button on its head and hold it while you replug your rabbit. When all the lights are blue, you can release the button
 * On your computer, connect to the WiFi network created by your rabbit (the name should be Nabaztag\<XX\>)
 * Go to the configuration page at the following address: http://192.168.0.1
-* At the bottom of the page, in General Info, change "Violet Platform" to the URL of the vl directory (without http://, example: 192.168.0.1/vl)
+* At the bottom of the page, in General Info, change "Violet Platform" to your server's address (without http://, example: 192.168.0.1; the firmware automatically appends `/vl`)
 * Click on Update settings and wait for the rabbit to reboot
 * You can now connect to the IP of your rabbit, configure and control it. (Note: if your rabbit IP is assigned with DHCP, you have to discover the IP address. Usually you can check the assigned IP from some page on your router)
 
