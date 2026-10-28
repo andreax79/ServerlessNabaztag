@@ -1,0 +1,5 @@
+#include tests/test_mdns.mtl
+
+fun run_tests=
+    test_mdns;
+    0;;

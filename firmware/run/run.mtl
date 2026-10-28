@@ -228,7 +228,9 @@ fun _run_parse_config_cb _ res=
 
 fun _run_config_start =
     if wifi_connected && audiolib_wav_running==0 then (
+#ifndef TEST
         ntp_get_time;
+#endif
         forth_init // set the run state to configwaitRun while fetching init.forth
 #ifndef SERVERLESS
         Secho "config_get_server_url: "; Secholn config_get_server_url;

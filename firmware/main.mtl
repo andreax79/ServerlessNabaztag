@@ -88,6 +88,10 @@ const LED_TIMEOUT = 600;; // 10 minutes
 #include forth/forth.mtl
 #include run/ai.mtl
 
+#ifdef TEST
+#include tests/tests.mtl
+#endif
+
 fun main=
     // Set the loop callback
     loopcb #task_scheduler;
@@ -123,5 +127,8 @@ fun main=
 #endif
 #ifdef XMPP
     xmpp_init;
+#endif
+#ifdef TEST
+    run_tests;
 #endif
     0;;

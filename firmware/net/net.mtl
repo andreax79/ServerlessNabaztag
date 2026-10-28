@@ -5,6 +5,7 @@
 #include protos/arp_protos.mtl
 #include protos/dns_protos.mtl
 #include protos/dhcp_protos.mtl
+#include protos/mdns_protos.mtl
 
 #include ipv4/ipv4.mtl
 
@@ -23,7 +24,7 @@ fun net src mac=
 		else if p==IP_PROTO then // IP
 			let strget src 17 -> ip in
 			if ip==SOL_TCP then tcp_handler src mac // TCP
-			else if ip==SOL_UDP then udp_handler src mac // UDP
+            else if ip==SOL_UDP then udp_handler src mac // UDP
 			else if ip==SOL_ICMP then icmp_handler src mac;  // ICMP
 		0
 	);
@@ -57,6 +58,8 @@ fun net_init=
     // Start DHCP client
     dhcp_start_client;
 #endif
+    // Start the mDNS client
+    mdns_start_client;
 	0;;
 
 /**
@@ -74,6 +77,7 @@ fun net_json=
 
 #include net/dhcp.mtl
 #include net/dns.mtl
+#include net/mdns.mtl
 #include net/http.mtl
 #include net/ntp.mtl
 #include net/sock.mtl

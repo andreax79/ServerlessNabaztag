@@ -1,0 +1,107 @@
+#include protos/mdns_protos.mtl
+
+//--------------------------------------------------------------------------------------------------
+// Multicast DNS (mDNS)
+//--------------------------------------------------------------------------------------------------
+
+const MDNS_PORT = 5353;;  // UDP port 5353
+const MDNS_IP = "\224\0\0\251";;  // 224.0.0.251
+const MDNS_MAC = "\1\0\94\0\0\251";;
+const MDNS_NAME = "\8nabaztag\5local\0";;  // nabaztag.local
+
+/**
+ * Decode a mDNS name from the given source string starting at the given offset
+ * src: source string
+ * offset: starting offset in the source string
+ * budget: maximum number of recursive calls to avoid infinite loops
+ */
+fun _mdns_name src offset budget=
+    if budget<=0 || offset>=(strlen src) then nil
+    else let strget src offset -> size in
+    if size==0 then ["\0" offset+1]
+    else if (size&192)==192 then
+        if offset+2>(strlen src) then nil
+        else let (strgetword src offset)&16383 -> target in
+        if target<12 || target>=offset then nil
+        else let _mdns_name src target budget-1 -> decoded in
+        if decoded==nil then nil
+        else let decoded -> [name _] in [name offset+2]
+    else if size>63 || offset+1+size>=(strlen src) then nil
+    else let _mdns_name src offset+1+size budget-1 -> decoded in
+    if decoded==nil then nil
+    else let decoded -> [suffix next] in
+    let strcat (strsub src offset size+1) suffix -> name in
+    if (strlen name)>255 then nil else [name next];;
+
+/**
+ * Decode mDNS questions from the given source string starting at the given offset
+ * src: source string
+ * offset: starting offset in the source string
+ * count: number of questions to decode
+ * found: whether a matching question has been found
+ * unicast: whether a unicast response is requested
+ */
+fun _mdns_questions src offset count found unicast=
+    if count==0 then [found unicast offset]
+    else let _mdns_name src offset 32 -> decoded in
+    if decoded==nil then nil
+    else let decoded -> [name next] in
+    if next+4>(strlen src) then nil
+    else let strgetword src next -> kind in
+    let strgetword src next+2 -> class in
+    let (!strcmp (to_lower name) MDNS_NAME) &&
+        (kind==1 || kind==255) && ((class&32767)==1 || (class&32767)==255) -> matches in
+    _mdns_questions src next+4 count-1 (found || matches) (unicast || (matches && (class&32768)));;
+
+/**
+ * Process a mDNS response from the given source string and port
+ * src: source string containing the mDNS response
+ * port: source port of the mDNS response
+ */
+fun _mdns_response src port=
+    if (strlen src)<12 || ((strgetword src 2)&0xf80f) then nil
+    else let _mdns_questions src 12 (strgetword src 4) 0 0 -> questions in
+    if questions==nil then nil
+    else let questions -> [found unicast last] in
+    if !found || !strcmp netip netip_empty then nil
+    else let port!=MDNS_PORT -> legacy in
+    let strcatlist
+        (if legacy then strsub src 0 2 else "\0\0") ::
+        "\132\0" ::
+        (if legacy then strsub src 4 2 else "\0\0") ::
+        "\0\1\0\0\0\0" ::
+        (if legacy then strsub src 12 last-12 else "") ::
+        MDNS_NAME :: "\0\1" ::
+        (if legacy then "\0\1\0\0\0\10" else "\128\1\0\0\0\120") ::
+        "\0\4" :: netip :: nil -> response in
+    [response (legacy || unicast)];;
+
+/**
+ * Handle a mDNS packet from the given source string and MAC address
+ * src: source string containing the mDNS packet
+ * macfrom: source MAC address of the mDNS packet
+ * hostip: host IP address to respond to
+ */
+fun _mdns_handler src macfrom hostip=
+    if (strlen src)<36 then nil
+    else let strgetword src 32 -> length in
+    if length<20 || length+28>(strlen src) then nil
+    else let strgetword src 28 -> port in
+    let _mdns_response (strsub src 36 length-8) port -> answer in
+    if answer!=nil then
+        let answer -> [response unicast] in
+        let _udp_create_pkg netip (if unicast then strsub src 20 4 else MDNS_IP)
+            MDNS_PORT (if unicast then port else MDNS_PORT) response -> packet in
+        (
+            strset packet 16 255;
+            strputword packet 18 0;
+            strputchk packet 18 netChk packet 8 20 0;
+            _udp_send2 (if unicast then macfrom else MDNS_MAC) packet
+        );;
+
+/**
+ * Starts mDNS client
+ */
+fun mdns_start_client=
+    regudp MDNS_PORT #_mdns_handler;
+    0;;

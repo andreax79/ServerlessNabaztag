@@ -1,0 +1,63 @@
+var mdns_failures=0;;
+
+fun mdns_check label passed=
+    if !passed then (
+        Secholn strcat "[TEST-ERROR] mDNS " label;
+        set mdns_failures=mdns_failures+1
+    );
+    0;;
+
+fun test_mdns=
+    set netip="\192\168\1\42";
+    let "\0\0\0\0\0\1\0\0\0\0\0\0" -> header in
+    let strcatlist header :: MDNS_NAME :: "\0\1\0\1" :: nil -> query in
+    let _mdns_response query MDNS_PORT -> [response unicast] in
+    (
+        mdns_check "multicast A response" (!unicast && !strcmp response
+            strcatlist "\0\0\132\0\0\0\0\1\0\0\0\0" :: MDNS_NAME ::
+            "\0\1\128\1\0\0\0\120\0\4" :: netip :: nil);
+        let _mdns_response query 12345 -> [legacy direct] in (
+            mdns_check "legacy unicast" (direct && (strgetword legacy 4)==1 &&
+                !strcmp (strsub legacy 12 20) (strsub query 12 20));
+            mdns_check "legacy TTL and class" ((strgetword legacy 54)==10 && (strgetword legacy 50)==1)
+        );
+        strputword query 0 1234;
+        let _mdns_response query 12345 -> [legacy _] in
+            mdns_check "legacy transaction ID" ((strgetword legacy 0)==1234);
+        strputword query 30 32769;
+        let _mdns_response query MDNS_PORT -> [_ direct] in
+            mdns_check "QU unicast" direct;
+        strputword query 30 1;
+        mdns_check "case insensitive ANY" ((_mdns_response
+            (strcatlist header :: "\8NABAZTAG\5LOCAL\0\0\255\0\1" :: nil) MDNS_PORT)!=nil);
+        mdns_check "other host ignored" ((_mdns_response
+            (strcatlist header :: "\5other\5local\0\0\1\0\1" :: nil) MDNS_PORT)==nil);
+        strputword query 28 28;
+        mdns_check "AAAA ignored" ((_mdns_response query MDNS_PORT)==nil);
+        strputword query 28 1;
+        strputword query 30 3;
+        mdns_check "other class ignored" ((_mdns_response query MDNS_PORT)==nil);
+        strputword query 30 1;
+        mdns_check "truncated header" ((_mdns_response "\0" MDNS_PORT)==nil);
+        mdns_check "truncated question" ((_mdns_response (strsub query 0 31) MDNS_PORT)==nil);
+        mdns_check "compression loop" ((_mdns_response
+            (strcat header "\192\12\0\1\0\1") MDNS_PORT)==nil);
+        let strcat query "\192\12\0\255\0\1" -> compressed in (
+            strputword compressed 4 2;
+            mdns_check "compressed second question" ((_mdns_response compressed MDNS_PORT)!=nil)
+        );
+        strputword query 2 32768;
+        mdns_check "response ignored" ((_mdns_response query MDNS_PORT)==nil);
+        strputword query 2 2048;
+        mdns_check "non-query opcode ignored" ((_mdns_response query MDNS_PORT)==nil);
+        strputword query 2 512;
+        mdns_check "truncated-query flag allowed" ((_mdns_response query MDNS_PORT)!=nil);
+        strputword query 2 0;
+        strputword query 4 65535;
+        mdns_check "excess question count" ((_mdns_response query MDNS_PORT)==nil);
+        strputword query 4 1;
+        set netip=netip_empty;
+        mdns_check "no address yet" ((_mdns_response query MDNS_PORT)==nil);
+        if mdns_failures==0 then Secholn "mDNS test passed";
+        0
+    );;
